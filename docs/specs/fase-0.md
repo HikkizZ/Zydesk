@@ -180,11 +180,11 @@ NODE_ENV=development
 POSTGRES_USER=zydesk
 POSTGRES_PASSWORD=zydesk
 POSTGRES_DB=zydesk
-POSTGRES_PORT=5432
+POSTGRES_PORT=5433
 
 # API
-API_PUERTO=3000
-DATABASE_URL=postgres://zydesk:zydesk@localhost:5432/zydesk
+API_PUERTO=3010
+DATABASE_URL=postgres://zydesk:zydesk@localhost:5433/zydesk
 # error | warn | info | debug — por defecto: debug en development, info en el resto
 LOG_LEVEL=
 
@@ -262,7 +262,7 @@ Carga `.env` de la raíz con `dotenv`: `config({ path: fileURLToPath(new URL('..
 ```ts
 const esquema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
-  API_PUERTO: z.coerce.number().int().positive().default(3000),
+  API_PUERTO: z.coerce.number().int().positive().default(3010),
   DATABASE_URL: z.string().url(),
   LOG_LEVEL: z.enum(['error', 'warn', 'info', 'debug']).optional(),
 });
@@ -378,7 +378,7 @@ export default defineConfig(({ mode }) => {
     plugins: [react(), tailwindcss()],
     envDir: raiz,
     resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-    server: { port: Number(env.WEB_PUERTO ?? 5173), proxy: { '/api': `http://localhost:${env.API_PUERTO ?? 3000}` } },
+    server: { port: Number(env.WEB_PUERTO ?? 5173), proxy: { '/api': `http://localhost:${env.API_PUERTO ?? 3010}` } },
     test: { environment: 'jsdom', include: ['src/**/*.test.tsx', 'src/**/*.test.ts'] },
   };
 });
@@ -494,7 +494,7 @@ Cada página es un componente en `src/features/<feature>/pages/<Nombre>Page.tsx`
 | **F0-T2 `packages/shared`** | §5 completo, `postinstall` en la raíz | `npm run build -w @zydesk/shared` genera `dist/index.js` y `dist/formato/index.d.ts`; `npm test -w @zydesk/shared` verde con los casos de §5; `npm run typecheck -w @zydesk/shared` verde. |
 | **F0-T3 Postgres de desarrollo** | `docker-compose.dev.yml`, `.env.example`, `.env` local | `docker compose -f docker-compose.dev.yml up -d` deja el contenedor `healthy` (`docker compose -f docker-compose.dev.yml ps`); `docker compose -f docker-compose.dev.yml exec postgres psql -U zydesk -d zydesk -c "select 1"` devuelve `1`. |
 | **F0-T4 Configuración de la API** | `apps/api` package/tsconfigs/vitest, `config/env.ts`, `version.ts`, `logger.ts`, `db.ts`, `core/http/contexto.ts` | Tests de §6.1 y §6.3 verdes (`npm test -w @zydesk/api`); `npm run typecheck -w @zydesk/api` verde. |
-| **F0-T5 API HTTP** | `req-id.ts`, `log-http.ts`, `core/errores/*`, `modulos/salud/*`, `app.ts`, `server.ts` | Tests de §6.10 verdes. Con Postgres arriba: `npm run dev -w @zydesk/api` imprime en pino-pretty `api iniciada` con `puerto=3000`; `curl -i localhost:3000/api/salud` → `200`, cuerpo `{"estado":"ok","version":"0.1.0","bd":"ok"}`, cabecera `X-Request-Id` UUID; `curl -i -H "X-Request-Id: 123e4567-e89b-12d3-a456-426614174000" localhost:3000/api/salud` devuelve ese mismo id; con `NODE_ENV=production npm run start -w @zydesk/api` (tras `build`) cada línea de stdout es JSON con `req_id`; con Postgres detenido `/api/salud` → `503` y `bd:"error"`; `Ctrl+C` imprime `apagando api` y `api detenida` y sale con 0. |
+| **F0-T5 API HTTP** | `req-id.ts`, `log-http.ts`, `core/errores/*`, `modulos/salud/*`, `app.ts`, `server.ts` | Tests de §6.10 verdes. Con Postgres arriba: `npm run dev -w @zydesk/api` imprime en pino-pretty `api iniciada` con `puerto=3010`; `curl -i localhost:3010/api/salud` → `200`, cuerpo `{"estado":"ok","version":"0.1.0","bd":"ok"}`, cabecera `X-Request-Id` UUID; `curl -i -H "X-Request-Id: 123e4567-e89b-12d3-a456-426614174000" localhost:3010/api/salud` devuelve ese mismo id; con `NODE_ENV=production npm run start -w @zydesk/api` (tras `build`) cada línea de stdout es JSON con `req_id`; con Postgres detenido `/api/salud` → `503` y `bd:"error"`; `Ctrl+C` imprime `apagando api` y `api detenida` y sale con 0. |
 | **F0-T6 Web base** | `apps/web` package/tsconfig/vite.config, `index.html` (`<title>Zydesk</title>`, `lang="es"`), `main.tsx`, `estilos/*`, `lib/utils.ts`, `components.json`, `lib/utils.test.ts` | `npm run dev -w @zydesk/web` sirve `http://localhost:5173` mostrando "Zydesk" en Bricolage Grotesque sobre fondo `#F3F1EC` (verificar en DevTools que las fuentes cargan desde `/node_modules/@fontsource/...` o el bundle, no desde Google); `npm run build -w @zydesk/web` genera `dist/`; test de `cn` verde. |
 | **F0-T7 Layout y rutas** | `app/router.tsx`, `app/layout/*`, `app/TituloPagina.tsx`, `features/*/pages/*` | Test §7.7 verde; en el navegador cada entrada del menú navega a su ruta y muestra su `<h1>`; el ítem activo se resalta; `/` redirige a `/mi-dia`; a 1440 px se ve el menú lateral oscuro y a 800 px (DevTools) desaparece y aparece la barra inferior con 4 accesos; `/no-existe` muestra "Página no encontrada". |
 | **F0-T8 Estado del sistema** | `app/proveedores.tsx`, `lib/api.ts`, `features/salud/*`, `ConfiguracionPage.tsx` | Con API y Postgres arriba, `/configuracion` muestra "API: ok · Base de datos: ok · versión 0.1.0"; con la API detenida muestra el mensaje de error en rojo; la pestaña Network muestra `/api/salud` proxyado (respuesta con `X-Request-Id`). |
@@ -511,7 +511,7 @@ npm run format:check                                → "All matched files use P
 npm test                                            → todos los tests verdes en shared, api y web
 docker compose -f docker-compose.dev.yml up -d      → postgres healthy
 npm run dev                                         → shared en watch, api "api iniciada", web en http://localhost:5173
-curl -i localhost:3000/api/salud                    → 200, X-Request-Id: <uuid>, {"estado":"ok","version":"0.1.0","bd":"ok"}
+curl -i localhost:3010/api/salud                    → 200, X-Request-Id: <uuid>, {"estado":"ok","version":"0.1.0","bd":"ok"}
 curl -i localhost:5173/api/salud                    → misma respuesta a través del proxy de Vite
 ```
 Además: (a) en la consola de `npm run dev` los logs de la API salen con pino-pretty y muestran `req_id`; ejecutando la API con `NODE_ENV=production` salen en JSON de una línea; (b) el test de `redact` (§6.3) demuestra que `password` aparece como `[Redactado]`; (c) en `http://localhost:5173` se ve el menú lateral oscuro con "Zydesk" en Bricolage Grotesque, ítems en IBM Plex Sans, botón "Nuevo ticket" en `#2F47C4`, fondo `#F3F1EC`; bajo 1024 px aparece la barra inferior; (d) `/configuracion` muestra el estado de `/api/salud`.

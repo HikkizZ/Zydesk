@@ -1,0 +1,2 @@
+// enums de dominio
+export {};
