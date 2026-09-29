@@ -1,0 +1,27 @@
+# Decisiones de arquitectura (ADR) — Zydesk
+
+Cada archivo registra una decisión de diseño con su contexto, las opciones consideradas, la decisión y sus consecuencias. Las ADR no se editan una vez aceptadas: si una decisión cambia, se escribe una nueva que sustituya total o parcialmente a la anterior, y en la antigua solo se actualiza la línea **Estado**.
+
+Fuentes: `../especificacion/contexto-app-trazo.md` (escrita cuando la app se llamaba "Trazo"; reglas 4.1, 4.5–4.6 y 4.8 son el núcleo) y el diseño de referencia. La app se llama **Zydesk** y se publica en `desk.zytech.dev` (ADR 0013).
+
+| Nº | ADR | Decisión en una línea |
+|---|---|---|
+| 0001 | [Stack y estructura del monorepo](0001-stack-y-monorepo.md) | npm workspaces: `apps/api` (Express 5 + TypeORM + PG 16), `apps/web` (React 19 + Vite), `packages/shared` (Zod, enums, máquinas de estado, cálculos); Docker Compose portable. |
+| 0002 | [Autenticación y autorización](0002-autenticacion-y-autorizacion.md) | Sesión opaca en Postgres con cookie httpOnly (no JWT); argon2; matriz de permisos de la spec en `shared`; el bot usa sesiones `origen = bot`. *Parcialmente sustituida por 0013 (sin Microsoft ni correo).* |
+| 0003 | [Historial y transacciones](0003-historial-y-transacciones.md) | Capa de servicio explícita con `enTransaccion` + helper `registrarCambios`; sin subscribers ni triggers en producción; subscriber de verificación solo en tests. |
+| 0004 | [Máquinas de estado](0004-maquinas-de-estado.md) | Transiciones y payloads (Zod, unión discriminada) en `shared`; "Facturada" es `estado_facturacion`, no etapa; etapa `cancelada` añadida; resolver con OT abierta → 409 `OT_ABIERTA`. |
+| 0005 | [Motor de horas hábiles](0005-motor-de-horas-habiles.md) | date-fns v4 + `@date-fns/tz`; motor puro en `shared`; horario con colación como bloque; feriados en tabla con semilla chilena editable por Admin. |
+| 0006 | [Numeración correlativa](0006-numeracion-correlativa.md) | Tabla `contador` con `UPDATE … RETURNING` en la transacción de creación; `codigo` materializado; COT deriva su número de la OT. *Parcialmente sustituida por 0014.* |
+| 0007 | [Montos y moneda](0007-montos-y-moneda.md) | `numeric(14,2)` → `number`; redondeo por línea (0 dec. CLP, 2 UF); IVA % y `aplica_iva` snapshot por cotización; función de cálculo única en `shared`. |
+| 0008 | [Avisos, canales y tareas programadas](0008-avisos-canales-y-tareas-programadas.md) | Eventos de dominio → despachador → canales; pg-boss para cola y cron; bot con long polling, vinculado por código de un solo uso y hablando solo con la API. *Parcialmente sustituida por 0013 (sin correo; Telegram en Fase 6).* |
+| 0009 | [Archivos y correos adjuntos](0009-archivos-y-correos-adjuntos.md) | Disco local tras interfaz `Storage`; 20 MB/archivo; subida en dos pasos; compresión de fotos en el cliente; parseo .eml/.msg/texto con vista previa y adjuntos internos opcionales. |
+| 0010 | [API REST y validación](0010-api-rest-y-validacion.md) | `/api` sin versión, recursos en español, transiciones como acciones `POST`, paginación offset, errores `{error:{codigo}}`, Zod compartido, OpenAPI generado con `zod-openapi` + Scalar. |
+| 0011 | [Frontend y sistema de diseño](0011-frontend-sistema-de-diseno.md) | Tailwind v4 con tokens de la spec + shadcn/ui; fuentes autoalojadas; pills con texto siempre; mobile-first en las 4 pantallas de terreno; TanStack Query sin estado global. |
+| 0012 | [Documentación y manuales](0012-documentacion-y-manuales.md) | Todo en Markdown en `docs/`: manual por rol, manual de administración, despliegue, `openapi.json` generado; ayuda dentro de la app desde los mismos archivos. |
+| 0013 | [Zydesk: nombre, dominio y acceso sin Microsoft ni correo](0013-zydesk-acceso-sin-microsoft-ni-correo.md) | Nombre/logo configurables; solo correo + contraseña; restablecimiento por Administración; avisos por app y Telegram (bot en Fase 6); sesiones endurecidas (token hasheado, `__Host-`, límites de intentos, sesiones activas); segundo factor **pendiente** (Cloudflare Access recomendado). *Parcialmente sustituida por 0017 (`intento_ingreso` → `auditoria`).* |
+| 0014 | [Numeración configurable](0014-numeracion-configurable.md) | Prefijo, inicial y dígitos por tipo desde Configuración; tickets `correlativo` o `aleatorio`; OT siempre correlativa; COT deriva de la OT; cambios solo hacia adelante, rechazo de inicial menor al usado, auditados con `Evento`. |
+| 0015 | [Bolsa de horas por cliente](0015-bolsa-de-horas-por-cliente.md) | `contrato_bolsa` opcional por cliente; casilla "Descuenta de la bolsa" en OT facturables vincula `contrato_id`; horas usadas = suma de `registro_horas` de esas OT en el mes; sin alertas en v1. |
+| 0016 | [Línea de tiempo: agrupación y vencidos](0016-linea-de-tiempo-agrupacion-y-vencidos.md) | Agrupar por persona / cliente; aviso "N vencidos" e ícono en barras vencidas (límite pasado y no cerrado); ancho mínimo de barra; se mantiene escala por días hábiles. |
+| 0017 | [Logs y auditoría](0017-logs-y-auditoria.md) | Tres registros: `evento` (negocio, permanente), `auditoria` (seguridad, 1 año; absorbe `intento_ingreso`), logs pino JSON a stdout con `req_id` y esquema fijo (30 días en Loki desde Fase 9); `zydesk_app` sin `UPDATE/DELETE` sobre `evento`/`auditoria`, limpieza con función `SECURITY DEFINER`. |
+
+Pendientes de confirmación por el usuario: [preguntas-abiertas.md](preguntas-abiertas.md).
