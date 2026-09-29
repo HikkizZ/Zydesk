@@ -1,0 +1,10 @@
+import { TituloPagina } from '@/app/TituloPagina';
+
+export function AvisosPage() {
+  return (
+    <>
+      <TituloPagina titulo="Avisos" />
+      <p className="mt-2 text-tinta-2">Pendiente (Fase 6)</p>
+    </>
+  );
+}

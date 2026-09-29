@@ -3,7 +3,6 @@ import { crearApp } from './app.js';
 import { comprobarBd, dataSource } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
-import { VERSION } from './config/version.js';
 
 process.on('unhandledRejection', (err) => {
   logger.fatal({ err }, 'promesa rechazada sin manejar');
@@ -23,7 +22,7 @@ try {
 
 const app = crearApp({ comprobarBd });
 const server = app.listen(env.API_PUERTO);
-logger.info({ puerto: env.API_PUERTO, version: VERSION, entorno: env.NODE_ENV }, 'api iniciada');
+logger.info({ puerto: env.API_PUERTO }, 'api iniciada');
 
 async function apagar(): Promise<void> {
   logger.info('apagando api');

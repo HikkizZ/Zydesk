@@ -1,0 +1,55 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-fondo: #f3f1ec;
+  --color-superficie: #ffffff;
+  --color-superficie-suave: #f7f5f1;
+  --color-superficie-suave-2: #fbfaf7;
+  --color-tinta: #1b1a17;
+  --color-tinta-2: #4a463f;
+  --color-tinta-3: #5c574e;
+  --color-borde: #e1ddd4;
+  --color-borde-campo: #cfc9be;
+  --color-acento: #2f47c4;
+  --color-urgente: #9a1c0e;
+  --color-urgente-fondo: #fce9e4;
+  --color-urgente-punto: #c8321f;
+  --color-alta: #7a4300;
+  --color-alta-fondo: #fbefd9;
+  --color-alta-punto: #d98a1c;
+  --color-media: #2f47c4;
+  --color-media-fondo: #e8ecf9; /* provisional, no está en la spec */
+  --color-media-punto: #2f47c4; /* provisional, no está en la spec */
+  --color-baja: #4f4b44;
+  --color-baja-fondo: #eeece7;
+  --color-baja-punto: #4f4b44; /* provisional, no está en la spec */
+  --color-en-espera: #6e4300;
+  --color-en-espera-fondo: #f6eedb;
+  --color-resuelto: #0e5a3f;
+  --color-resuelto-fondo: #e1f2ea;
+  --color-interna: #4e2f99;
+  --color-interna-fondo: #eee8fa;
+  --color-nota-interna-fondo: #fbf5e4;
+  --color-nota-interna-borde: #ebddb0;
+  --color-grafico-facturable: #2f47c4;
+  --color-grafico-interna: #d98a1c;
+  --font-titulo: 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif;
+  --font-texto: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-texto);
+    background: var(--color-fondo);
+    color: var(--color-tinta);
+  }
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-titulo);
+  }
+}

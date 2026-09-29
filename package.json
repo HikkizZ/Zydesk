@@ -12,14 +12,15 @@
     "npm": ">=10"
   },
   "scripts": {
-    "build": "npm run build --workspaces --if-present",
+    "postinstall": "npm run build -w @zydesk/shared",
+    "dev": "npm run build -w @zydesk/shared && concurrently -n shared,api,web -c blue,green,magenta \"npm run dev -w @zydesk/shared\" \"npm run dev -w @zydesk/api\" \"npm run dev -w @zydesk/web\"",
+    "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
-    "typecheck": "npm run typecheck --workspaces --if-present",
+    "typecheck": "npm run build -w @zydesk/shared && npm run typecheck --workspaces",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist",
-    "postinstall": "npm run build -w @zydesk/shared"
+    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist"
   },
   "devDependencies": {
     "concurrently": "^9.2.4",
