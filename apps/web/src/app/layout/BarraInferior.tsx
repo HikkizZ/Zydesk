@@ -1,6 +1,6 @@
 import { Menu } from 'lucide-react';
 import { useState } from 'react';
-import { NavLink, useLocation } from 'react-router';
+import { Link, useLocation } from 'react-router';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
 import { cn } from '@/lib/utils';
 import { MENU } from './menu';
@@ -19,22 +19,36 @@ const claseAcceso = (activo: boolean) =>
     activo ? 'bg-white/10 text-fondo' : 'text-fondo/80',
   );
 
+// "Tickets" cubre todo lo que cuelga de /tickets (tablero, tabla, línea de tiempo…), salvo "Nuevo".
+function esActivo(ruta: string, pathname: string): boolean {
+  if (ruta !== '/tickets') return pathname === ruta;
+  return (pathname === ruta || pathname.startsWith(`${ruta}/`)) && pathname !== '/tickets/nuevo';
+}
+
 export function BarraInferior() {
   const [abierto, setAbierto] = useState(false);
   const { pathname } = useLocation();
   // "Más" está activo cuando la ruta no corresponde a ninguno de los otros cuatro accesos.
-  const masActivo = !ACCESOS.some((a) => a.ruta === pathname);
+  const masActivo = !ACCESOS.some((a) => esActivo(a.ruta, pathname));
   return (
     <nav
       aria-label="Principal (móvil)"
       className="fixed inset-x-0 bottom-0 z-10 flex bg-tinta lg:hidden"
     >
-      {ACCESOS.map(({ ruta, etiqueta, icono: Icono }) => (
-        <NavLink key={ruta} to={ruta} end className={({ isActive }) => claseAcceso(isActive)}>
-          <Icono size={18} strokeWidth={1.5} aria-hidden="true" />
-          {etiqueta}
-        </NavLink>
-      ))}
+      {ACCESOS.map(({ ruta, etiqueta, icono: Icono }) => {
+        const activo = esActivo(ruta, pathname);
+        return (
+          <Link
+            key={ruta}
+            to={ruta}
+            aria-current={activo ? 'page' : undefined}
+            className={claseAcceso(activo)}
+          >
+            <Icono size={18} strokeWidth={1.5} aria-hidden="true" />
+            {etiqueta}
+          </Link>
+        );
+      })}
       <Sheet open={abierto} onOpenChange={setAbierto}>
         <SheetTrigger className={claseAcceso(masActivo)}>
           <Menu size={18} strokeWidth={1.5} aria-hidden="true" />

@@ -59,6 +59,7 @@ describe('clientes', () => {
       {
         id: r.body.id,
         nombre: 'Viña Santa Clara',
+        rut: r.body.rut,
         es_interno: false,
         activo: true,
         tiene_bolsa: false,

@@ -12,12 +12,26 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 - Entidades TypeORM siempre con `type` explícito en `@Column` (tsx no emite metadatos de decoradores).
 - API por módulo (`apps/api/src/modulos/<módulo>/`): el handler de `ruta()` solo delega al servicio y resuelve lo puramente HTTP (cookies, cabeceras, `res.status`); la lógica de negocio va en `*.service.ts`.
 - Un módulo escribe en las tablas de otro solo a través del servicio de ese módulo, pasándole el `tx` (`EntityManager`) de la transacción en curso (ADR 0003): un servicio puede orquestar un único `enTransaccion` que toque varios módulos (cierre de OT → ticket, conversión ticket → OT). Leer entidades de otro módulo (joins, `findOneBy`) sí está permitido. Sin dependencias circulares entre módulos, salvo `tickets` ↔ `ots`, que la ADR 0003 exige y se limita a importar funciones entre sus `*.service.ts`.
+- Toda ruta HTTP se declara con `ruta()` (`core/http/ruta.ts`): es lo que valida, autoriza y alimenta OpenAPI. Tras agregar o cambiar una ruta o un esquema compartido, `npm run api:openapi` y versionar `docs/api/openapi.json`.
+- Toda mutación va dentro de `enTransaccion` y se invoca desde un servicio.
+- Qué registra cada acción (ADR 0003 y 0017):
+
+| Acción                                           | `evento`                                     | `auditoria`                                                                            |
+| ------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Guardar numeración                               | `contador` / `numeracion_cambiada` por clave | `numeracion_cambiada`                                                                  |
+| Ingreso, salida, sesiones, bloqueo               | —                                            | `ingreso_ok`, `ingreso_fallido`, `cuenta_bloqueada`, `cierre_sesion`, `sesion_cerrada` |
+| Contraseñas                                      | —                                            | `contrasena_cambiada`, `contrasena_restablecida`                                       |
+| Usuarios                                         | —                                            | `usuario_creado`, `usuario_desactivado`, `usuario_reactivado`, `rol_cambiado`          |
+| Términos                                         | —                                            | `terminos_aceptados`                                                                   |
+| Marca, logo, departamentos, feriados, categorías | —                                            | `config_cambiada { seccion, … }`                                                       |
+| Clientes, contactos, bolsa, tarifas              | —                                            | —                                                                                      |
 
 ## 3. Tests
 
 - Cada tarea trae sus tests; `npm test` debe quedar verde antes de terminar.
 - API con Supertest sobre `crearApp()`.
-- Nada de mocks del ORM (desde la Fase 1: Postgres real).
+- Nada de mocks del ORM (desde la Fase 1: Postgres real; `docker compose -f docker-compose.dev.yml up -d` antes de `npm test`).
+- Los tests de integración de la API usan `apps/api/test/fabricas.ts` (`crearUsuario`, `crearCliente`, …) e `ingresarComo` para obtener cookie y cabecera CSRF.
 
 ## 4. Regla de oro
 
@@ -34,6 +48,8 @@ No tomar decisiones de diseño sin ADR. Si la spec de la fase no lo cubre, deten
 - `npm run dev`
 - `npm test`
 - `npm run test -w @zydesk/api`
+- `npm run db:migrar` · `npm run db:sembrar` · `npm run db:admin -- --correo … --nombre …` · `npm run api:openapi`
+- `npm run db:reiniciar`: úsalo **antes de probar a mano** (vacía la base de desarrollo y la siembra; lee `SEMILLA_PASSWORD`)
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format`

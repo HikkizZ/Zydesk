@@ -2851,6 +2851,12 @@
                       "nombre": {
                         "type": "string"
                       },
+                      "rut": {
+                        "type": [
+                          "string",
+                          "null"
+                        ]
+                      },
                       "es_interno": {
                         "type": "boolean"
                       },
@@ -2864,6 +2870,7 @@
                     "required": [
                       "id",
                       "nombre",
+                      "rut",
                       "es_interno",
                       "activo",
                       "tiene_bolsa"

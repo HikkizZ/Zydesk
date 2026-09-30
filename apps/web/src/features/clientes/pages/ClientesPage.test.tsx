@@ -19,11 +19,19 @@ const resumen = (
   nombre: string,
   es_interno: boolean,
   extra: Partial<ClienteResumenDatos> = {},
-): ClienteResumenDatos => ({ id, nombre, es_interno, activo: true, tiene_bolsa: false, ...extra });
+): ClienteResumenDatos => ({
+  id,
+  nombre,
+  rut: null,
+  es_interno,
+  activo: true,
+  tiene_bolsa: false,
+  ...extra,
+});
 
 const ACTIVOS = [
-  resumen(1, 'Viña Santa Clara', false, { tiene_bolsa: true }),
-  resumen(2, 'Constructora Andes', false),
+  resumen(1, 'Viña Santa Clara', false, { tiene_bolsa: true, rut: '76123456-K' }),
+  resumen(2, 'Constructora Andes', false, { rut: '77888999-1' }),
   resumen(3, 'Administración', true),
 ];
 const INACTIVOS = [resumen(4, 'Transportes Austral', false, { activo: false })];
@@ -158,6 +166,21 @@ it('filtra por nombre en el cliente sin llamar a la API y muestra inactivos con 
   expect(screen.queryByText('Transportes Austral')).toBeNull();
   await usuario.click(screen.getByLabelText('Mostrar inactivos'));
   expect(await screen.findByText('Transportes Austral')).toBeTruthy();
+});
+
+it('filtra por RUT sin puntos ni guion y sin distinguir la K, sin llamar a la API', async () => {
+  const usuario = userEvent.setup();
+  pantalla();
+  await screen.findByText('Viña Santa Clara');
+  const campo = screen.getByLabelText('Buscar cliente');
+  await usuario.type(campo, '76.123.456-k');
+  expect(screen.getByText('Viña Santa Clara')).toBeTruthy();
+  expect(screen.queryByText('Constructora Andes')).toBeNull();
+  await usuario.clear(campo);
+  await usuario.type(campo, '778889991');
+  expect(screen.queryByText('Viña Santa Clara')).toBeNull();
+  expect(screen.getByText('Constructora Andes')).toBeTruthy();
+  expect(fetchSimulado).toHaveBeenCalledTimes(1);
 });
 
 it('sin clientes muestra el estado vacío con la acción para quien puede crear', async () => {

@@ -138,7 +138,7 @@ export async function listarClientes(q: ClientesQueryDatos): Promise<ClienteResu
     condiciones.push(`(c.nombre ILIKE $2 OR c.rut ILIKE $3)`);
   }
   const filas: ClienteResumenDatos[] = await dataSource.query(
-    `SELECT c.id, c.nombre, c.es_interno, c.activo,
+    `SELECT c.id, c.nombre, c.rut, c.es_interno, c.activo,
             EXISTS (SELECT 1 FROM contrato_bolsa b WHERE b.cliente_id = c.id) AS tiene_bolsa
        FROM cliente c WHERE ${condiciones.join(' AND ')} ORDER BY c.nombre, c.id`,
     valores,

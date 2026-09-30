@@ -20,6 +20,9 @@ const sinTildes = (s: string) =>
     .replace(/\p{Diacritic}/gu, '')
     .toLowerCase();
 
+// Para comparar RUT sin puntos ni guion y sin distinguir la K mayúscula o minúscula.
+const soloRut = (s: string) => s.replace(/[.\s-]/g, '').toLowerCase();
+
 function Grupo({
   titulo,
   filas,
@@ -94,7 +97,14 @@ export function ClientesPage() {
     ...(inactivos ? (inactivosConsulta.data ?? []) : []),
   ].sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
   const filtro = sinTildes(busqueda.trim());
-  const visibles = filtro ? todos.filter((c) => sinTildes(c.nombre).includes(filtro)) : todos;
+  const filtroRut = soloRut(busqueda.trim());
+  const visibles = filtro
+    ? todos.filter(
+        (c) =>
+          sinTildes(c.nombre).includes(filtro) ||
+          (filtroRut !== '' && c.rut !== null && soloRut(c.rut).includes(filtroRut)),
+      )
+    : todos;
   const externos = visibles.filter((c) => !c.es_interno);
   const internos = visibles.filter((c) => c.es_interno);
 

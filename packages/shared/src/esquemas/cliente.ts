@@ -42,6 +42,7 @@ export const ClienteEntrada = z.object({
 export const ClienteResumen = z.object({
   id,
   nombre: z.string(),
+  rut: z.string().nullable(),
   es_interno: z.boolean(),
   activo: z.boolean(),
   tiene_bolsa: z.boolean(),

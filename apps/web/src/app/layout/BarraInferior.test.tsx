@@ -114,3 +114,17 @@ it('Más se pinta activo solo cuando la ruta no es de los otros cuatro accesos',
   montar('tecnico', '/tickets');
   expect(botonMas().className).not.toContain('bg-white/10');
 });
+
+it('cualquier ruta bajo /tickets marca Tickets y no Más; /tickets/nuevo marca Nuevo', () => {
+  for (const ruta of ['/tickets', '/tickets/tabla', '/tickets/linea-de-tiempo', '/tickets/42']) {
+    const { unmount } = montar('tecnico', ruta);
+    expect(screen.getByRole('link', { name: 'Tickets' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('link', { name: 'Nuevo' }).getAttribute('aria-current')).toBeNull();
+    expect(botonMas().className).not.toContain('bg-white/10');
+    unmount();
+  }
+  montar('tecnico', '/tickets/nuevo');
+  expect(screen.getByRole('link', { name: 'Nuevo' }).getAttribute('aria-current')).toBe('page');
+  expect(screen.getByRole('link', { name: 'Tickets' }).getAttribute('aria-current')).toBeNull();
+  expect(botonMas().className).not.toContain('bg-white/10');
+});
