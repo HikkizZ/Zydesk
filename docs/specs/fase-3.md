@@ -551,6 +551,12 @@ En el navegador (1440 px y 390 px): `/ots/<OT-0218>` reproduce la pantalla del d
 8. ¿Vale la **lista mínima `/ots`** ahora (decisión 14) o prefieres esperar la pantalla 10 completa en Fase 6? No bloquea.
 9. En "Copiar al ticket", ¿se permiten **notas internas** o solo seguimientos (decisión 10)? No bloquea.
 
+### Respuestas del usuario (2026-09-30)
+
+1. Aceptado: "Cotizada" se marca a mano hasta que exista el cotizador (Fase 4).
+2–8. Aceptadas las decisiones 2, 6, 7, 5, 3, 8 y 14 tal como están en §17.
+9. Aceptada la decisión 10: "Copiar al ticket" copia seguimientos y notas internas, cada uno con su mismo tipo.
+
 ## 19. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0023 "Precisiones de la Fase 3" al cerrar)
 
 - **ADR 0004**: `OT_ABIERTA` aplica a los tres estados cerrados del ticket; `cotizada` se marca a mano hasta la Fase 4; una OT cancelada pasa a `estado_facturacion = 'no_aplica'`; `aprobar` y `aprobacion` admiten `iniciar` (aprobada → en_ejecucion en la misma transacción); `en_ejecucion` fija `inicio` si falta y `cerrada` fija `termino` si falta; el cierre con `en_espera` sobre un ticket ya en espera actualiza `espera_de` sin transición; `cancelar` exige `ots.cerrar`; `cambiar-etapa` genérico solo para etapas sin permiso especial.
