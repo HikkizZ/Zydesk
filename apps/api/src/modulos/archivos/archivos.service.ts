@@ -22,7 +22,7 @@ import { Archivo } from './archivo.entity.js';
 export type ArchivoSalidaDatos = z.infer<typeof ArchivoSalida>;
 
 export interface DestinoArchivo {
-  entidad: 'ticket';
+  entidad: 'ticket' | 'ot';
   entidad_id: number;
   mensaje_id?: number;
 }
@@ -67,23 +67,25 @@ export async function aSalidas(m: EntityManager, filas: Archivo[]): Promise<Arch
   );
 }
 
-// Archivos propios del ticket: sin los de mensajes, sin el original del correo (va en `correo.archivo`)
-// y sin los adjuntos extraídos del correo (van en `correo.adjuntos`, ver `archivosDeCorreo`).
+// Archivos propios de la entidad: sin los de mensajes. En un ticket, además sin el original del correo
+// (va en `correo.archivo`) y sin los adjuntos extraídos del correo (van en `correo.adjuntos`, ver
+// `archivosDeCorreo`); en una OT ese filtro no aplica.
 export async function archivosDe(
   m: EntityManager,
-  entidad: 'ticket',
+  entidad: 'ticket' | 'ot',
   entidad_id: number,
 ): Promise<ArchivoSalidaDatos[]> {
-  const filas = await m
+  const consulta = m
     .createQueryBuilder(Archivo, 'a')
     .where('a.entidad = :entidad AND a.entidad_id = :entidad_id', { entidad, entidad_id })
-    .andWhere('a.mensaje_id IS NULL AND a.origen_correo_id IS NULL')
-    .andWhere(
+    .andWhere('a.mensaje_id IS NULL AND a.origen_correo_id IS NULL');
+  if (entidad === 'ticket') {
+    consulta.andWhere(
       `a.id NOT IN (SELECT c.archivo_id FROM correo_adjunto c
                      WHERE c.ticket_id = :entidad_id AND c.archivo_id IS NOT NULL)`,
-    )
-    .orderBy('a.id', 'ASC')
-    .getMany();
+    );
+  }
+  const filas = await consulta.orderBy('a.id', 'ASC').getMany();
   return aSalidas(m, filas);
 }
 
@@ -314,7 +316,7 @@ export interface DescargaArchivo {
   disposicion: 'inline' | 'attachment';
 }
 
-// Pendiente → solo quien lo subió; asociado a un ticket → cualquier usuario autenticado (B10).
+// Pendiente → solo quien lo subió; asociado a un ticket o a una OT → cualquier usuario autenticado (B10).
 // Audita `descarga_archivo` solo cuando se sirve como `attachment` (spec fase-2 §4.4).
 export async function prepararDescarga(actor: UsuarioSesion, id: number): Promise<DescargaArchivo> {
   const archivo = await dataSource.manager.findOneBy(Archivo, { id });

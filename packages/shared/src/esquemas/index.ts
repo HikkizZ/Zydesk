@@ -14,4 +14,5 @@ export * from './archivo.js';
 export * from './correo.js';
 export * from './tarea.js';
 export * from './mensaje.js';
+export * from './ot.js';
 export * from './ticket.js';

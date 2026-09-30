@@ -70,6 +70,7 @@ async function aSalidas(m: EntityManager, filas: Mensaje[]): Promise<MensajeSali
     return {
       id: f.id,
       ticket_id: f.ticket_id,
+      ot_id: null, // Fase 3: los mensajes de OT los sirve el bloque 3C
       tipo: f.tipo,
       autor: autor ? usuarioBreve(autor) : null,
       texto: f.texto,
@@ -77,6 +78,8 @@ async function aSalidas(m: EntityManager, filas: Mensaje[]): Promise<MensajeSali
       archivos: archivos.get(f.id) ?? [],
       mencionados: menciones.filter((x) => x.mensaje_id === f.id).map(usuarioBreve),
       creado_en: f.creado_en.toISOString(),
+      copiado_de: null,
+      copiado_al_ticket: false,
     };
   });
 }

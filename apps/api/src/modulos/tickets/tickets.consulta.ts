@@ -236,6 +236,9 @@ function tareaSalida(t: FilaTarea): TareaSalidaDatos {
   return {
     id: t.id,
     ticket_id: t.ticket_id,
+    ot_id: null, // Fase 3: las tareas de OT las sirve el bloque 3C
+    horas_estimadas: null,
+    horas_reales: null,
     titulo: t.titulo,
     responsable:
       t.responsable_id === null

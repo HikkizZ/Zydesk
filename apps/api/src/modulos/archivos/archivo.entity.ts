@@ -6,9 +6,9 @@ export class Archivo {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number;
 
-  // NULL = pendiente (subida en dos pasos, ADR 0009); Fase 3 agrega 'ot'
+  // NULL = pendiente (subida en dos pasos, ADR 0009)
   @Column({ type: 'text', nullable: true })
-  entidad!: 'ticket' | null;
+  entidad!: 'ticket' | 'ot' | null;
 
   @Column({ type: 'integer', nullable: true })
   entidad_id!: number | null;

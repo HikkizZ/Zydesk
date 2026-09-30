@@ -15,6 +15,8 @@ import { HorarioDia } from '../modulos/departamentos/horario-dia.entity.js';
 import { RegistroHoras } from '../modulos/horas/registro-horas.entity.js';
 import { Mencion } from '../modulos/mensajes/mencion.entity.js';
 import { Mensaje } from '../modulos/mensajes/mensaje.entity.js';
+import { AprobacionCliente } from '../modulos/ots/aprobacion-cliente.entity.js';
+import { Ot } from '../modulos/ots/ot.entity.js';
 import { Tarea } from '../modulos/tareas/tarea.entity.js';
 import { CorreoAdjunto } from '../modulos/tickets/correo-adjunto.entity.js';
 import { TicketResponsable } from '../modulos/tickets/ticket-responsable.entity.js';
@@ -48,4 +50,6 @@ export const entidades = [
   Mensaje,
   Mencion,
   RegistroHoras,
+  Ot,
+  AprobacionCliente,
 ];

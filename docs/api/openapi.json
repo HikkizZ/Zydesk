@@ -12651,8 +12651,35 @@
                       }
                     ]
                   },
+                  "horas_estimadas": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 999,
+                        "multipleOf": 0.25
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
                   "hecha": {
                     "type": "boolean"
+                  },
+                  "horas_reales": {
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 999,
+                        "multipleOf": 0.25
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 }
               }
@@ -12673,9 +12700,28 @@
                       "maximum": 9007199254740991
                     },
                     "ticket_id": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "ot_id": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "titulo": {
                       "type": "string"
@@ -12728,6 +12774,18 @@
                     "hecha": {
                       "type": "boolean"
                     },
+                    "horas_estimadas": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "horas_reales": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
                     "hecha_en": {
                       "anyOf": [
                         {
@@ -12760,10 +12818,13 @@
                   "required": [
                     "id",
                     "ticket_id",
+                    "ot_id",
                     "titulo",
                     "responsable",
                     "fecha",
                     "hecha",
+                    "horas_estimadas",
+                    "horas_reales",
                     "hecha_en",
                     "orden",
                     "vencida",
@@ -13075,6 +13136,24 @@
                 "true",
                 "false"
               ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "con_ot",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -14523,9 +14602,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -14578,6 +14676,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -14610,10 +14720,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -14651,7 +14764,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -15616,9 +15808,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -15671,6 +15882,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -15703,10 +15926,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -15744,7 +15970,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -16837,9 +17142,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -16892,6 +17216,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -16924,10 +17260,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -16965,7 +17304,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -17250,9 +17668,28 @@
                                     "maximum": 9007199254740991
                                   },
                                   "ticket_id": {
-                                    "type": "integer",
-                                    "exclusiveMinimum": 0,
-                                    "maximum": 9007199254740991
+                                    "anyOf": [
+                                      {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "ot_id": {
+                                    "anyOf": [
+                                      {
+                                        "type": "integer",
+                                        "exclusiveMinimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
                                   },
                                   "tipo": {
                                     "type": "string",
@@ -17418,18 +17855,64 @@
                                     "type": "string",
                                     "format": "date-time",
                                     "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                  },
+                                  "copiado_de": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "mensaje_id": {
+                                            "type": "integer",
+                                            "exclusiveMinimum": 0,
+                                            "maximum": 9007199254740991
+                                          },
+                                          "ot": {
+                                            "type": "object",
+                                            "properties": {
+                                              "id": {
+                                                "type": "integer",
+                                                "exclusiveMinimum": 0,
+                                                "maximum": 9007199254740991
+                                              },
+                                              "codigo": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "id",
+                                              "codigo"
+                                            ],
+                                            "additionalProperties": false
+                                          }
+                                        },
+                                        "required": [
+                                          "mensaje_id",
+                                          "ot"
+                                        ],
+                                        "additionalProperties": false
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ]
+                                  },
+                                  "copiado_al_ticket": {
+                                    "type": "boolean"
                                   }
                                 },
                                 "required": [
                                   "id",
                                   "ticket_id",
+                                  "ot_id",
                                   "tipo",
                                   "autor",
                                   "texto",
                                   "horas",
                                   "archivos",
                                   "mencionados",
-                                  "creado_en"
+                                  "creado_en",
+                                  "copiado_de",
+                                  "copiado_al_ticket"
                                 ],
                                 "additionalProperties": false
                               }
@@ -18607,9 +19090,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -18662,6 +19164,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -18694,10 +19208,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -18735,7 +19252,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -19000,9 +19596,28 @@
                         "maximum": 9007199254740991
                       },
                       "ticket_id": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0,
-                        "maximum": 9007199254740991
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "ot_id": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "tipo": {
                         "type": "string",
@@ -19168,18 +19783,64 @@
                         "type": "string",
                         "format": "date-time",
                         "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                      },
+                      "copiado_de": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "mensaje_id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "ot": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo"
+                                ],
+                                "additionalProperties": false
+                              }
+                            },
+                            "required": [
+                              "mensaje_id",
+                              "ot"
+                            ],
+                            "additionalProperties": false
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "copiado_al_ticket": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
                       "id",
                       "ticket_id",
+                      "ot_id",
                       "tipo",
                       "autor",
                       "texto",
                       "horas",
                       "archivos",
                       "mencionados",
-                      "creado_en"
+                      "creado_en",
+                      "copiado_de",
+                      "copiado_al_ticket"
                     ],
                     "additionalProperties": false
                   }
@@ -19390,6 +20051,10 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "copiar_al_ticket": {
+                    "default": false,
+                    "type": "boolean"
                   }
                 },
                 "required": [
@@ -19414,9 +20079,28 @@
                       "maximum": 9007199254740991
                     },
                     "ticket_id": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "ot_id": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "tipo": {
                       "type": "string",
@@ -19582,18 +20266,64 @@
                       "type": "string",
                       "format": "date-time",
                       "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "copiado_de": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "mensaje_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "codigo": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "codigo"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "required": [
+                            "mensaje_id",
+                            "ot"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "copiado_al_ticket": {
+                      "type": "boolean"
                     }
                   },
                   "required": [
                     "id",
                     "ticket_id",
+                    "ot_id",
                     "tipo",
                     "autor",
                     "texto",
                     "horas",
                     "archivos",
                     "mencionados",
-                    "creado_en"
+                    "creado_en",
+                    "copiado_de",
+                    "copiado_al_ticket"
                   ],
                   "additionalProperties": false
                 }
@@ -20583,9 +21313,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -20638,6 +21387,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -20670,10 +21431,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -20711,7 +21475,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -21732,9 +22575,28 @@
                             "maximum": 9007199254740991
                           },
                           "ticket_id": {
-                            "type": "integer",
-                            "exclusiveMinimum": 0,
-                            "maximum": 9007199254740991
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
                           },
                           "titulo": {
                             "type": "string"
@@ -21787,6 +22649,18 @@
                           "hecha": {
                             "type": "boolean"
                           },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -21819,10 +22693,13 @@
                         "required": [
                           "id",
                           "ticket_id",
+                          "ot_id",
                           "titulo",
                           "responsable",
                           "fecha",
                           "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -21860,7 +22737,86 @@
                     "ots": {
                       "type": "array",
                       "items": {
-                        "not": {}
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en"
+                        ],
+                        "additionalProperties": false
                       }
                     }
                   },
@@ -22114,9 +23070,28 @@
                         "maximum": 9007199254740991
                       },
                       "ticket_id": {
-                        "type": "integer",
-                        "exclusiveMinimum": 0,
-                        "maximum": 9007199254740991
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "ot_id": {
+                        "anyOf": [
+                          {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "titulo": {
                         "type": "string"
@@ -22169,6 +23144,18 @@
                       "hecha": {
                         "type": "boolean"
                       },
+                      "horas_estimadas": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
+                      "horas_reales": {
+                        "type": [
+                          "number",
+                          "null"
+                        ]
+                      },
                       "hecha_en": {
                         "anyOf": [
                           {
@@ -22201,10 +23188,13 @@
                     "required": [
                       "id",
                       "ticket_id",
+                      "ot_id",
                       "titulo",
                       "responsable",
                       "fecha",
                       "hecha",
+                      "horas_estimadas",
+                      "horas_reales",
                       "hecha_en",
                       "orden",
                       "vencida",
@@ -22405,6 +23395,20 @@
                         "type": "null"
                       }
                     ]
+                  },
+                  "horas_estimadas": {
+                    "default": null,
+                    "anyOf": [
+                      {
+                        "type": "number",
+                        "minimum": 0,
+                        "maximum": 999,
+                        "multipleOf": 0.25
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
                   }
                 },
                 "required": [
@@ -22428,9 +23432,28 @@
                       "maximum": 9007199254740991
                     },
                     "ticket_id": {
-                      "type": "integer",
-                      "exclusiveMinimum": 0,
-                      "maximum": 9007199254740991
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "ot_id": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "titulo": {
                       "type": "string"
@@ -22483,6 +23506,18 @@
                     "hecha": {
                       "type": "boolean"
                     },
+                    "horas_estimadas": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
+                    "horas_reales": {
+                      "type": [
+                        "number",
+                        "null"
+                      ]
+                    },
                     "hecha_en": {
                       "anyOf": [
                         {
@@ -22515,10 +23550,13 @@
                   "required": [
                     "id",
                     "ticket_id",
+                    "ot_id",
                     "titulo",
                     "responsable",
                     "fecha",
                     "hecha",
+                    "horas_estimadas",
+                    "horas_reales",
                     "hecha_en",
                     "orden",
                     "vencida",
@@ -22791,6 +23829,24 @@
                 "true",
                 "false"
               ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "con_ot",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "type": "string"
             }
           }
         ],

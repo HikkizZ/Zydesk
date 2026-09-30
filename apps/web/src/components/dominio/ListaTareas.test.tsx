@@ -17,6 +17,9 @@ const tarea = (
 ): TareaDatos => ({
   id,
   ticket_id: 7,
+  ot_id: null,
+  horas_estimadas: null,
+  horas_reales: null,
   titulo,
   responsable: null,
   fecha: null,
