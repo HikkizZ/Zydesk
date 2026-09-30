@@ -1,4 +1,4 @@
-import type { Permiso } from '@zydesk/shared';
+import { tienePermiso, type Permiso, type Rol } from '@zydesk/shared';
 import {
   BarChart3,
   Bell,
@@ -51,3 +51,6 @@ export const MENU: EntradaMenu[] = [
   },
   { etiqueta: 'Perfil', ruta: '/perfil', icono: User },
 ];
+
+// Una entrada se muestra si no exige permiso o si el rol lo tiene (la usan el menú lateral y el panel móvil).
+export const visible = (rol: Rol, e: EntradaMenu) => !e.permiso || tienePermiso(rol, e.permiso);

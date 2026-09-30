@@ -1,6 +1,6 @@
 # ADR 0011 — Frontend: sistema de diseño, accesibilidad, responsive y estado
 
-**Estado**: aceptada · 2026-09-29
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0019 (navegación móvil)
 
 ## Contexto
 

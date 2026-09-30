@@ -1,9 +1,9 @@
-import { ETIQUETA_ROL, tienePermiso } from '@zydesk/shared';
+import { ETIQUETA_ROL } from '@zydesk/shared';
 import { NavLink } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { useYo } from '@/features/auth/SesionProvider';
 import { cn } from '@/lib/utils';
-import { MENU, type EntradaMenu } from './menu';
+import { MENU, visible, type EntradaMenu } from './menu';
 
 const GRUPOS = ['Tickets', 'Trabajo', 'Administración'] as const;
 
@@ -31,7 +31,7 @@ const principales = MENU.filter(
 export function MenuLateral() {
   const yo = useYo();
   const NuevoIcono = nuevo.icono;
-  const visible = (e: EntradaMenu) => !e.permiso || tienePermiso(yo.rol, e.permiso);
+  const esVisible = (e: EntradaMenu) => visible(yo.rol, e);
   return (
     <nav
       aria-label="Principal"
@@ -49,13 +49,13 @@ export function MenuLateral() {
         <NuevoIcono size={18} strokeWidth={1.5} aria-hidden="true" />
         {nuevo.etiqueta}
       </NavLink>
-      {principales.filter(visible).map((e) => (
+      {principales.filter(esVisible).map((e) => (
         <Item key={e.ruta} entrada={e} />
       ))}
       {GRUPOS.map((grupo) => (
         <div key={grupo} className="mt-4 flex flex-col gap-1">
           <div className="px-3 pb-1 text-xs uppercase tracking-wide text-fondo/50">{grupo}</div>
-          {MENU.filter((e) => e.grupo === grupo && visible(e)).map((e) => (
+          {MENU.filter((e) => e.grupo === grupo && esVisible(e)).map((e) => (
             <Item key={e.ruta} entrada={e} />
           ))}
         </div>
