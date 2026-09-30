@@ -20,7 +20,6 @@ export function crearLogHttp(logger: Logger) {
           ? `${r.baseUrl}${r.route.path === '/' ? '' : r.route.path}`
           : r.originalUrl.split('?')[0],
         status: res.statusCode,
-        ip: r.ip,
       };
     },
     customLogLevel: (_req, res, err) =>

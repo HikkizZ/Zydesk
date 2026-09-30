@@ -1,9 +1,12 @@
 import argon2 from 'argon2';
+import type { Express } from 'express';
+import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
 import { Cliente } from '../src/modulos/clientes/cliente.entity.js';
 import { Departamento } from '../src/modulos/departamentos/departamento.entity.js';
 import { HorarioDia } from '../src/modulos/departamentos/horario-dia.entity.js';
+import { versionTerminosVigente } from '../src/modulos/legal/legal.service.js';
 import { Usuario } from '../src/modulos/usuarios/usuario.entity.js';
 
 export const CONTRASENA_PRUEBA = 'Contrasena.Prueba.1';
@@ -39,6 +42,8 @@ export async function crearUsuario(
   } = {},
 ): Promise<Usuario> {
   const n = siguiente();
+  const terminos_version =
+    datos.terminos_version === undefined ? versionTerminosVigente() : datos.terminos_version;
   return dataSource.manager.save(Usuario, {
     nombre: datos.nombre ?? `Usuario ${n}`,
     correo: datos.correo ?? `usuario${n}@zydesk.test`,
@@ -48,8 +53,9 @@ export async function crearUsuario(
     activo: datos.activo ?? true,
     color_avatar: '#CFDDF3',
     debe_cambiar_contrasena: datos.debe_cambiar_contrasena ?? false,
-    terminos_version: datos.terminos_version ?? null,
-    terminos_aceptados_en: datos.terminos_version ? new Date() : null,
+    // por defecto ya aceptó la versión vigente (para no frenar los tests con TERMINOS_PENDIENTES)
+    terminos_version,
+    terminos_aceptados_en: terminos_version ? new Date() : null,
   });
 }
 
@@ -105,4 +111,20 @@ export async function crearCategoria(
   });
 }
 
-// `ingresarComo(app, usuario)` lo agrega el bloque 1B (depende de core/auth).
+// Ingresa por la API y devuelve la cookie, la cabecera CSRF y un agente de Supertest que ya las envía.
+export async function ingresarComo(
+  app: Express,
+  usuario: Pick<Usuario, 'correo'>,
+  contrasena: string = CONTRASENA_PRUEBA,
+  mantener = false,
+): Promise<{ cookie: string; csrf: string; agente: ReturnType<typeof request.agent> }> {
+  const agente = request.agent(app).set('X-Requested-With', 'Zydesk');
+  const res = await agente
+    .post('/api/auth/ingresar')
+    .send({ correo: usuario.correo, contrasena, mantener });
+  if (res.status !== 200) throw new Error(`ingresarComo falló: ${res.status} ${res.text}`);
+  const cookie = (res.headers['set-cookie'] as unknown as string[])
+    .map((c) => c.split(';')[0])
+    .join('; ');
+  return { cookie, csrf: 'Zydesk', agente };
+}

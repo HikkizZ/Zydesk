@@ -39,6 +39,34 @@ programa
     });
   });
 
+programa
+  .command('admin')
+  .description('Crea el primer usuario Administración (lee ADMIN_PASSWORD)')
+  .requiredOption('--correo <correo>', 'correo del administrador')
+  .requiredOption('--nombre <nombre>', 'nombre del administrador')
+  .action(async (opciones: { correo: string; nombre: string }) => {
+    const { crearAdmin, conDataSource, ErrorCli } = await import('./admin.js');
+    const { env } = await import('../config/env.js');
+    try {
+      const id = await conDataSource(() =>
+        crearAdmin({ ...opciones, contrasena: env.ADMIN_PASSWORD }),
+      );
+      logger.info({ usuario_id: id }, 'administrador creado');
+    } catch (err) {
+      if (!(err instanceof ErrorCli)) throw err;
+      logger.error(err.message);
+      process.exit(1);
+    }
+  });
+
+programa
+  .command('openapi')
+  .description('Escribe docs/api/openapi.json (construye la app sin conectar a la BD)')
+  .action(async () => {
+    const { escribirOpenApi } = await import('./openapi.js');
+    logger.info({ archivo: await escribirOpenApi() }, 'openapi.json generado');
+  });
+
 try {
   await programa.parseAsync(process.argv);
   process.exit(0);

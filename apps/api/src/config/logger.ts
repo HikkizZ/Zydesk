@@ -11,6 +11,11 @@ export const CLAVES_REDACTADAS = [
   'authorization',
   'token',
   'codigo',
+  'contrasena_temporal',
+  'contrasena_hash',
+  'token_hash',
+  'nueva',
+  'actual',
 ];
 
 // pino: claves con guion van como ["clave"]; sin guion como .clave

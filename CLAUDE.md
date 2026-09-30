@@ -10,6 +10,8 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 - `snake_case` en JSON, BD y en los campos de datos que los cruzan (propiedades de entidades TypeORM, esquemas Zod, DTOs); `camelCase` en variables, funciones, métodos y tipos de TypeScript.
 - TypeScript estricto, ESM, imports relativos con extensión `.js` en `api` y `shared`; sin `any`.
 - Entidades TypeORM siempre con `type` explícito en `@Column` (tsx no emite metadatos de decoradores).
+- API por módulo (`apps/api/src/modulos/<módulo>/`): el handler de `ruta()` solo delega al servicio y resuelve lo puramente HTTP (cookies, cabeceras, `res.status`); la lógica de negocio va en `*.service.ts`.
+- Un módulo escribe en las tablas de otro solo a través del servicio de ese módulo, pasándole el `tx` (`EntityManager`) de la transacción en curso (ADR 0003): un servicio puede orquestar un único `enTransaccion` que toque varios módulos (cierre de OT → ticket, conversión ticket → OT). Leer entidades de otro módulo (joins, `findOneBy`) sí está permitido. Sin dependencias circulares entre módulos, salvo `tickets` ↔ `ots`, que la ADR 0003 exige y se limita a importar funciones entre sus `*.service.ts`.
 
 ## 3. Tests
 

@@ -6,6 +6,7 @@ import { env } from './config/env.js';
 import { logger } from './config/logger.js';
 import { crearBoss, iniciarJobs } from './core/jobs/boss.js';
 import { sembrarBase } from './database/semillas/base.js';
+import { cargarLegal } from './modulos/legal/legal.service.js';
 
 process.on('unhandledRejection', (err) => {
   logger.fatal({ err }, 'promesa rechazada sin manejar');
@@ -15,6 +16,14 @@ process.on('uncaughtException', (err) => {
   logger.fatal({ err }, 'excepción sin capturar');
   process.exit(1);
 });
+
+// Términos y privacidad: se leen una vez al arrancar; sin ellos la API no inicia (spec §5.8).
+try {
+  cargarLegal();
+} catch (err) {
+  logger.error({ err }, 'no se pudieron leer los documentos legales (docs/legal)');
+  process.exit(1);
+}
 
 try {
   await dataSource.initialize();

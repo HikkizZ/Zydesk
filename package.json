@@ -22,7 +22,9 @@
     "format:check": "prettier --check .",
     "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist",
     "db:migrar": "npm run db:migrar -w @zydesk/api",
-    "db:revertir": "npm run db:revertir -w @zydesk/api"
+    "db:revertir": "npm run db:revertir -w @zydesk/api",
+    "db:admin": "npm run db:admin -w @zydesk/api --",
+    "api:openapi": "npm run openapi -w @zydesk/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.4",

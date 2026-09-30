@@ -1,7 +1,7 @@
 import { createDocument } from 'zod-openapi';
 import { z, type ZodObject, type ZodType } from 'zod';
-import { env } from '../../config/env.js';
 import { VERSION } from '../../config/version.js';
+import { NOMBRE_COOKIE } from '../auth/cookie.js';
 
 export interface RutaRegistrada {
   metodo: 'get' | 'post' | 'put' | 'patch' | 'delete';
@@ -39,9 +39,6 @@ const esquemaError = z.object({
   }),
 });
 
-// Nombre de la cookie de sesión (ADR 0018 §2). El bloque 1B puede reapuntarlo a core/auth/cookie.ts.
-const NOMBRE_COOKIE = env.NODE_ENV === 'production' ? '__Host-sesion' : 'sesion';
-
 function aPathOpenApi(path: string): string {
   return path.replace(/^\/api(?=\/)/, '').replace(/:(\w+)/g, '{$1}');
 }
@@ -59,9 +56,9 @@ export type DocumentoOpenApi = ReturnType<typeof createDocument>;
 
 export function generarDocumento(): DocumentoOpenApi {
   const paths: Record<string, Record<string, unknown>> = {};
-  const ordenadas = metadatosRutas().sort((a, b) =>
-    `${a.path} ${a.metodo}`.localeCompare(`${b.path} ${b.metodo}`),
-  );
+  // comparación por punto de código: el orden no depende del locale de la máquina
+  const clave = (r: RutaRegistrada) => `${r.path} ${r.metodo}`;
+  const ordenadas = metadatosRutas().sort((a, b) => (clave(a) < clave(b) ? -1 : 1));
   for (const r of ordenadas) {
     const publico = r.permiso === 'publico';
     const permisoTexto = Array.isArray(r.permiso) ? r.permiso.join(' o ') : r.permiso;

@@ -6,7 +6,7 @@ import { crearApp } from '../../app.js';
 import { manejadorErrores } from '../errores/manejador.js';
 import { esquemaPaginacion, paginar } from './paginacion.js';
 import { generarDocumento, rutasRegistradas } from './openapi.js';
-import { ruta } from './ruta.js';
+import { ruta, seguridad } from './ruta.js';
 
 function appDePrueba() {
   const router = Router();
@@ -36,37 +36,55 @@ function appDePrueba() {
 
 describe('ruta() y validar', () => {
   it('body inválido → 400 VALIDACION con el detalle por campo', async () => {
-    const res = await request(appDePrueba()).post('/api/prueba/3').send({ nombre: 'a' });
+    const res = await request(appDePrueba())
+      .post('/api/prueba/3')
+      .set('X-Requested-With', 'Zydesk')
+      .send({ nombre: 'a' });
     expect(res.status).toBe(400);
     expect(res.body.error.codigo).toBe('VALIDACION');
     expect(res.body.error.detalles.nombre).toHaveLength(1);
   });
 
   it('params inválidos → 400', async () => {
-    const res = await request(appDePrueba()).post('/api/prueba/x').send({ nombre: 'ab' });
+    const res = await request(appDePrueba())
+      .post('/api/prueba/x')
+      .set('X-Requested-With', 'Zydesk')
+      .send({ nombre: 'ab' });
     expect(res.status).toBe(400);
     expect(res.body.error.detalles.id).toBeDefined();
   });
 
   it('datos válidos → status de la definición y datos parseados con valores por defecto', async () => {
-    const res = await request(appDePrueba()).post('/api/prueba/3?pagina=2').send({ nombre: 'ab' });
+    const res = await request(appDePrueba())
+      .post('/api/prueba/3?pagina=2')
+      .set('X-Requested-With', 'Zydesk')
+      .send({ nombre: 'ab' });
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ id: 3, nombre: 'ab', pagina: 2 });
-    const sinPagina = await request(appDePrueba()).post('/api/prueba/3').send({ nombre: 'ab' });
+    const sinPagina = await request(appDePrueba())
+      .post('/api/prueba/3')
+      .set('X-Requested-With', 'Zydesk')
+      .send({ nombre: 'ab' });
     expect(sinPagina.body.pagina).toBe(1);
   });
 
   it('una ruta protegida sin `requiere` configurado no se registra', () => {
-    expect(() =>
-      ruta(Router(), {
-        metodo: 'get',
-        path: '/api/cerrada',
-        resumen: 'x',
-        etiqueta: 'x',
-        respuesta: z.object({}),
-        handler: async () => ({}),
-      }),
-    ).toThrow(/requiere/);
+    const { requiere } = seguridad; // lo conecta core/auth/seguridad.ts al importar la app
+    delete seguridad.requiere;
+    try {
+      expect(() =>
+        ruta(Router(), {
+          metodo: 'get',
+          path: '/api/cerrada',
+          resumen: 'x',
+          etiqueta: 'x',
+          respuesta: z.object({}),
+          handler: async () => ({}),
+        }),
+      ).toThrow(/requiere/);
+    } finally {
+      if (requiere) seguridad.requiere = requiere;
+    }
   });
 });
 

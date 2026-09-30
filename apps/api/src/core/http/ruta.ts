@@ -1,20 +1,11 @@
 import type { NextFunction, Request, RequestHandler, Response, Router } from 'express';
 import type { ZodType } from 'zod';
 import { env } from '../../config/env.js';
+import type { PermisoRuta, UsuarioSesion } from '../auth/tipos.js';
 import { registrarRuta } from './openapi.js';
 import { validar, type DatosValidados } from './validar.js';
 
-// Placeholder del actor autenticado: el bloque 1B (core/auth) lo reemplaza por su tipo real.
-export interface UsuarioSesion {
-  id: number;
-  nombre: string;
-  correo: string;
-  rol: string;
-  permisos: readonly string[];
-  [campo: string]: unknown;
-}
-
-export type PermisoRuta = string | 'sesion' | 'publico';
+export type { PermisoRuta, UsuarioSesion };
 
 export interface DefRuta<P, Q, B, R> {
   metodo: 'get' | 'post' | 'put' | 'patch' | 'delete';
