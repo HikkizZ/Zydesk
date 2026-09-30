@@ -63,6 +63,7 @@ describe('clientes', () => {
         es_interno: false,
         activo: true,
         tiene_bolsa: false,
+        tickets_abiertos: 0,
       },
     ]);
   });

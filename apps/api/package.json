@@ -14,6 +14,7 @@
     "db:admin": "cross-env TZ=UTC tsx src/database/cli.ts admin",
     "db:sembrar": "cross-env TZ=UTC tsx src/database/cli.ts sembrar",
     "db:reiniciar": "cross-env TZ=UTC tsx src/database/cli.ts reiniciar",
+    "db:test:crear": "cross-env TZ=UTC tsx src/database/cli.ts bd-test crear",
     "openapi": "cross-env TZ=UTC tsx src/database/cli.ts openapi"
   },
   "dependencies": {

@@ -1,0 +1,30 @@
+From: Paula Herrera <pherrera@ejemplo.test>
+To: Soporte Zydesk <soporte@zydesk.test>
+Date: Tue, 29 Sep 2026 16:45:00 -0300
+Subject: Error al emitir facturas desde el ERP
+Message-ID: <fixture-1@ejemplo.test>
+MIME-Version: 1.0
+Content-Type: multipart/mixed; boundary="===============8492356807054552946=="
+
+--===============8492356807054552946==
+Content-Type: text/plain; charset="utf-8"
+Content-Transfer-Encoding: 8bit
+
+Hola equipo,
+
+Desde esta mañana el ERP muestra un error al emitir facturas electrónicas.
+Adjunto una captura de pantalla.
+
+Saludos,
+Paula Herrera
+
+--===============8492356807054552946==
+Content-Type: image/png
+Content-Transfer-Encoding: base64
+Content-Disposition: attachment; filename="captura.png"
+MIME-Version: 1.0
+
+iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGM4IScHAAK2AQU0pnWq
+AAAAAElFTkSuQmCC
+
+--===============8492356807054552946==--

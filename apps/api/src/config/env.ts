@@ -1,8 +1,11 @@
 import { config } from 'dotenv';
+import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
 
-config({ path: fileURLToPath(new URL('../../../../.env', import.meta.url)), quiet: true });
+const raizRepo = fileURLToPath(new URL('../../../../', import.meta.url));
+
+config({ path: path.join(raizRepo, '.env'), quiet: true });
 
 const vacioAUndefined = (v: unknown) => (v === '' ? undefined : v);
 
@@ -14,6 +17,23 @@ const esquema = z
     DATABASE_URL_OWNER: z.preprocess(vacioAUndefined, z.string().url().optional()),
     TEST_DATABASE_URL: z.preprocess(vacioAUndefined, z.string().url().optional()),
     TEST_DATABASE_URL_OWNER: z.preprocess(vacioAUndefined, z.string().url().optional()),
+    // Solo tests de la API: base de test por bloque `zydesk_test_<sufijo>` (spec fase-2 §1.1)
+    TEST_BD_SUFIJO: z.preprocess(
+      vacioAUndefined,
+      z
+        .string()
+        .regex(/^[a-z0-9_]{1,20}$/)
+        .optional(),
+    ),
+    // Superusuario de desarrollo: solo lo usa `db:test:crear`
+    POSTGRES_USER: z.preprocess(vacioAUndefined, z.string().optional()),
+    POSTGRES_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
+    POSTGRES_PORT: z.preprocess(vacioAUndefined, z.string().optional()),
+    // Archivos en disco (ADR 0009): relativa a la raíz del repo o absoluta
+    ARCHIVOS_DIR: z
+      .preprocess(vacioAUndefined, z.string().default('./datos/archivos'))
+      .transform((v) => path.resolve(raizRepo, v)),
+    TEST_ARCHIVOS_DIR: z.preprocess(vacioAUndefined, z.string().optional()),
     PROXY_SALTOS: z.preprocess(vacioAUndefined, z.coerce.number().int().min(0).default(0)),
     EJECUTAR_JOBS: z
       .preprocess(vacioAUndefined, z.enum(['true', 'false']).default('true'))
@@ -33,6 +53,20 @@ const esquema = z
         message: 'obligatoria con NODE_ENV=test',
       });
     }
+  })
+  .transform((v) => {
+    if (v.NODE_ENV !== 'test' || !v.TEST_BD_SUFIJO) return v;
+    const conBase = (url: string | undefined) => {
+      if (!url) return url;
+      const u = new URL(url);
+      u.pathname = `/zydesk_test_${v.TEST_BD_SUFIJO}`;
+      return u.toString();
+    };
+    return {
+      ...v,
+      TEST_DATABASE_URL: conBase(v.TEST_DATABASE_URL),
+      TEST_DATABASE_URL_OWNER: conBase(v.TEST_DATABASE_URL_OWNER),
+    };
   });
 
 export type Env = z.infer<typeof esquema>;

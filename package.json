@@ -26,6 +26,7 @@
     "db:admin": "npm run db:admin -w @zydesk/api --",
     "db:sembrar": "npm run db:sembrar -w @zydesk/api",
     "db:reiniciar": "npm run db:reiniciar -w @zydesk/api",
+    "db:test:crear": "npm run db:test:crear -w @zydesk/api --",
     "api:openapi": "npm run openapi -w @zydesk/api"
   },
   "devDependencies": {

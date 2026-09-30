@@ -46,6 +46,7 @@ export const ClienteResumen = z.object({
   es_interno: z.boolean(),
   activo: z.boolean(),
   tiene_bolsa: z.boolean(),
+  tickets_abiertos: z.number(),
 });
 
 export const ContactoEntrada = z.object({

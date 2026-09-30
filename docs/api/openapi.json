@@ -2865,6 +2865,9 @@
                       },
                       "tiene_bolsa": {
                         "type": "boolean"
+                      },
+                      "tickets_abiertos": {
+                        "type": "number"
                       }
                     },
                     "required": [
@@ -2873,7 +2876,8 @@
                       "rut",
                       "es_interno",
                       "activo",
-                      "tiene_bolsa"
+                      "tiene_bolsa",
+                      "tickets_abiertos"
                     ],
                     "additionalProperties": false
                   }
