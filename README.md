@@ -18,7 +18,7 @@ Monorepo con API (Express), web (React + Vite) y un paquete compartido de tipos 
 4. Levantar Postgres: `docker compose -f docker-compose.dev.yml up -d`.
    Si ya existía un volumen de una versión anterior a la Fase 1, o si cambian los roles o las bases en `docker/postgres-init/`, hay que recrearlo (**borra los datos de desarrollo**): `docker compose -f docker-compose.dev.yml down -v` y luego `up -d`.
 5. Aplicar las migraciones: `npm run db:migrar`.
-6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
+6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 16 tickets de ejemplo, TK-1012 a TK-1051; `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
    Para una instalación real, en vez de sembrar, crear la primera cuenta: `npm run db:admin -- --correo admin@ejemplo.cl --nombre "Nombre Apellido"`.
 7. Arrancar shared (watch), API y web: `npm run dev`.
 8. Abrir <http://localhost:5173>.
@@ -39,28 +39,35 @@ Todas las cuentas de ejemplo usan el correo `<usuario>@zydesk.local` y la contra
 
 Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el script de inicio de Docker; se conecta con `TEST_DATABASE_URL` y `TEST_DATABASE_URL_OWNER`). Con Postgres levantado, `npm test` aplica las migraciones y vacía la base entre tests; no toca la base de desarrollo.
 
+Para correr los tests sin pisar otra ejecución en paralelo, crea una base propia con `npm run db:test:crear -- <sufijo>` (por ejemplo `2h`) y usa `TEST_BD_SUFIJO=<sufijo>` al correr `npm run test -w @zydesk/api` (con `npx cross-env` en Windows).
+
+## Archivos de tickets
+
+Las fotos, documentos y correos de los tickets se guardan en disco en `ARCHIVOS_DIR` (por defecto `./datos/archivos`, carpeta ignorada por git). Respáldala junto con la base de datos. Más detalles en la sección 12 del [manual de administración](docs/manuales/administracion.md).
+
 ## Integración continua
 
 El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `build` y `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
 
 ## Scripts de la raíz
 
-| Script                 | Qué hace                                                                                        |
-| ---------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`          | Compila `shared` y levanta shared (watch), API y web                                            |
-| `npm run build`        | Compila los tres paquetes                                                                       |
-| `npm test`             | Corre los tests de los tres paquetes                                                            |
-| `npm run typecheck`    | Compila `shared` y revisa tipos en los tres paquetes                                            |
-| `npm run lint`         | ESLint                                                                                          |
-| `npm run format`       | Prettier (escribe)                                                                              |
-| `npm run format:check` | Prettier (solo revisa)                                                                          |
-| `npm run clean`        | Borra los `dist/` de los tres paquetes                                                          |
-| `npm run db:migrar`    | Aplica las migraciones pendientes (como `zydesk_owner`)                                         |
-| `npm run db:revertir`  | Revierte la última migración (`-- --todo` las revierte todas)                                   |
-| `npm run db:admin`     | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`) |
-| `npm run db:sembrar`   | Carga datos de ejemplo (lee `SEMILLA_PASSWORD`)                                                 |
-| `npm run db:reiniciar` | Vacía la base de desarrollo y la vuelve a sembrar                                               |
-| `npm run api:openapi`  | Regenera `docs/api/openapi.json`                                                                |
+| Script                  | Qué hace                                                                                        |
+| ----------------------- | ----------------------------------------------------------------------------------------------- |
+| `npm run dev`           | Compila `shared` y levanta shared (watch), API y web                                            |
+| `npm run build`         | Compila los tres paquetes                                                                       |
+| `npm test`              | Corre los tests de los tres paquetes                                                            |
+| `npm run typecheck`     | Compila `shared` y revisa tipos en los tres paquetes                                            |
+| `npm run lint`          | ESLint                                                                                          |
+| `npm run format`        | Prettier (escribe)                                                                              |
+| `npm run format:check`  | Prettier (solo revisa)                                                                          |
+| `npm run clean`         | Borra los `dist/` de los tres paquetes                                                          |
+| `npm run db:migrar`     | Aplica las migraciones pendientes (como `zydesk_owner`)                                         |
+| `npm run db:revertir`   | Revierte la última migración (`-- --todo` las revierte todas)                                   |
+| `npm run db:admin`      | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`) |
+| `npm run db:sembrar`    | Carga datos de ejemplo (lee `SEMILLA_PASSWORD`)                                                 |
+| `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar                                               |
+| `npm run db:test:crear` | Crea una base de test propia (`-- <sufijo>`); usarla con `TEST_BD_SUFIJO=<sufijo>`              |
+| `npm run api:openapi`   | Regenera `docs/api/openapi.json`                                                                |
 
 ## Estructura
 
@@ -78,6 +85,7 @@ docs            Plan, decisiones (ADR), especificaciones por fase, manuales y AP
 - [Especificaciones por fase](docs/specs/)
 - [Manual de administración](docs/manuales/administracion.md)
 - [Manual de usuario: primeros pasos](docs/manuales/usuario/00-primeros-pasos.md)
+- [Manual de tickets para el equipo](docs/manuales/usuario/01-tecnico.md)
 - [Guía de la API](docs/api/README.md)
 - [Documentos legales (borradores)](docs/legal/README.md)
 - [Cambios por versión](docs/CHANGELOG.md)

@@ -46,3 +46,7 @@ La aplicación no envía correos, así que no hay un enlace de recuperación. **
 ## En el celular
 
 En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol) y **Cerrar sesión**.
+
+## Trabajar con tickets
+
+Crear tickets (también desde un correo), registrar seguimientos y notas, tareas, horas, estados, Tablero y Tabla están explicados en el [manual de tickets para el equipo](01-tecnico.md).

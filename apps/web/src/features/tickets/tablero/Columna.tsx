@@ -19,7 +19,7 @@ export function Columna({
   return (
     <section
       aria-labelledby={`columna-${clave}`}
-      className="flex min-w-[280px] flex-1 snap-start flex-col gap-3 rounded-lg border border-borde bg-superficie-suave p-3"
+      className="flex min-w-[260px] flex-1 snap-start flex-col gap-3 rounded-lg border border-borde bg-superficie-suave p-3"
     >
       <header>
         <h2 id={`columna-${clave}`} className="flex items-center gap-2 font-semibold">

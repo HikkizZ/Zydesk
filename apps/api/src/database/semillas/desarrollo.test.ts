@@ -3,6 +3,9 @@ import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
+import { enTransaccion } from '../../core/historial/transaccion.js';
+import { fuenteNumeros } from '../../core/numeracion/fuente.js';
+import { siguienteNumero } from '../../core/numeracion/numeracion.js';
 import { ErrorSemilla, sembrarDesarrollo } from './desarrollo.js';
 
 const CLAVE = 'Semilla.Dev.2026';
@@ -63,5 +66,26 @@ describe('sembrarDesarrollo', () => {
   it('rechaza una contraseña ausente o que incumple la política', async () => {
     await expect(sembrarDesarrollo(undefined)).rejects.toThrow(ErrorSemilla);
     await expect(sembrarDesarrollo('corta')).rejects.toThrow('SEMILLA_PASSWORD');
+  });
+
+  it('siembra 16 tickets (1 archivado), TK-1048 completo y deja el contador listo para TK-1052', async () => {
+    await sembrarDesarrollo(CLAVE);
+    await sembrarDesarrollo(CLAVE);
+    expect(await contar('ticket')).toBe(16);
+    expect(await contar('ticket', 'archivado_en IS NOT NULL')).toBe(1);
+    expect(await contar('ticket', "estado IN ('resuelto','descartado','duplicado')")).toBe(5);
+    expect(await contar('correo_adjunto')).toBe(7);
+    const [t] = await dataSource.query(`SELECT id FROM ticket WHERE codigo = 'TK-1048'`);
+    expect(await contar('tarea', `ticket_id = ${t.id}`)).toBe(5);
+    expect(await contar('tarea', `ticket_id = ${t.id} AND hecha`)).toBe(2);
+    expect(await contar('mensaje', `ticket_id = ${t.id}`)).toBe(4);
+    expect(await contar('mensaje', `ticket_id = ${t.id} AND tipo = 'nota_interna'`)).toBe(2);
+    expect(await contar('mencion')).toBe(1);
+    expect(await contar('registro_horas', `ticket_id = ${t.id}`)).toBe(2);
+    expect(await contar('evento', `entidad = 'ticket' AND entidad_id = '${t.id}'`)).toBe(5);
+    const [{ valor }] = await dataSource.query(`SELECT valor FROM contador WHERE clave = 'ticket'`);
+    expect(valor).toBeGreaterThanOrEqual(1051);
+    const siguiente = await enTransaccion((tx) => siguienteNumero(tx, 'ticket', fuenteNumeros));
+    expect(siguiente.codigo).toBe('TK-1052');
   });
 });
