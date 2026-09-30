@@ -12,6 +12,8 @@
     "db:migrar": "cross-env TZ=UTC tsx src/database/cli.ts migrar",
     "db:revertir": "cross-env TZ=UTC tsx src/database/cli.ts revertir",
     "db:admin": "cross-env TZ=UTC tsx src/database/cli.ts admin",
+    "db:sembrar": "cross-env TZ=UTC tsx src/database/cli.ts sembrar",
+    "db:reiniciar": "cross-env TZ=UTC tsx src/database/cli.ts reiniciar",
     "openapi": "cross-env TZ=UTC tsx src/database/cli.ts openapi"
   },
   "dependencies": {

@@ -24,6 +24,8 @@
     "db:migrar": "npm run db:migrar -w @zydesk/api",
     "db:revertir": "npm run db:revertir -w @zydesk/api",
     "db:admin": "npm run db:admin -w @zydesk/api --",
+    "db:sembrar": "npm run db:sembrar -w @zydesk/api",
+    "db:reiniciar": "npm run db:reiniciar -w @zydesk/api",
     "api:openapi": "npm run openapi -w @zydesk/api"
   },
   "devDependencies": {

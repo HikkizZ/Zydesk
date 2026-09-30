@@ -15,6 +15,10 @@ export default defineConfig(({ mode }) => {
       port: Number(env.WEB_PUERTO ?? 5173),
       proxy: { '/api': `http://localhost:${env.API_PUERTO ?? 3010}` },
     },
-    test: { environment: 'jsdom', include: ['src/**/*.test.tsx', 'src/**/*.test.ts'] },
+    test: {
+      environment: 'jsdom',
+      include: ['src/**/*.test.tsx', 'src/**/*.test.ts'],
+      setupFiles: ['src/test/setup.ts'],
+    },
   };
 });

@@ -41,11 +41,57 @@
   --radius-lg: 12px;
 }
 
+/* Variables de shadcn/ui mapeadas a los tokens de Zydesk (ADR 0011). Sin modo oscuro. */
+:root {
+  --background: var(--color-fondo);
+  --foreground: var(--color-tinta);
+  --card: var(--color-superficie);
+  --card-foreground: var(--color-tinta);
+  --popover: var(--color-superficie);
+  --popover-foreground: var(--color-tinta);
+  --primary: var(--color-acento);
+  --primary-foreground: #fff;
+  --secondary: var(--color-superficie-suave);
+  --secondary-foreground: var(--color-tinta);
+  --muted: var(--color-superficie-suave);
+  --muted-foreground: var(--color-tinta-2);
+  --accent: var(--color-superficie-suave);
+  --accent-foreground: var(--color-tinta);
+  --destructive: var(--color-urgente);
+  --border: var(--color-borde);
+  --input: var(--color-borde-campo);
+  --ring: var(--color-acento);
+  --radius: var(--radius-md);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+}
+
 @layer base {
   html {
     font-family: var(--font-texto);
     background: var(--color-fondo);
     color: var(--color-tinta);
+  }
+  * {
+    border-color: var(--color-borde);
   }
   h1,
   h2,

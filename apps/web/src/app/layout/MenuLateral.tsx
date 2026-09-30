@@ -1,5 +1,7 @@
+import { ETIQUETA_ROL, tienePermiso } from '@zydesk/shared';
 import { NavLink } from 'react-router';
-import { Avatar } from '@/components/Avatar';
+import { Avatar } from '@/components/dominio/Avatar';
+import { useYo } from '@/features/auth/SesionProvider';
 import { cn } from '@/lib/utils';
 import { MENU, type EntradaMenu } from './menu';
 
@@ -27,13 +29,18 @@ const principales = MENU.filter(
 );
 
 export function MenuLateral() {
+  const yo = useYo();
   const NuevoIcono = nuevo.icono;
+  const visible = (e: EntradaMenu) => !e.permiso || tienePermiso(yo.rol, e.permiso);
   return (
     <nav
       aria-label="Principal"
       className="hidden bg-tinta text-fondo/80 lg:sticky lg:top-0 lg:flex lg:h-dvh lg:flex-col lg:gap-1 lg:overflow-y-auto lg:p-4"
     >
-      <div className="px-3 pb-4 pt-2 font-titulo text-xl font-bold text-fondo">Zydesk</div>
+      <div className="flex items-center gap-2 px-3 pb-4 pt-2 font-titulo text-xl font-bold text-fondo">
+        {yo.logo_url ? <img src={yo.logo_url} alt="" className="h-6 w-auto" /> : null}
+        {yo.nombre_app}
+      </div>
       <NavLink
         to={nuevo.ruta}
         end
@@ -42,20 +49,23 @@ export function MenuLateral() {
         <NuevoIcono size={18} strokeWidth={1.5} aria-hidden="true" />
         {nuevo.etiqueta}
       </NavLink>
-      {principales.map((e) => (
+      {principales.filter(visible).map((e) => (
         <Item key={e.ruta} entrada={e} />
       ))}
       {GRUPOS.map((grupo) => (
         <div key={grupo} className="mt-4 flex flex-col gap-1">
           <div className="px-3 pb-1 text-xs uppercase tracking-wide text-fondo/50">{grupo}</div>
-          {MENU.filter((e) => e.grupo === grupo).map((e) => (
+          {MENU.filter((e) => e.grupo === grupo && visible(e)).map((e) => (
             <Item key={e.ruta} entrada={e} />
           ))}
         </div>
       ))}
       <NavLink to="/perfil" className={(s) => cn(claseItem(s), 'mt-auto py-2')}>
-        <Avatar iniciales="UE" />
-        Usuario de ejemplo
+        <Avatar iniciales={yo.iniciales} color={yo.color_avatar} />
+        <span className="flex min-w-0 flex-col leading-tight">
+          <span className="truncate">{yo.nombre}</span>
+          <span className="truncate text-xs text-fondo/60">{ETIQUETA_ROL[yo.rol]}</span>
+        </span>
       </NavLink>
     </nav>
   );

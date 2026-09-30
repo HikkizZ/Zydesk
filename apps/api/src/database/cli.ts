@@ -60,6 +60,22 @@ programa
   });
 
 programa
+  .command('sembrar')
+  .description('Siembra datos de desarrollo, idempotente (lee SEMILLA_PASSWORD)')
+  .action(async () => {
+    const { sembrarTodo } = await import('./semillas/cargar.js');
+    await sembrarTodo();
+  });
+
+programa
+  .command('reiniciar')
+  .description('Vacía todas las tablas (rol owner) y vuelve a sembrar; solo desarrollo')
+  .action(async () => {
+    const { reiniciarDesarrollo } = await import('./semillas/cargar.js');
+    await reiniciarDesarrollo();
+  });
+
+programa
   .command('openapi')
   .description('Escribe docs/api/openapi.json (construye la app sin conectar a la BD)')
   .action(async () => {

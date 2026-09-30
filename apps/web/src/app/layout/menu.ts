@@ -1,3 +1,4 @@
+import type { Permiso } from '@zydesk/shared';
 import {
   BarChart3,
   Bell,
@@ -20,6 +21,8 @@ export interface EntradaMenu {
   ruta: string;
   icono: LucideIcon;
   grupo?: 'Tickets' | 'Trabajo' | 'Administración';
+  // Si se indica, la entrada solo se muestra a quien tiene el permiso (la ruta se protege aparte).
+  permiso?: Permiso;
 }
 
 export const MENU: EntradaMenu[] = [
@@ -39,6 +42,12 @@ export const MENU: EntradaMenu[] = [
   { etiqueta: 'Horas', ruta: '/horas', icono: Clock, grupo: 'Trabajo' },
   { etiqueta: 'Reportes', ruta: '/reportes', icono: BarChart3, grupo: 'Administración' },
   { etiqueta: 'Clientes', ruta: '/clientes', icono: Building2, grupo: 'Administración' },
-  { etiqueta: 'Configuración', ruta: '/configuracion', icono: Settings, grupo: 'Administración' },
+  {
+    etiqueta: 'Configuración',
+    ruta: '/configuracion',
+    icono: Settings,
+    grupo: 'Administración',
+    permiso: 'config.editar',
+  },
   { etiqueta: 'Perfil', ruta: '/perfil', icono: User },
 ];
