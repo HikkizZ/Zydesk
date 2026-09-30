@@ -39,6 +39,10 @@ Todas las cuentas de ejemplo usan el correo `<usuario>@zydesk.local` y la contra
 
 Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el script de inicio de Docker; se conecta con `TEST_DATABASE_URL` y `TEST_DATABASE_URL_OWNER`). Con Postgres levantado, `npm test` aplica las migraciones y vacía la base entre tests; no toca la base de desarrollo.
 
+## Integración continua
+
+El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `build` y `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
+
 ## Scripts de la raíz
 
 | Script                 | Qué hace                                                                                        |

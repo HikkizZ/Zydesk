@@ -1,0 +1,79 @@
+# Integración continua (ADR 0020). Repositorio público: sin secretos, sin pull_request_target,
+# permisos mínimos y acciones fijadas por SHA de commit (el tag va como comentario).
+name: CI
+
+on:
+  push:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verificar:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: zydesk
+          POSTGRES_PASSWORD: zydesk
+          POSTGRES_DB: zydesk
+        ports:
+          - 5433:5432
+        options: >-
+          --health-cmd "pg_isready -U zydesk -d zydesk"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Generar .env de CI (valores de prueba, sin secretos)
+        run: |
+          cp .env.example .env
+          echo 'SEMILLA_PASSWORD=Semilla.CI.Prueba.1' >> .env
+          echo 'ADMIN_PASSWORD=Admin.CI.Prueba.1' >> .env
+
+      - name: Crear roles y bases (mismo 01-roles.sql que el desarrollo local)
+        run: |
+          if ! command -v psql >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y postgresql-client
+          fi
+          PGPASSWORD=zydesk psql -v ON_ERROR_STOP=1 -h localhost -p 5433 -U zydesk -d zydesk -f docker/postgres-init/01-roles.sql
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Formato
+        run: npm run format:check
+
+      - name: Tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      - name: OpenAPI sin cambios
+        run: |
+          npm run api:openapi
+          git diff --exit-code docs/api/openapi.json
