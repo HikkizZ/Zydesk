@@ -1,6 +1,6 @@
 # ADR 0010 — API REST: rutas, paginación, errores, validación y OpenAPI
 
-**Estado**: aceptada · 2026-09-29
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0021 (Fase 2)
 
 ## Contexto
 

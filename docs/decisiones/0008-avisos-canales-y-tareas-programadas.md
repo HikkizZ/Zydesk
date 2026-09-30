@@ -1,6 +1,6 @@
 # ADR 0008 — Avisos, canales (app / correo / Telegram futuro) y tareas programadas
 
-**Estado**: sustituida parcialmente por ADR 0013 (canal `correo` sin implementar, resumen diario por Telegram, bot en Fase 6) · 2026-09-29
+**Estado**: sustituida parcialmente por ADR 0013 (canal `correo` sin implementar, resumen diario por Telegram, bot en Fase 6) · 2026-09-29 · precisada por ADR 0021 (Fase 2)
 
 ## Contexto
 
