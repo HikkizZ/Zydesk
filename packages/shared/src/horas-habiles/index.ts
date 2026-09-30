@@ -1,2 +1,11 @@
 // motor de horas hábiles (ADR 0005)
-export {};
+export type { Calendario, HorarioDia, Plazo } from './tipos.js';
+export { bloquesDelDia, jornadaSemanalHoras } from './calendario.js';
+export {
+  esHoraExtendida,
+  horasHabilesEntre,
+  siguienteInicioHabil,
+  sumarDiasHabiles,
+  sumarHorasHabiles,
+  sumarPlazo,
+} from './motor.js';
