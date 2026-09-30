@@ -1,12 +1,15 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import { entidades } from '../database/entidades.js';
 import { env } from './env.js';
 import { logger } from './logger.js';
 
+const urlApp = env.NODE_ENV === 'test' ? env.TEST_DATABASE_URL! : env.DATABASE_URL;
+
 export const dataSource = new DataSource({
   type: 'postgres',
-  url: env.DATABASE_URL,
-  entities: [],
+  url: urlApp,
+  entities: entidades,
   migrations: [],
   synchronize: false,
   logging: false,

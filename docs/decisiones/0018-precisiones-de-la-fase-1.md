@@ -17,6 +17,7 @@ Al escribir `docs/specs/fase-1.md` aparecieron detalles que las ADR dejaban abie
 7. **Ruta de los manuales** (precisa ADR 0012): `docs/manuales/usuario/` y `docs/manuales/administracion.md`, como en el PLAN.
 8. **Feriados**: la semilla `feriados-cl.json` se valida contra la API pública de Boostr (`https://api.boostr.cl/holidays/{año}.json`). No es una dependencia en tiempo de ejecución; la tabla sigue siendo editable por Administración (ADR 0005).
 9. **Sesiones activas**: el dispositivo se muestra con un nombre legible obtenido con `ua-parser-js` en la web.
+10. **Nombres de campos en TypeScript** (precisa ADR 0010): las propiedades de las entidades TypeORM, los esquemas Zod y los DTOs usan `snake_case`, igual que la columna y el JSON (`creado_en`, `entidad_id`); así una entidad se devuelve sin capa de mapeo. `camelCase` queda para variables, funciones, métodos y tipos.
 
 ## Consecuencias
 

@@ -22,7 +22,7 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(helmet());
   app.use(express.json({ limit: '1mb' }));
 
-  app.use('/api/salud', crearRutaSalud(deps.comprobarBd));
+  app.use(crearRutaSalud(deps.comprobarBd));
 
   app.use('/api', noEncontrado);
   app.use(manejadorErrores);

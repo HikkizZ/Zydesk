@@ -20,7 +20,9 @@
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist"
+    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist",
+    "db:migrar": "npm run db:migrar -w @zydesk/api",
+    "db:revertir": "npm run db:revertir -w @zydesk/api"
   },
   "devDependencies": {
     "concurrently": "^9.2.4",

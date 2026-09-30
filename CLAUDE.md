@@ -7,7 +7,7 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 ## 2. Convenciones
 
 - Español en dominio, rutas, nombres de archivos, mensajes de commit y logs.
-- `snake_case` en JSON y BD; `camelCase` en TypeScript.
+- `snake_case` en JSON, BD y en los campos de datos que los cruzan (propiedades de entidades TypeORM, esquemas Zod, DTOs); `camelCase` en variables, funciones, métodos y tipos de TypeScript.
 - TypeScript estricto, ESM, imports relativos con extensión `.js` en `api` y `shared`; sin `any`.
 - Entidades TypeORM siempre con `type` explícito en `@Column` (tsx no emite metadatos de decoradores).
 
