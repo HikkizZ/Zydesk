@@ -17,6 +17,7 @@ import { ReportesPage } from '@/features/reportes/pages/ReportesPage';
 import { LineaDeTiempoPage } from '@/features/tickets/pages/LineaDeTiempoPage';
 import { NuevoTicketPage } from '@/features/tickets/pages/NuevoTicketPage';
 import { TablaPage } from '@/features/tickets/pages/TablaPage';
+import { TicketDetallePage } from '@/features/tickets/pages/TicketDetallePage';
 import { TableroPage } from '@/features/tickets/pages/TableroPage';
 import { Layout } from './layout/Layout';
 import { PaginaNoEncontrada } from './PaginaNoEncontrada';
@@ -44,6 +45,7 @@ export const router = createBrowserRouter([
               { path: '/tickets', element: <TableroPage /> },
               { path: '/tickets/tabla', element: <TablaPage /> },
               { path: '/tickets/linea-de-tiempo', element: <LineaDeTiempoPage /> },
+              { path: '/tickets/:id', element: <TicketDetallePage /> },
               { path: '/ots', element: <OtsPage /> },
               { path: '/cotizaciones', element: <CotizadorPage /> },
               { path: '/horas', element: <HorasPage /> },

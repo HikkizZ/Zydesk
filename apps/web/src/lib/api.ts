@@ -64,6 +64,17 @@ export async function enviar<T>(
   return procesar<T>(ruta, res);
 }
 
+// Subida multipart: sin `Content-Type` manual (el navegador agrega el `boundary`).
+export async function enviarMultipart<T>(ruta: string, formData: FormData): Promise<T> {
+  const res = await fetch(ruta, {
+    method: 'POST',
+    headers: { Accept: 'application/json', 'X-Requested-With': 'Zydesk' },
+    credentials: 'same-origin',
+    body: formData,
+  });
+  return procesar<T>(ruta, res);
+}
+
 // Arma `?a=1&b=2` omitiendo valores vacíos; para los filtros de las listas.
 export function conQuery(
   ruta: string,

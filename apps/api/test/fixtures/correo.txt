@@ -1,0 +1,12 @@
+De: Paula Herrera <pherrera@ejemplo.test>
+Para: Soporte Zydesk <soporte@zydesk.test>
+Enviado: martes, 29 de septiembre de 2026 16:45
+Asunto: Error al emitir facturas desde el ERP
+
+Hola equipo,
+
+Desde esta mañana el ERP muestra un error al emitir facturas electrónicas.
+Adjunto una captura de pantalla.
+
+Saludos,
+Paula Herrera

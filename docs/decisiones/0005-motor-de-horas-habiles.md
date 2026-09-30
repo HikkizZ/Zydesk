@@ -1,6 +1,6 @@
 # ADR 0005 — Motor de horas hábiles, fechas y feriados
 
-**Estado**: aceptada · 2026-09-29
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0021 (Fase 2)
 
 ## Contexto
 

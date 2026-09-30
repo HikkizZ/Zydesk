@@ -1,6 +1,6 @@
 # ADR 0017 — Logs técnicos, auditoría de seguridad e inmutabilidad del historial
 
-**Estado**: aceptada · 2026-09-29 · complementa a ADR 0003 (`evento`) · sustituye parcialmente a ADR 0013 (tabla `intento_ingreso` y su retención de 90 días)
+**Estado**: aceptada · 2026-09-29 · complementa a ADR 0003 (`evento`) · sustituye parcialmente a ADR 0013 (tabla `intento_ingreso` y su retención de 90 días) · precisada por ADR 0021 (Fase 2)
 
 ## Contexto
 

@@ -13,24 +13,32 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 - API por módulo (`apps/api/src/modulos/<módulo>/`): el handler de `ruta()` solo delega al servicio y resuelve lo puramente HTTP (cookies, cabeceras, `res.status`); la lógica de negocio va en `*.service.ts`.
 - Un módulo escribe en las tablas de otro solo a través del servicio de ese módulo, pasándole el `tx` (`EntityManager`) de la transacción en curso (ADR 0003): un servicio puede orquestar un único `enTransaccion` que toque varios módulos (cierre de OT → ticket, conversión ticket → OT). Leer entidades de otro módulo (joins, `findOneBy`) sí está permitido. Sin dependencias circulares entre módulos, salvo `tickets` ↔ `ots`, que la ADR 0003 exige y se limita a importar funciones entre sus `*.service.ts`.
 - Toda ruta HTTP se declara con `ruta()` (`core/http/ruta.ts`): es lo que valida, autoriza y alimenta OpenAPI. Tras agregar o cambiar una ruta o un esquema compartido, `npm run api:openapi` y versionar `docs/api/openapi.json`.
+- `ruta()` acepta `previos?: RequestHandler[]` (middlewares que corren antes de validar, p. ej. `multer` en la subida multipart de `POST /api/archivos`).
+- **El Tablero (`/tickets`) y la Tabla (`/tickets/tabla`) son de solo lectura** (ADR 0022): sin arrastrar ni menú de cambio de estado; cada tarjeta y fila enlaza al detalle. El estado se cambia solo desde el detalle del ticket con `DialogoCambiarEstado`. No reinstalar `@dnd-kit`. Misma regla para el futuro tablero de OT.
 - Toda mutación va dentro de `enTransaccion` y se invoca desde un servicio.
 - Qué registra cada acción (ADR 0003 y 0017):
 
-| Acción                                           | `evento`                                     | `auditoria`                                                                            |
-| ------------------------------------------------ | -------------------------------------------- | -------------------------------------------------------------------------------------- |
-| Guardar numeración                               | `contador` / `numeracion_cambiada` por clave | `numeracion_cambiada`                                                                  |
-| Ingreso, salida, sesiones, bloqueo               | —                                            | `ingreso_ok`, `ingreso_fallido`, `cuenta_bloqueada`, `cierre_sesion`, `sesion_cerrada` |
-| Contraseñas                                      | —                                            | `contrasena_cambiada`, `contrasena_restablecida`                                       |
-| Usuarios                                         | —                                            | `usuario_creado`, `usuario_desactivado`, `usuario_reactivado`, `rol_cambiado`          |
-| Términos                                         | —                                            | `terminos_aceptados`                                                                   |
-| Marca, logo, departamentos, feriados, categorías | —                                            | `config_cambiada { seccion, … }`                                                       |
-| Clientes, contactos, bolsa, tarifas              | —                                            | —                                                                                      |
+| Acción                                                                | `evento`                                                           | `auditoria`                                                                            |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+| Guardar numeración                                                    | `contador` / `numeracion_cambiada` por clave                       | `numeracion_cambiada`                                                                  |
+| Ingreso, salida, sesiones, bloqueo                                    | —                                                                  | `ingreso_ok`, `ingreso_fallido`, `cuenta_bloqueada`, `cierre_sesion`, `sesion_cerrada` |
+| Contraseñas                                                           | —                                                                  | `contrasena_cambiada`, `contrasena_restablecida`                                       |
+| Usuarios                                                              | —                                                                  | `usuario_creado`, `usuario_desactivado`, `usuario_reactivado`, `rol_cambiado`          |
+| Términos                                                              | —                                                                  | `terminos_aceptados`                                                                   |
+| Marca, logo, departamentos, feriados, categorías                      | —                                                                  | `config_cambiada { seccion, … }`                                                       |
+| Clientes, contactos, bolsa, tarifas                                   | —                                                                  | —                                                                                      |
+| Crear ticket, PATCH, cambiar estado, responsables, seguidores, tareas | `creado`, `cambio` (por campo), `tarea_*` con `entidad = 'ticket'` | —                                                                                      |
+| Seguimiento, nota interna, horas, menciones                           | — (el `mensaje` es el registro)                                    | —                                                                                      |
+| Archivado automático                                                  | `archivado` (autor null)                                           | —                                                                                      |
+| Subir archivo, parsear correo                                         | —                                                                  | —                                                                                      |
+| Descargar archivo como `attachment`                                   | —                                                                  | `descarga_archivo { archivo_id, entidad, entidad_id }`                                 |
 
 ## 3. Tests
 
 - Cada tarea trae sus tests; `npm test` debe quedar verde antes de terminar.
 - API con Supertest sobre `crearApp()`.
 - Nada de mocks del ORM (desde la Fase 1: Postgres real; `docker compose -f docker-compose.dev.yml up -d` antes de `npm test`).
+- **Una base de test por bloque** cuando hay agentes o procesos en paralelo (los tests truncan la BD): `npm run db:test:crear -- <sufijo>` crea `zydesk_test_<sufijo>` y luego `npx cross-env TEST_BD_SUFIJO=<sufijo> npm run test -w @zydesk/api`. Sin `TEST_BD_SUFIJO` se usa `zydesk_test` (CI y uso normal).
 - Los tests de integración de la API usan `apps/api/test/fabricas.ts` (`crearUsuario`, `crearCliente`, …) e `ingresarComo` para obtener cookie y cabecera CSRF.
 
 ## 4. Regla de oro
@@ -58,3 +66,5 @@ No tomar decisiones de diseño sin ADR. Si la spec de la fase no lo cubre, deten
 ## 7. Windows
 
 Sin `rm -rf` ni variables de entorno inline en scripts; usar `rimraf` y `cross-env`.
+
+**Detener procesos de desarrollo.** Matar solo el proceso que escucha el puerto (3010, 5173) **no basta**: los observadores `tsx watch` y `tsc --watch` (y `vite`, `concurrently`) siguen vivos. Mata el árbol completo desde el proceso raíz (el `npm run dev` o el `node.exe` padre): `taskkill /PID <pid> /T /F`. Para comprobar que no quedó nada (PowerShell): `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -match 'tickets-app' -and $_.CommandLine -match 'watch|vite|tsx' }` debe devolver vacío. Postgres (Docker) se deja corriendo.

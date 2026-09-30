@@ -139,7 +139,8 @@ export async function listarClientes(q: ClientesQueryDatos): Promise<ClienteResu
   }
   const filas: ClienteResumenDatos[] = await dataSource.query(
     `SELECT c.id, c.nombre, c.rut, c.es_interno, c.activo,
-            EXISTS (SELECT 1 FROM contrato_bolsa b WHERE b.cliente_id = c.id) AS tiene_bolsa
+            EXISTS (SELECT 1 FROM contrato_bolsa b WHERE b.cliente_id = c.id) AS tiene_bolsa,
+            (SELECT count(*)::int FROM ticket t WHERE t.cliente_id = c.id AND t.cerrado_en IS NULL) AS tickets_abiertos
        FROM cliente c WHERE ${condiciones.join(' AND ')} ORDER BY c.nombre, c.id`,
     valores,
   );

@@ -59,7 +59,7 @@ export const fuenteNumerosFase1: FuenteNumeros = {
 export async function siguienteNumero(
   tx: EntityManager,
   clave: ClaveContador,
-  fuente: FuenteNumeros = fuenteNumerosFase1,
+  fuente: FuenteNumeros,
 ): Promise<{ numero: number; codigo: string }> {
   const c = await leerContador(tx, clave);
   if (c.modo === 'correlativo') {

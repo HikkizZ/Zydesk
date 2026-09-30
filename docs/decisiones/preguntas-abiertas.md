@@ -12,7 +12,7 @@
 | A4 | OT cancelada | Spec 4.1 habla de "cancelar la OT primero" pero no hay etapa Cancelada. | Agregar etapa `cancelada` con motivo. (ADR 0004) |
 | A5 | Plazos por prioridad | Spec 4.1: plazo de resolución "por prioridad". Diseño (Configuración): un solo plazo de respuesta y uno de resolución por categoría. | Plazo de resolución con **4 valores (uno por prioridad)** y plazo de respuesta único; la pantalla de configuración se amplía con 4 columnas. |
 | A6 | Colación | Spec: "entrada, salida y colación". Diseño: solo "60 min". | Guardar `colacion_inicio` (por defecto 13:00) + `colacion_min`, para descontar el bloque correcto al contar horas hábiles. (ADR 0005) |
-| A7 | Columna "Cerrados" del Kanban | Tres estados cerrados en una columna. | Arrastrar a "Cerrados" abre un selector (Resuelto / Descartado / Duplicado) con sus campos. |
+| A7 | Columna "Cerrados" del Kanban | Tres estados cerrados en una columna. | ~~Arrastrar a "Cerrados" abre un selector (Resuelto / Descartado / Duplicado) con sus campos.~~ **Sustituida por ADR 0022 (2026-09-30)**: el tablero es solo vista; el cierre se elige en el detalle del ticket. |
 | A8 | Línea de tiempo | Diseño muestra 10 días (solo L-V). | Escala "2 semanas" = 10 días hábiles del departamento del usuario que mira; "Mes" = días hábiles del mes. Además: agrupar por persona/cliente, aviso de vencidos y ancho mínimo de barra. (ADR 0016) |
 
 ## B. Reglas incompletas en la especificación — aceptadas por el usuario (2026-09-29)

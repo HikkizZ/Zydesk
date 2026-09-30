@@ -10,3 +10,8 @@ export * from './categoria.js';
 export * from './plazos.js';
 export * from './cliente.js';
 export * from './configuracion.js';
+export * from './archivo.js';
+export * from './correo.js';
+export * from './tarea.js';
+export * from './mensaje.js';
+export * from './ticket.js';

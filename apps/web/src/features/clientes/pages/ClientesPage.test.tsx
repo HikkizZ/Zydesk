@@ -5,6 +5,7 @@ import { Route, Routes } from 'react-router';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
+import { ticketDePrueba } from '@/test/tickets';
 import { ClientesPage } from './ClientesPage';
 
 function respuesta(status: number, cuerpo?: unknown) {
@@ -26,11 +27,16 @@ const resumen = (
   es_interno,
   activo: true,
   tiene_bolsa: false,
+  tickets_abiertos: 0,
   ...extra,
 });
 
 const ACTIVOS = [
-  resumen(1, 'Viña Santa Clara', false, { tiene_bolsa: true, rut: '76123456-K' }),
+  resumen(1, 'Viña Santa Clara', false, {
+    tiene_bolsa: true,
+    rut: '76123456-K',
+    tickets_abiertos: 2,
+  }),
   resumen(2, 'Constructora Andes', false, { rut: '77888999-1' }),
   resumen(3, 'Administración', true),
 ];
@@ -112,6 +118,28 @@ beforeEach(() => {
     if (ruta === '/api/clientes?activo=false') return Promise.resolve(respuesta(200, INACTIVOS));
     if (ruta === '/api/clientes/1') return Promise.resolve(respuesta(200, FICHA));
     if (ruta === '/api/clientes/3') return Promise.resolve(respuesta(200, INTERNA));
+    if (ruta === '/api/tickets?cliente_id=1&por_pagina=20') {
+      return Promise.resolve(
+        respuesta(200, {
+          datos: [
+            ticketDePrueba(),
+            ticketDePrueba({
+              id: 8,
+              codigo: 'TK-1028',
+              asunto: 'Revisión de cámaras de seguridad',
+              estado: 'en_espera',
+              espera_de: 'repuesto',
+            }),
+          ],
+          total: 2,
+          pagina: 1,
+          por_pagina: 20,
+        }),
+      );
+    }
+    if (ruta.startsWith('/api/tickets?')) {
+      return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
+    }
     if (ruta === '/api/clientes/99') {
       return Promise.resolve(
         respuesta(404, { error: { codigo: 'NO_ENCONTRADO', mensaje: 'No existe' } }),
@@ -150,7 +178,7 @@ it('separa clientes y áreas internas en grupos distintos', async () => {
   expect(within(clientes).queryByText('Administración')).toBeNull();
   expect(within(internas).getByText('Administración')).toBeTruthy();
   expect(within(internas).queryByText('Viña Santa Clara')).toBeNull();
-  expect(within(clientes).getByText('bolsa de horas')).toBeTruthy();
+  expect(within(clientes).getByText('2 tickets abiertos · bolsa de horas')).toBeTruthy();
 });
 
 it('filtra por nombre en el cliente sin llamar a la API y muestra inactivos con el interruptor', async () => {
@@ -204,11 +232,21 @@ it('administración ve la ficha completa con bolsa, tarifas y acciones de edici�
   expect(screen.getByRole('button', { name: 'Agregar bolsa' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Editar tarifas' })).toBeTruthy();
   expect(
-    (screen.getByRole('button', { name: 'Nuevo ticket para este cliente' }) as HTMLButtonElement)
-      .disabled,
-  ).toBe(true);
-  expect(screen.getByText('Disponible en la Fase 2')).toBeTruthy();
+    screen.getByRole('link', { name: 'Nuevo ticket para este cliente' }).getAttribute('href'),
+  ).toBe('/tickets/nuevo?cliente_id=1');
+  expect(await screen.findByText('TK-1048')).toBeTruthy();
+  expect(screen.getByText('TK-1028')).toBeTruthy();
+  expect(screen.getByText('En espera · repuesto')).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Ver todos en la tabla' }).getAttribute('href')).toBe(
+    '/tickets/tabla?cliente_id=1',
+  );
   expect(screen.getByText('Disponible en la Fase 3')).toBeTruthy();
+});
+
+it('quien solo lee no ve el botón de nuevo ticket pero sí la lista de tickets', async () => {
+  pantalla({ rol: 'lectura' }, '/clientes/1');
+  expect(await screen.findByText('TK-1048')).toBeTruthy();
+  expect(screen.queryByRole('link', { name: 'Nuevo ticket para este cliente' })).toBeNull();
 });
 
 it('el técnico no ve "Editar ficha", bolsa ni tarifas, pero sí puede agregar contactos', async () => {
@@ -313,6 +351,9 @@ it('agregar bolsa: un 409 por solape se muestra en el diálogo', async () => {
       );
     }
     if (ruta === '/api/clientes/1') return Promise.resolve(respuesta(200, FICHA));
+    if (ruta.startsWith('/api/tickets?')) {
+      return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
+    }
     return Promise.resolve(respuesta(200, ACTIVOS));
   });
   pantalla({ rol: 'admin' }, '/clientes/1');

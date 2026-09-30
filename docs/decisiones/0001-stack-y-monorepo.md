@@ -1,6 +1,6 @@
 # ADR 0001 — Stack y estructura del monorepo
 
-**Estado**: aceptada · 2026-09-29
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0021 (Fase 2)
 
 ## Contexto
 

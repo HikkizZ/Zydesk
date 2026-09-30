@@ -139,6 +139,22 @@ Los textos están en los archivos `docs/legal/terminos-de-uso.md` y `docs/legal/
 
 Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptación a todo el equipo: edita el texto, cambia la línea `version:` al inicio de `terminos-de-uso.md` y vuelve a iniciar la API. Todas las personas verán el diálogo de aceptación. Más detalles en `docs/legal/README.md`.
 
-## 12. Referencia de la API
+## 12. Tickets: archivos, correos y archivado
+
+**Dónde se guardan los archivos.** Las fotos, documentos y correos de los tickets se guardan en disco, en la carpeta indicada por `ARCHIVOS_DIR` en el archivo `.env` (por defecto `./datos/archivos`, dentro del repositorio; también puede ser una ruta absoluta). Dentro se organizan por año y mes (`aaaa/mm/`) con nombres aleatorios: el nombre original solo se guarda en la base de datos. La carpeta `datos/` no se versiona. **Respáldala junto con la base de datos**: si falta un archivo en disco, el ticket sigue existiendo pero la descarga falla. Si cambias `ARCHIVOS_DIR`, mueve antes el contenido y reinicia la API.
+
+**Límites.** Hasta 10 archivos por subida y 20 MB cada uno. Tipos permitidos: JPG, PNG, WebP, HEIC, PDF, Word, Excel, PowerPoint, ZIP, `.eml`, `.msg`, `.txt` y `.csv`. La app revisa el contenido real del archivo, no solo la extensión: un ejecutable renombrado como `.png` se rechaza.
+
+**Archivos huérfanos.** Un archivo subido que nunca se usó en un ticket, seguimiento o nota (por ejemplo, alguien abandonó el formulario) se elimina automáticamente a las 24 horas; la tarea corre cada noche a las 04:00 (hora de Santiago).
+
+**Espacio en disco.** Los archivos de tickets no se borran solos. Revisa de vez en cuando el tamaño de `ARCHIVOS_DIR` y el espacio libre del disco.
+
+**Descargas.** Cualquier persona con sesión puede ver y descargar los archivos de los tickets. Las descargas de documentos y correos (no las fotos ni los PDF que se abren en pantalla) quedan en el registro de seguridad.
+
+**Archivado de tickets.** Un ticket cerrado (Resuelto, Descartado o Duplicado) se archiva solo a los 7 días; la tarea corre cada noche a las 03:10 (hora de Santiago). Archivado significa que sale del Tablero y se ve en la Tabla, filtro **Archivados**; no se borra nada y se puede reabrir. El estado de un ticket se cambia únicamente desde su detalle (el Tablero y la Tabla son de solo lectura).
+
+**Crear tickets desde correos.** No hay un buzón conectado: la persona arrastra un `.eml`/`.msg` o pega el texto del correo al crear el ticket (ver el [manual de tickets](usuario/01-tecnico.md)).
+
+## 13. Referencia de la API
 
 Para integraciones y el bot futuro: con sesión de Administración, abre `/api/docs` (por ejemplo `http://localhost:3010/api/docs`) para ver todas las rutas. La guía de uso está en `docs/api/README.md`.

@@ -4,7 +4,8 @@ import { crearUsuario, ingresarComo } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
-import { siguienteNumero } from '../../core/numeracion/numeracion.js';
+import { fuenteNumeros } from '../../core/numeracion/fuente.js';
+import { fuenteNumerosFase1, siguienteNumero } from '../../core/numeracion/numeracion.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 
@@ -12,6 +13,18 @@ async function como(rol: 'admin' | 'coordinacion' | 'tecnico' | 'lectura') {
   const usuario = await crearUsuario({ rol });
   return { usuario, ...(await ingresarComo(app(), usuario)) };
 }
+
+// Emite un número de ticket y crea la fila real (la fuente de la Fase 2 cuenta sobre la tabla `ticket`).
+const emitirTicket = () =>
+  enTransaccion(async (tx) => {
+    const n = await siguienteNumero(tx, 'ticket', fuenteNumeros);
+    await tx.query(
+      `INSERT INTO ticket (numero, codigo, asunto, origen, prioridad, estado)
+       VALUES ($1, $2, 'Prueba', 'externo', 'media', 'nuevo')`,
+      [n.numero, n.codigo],
+    );
+    return n;
+  });
 
 const PNG = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 1, 2, 3]);
 const SVG = Buffer.from('<svg xmlns="http://www.w3.org/2000/svg"></svg>');
@@ -161,7 +174,7 @@ describe('numeración', () => {
       despues: { prefijo: 'SOP-', inicial: 5000, digitos: 5, modo: 'correlativo' },
     });
 
-    const n = await enTransaccion((tx) => siguienteNumero(tx, 'ticket'));
+    const n = await emitirTicket();
     expect(n).toEqual({ numero: 5000, codigo: 'SOP-05000' });
 
     // guardar lo mismo no registra nada
@@ -173,8 +186,8 @@ describe('numeración', () => {
 
   it('NUMERACION_INICIAL_MENOR si el inicial nuevo ≤ último usado; no consume ni cambia nada', async () => {
     const { agente } = await como('admin');
-    await enTransaccion((tx) => siguienteNumero(tx, 'ticket')); // 1000
-    await enTransaccion((tx) => siguienteNumero(tx, 'ticket')); // 1001
+    await emitirTicket(); // 1000
+    await emitirTicket(); // 1001
     const r = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { inicial: 1001 } }));
@@ -184,8 +197,8 @@ describe('numeración', () => {
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { inicial: 1002 } }));
     expect(ok.status).toBe(200);
-    expect(ok.body.ticket).toMatchObject({ inicial: 1002, ultimo_usado: null });
-    expect((await enTransaccion((tx) => siguienteNumero(tx, 'ticket'))).numero).toBe(1002);
+    expect(ok.body.ticket).toMatchObject({ inicial: 1002, ultimo_usado: 1001 });
+    expect((await emitirTicket()).numero).toBe(1002);
     // cambiar solo el prefijo con números ya emitidos es válido
     const pref = await agente
       .put('/api/config/numeracion')
@@ -195,7 +208,7 @@ describe('numeración', () => {
 
   it('el rechazo revierte toda la transacción (la otra clave tampoco cambia)', async () => {
     const { agente } = await como('admin');
-    await enTransaccion((tx) => siguienteNumero(tx, 'ot')); // 200
+    await enTransaccion((tx) => siguienteNumero(tx, 'ot', fuenteNumerosFase1)); // 200
     const r = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { prefijo: 'NUEVO-' }, ot: { inicial: 200, prefijo: 'X-' } }));
@@ -212,7 +225,7 @@ describe('numeración', () => {
     await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { inicial: 12000, digitos: 6 } }));
-    await enTransaccion((tx) => siguienteNumero(tx, 'ticket')); // 12000
+    await emitirTicket(); // 12000
     const r = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { inicial: 12001, digitos: 4 } }));
@@ -229,7 +242,7 @@ describe('numeración', () => {
 
   it('correlativo → aleatorio → correlativo: no reutiliza números y valida el rango', async () => {
     const { agente } = await como('admin');
-    await enTransaccion((tx) => siguienteNumero(tx, 'ticket')); // 1000
+    await emitirTicket(); // 1000
     const alea = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { modo: 'aleatorio', inicial: 2000 } }));
@@ -240,14 +253,18 @@ describe('numeración', () => {
       usados: 0,
       advertencia: false,
     });
-    const n = await enTransaccion((tx) => siguienteNumero(tx, 'ticket'));
+    const n = await emitirTicket();
     expect(n.numero).toBeGreaterThanOrEqual(2000);
     expect(n.numero).toBeLessThan(10000);
+    expect((await agente.get('/api/config/numeracion')).body.ticket).toMatchObject({
+      ultimo_usado: n.numero,
+      usados: 1,
+    });
     const corr = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { modo: 'correlativo', inicial: 2000 } }));
     expect(corr.status).toBe(200);
-    expect((await enTransaccion((tx) => siguienteNumero(tx, 'ticket'))).numero).toBe(2000);
+    expect((await emitirTicket()).numero).toBe(n.numero + 1); // nunca reutiliza
   });
 
   it('el OT siempre es correlativo aunque se envíe otro modo', async () => {

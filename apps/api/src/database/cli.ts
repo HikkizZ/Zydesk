@@ -76,6 +76,25 @@ programa
   });
 
 programa
+  .command('bd-test')
+  .description('Base de test por bloque (spec fase-2 §1.1)')
+  .command('crear <sufijo>')
+  .description(
+    'Crea zydesk_test_<sufijo> con los roles y permisos de zydesk_test (solo desarrollo)',
+  )
+  .action(async (sufijo: string) => {
+    const { crearBdTest, ErrorBdTest } = await import('./bd-test.js');
+    try {
+      const nombre = await crearBdTest(sufijo);
+      logger.info({ base: nombre }, 'base de test lista');
+    } catch (err) {
+      if (!(err instanceof ErrorBdTest)) throw err;
+      logger.error(err.message);
+      process.exit(1);
+    }
+  });
+
+programa
   .command('openapi')
   .description('Escribe docs/api/openapi.json (construye la app sin conectar a la BD)')
   .action(async () => {

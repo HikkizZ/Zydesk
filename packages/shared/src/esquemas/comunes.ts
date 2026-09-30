@@ -14,3 +14,18 @@ export const esquemaPaginacion = z.object({
 });
 
 export const referencia = z.object({ id, nombre: z.string() });
+
+// Lista separada por comas validada contra los valores permitidos: `?estado=nuevo,en_curso`.
+export const csv = <const T extends readonly [string, ...string[]]>(valores: T) =>
+  z
+    .string()
+    .transform((s) => s.split(','))
+    .pipe(z.array(z.enum(valores)).min(1));
+
+// Referencia corta a una persona (avatar, listas); vive aquí para evitar ciclos entre esquemas.
+export const UsuarioBreve = z.object({
+  id,
+  nombre: z.string(),
+  iniciales: z.string(),
+  color_avatar: z.string(),
+});
