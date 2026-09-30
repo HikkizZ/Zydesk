@@ -21,6 +21,8 @@ import { crearRutasDepartamentos } from './modulos/departamentos/departamentos.r
 import { crearRutasPlazos } from './modulos/plazos/plazos.routes.js';
 import { crearRutasLegal } from './modulos/legal/legal.routes.js';
 import { crearRutaSalud } from './modulos/salud/salud.routes.js';
+import { crearRutasMensajes } from './modulos/mensajes/mensajes.routes.js';
+import { crearRutasTareas } from './modulos/tareas/tareas.routes.js';
 import { crearRutasTickets } from './modulos/tickets/tickets.routes.js';
 import { crearRutasUsuarios } from './modulos/usuarios/usuarios.routes.js';
 
@@ -60,6 +62,8 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasCategorias());
   app.use(crearRutasPlazos());
   app.use(crearRutasTickets());
+  app.use(crearRutasMensajes());
+  app.use(crearRutasTareas());
   app.use(crearRutasArchivos());
   app.use(crearRutasCorreos());
   app.use(crearRutasDocs());

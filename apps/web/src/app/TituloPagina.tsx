@@ -1,8 +1,9 @@
 import { useEffect } from 'react';
 
-export function TituloPagina({ titulo }: { titulo: string }) {
+// Con `codigo` (p. ej. "TK-1048") la pestaña dice "TK-1048 · Zydesk" y el `h1` sigue siendo el título.
+export function TituloPagina({ titulo, codigo }: { titulo: string; codigo?: string }) {
   useEffect(() => {
-    document.title = `${titulo} · Zydesk`;
-  }, [titulo]);
+    document.title = `${codigo ?? titulo} · Zydesk`;
+  }, [titulo, codigo]);
   return <h1 className="font-titulo text-2xl font-bold">{titulo}</h1>;
 }

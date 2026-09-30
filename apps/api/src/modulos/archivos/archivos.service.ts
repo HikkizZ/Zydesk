@@ -188,6 +188,8 @@ export async function guardarBufferComoArchivo(
     destino?: DestinoArchivo;
     origen_correo_id?: number | null;
     tipo?: MimeDetectado;
+    // Por defecto se deduce del MIME (`categoriaDe`); el texto pegado de un correo fuerza `correo`
+    categoria?: Archivo['categoria'];
   },
 ): Promise<Archivo> {
   let tipo = datos.tipo;
@@ -207,7 +209,7 @@ export async function guardarBufferComoArchivo(
       entidad: datos.destino?.entidad ?? null,
       entidad_id: datos.destino?.entidad_id ?? null,
       mensaje_id: datos.destino?.mensaje_id ?? null,
-      categoria: categoriaDe(tipo.tipo_mime),
+      categoria: datos.categoria ?? categoriaDe(tipo.tipo_mime),
       nombre_original: datos.nombre_original,
       tipo_mime: tipo.tipo_mime,
       tamano: datos.contenido.length,

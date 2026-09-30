@@ -425,6 +425,43 @@ describe('cobertura de eventos (ADR 0003)', () => {
       expect(despues, nombre).toBeGreaterThan(antes);
       antes = despues;
     }
+
+    // Tareas (F2-T12): cada endpoint mutante deja evento en el ticket
+    const tarea = await agente.post(`/api/tickets/${id}/tareas`).send({ titulo: 'Tarea' });
+    expect(tarea.status).toBe(201);
+    expect(await cuenta(id), 'POST tareas').toBeGreaterThan(antes);
+    antes = await cuenta(id);
+    const pasosTarea: [string, () => Promise<{ status: number }>, number][] = [
+      [
+        'PATCH tarea (editar)',
+        () => agente.patch(`/api/tareas/${tarea.body.id}`).send({ titulo: 'Otra' }),
+        200,
+      ],
+      [
+        'PATCH tarea (hecha)',
+        () => agente.patch(`/api/tareas/${tarea.body.id}`).send({ hecha: true }),
+        200,
+      ],
+      [
+        'PATCH tarea (reabrir)',
+        () => agente.patch(`/api/tareas/${tarea.body.id}`).send({ hecha: false }),
+        200,
+      ],
+      ['DELETE tarea', () => agente.delete(`/api/tareas/${tarea.body.id}`), 204],
+    ];
+    for (const [nombre, ejecutar, status] of pasosTarea) {
+      expect((await ejecutar()).status, nombre).toBe(status);
+      const despues = await cuenta(id);
+      expect(despues, nombre).toBeGreaterThan(antes);
+      antes = despues;
+    }
+
+    // Los mensajes no generan evento (el mensaje es el registro)
+    const mensaje = await agente
+      .post(`/api/tickets/${id}/mensajes`)
+      .send({ tipo: 'seguimiento', texto: 'Avance', horas: 1 });
+    expect(mensaje.status).toBe(201);
+    expect(await cuenta(id), 'POST mensajes').toBe(antes);
   });
 
   it('las lecturas no escriben: GET de ticket, listado y tablero no crean eventos ni cambian filas', async () => {

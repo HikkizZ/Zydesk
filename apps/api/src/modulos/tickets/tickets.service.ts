@@ -317,10 +317,9 @@ async function crearTicketEnTx(
         subido_por: actor.id,
         destino,
         tipo: { tipo_mime: 'text/plain', ext: '.txt' },
+        categoria: 'correo',
       });
       claves.push(original.clave);
-      // `guardarBufferComoArchivo` clasifica text/plain como documento; la spec pide categoría `correo`
-      await tx.update(Archivo, { id: original.id }, { categoria: 'correo' });
       archivo_id = original.id;
     }
     const [ca]: { id: number }[] = await tx.query(
@@ -709,4 +708,24 @@ export async function guardarSeguidores(
     });
     return cargarTicket(tx, id);
   });
+}
+
+// ---- Para los módulos de actividad (mensajes y tareas escriben el ticket solo por aquí) ----
+
+export { bloquearTicket };
+
+// Un mensaje o una tarea tocan el ticket: `actualizado_en` y, con `respuesta`, la primera respuesta (§6.1).
+export async function registrarActividadEnTicket(
+  tx: EntityManager,
+  id: number,
+  opciones: { respuesta?: boolean } = {},
+): Promise<void> {
+  await tx.query(
+    `UPDATE ticket
+        SET actualizado_en = now(),
+            primera_respuesta_en = CASE WHEN $2::boolean THEN COALESCE(primera_respuesta_en, now())
+                                        ELSE primera_respuesta_en END
+      WHERE id = $1`,
+    [id, opciones.respuesta === true],
+  );
 }
