@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { dataSource } from '../../config/db.js';
 import { enTransaccion } from '../historial/transaccion.js';
-import { formatearCodigo, siguienteNumero, type FuenteNumeros } from './numeracion.js';
+import {
+  formatearCodigo,
+  fuenteNumerosFase1,
+  siguienteNumero,
+  type FuenteNumeros,
+} from './numeracion.js';
 
 describe('formatearCodigo', () => {
   it('rellena con ceros y no recorta', () => {
@@ -13,8 +18,8 @@ describe('formatearCodigo', () => {
 
 describe('siguienteNumero correlativo', () => {
   it('dos llamadas → 1000, 1001', async () => {
-    const a = await enTransaccion((tx) => siguienteNumero(tx, 'ticket'));
-    const b = await enTransaccion((tx) => siguienteNumero(tx, 'ticket'));
+    const a = await enTransaccion((tx) => siguienteNumero(tx, 'ticket', fuenteNumerosFase1));
+    const b = await enTransaccion((tx) => siguienteNumero(tx, 'ticket', fuenteNumerosFase1));
     expect(a).toEqual({ numero: 1000, codigo: 'TK-1000' });
     expect(b).toEqual({ numero: 1001, codigo: 'TK-1001' });
   });
@@ -22,11 +27,11 @@ describe('siguienteNumero correlativo', () => {
   it('una transacción que falla no consume número', async () => {
     await expect(
       enTransaccion(async (tx) => {
-        await siguienteNumero(tx, 'ot');
+        await siguienteNumero(tx, 'ot', fuenteNumerosFase1);
         throw new Error('falla');
       }),
     ).rejects.toThrow('falla');
-    const r = await enTransaccion((tx) => siguienteNumero(tx, 'ot'));
+    const r = await enTransaccion((tx) => siguienteNumero(tx, 'ot', fuenteNumerosFase1));
     expect(r.codigo).toBe('OT-0200');
   });
 });
@@ -41,7 +46,7 @@ describe('siguienteNumero aleatorio', () => {
   it('emite números dentro del rango [inicial, 10^digitos)', async () => {
     await pasarAAleatorio(3, 100);
     for (let i = 0; i < 30; i++) {
-      const r = await enTransaccion((tx) => siguienteNumero(tx, 'ticket'));
+      const r = await enTransaccion((tx) => siguienteNumero(tx, 'ticket', fuenteNumerosFase1));
       expect(r.numero).toBeGreaterThanOrEqual(100);
       expect(r.numero).toBeLessThan(1000);
       expect(r.codigo).toBe(`TK-${r.numero}`);

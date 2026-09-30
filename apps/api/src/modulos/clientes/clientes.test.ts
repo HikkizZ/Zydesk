@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { crearCliente, crearUsuario, ingresarComo } from '../../../test/fabricas.js';
+import { crearCliente, crearTicket, crearUsuario, ingresarComo } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 
@@ -363,5 +363,26 @@ describe('tarifas', () => {
       ).status,
     ).toBe(400);
     expect((await admin.put('/api/clientes/99999/tarifas').send([])).status).toBe(404);
+  });
+});
+
+describe('clientes: tickets_abiertos', () => {
+  it('cuenta solo los tickets no cerrados del cliente (los archivados cerrados no cuentan)', async () => {
+    const admin = await como('admin');
+    const a = await crearCliente({ nombre: 'Cliente A' });
+    const b = await crearCliente({ nombre: 'Cliente B' });
+    await crearTicket({ cliente_id: a.id, estado: 'nuevo' });
+    await crearTicket({ cliente_id: a.id, estado: 'en_espera' });
+    await crearTicket({ cliente_id: a.id, estado: 'resuelto' });
+    await crearTicket({ cliente_id: a.id, estado: 'descartado', archivado_en: new Date() });
+    await crearTicket({ cliente_id: b.id, estado: 'en_curso' });
+    const lista = await admin.get('/api/clientes');
+    const por = Object.fromEntries(
+      lista.body.map((c: { nombre: string; tickets_abiertos: number }) => [
+        c.nombre,
+        c.tickets_abiertos,
+      ]),
+    );
+    expect(por).toEqual({ 'Cliente A': 2, 'Cliente B': 1 });
   });
 });

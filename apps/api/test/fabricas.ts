@@ -3,12 +3,11 @@ import argon2 from 'argon2';
 import type { Express } from 'express';
 import { randomUUID } from 'node:crypto';
 import fs from 'node:fs';
-import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
-import { env } from '../src/config/env.js';
+import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Archivo } from '../src/modulos/archivos/archivo.entity.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
 import { Cliente } from '../src/modulos/clientes/cliente.entity.js';
@@ -245,12 +244,8 @@ export async function crearTarea(
   });
 }
 
-// Directorio de archivos de los tests: TEST_ARCHIVOS_DIR o uno temporal por proceso. Mismo criterio que el
-// Storage de test (spec fase-2 §3.2): cuando exista `crearStorage`, debe usar este mismo directorio.
-let directorioArchivos: string | undefined;
+// Directorio de archivos de los tests: el mismo que usa el Storage de la app (TEST_ARCHIVOS_DIR o uno temporal por proceso).
 export function directorioArchivosTest(): string {
-  directorioArchivos ??=
-    env.TEST_ARCHIVOS_DIR ?? fs.mkdtempSync(path.join(os.tmpdir(), 'zydesk-archivos-'));
   return directorioArchivos;
 }
 

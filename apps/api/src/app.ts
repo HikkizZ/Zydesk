@@ -10,15 +10,18 @@ import { manejadorErrores, noEncontrado } from './core/errores/manejador.js';
 import { crearRutasDocs } from './core/http/docs.routes.js';
 import { crearLogHttp } from './core/http/log-http.js';
 import { reqId } from './core/http/req-id.js';
+import { crearRutasArchivos } from './modulos/archivos/archivos.routes.js';
 import { crearRutasAuditoria } from './modulos/auditoria/auditoria.routes.js';
 import { crearRutasAuth } from './modulos/auth/auth.routes.js';
 import { crearRutasClientes } from './modulos/clientes/clientes.routes.js';
 import { crearRutasConfiguracion } from './modulos/configuracion/configuracion.routes.js';
+import { crearRutasCorreos } from './modulos/correos/correos.routes.js';
 import { crearRutasCategorias } from './modulos/categorias/categorias.routes.js';
 import { crearRutasDepartamentos } from './modulos/departamentos/departamentos.routes.js';
 import { crearRutasPlazos } from './modulos/plazos/plazos.routes.js';
 import { crearRutasLegal } from './modulos/legal/legal.routes.js';
 import { crearRutaSalud } from './modulos/salud/salud.routes.js';
+import { crearRutasTickets } from './modulos/tickets/tickets.routes.js';
 import { crearRutasUsuarios } from './modulos/usuarios/usuarios.routes.js';
 
 export interface DependenciasApp {
@@ -56,6 +59,9 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasDepartamentos());
   app.use(crearRutasCategorias());
   app.use(crearRutasPlazos());
+  app.use(crearRutasTickets());
+  app.use(crearRutasArchivos());
+  app.use(crearRutasCorreos());
   app.use(crearRutasDocs());
 
   app.use('/api', noEncontrado);

@@ -18,6 +18,8 @@ export interface DefRuta<P, Q, B, R> {
   params?: ZodType<P> | undefined;
   query?: ZodType<Q> | undefined;
   body?: ZodType<B> | undefined;
+  // Middlewares entre la autorización y la validación (único uso: `multer` en la subida multipart, ADR 0009)
+  previos?: RequestHandler[];
   respuesta: ZodType<R>;
   status?: number;
   handler: (ctx: {
@@ -54,6 +56,7 @@ export function ruta<P = unknown, Q = unknown, B = unknown, R = unknown>(
   if (def.metodo !== 'get' && seguridad.csrf) cadena.push(seguridad.csrf);
   if (seguridad.autenticar) cadena.push(seguridad.autenticar);
   if (!publico && seguridad.requiere) cadena.push(seguridad.requiere(permiso));
+  if (def.previos) cadena.push(...def.previos);
   cadena.push(validar({ params: def.params, query: def.query, body: def.body }));
 
   const ejecutar = async (req: Request, res: Response, next: NextFunction): Promise<void> => {

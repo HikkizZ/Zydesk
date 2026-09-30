@@ -13,8 +13,8 @@ import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarAuditoria } from '../../core/historial/auditoria.js';
 import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
+import { fuenteNumeros } from '../../core/numeracion/fuente.js';
 import {
-  fuenteNumerosFase1,
   leerContador,
   type ClaveContador,
   type FilaContador,
@@ -147,10 +147,10 @@ export async function obtenerNumeracion(
   for (const clave of CLAVES) {
     const c = await leerContador(m, clave);
     const capacidad = 10 ** c.digitos - c.inicial;
-    const usados = await fuenteNumerosFase1.usados(m, clave);
+    const usados = await fuenteNumeros.usados(m, clave);
     filas.push({
       ...configuracionDe(c),
-      ultimo_usado: await fuenteNumerosFase1.ultimoUsado(m, clave),
+      ultimo_usado: await fuenteNumeros.ultimoUsado(m, clave),
       usados,
       capacidad,
       advertencia: c.modo === 'aleatorio' && capacidad > 0 && usados / capacidad >= 0.5,
@@ -171,7 +171,7 @@ export async function guardarNumeracion(
     for (const clave of CLAVES) {
       const actual = await leerContador(tx, clave, true);
       const n = nuevos[clave];
-      const ultimo = await fuenteNumerosFase1.ultimoUsado(tx, clave);
+      const ultimo = await fuenteNumeros.ultimoUsado(tx, clave);
 
       // Las reglas de ADR 0014 se aplican al cambiar `inicial` o `digitos`: guardar sin tocarlos
       // (p. ej. solo el prefijo) no debe fallar porque ya se emitieron números.
