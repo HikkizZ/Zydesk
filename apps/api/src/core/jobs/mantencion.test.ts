@@ -23,6 +23,7 @@ describe('mantencion.limpiar', () => {
     await insertarSesion(u.id, 'vigente', '1 hour', '1 day');
     await insertarSesion(u.id, 'inactiva', '-1 hour', '1 day');
     await insertarSesion(u.id, 'absoluta', '1 hour', '-1 minute');
+    await insertarSesion(u.id, 'inactiva-2', '-2 hours', '1 day');
     await dataSourceOwner.initialize();
     try {
       await dataSourceOwner.query(
@@ -33,7 +34,7 @@ describe('mantencion.limpiar', () => {
     }
 
     const r = await mantencionLimpiar('job-1');
-    expect(r.sesiones_borradas).toBe(2);
+    expect(r.sesiones_borradas).toBe(3);
     const restantes = await dataSource.query(`SELECT token_hash FROM sesion`);
     expect(restantes).toEqual([{ token_hash: 'vigente' }]);
     const [a] = await dataSource.query(`SELECT count(*)::int AS n FROM auditoria`);

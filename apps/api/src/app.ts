@@ -12,6 +12,11 @@ import { crearLogHttp } from './core/http/log-http.js';
 import { reqId } from './core/http/req-id.js';
 import { crearRutasAuditoria } from './modulos/auditoria/auditoria.routes.js';
 import { crearRutasAuth } from './modulos/auth/auth.routes.js';
+import { crearRutasClientes } from './modulos/clientes/clientes.routes.js';
+import { crearRutasConfiguracion } from './modulos/configuracion/configuracion.routes.js';
+import { crearRutasCategorias } from './modulos/categorias/categorias.routes.js';
+import { crearRutasDepartamentos } from './modulos/departamentos/departamentos.routes.js';
+import { crearRutasPlazos } from './modulos/plazos/plazos.routes.js';
 import { crearRutasLegal } from './modulos/legal/legal.routes.js';
 import { crearRutaSalud } from './modulos/salud/salud.routes.js';
 import { crearRutasUsuarios } from './modulos/usuarios/usuarios.routes.js';
@@ -45,7 +50,12 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasAuth());
   app.use(crearRutasLegal());
   app.use(crearRutasUsuarios());
+  app.use(crearRutasClientes());
+  app.use(crearRutasConfiguracion());
   app.use(crearRutasAuditoria());
+  app.use(crearRutasDepartamentos());
+  app.use(crearRutasCategorias());
+  app.use(crearRutasPlazos());
   app.use(crearRutasDocs());
 
   app.use('/api', noEncontrado);

@@ -9,9 +9,10 @@ export async function mantencionLimpiar(jobId?: string): Promise<{ sesiones_borr
   logger.debug({ job: JOB_MANTENCION, job_id: jobId }, 'job iniciado');
   try {
     await dataSource.query('SELECT limpiar_auditoria()');
-    const borradas: unknown[] = await dataSource.query(
+    // DELETE … RETURNING devuelve [filas, cantidad], no un arreglo de filas
+    const [borradas] = (await dataSource.query(
       'DELETE FROM sesion WHERE expira_en < now() OR expira_max_en < now() RETURNING id',
-    );
+    )) as [unknown[], number];
     const resultado = { sesiones_borradas: borradas.length };
     logger.info(
       {
