@@ -18,7 +18,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { ErrorApi } from '@/lib/api';
 import {
@@ -33,6 +32,7 @@ import { DialogoBolsa } from '../components/DialogoBolsa';
 import { DialogoCliente } from '../components/DialogoCliente';
 import { DialogoContacto } from '../components/DialogoContacto';
 import { DialogoTarifas } from '../components/DialogoTarifas';
+import { TicketsDelCliente } from '../components/TicketsDelCliente';
 import { formatearDia, formatearDiaAnio, formatearHoras } from '../formato';
 
 function Tarjeta({
@@ -246,6 +246,7 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
   const puedeEditarFicha = usePermiso('config.editar');
   const puedeAprobar = usePermiso('ots.aprobar');
   const puedeBolsa = puedeEditarFicha || puedeAprobar;
+  const puedeEditarTickets = usePermiso('tickets.editar');
   const [editando, setEditando] = useState(false);
   const [agregandoBolsa, setAgregandoBolsa] = useState(false);
 
@@ -276,16 +277,11 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
           </p>
         )}
         <div className="mt-4 flex flex-wrap gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-flex">
-                <Button variant="outline" disabled>
-                  Nuevo ticket para este cliente
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Disponible en la Fase 2</TooltipContent>
-          </Tooltip>
+          {puedeEditarTickets ? (
+            <Button asChild variant="outline">
+              <Link to={`/tickets/nuevo?cliente_id=${c.id}`}>Nuevo ticket para este cliente</Link>
+            </Button>
+          ) : null}
           {puedeEditarFicha ? (
             <>
               <Button variant="outline" onClick={() => setEditando(true)}>
@@ -311,8 +307,18 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
       {c.bolsa.historial.length > 0 ? <Bolsa c={c} /> : null}
       {c.es_interno ? null : <Condiciones c={c} puedeEditar={puedeEditarFicha} />}
       <Contactos c={c} />
-      <Tarjeta titulo="Tickets">
-        <EstadoVacio titulo="Disponible en la Fase 2" />
+      <Tarjeta
+        titulo="Tickets"
+        acciones={
+          <Link
+            to={`/tickets/tabla?cliente_id=${c.id}`}
+            className="text-sm text-acento underline underline-offset-2"
+          >
+            Ver todos en la tabla
+          </Link>
+        }
+      >
+        <TicketsDelCliente clienteId={c.id} />
       </Tarjeta>
       <Tarjeta titulo="Órdenes de trabajo">
         <EstadoVacio titulo="Disponible en la Fase 3" />

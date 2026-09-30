@@ -40,7 +40,13 @@ function Grupo({
       </h3>
       <ul className="flex flex-col gap-0.5">
         {filas.map((c) => {
-          const secundario = [c.tiene_bolsa ? 'bolsa de horas' : null, c.activo ? null : 'Inactivo']
+          const secundario = [
+            c.tickets_abiertos > 0
+              ? `${c.tickets_abiertos} ${c.tickets_abiertos === 1 ? 'ticket abierto' : 'tickets abiertos'}`
+              : null,
+            c.tiene_bolsa ? 'bolsa de horas' : null,
+            c.activo ? null : 'Inactivo',
+          ]
             .filter(Boolean)
             .join(' · ');
           return (
