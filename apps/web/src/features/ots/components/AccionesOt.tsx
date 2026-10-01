@@ -2,16 +2,6 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { esEtapaFinal } from '@zydesk/shared';
 import { useState } from 'react';
 import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import {
@@ -27,7 +17,7 @@ import { DialogoCancelarOt } from './DialogoCancelarOt';
 import { DialogoCerrarOt } from './DialogoCerrarOt';
 import { DialogoFacturar } from './DialogoFacturar';
 
-type Dialogo = 'cotizada' | 'aprobacion' | 'cerrar' | 'facturar' | 'cancelar' | null;
+type Dialogo = 'aprobacion' | 'cerrar' | 'facturar' | 'cancelar' | null;
 
 // Acciones del encabezado de la OT según etapa, tipo y permisos (spec fase 3 §10.4).
 export function AccionesOt({ ot }: { ot: OtDatos }) {
@@ -44,7 +34,6 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
     onSuccess: async (_, entrada) => {
       toast.success(
         {
-          cotizada: 'OT marcada como cotizada',
           borrador: 'OT devuelta a Borrador',
           en_ejecucion: 'OT en ejecución',
         }[entrada.etapa],
@@ -72,18 +61,6 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
   const botones: React.ReactNode[] = [];
 
   if (puedeEditar && !final) {
-    if (facturable && ot.etapa === 'borrador') {
-      botones.push(
-        <Button
-          key="cotizada"
-          type="button"
-          disabled={ocupado}
-          onClick={() => setDialogo('cotizada')}
-        >
-          Marcar como cotizada
-        </Button>,
-      );
-    }
     if (ot.etapa === 'aprobada') {
       botones.push(
         <Button
@@ -174,28 +151,6 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
       {botones}
       {pendienteDeAprobar}
       {!puedeEditar ? <span className="text-sm text-tinta-2">Solo lectura</span> : null}
-
-      <AlertDialog open={dialogo === 'cotizada'} onOpenChange={(a) => !a && setDialogo(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>¿Marcar {ot.codigo} como cotizada?</AlertDialogTitle>
-            <AlertDialogDescription>
-              La cotización se hizo fuera de la app. El cotizador llega en la Fase 4.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                cambiar.mutate({ etapa: 'cotizada' });
-              }}
-            >
-              Marcar como cotizada
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
       <DialogoAprobacionCliente
         ot={ot}

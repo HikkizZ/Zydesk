@@ -41,6 +41,7 @@ const NOMBRES: NombreEventoDominio[] = [
   'ot.por_facturar',
   'ot.por_aprobar',
   'ot.cancelada',
+  'cotizacion.respondida',
 ];
 for (const nombre of NOMBRES) {
   eventosDominio.on(nombre, (datos) => {

@@ -78,7 +78,8 @@ export function estadoFacturacionInicial(tipo: TipoOt): EstadoFacturacion {
 }
 
 // Solo etapas sin permiso especial (aprobar, cerrar, cancelar y facturar son acciones propias).
-export const CambioEtapaOt = z.object({ etapa: z.enum(['borrador', 'cotizada', 'en_ejecucion']) });
+// `cotizada` ya no se marca a mano: se alcanza al marcar una cotización como enviada (spec fase 4 §6.2).
+export const CambioEtapaOt = z.object({ etapa: z.enum(['borrador', 'en_ejecucion']) });
 export type CambioEtapaOtDatos = z.infer<typeof CambioEtapaOt>;
 
 export const CierreOt = z.discriminatedUnion('resolvio_ticket', [

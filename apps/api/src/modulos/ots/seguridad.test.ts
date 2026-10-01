@@ -6,6 +6,7 @@ import {
   crearArchivoPendiente,
   crearCliente,
   crearContacto,
+  crearCotizacion,
   crearMensaje,
   crearOt,
   crearTarea,
@@ -58,6 +59,15 @@ async function preparar(usuario: { id: number }) {
     crearOt(ticket.id, { tipo: tipo as 'facturable' | 'interna', etapa, cliente_id: cliente.id });
   const trabajo = await ot('borrador');
   const paraCotizar = await ot('cotizada');
+  const paraDevolver = await ot('cotizada');
+  // las OT cotizadas tienen su cotización enviada (la aprobación del cliente la exige; spec fase 4 §6.2)
+  for (const o of [paraCotizar, paraDevolver]) {
+    await crearCotizacion(o.id, {
+      estado: 'enviada',
+      contacto_id: contacto.id,
+      lineas: [{ cantidad: 1, precio_unitario: 475000 }],
+    });
+  }
   const interna = await ot('borrador', 'interna');
   const paraCancelar = await ot('borrador');
   const paraFacturar = await ot('cerrada');
@@ -70,6 +80,7 @@ async function preparar(usuario: { id: number }) {
     contacto,
     trabajo,
     paraCotizar,
+    paraDevolver,
     interna,
     paraCancelar,
     paraFacturar,
@@ -100,7 +111,8 @@ const MUTACIONES: {
   {
     nombre: 'cambiar-etapa',
     permiso: 'editar',
-    enviar: (a, d) => a.post(`/api/ots/${d.trabajo.id}/cambiar-etapa`).send({ etapa: 'cotizada' }),
+    enviar: (a, d) =>
+      a.post(`/api/ots/${d.paraDevolver.id}/cambiar-etapa`).send({ etapa: 'borrador' }),
   },
   {
     nombre: 'POST tareas',

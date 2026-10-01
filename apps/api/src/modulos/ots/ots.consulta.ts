@@ -1,8 +1,10 @@
-import { iniciales, type FormaAprobacion } from '@zydesk/shared';
+import { iniciales, redondear, type FormaAprobacion } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { paginar } from '../../core/http/paginacion.js';
 import { archivoDeId, archivosDe } from '../archivos/archivos.service.js';
+import { cotizacionVigente } from '../cotizaciones/cotizaciones.consulta.js';
+import { leerTarifas } from '../configuracion/configuracion.service.js';
 import type { OtResumenDatos, OtSalidaDatos, OtsQueryDatos } from './ots.tipos.js';
 
 type Consulta = Pick<EntityManager, 'query'>;
@@ -26,6 +28,7 @@ const SELECT_RESUMEN = `
               ELSE json_build_object('id', c.id, 'nombre', c.nombre, 'es_interno', c.es_interno) END AS cliente,
          ${persona('ur')} AS responsable_tecnico,
          ${persona('ua')} AS aprobador,
+         cv.neto_clp::float8 AS neto,
          json_build_object(
            'estimadas', COALESCE((SELECT sum(ta.horas_estimadas) FROM tarea ta WHERE ta.ot_id = o.id), 0)::float8,
            'reales', COALESCE((SELECT sum(ta.horas_reales) FROM tarea ta WHERE ta.ot_id = o.id), 0)::float8,
@@ -37,7 +40,11 @@ const SELECT_RESUMEN = `
     JOIN ticket t ON t.id = o.ticket_id
     LEFT JOIN cliente c ON c.id = o.cliente_id
     LEFT JOIN usuario ur ON ur.id = o.responsable_tecnico_id
-    LEFT JOIN usuario ua ON ua.id = o.aprobador_id`;
+    LEFT JOIN usuario ua ON ua.id = o.aprobador_id
+    LEFT JOIN LATERAL (
+      SELECT CASE cq.moneda WHEN 'CLP' THEN cq.neto WHEN 'UF' THEN round(cq.neto * cq.valor_uf) END AS neto_clp
+        FROM cotizacion cq WHERE cq.ot_id = o.id ORDER BY cq.version DESC LIMIT 1
+    ) cv ON true`;
 
 interface PersonaFila {
   id: number;
@@ -63,6 +70,7 @@ interface FilaResumen {
   cliente: OtResumenDatos['cliente'];
   responsable_tecnico: PersonaFila | null;
   aprobador: PersonaFila | null;
+  neto: number | null;
   horas: OtResumenDatos['horas'];
   vencida: boolean;
   n_mensajes: number;
@@ -89,7 +97,7 @@ function aResumen(f: FilaResumen): OtResumenDatos {
     cliente: f.cliente,
     responsable_tecnico: aBreve(f.responsable_tecnico),
     aprobador: aBreve(f.aprobador),
-    neto: null, // F4-T5
+    neto: f.neto,
     horas: f.horas,
     inicio: f.inicio,
     termino: f.termino,
@@ -346,6 +354,16 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
     [resumen.ticket.id, id],
   );
 
+  // Spec fase 4 §6.1: costo interno de una OT interna con horas registradas × tarifa de costo interno.
+  let costo_interno: OtSalidaDatos['costo_interno'] = null;
+  if (resumen.tipo === 'interna') {
+    const { costo_interno: tarifa } = await leerTarifas(m);
+    if (tarifa !== null) {
+      const horas = resumen.horas.registradas;
+      costo_interno = { horas, tarifa, monto: redondear(horas * tarifa, 'CLP') };
+    }
+  }
+
   return {
     ...aResumen(resumen),
     alcance: e.alcance,
@@ -384,9 +402,13 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
       seguidores: seguidores.map((s) => aBreve(s)!),
       otras_ots_abiertas: otras,
     },
-    cotizacion: null, // F4-T5
-    costo_interno: null, // F4-T5
-    puede_cotizar: false, // F4-T5
+    cotizacion: await cotizacionVigente(m, id),
+    costo_interno,
+    puede_cotizar:
+      resumen.tipo === 'facturable' &&
+      (resumen.etapa === 'borrador' || resumen.etapa === 'cotizada') &&
+      resumen.cliente !== null &&
+      !resumen.cliente.es_interno,
     tipo_cambiable: resumen.etapa === 'borrador',
     creado_por: e.creado_por,
   };

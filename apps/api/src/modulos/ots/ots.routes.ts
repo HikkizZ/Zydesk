@@ -91,7 +91,7 @@ export function crearRutasOts(): Router {
   ruta(router, {
     metodo: 'post',
     path: '/api/ots/:id/cambiar-etapa',
-    resumen: 'Cambiar la etapa de una OT (Borrador, Cotizada, En ejecución)',
+    resumen: 'Cambiar la etapa de una OT (Borrador, En ejecución)',
     etiqueta: ETIQUETA,
     permiso: 'tickets.editar',
     params: paramsId,

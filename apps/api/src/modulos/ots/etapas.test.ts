@@ -3,6 +3,7 @@ import {
   crearArchivoPendiente,
   crearCliente,
   crearContacto,
+  crearCotizacion,
   crearOt,
   crearTarea,
   crearTicket,
@@ -40,47 +41,63 @@ async function otFacturable(
   const cliente = await crearCliente();
   const ticket = await crearTicket({ cliente_id: cliente.id });
   const ot = await crearOt(ticket.id, { tipo: 'facturable', etapa, cliente_id: cliente.id });
-  return { cliente, ticket, ot };
+  // Una OT cotizada tiene su cotización enviada (la aprobación del cliente la exige; spec fase 4 §6.2)
+  const cotizacion =
+    etapa === 'cotizada'
+      ? await crearCotizacion(ot.id, {
+          estado: 'enviada',
+          contacto_id: (await crearContacto(cliente.id)).id,
+          lineas: [{ cantidad: 1, precio_unitario: 475000 }],
+        })
+      : null;
+  return { cliente, ticket, ot, cotizacion };
 }
 
 describe('cambiar-etapa (§4.5)', () => {
-  it('borrador → cotizada → borrador → cotizada deja un evento de etapa por cambio', async () => {
+  it('borrador → cotizada (al enviar) → borrador → cotizada deja un evento de etapa por cambio', async () => {
     const { agente } = await como('tecnico');
-    const { ot } = await otFacturable();
-    const a = await agente.post(`/api/ots/${ot.id}/cambiar-etapa`).send({ etapa: 'cotizada' });
+    const { ot, cliente } = await otFacturable();
+    const v1 = await crearCotizacion(ot.id, {
+      contacto_id: (await crearContacto(cliente.id)).id,
+      lineas: [{ cantidad: 1, precio_unitario: 475000 }],
+    });
+    const etapas = async () =>
+      (await eventos('ot', ot.id)).filter((e: { campo: string | null }) => e.campo === 'etapa');
+    const a = await agente.post(`/api/cotizaciones/${v1.id}/enviar`);
     expect(a.status).toBe(200);
-    expect(a.body.etapa).toBe('cotizada');
-    const evs = await eventos('ot', ot.id);
+    expect(a.body.ot.etapa).toBe('cotizada');
+    const evs = await etapas();
     expect(evs).toHaveLength(1);
     expect(evs[0]).toMatchObject({
       accion: 'cambio',
       campo: 'etapa',
       valor_anterior: 'Borrador',
       valor_nuevo: 'Cotizada',
-      datos: null,
+      datos: { cotizacion_id: v1.id, codigo: v1.codigo, version: 1 },
     });
     const b = await agente.post(`/api/ots/${ot.id}/cambiar-etapa`).send({ etapa: 'borrador' });
     expect(b.status).toBe(200);
     expect(b.body.tipo_cambiable).toBe(true);
-    expect(
-      (await agente.post(`/api/ots/${ot.id}/cambiar-etapa`).send({ etapa: 'cotizada' })).status,
-    ).toBe(200);
-    expect(await eventos('ot', ot.id)).toHaveLength(3);
+    const v2 = await agente.post(`/api/cotizaciones/${v1.id}/duplicar`);
+    expect(v2.status).toBe(201);
+    expect((await agente.post(`/api/cotizaciones/${v2.body.id}/enviar`)).status).toBe(200);
+    expect(await etapas()).toHaveLength(3);
   });
 
-  it('cotizada exige un cliente externo (400 VALIDACION cliente_id)', async () => {
+  it('enviar exige un cliente externo (400 VALIDACION cliente_id) y la OT sigue en borrador', async () => {
     const { agente } = await como('tecnico');
     const t = await crearTicket();
+    const contacto = await crearContacto((await crearCliente()).id);
     const sin = await crearOt(t.id, { tipo: 'facturable' });
-    const r = await agente.post(`/api/ots/${sin.id}/cambiar-etapa`).send({ etapa: 'cotizada' });
+    const lineas = [{ cantidad: 1, precio_unitario: 1000 }];
+    const vSin = await crearCotizacion(sin.id, { contacto_id: contacto.id, lineas });
+    const r = await agente.post(`/api/cotizaciones/${vSin.id}/enviar`);
     expect(r.status).toBe(400);
     expect(r.body.error.detalles).toHaveProperty('cliente_id');
     const interno = await crearCliente({ es_interno: true });
     const otInterno = await crearOt(t.id, { tipo: 'facturable', cliente_id: interno.id });
-    expect(
-      (await agente.post(`/api/ots/${otInterno.id}/cambiar-etapa`).send({ etapa: 'cotizada' }))
-        .status,
-    ).toBe(400);
+    const vInterno = await crearCotizacion(otInterno.id, { contacto_id: contacto.id, lineas });
+    expect((await agente.post(`/api/cotizaciones/${vInterno.id}/enviar`)).status).toBe(400);
     expect((await fila(sin.id)).etapa).toBe('borrador');
   });
 
@@ -88,13 +105,15 @@ describe('cambiar-etapa (§4.5)', () => {
     const { agente } = await como('tecnico');
     const t = await crearTicket();
     const interna = await crearOt(t.id, { tipo: 'interna' });
-    const r = await agente.post(`/api/ots/${interna.id}/cambiar-etapa`).send({ etapa: 'cotizada' });
+    const r = await agente
+      .post(`/api/ots/${interna.id}/cambiar-etapa`)
+      .send({ etapa: 'en_ejecucion' });
     expect(r.status).toBe(409);
     expect(r.body.error.codigo).toBe('TRANSICION_INVALIDA');
     expect(r.body.error.detalles).toEqual({
       entidad: 'ot',
       desde: 'borrador',
-      hasta: 'cotizada',
+      hasta: 'en_ejecucion',
       permitidas: ['aprobada', 'cancelada'],
     });
     const cerrada = await crearOt(t.id, { etapa: 'cerrada' });
@@ -107,7 +126,7 @@ describe('cambiar-etapa (§4.5)', () => {
       (await agente.post(`/api/ots/${borrador.id}/cambiar-etapa`).send({ etapa: 'en_ejecucion' }))
         .status,
     ).toBe(409);
-    for (const etapa of ['aprobada', 'cerrada', 'cancelada']) {
+    for (const etapa of ['cotizada', 'aprobada', 'cerrada', 'cancelada']) {
       expect(
         (await agente.post(`/api/ots/${borrador.id}/cambiar-etapa`).send({ etapa })).status,
       ).toBe(400);
@@ -191,7 +210,7 @@ describe('aprobación interna (§4.6)', () => {
 describe('aprobación del cliente (prueba 9)', () => {
   it('registra la aprobación con respaldo: etapa aprobada, archivo en la galería de la OT', async () => {
     const { agente, usuario } = await como('coordinacion');
-    const { cliente, ot } = await otFacturable('cotizada');
+    const { cliente, ot, cotizacion } = await otFacturable('cotizada');
     const contacto = await crearContacto(cliente.id, { nombre: 'Marta Lillo' });
     const respaldo = await crearArchivoPendiente(usuario.id, {
       tipo_mime: 'application/pdf',
@@ -223,8 +242,8 @@ describe('aprobación del cliente (prueba 9)', () => {
     );
     expect(archivo).toEqual({ entidad: 'ot', entidad_id: ot.id });
     const evs = await eventos('ot', ot.id);
-    expect(evs).toHaveLength(1);
-    expect(evs[0]).toMatchObject({
+    expect(evs.map((e: { accion: string }) => e.accion)).toEqual(['cotizacion_aprobada', 'cambio']);
+    expect(evs[1]).toMatchObject({
       campo: 'etapa',
       valor_anterior: 'Cotizada',
       valor_nuevo: 'Aprobada por cliente',
@@ -233,6 +252,7 @@ describe('aprobación del cliente (prueba 9)', () => {
         fecha: '2026-09-28',
         forma: 'orden_de_compra',
         archivo_id: respaldo.id,
+        cotizacion_id: cotizacion!.id,
       },
     });
   });
@@ -252,9 +272,11 @@ describe('aprobación del cliente (prueba 9)', () => {
       .send({ ...(await cuerpo()), iniciar: true });
     expect(r.status).toBe(200);
     expect(r.body.etapa).toBe('en_ejecucion');
-    expect((await eventos('ot', ot.id)).map((e: { valor_nuevo: string }) => e.valor_nuevo)).toEqual(
-      ['Aprobada por cliente', 'En ejecución'],
-    );
+    expect(
+      (await eventos('ot', ot.id))
+        .filter((e: { campo: string | null }) => e.campo === 'etapa')
+        .map((e: { valor_nuevo: string }) => e.valor_nuevo),
+    ).toEqual(['Aprobada por cliente', 'En ejecución']);
     const otra = await agente.put(`/api/ots/${ot.id}/aprobacion`).send(await cuerpo());
     expect(otra.status).toBe(409);
     expect(otra.body.error.codigo).toBe('TRANSICION_INVALIDA');

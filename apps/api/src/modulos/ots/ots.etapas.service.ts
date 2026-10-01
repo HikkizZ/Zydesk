@@ -15,6 +15,7 @@ import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import { asociarArchivos } from '../archivos/archivos.service.js';
+import { aprobarVigenteEnTx, rechazarVigenteEnTx } from '../cotizaciones/cotizaciones.estados.js';
 import { bloquearTicket, registrarActividadEnTicket } from '../tickets/tickets.service.js';
 import { bloquearOt, type OtBloqueada } from './ots.acceso.js';
 import { errorValidacion, hoyEnSantiago, nombreUsuario } from './ots.comun.js';
@@ -40,7 +41,7 @@ function transicionInvalida(
 
 // `inicio = hoy` al entrar en ejecución si falta (spec 4.5). Si `termino` ya es anterior a hoy el CHECK
 // de la tabla no lo permite: en ese caso `inicio` se deja como está.
-async function registrarEtapa(
+export async function registrarEtapa(
   tx: EntityManager,
   actor: UsuarioSesion,
   ot: OtBloqueada,
@@ -75,25 +76,21 @@ export async function cambiarEtapa(
   id: number,
   p: CambioEtapaOtDatos,
 ): Promise<OtSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const ot = await bloquearOt(tx, id);
     if (!puedeCambiarEtapa(ot.tipo, ot.etapa, p.etapa)) throw transicionInvalida(ot, p.etapa);
 
-    if (p.etapa === 'cotizada') {
-      // En esta fase es una marca manual: la cotización se hizo fuera de la app.
-      const externo: unknown[] =
-        ot.cliente_id === null
-          ? []
-          : await tx.query(`SELECT 1 FROM cliente WHERE id = $1 AND NOT es_interno`, [
-              ot.cliente_id,
-            ]);
-      if (externo.length === 0) {
-        throw errorValidacion({ cliente_id: ['La OT debe tener un cliente externo'] });
-      }
+    // "Volver a borrador" es el rechazo del cliente: la cotización vigente enviada queda rechazada (§6.2)
+    if (ot.etapa === 'cotizada' && p.etapa === 'borrador') {
+      const rechazo = await rechazarVigenteEnTx(tx, actor, ot);
+      if (rechazo) pendientes.push(rechazo);
     }
     await registrarEtapa(tx, actor, ot, p.etapa);
     return cargarOt(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Aprobaciones (spec fase 3 §4.6) ----
@@ -131,10 +128,15 @@ export async function registrarAprobacionCliente(
   id: number,
   e: AprobacionClienteEntradaDatos,
 ): Promise<OtSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const ot = await bloquearOt(tx, id);
     if (ot.tipo !== 'facturable' || ot.etapa !== 'cotizada')
       throw transicionInvalida(ot, 'aprobada');
+
+    // La aprobación exige una cotización enviada y la congela (spec fase 4 §6.2)
+    const aprobada = await aprobarVigenteEnTx(tx, actor, ot);
+    pendientes.push(aprobada.pendiente);
 
     // `aprueba_cotizaciones` es informativo: basta un contacto activo del cliente (spec §17.8)
     const [contacto]: { nombre: string }[] =
@@ -164,11 +166,14 @@ export async function registrarAprobacionCliente(
         fecha: e.fecha,
         forma: e.forma,
         archivo_id: e.archivo_id,
+        cotizacion_id: aprobada.cotizacion_id,
       },
     });
     if (e.iniciar) await registrarEtapa(tx, actor, { ...ot, etapa: 'aprobada' }, 'en_ejecucion');
     return cargarOt(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Cancelar (spec fase 3 §4.7) ----

@@ -3,6 +3,7 @@ import {
   crearArchivoPendiente,
   crearCliente,
   crearContacto,
+  crearCotizacion,
   crearMensaje,
   crearOt,
   crearTarea,
@@ -64,8 +65,8 @@ describe('cobertura de eventos de OT', () => {
     [
       'cambiar-etapa',
       (a: Agente, d: Datos) =>
-        a.post(`/api/ots/${d.borrador.id}/cambiar-etapa`).send({ etapa: 'cotizada' }),
-      'borrador',
+        a.post(`/api/ots/${d.cotizada.id}/cambiar-etapa`).send({ etapa: 'borrador' }),
+      'cotizada',
     ],
     [
       'aprobar',
@@ -121,12 +122,19 @@ describe('cobertura de eventos de OT', () => {
     const crear = (etapa: 'borrador' | 'cotizada' | 'cerrada', tipo = 'facturable') =>
       crearOt(ticket.id, { etapa, tipo: tipo as 'facturable' | 'interna', cliente_id: cliente.id });
     const borrador = await crear('borrador');
+    const cotizada = await crear('cotizada');
+    // la OT cotizada tiene su cotización enviada: la aprobación del cliente la exige (spec fase 4 §6.2)
+    await crearCotizacion(cotizada.id, {
+      estado: 'enviada',
+      contacto_id: contacto.id,
+      lineas: [{ cantidad: 1, precio_unitario: 475000 }],
+    });
     const datos = {
       usuario,
       contacto,
       borrador,
       interna: await crear('borrador', 'interna'),
-      cotizada: await crear('cotizada'),
+      cotizada,
       cerrada: await crear('cerrada'),
       tarea: await crearTarea({ ot_id: borrador.id }),
     };

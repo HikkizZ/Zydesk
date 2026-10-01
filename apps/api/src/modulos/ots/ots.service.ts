@@ -357,7 +357,16 @@ export async function editarOt(
       }
     }
     if (e.descuenta_bolsa !== undefined) {
-      if (e.descuenta_bolsa) {
+      // Regla mínima de bolsa (spec fase 4 §6.3): con el contrato ya fijado, `true` no lo vuelve a
+      // resolver; para cambiar de contrato hay que enviar `false` y luego `true`.
+      const [fijo]: { contrato_id: number | null }[] = await tx.query(
+        `SELECT contrato_id FROM ot WHERE id = $1`,
+        [id],
+      );
+      const contratoFijado = fijo!.contrato_id !== null && !('contrato_id' in sets);
+      if (e.descuenta_bolsa && contratoFijado) {
+        // sin cambios
+      } else if (e.descuenta_bolsa) {
         const r = await validarBolsa(tx, tipoNuevo, cliente_id);
         if (typeof r === 'string') errores['descuenta_bolsa'] = [r];
         else aplicar('contrato_id', r);

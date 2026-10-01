@@ -11,7 +11,7 @@ import { IngresoEntrada } from './auth.js';
 import { OtCrearEntrada, OtEditarEntrada, OtsQuery } from './ot.js';
 import { TareaEntrada } from './tarea.js';
 import { MensajeEntrada } from './mensaje.js';
-import { CierreOt } from '../estados/ot.js';
+import { CambioEtapaOt, CierreOt } from '../estados/ot.js';
 import { CotizacionEntrada } from './cotizacion.js';
 import { PlantillaLineaEntrada, TarifasEntrada } from './configuracion.js';
 
@@ -262,5 +262,12 @@ describe('PlantillaLineaEntrada', () => {
     });
     expect(r.precio_unitario).toBeNull();
     expect(r.cantidad).toBe(1);
+  });
+});
+
+describe('CambioEtapaOt', () => {
+  it('rechaza cotizada: la marca manual desapareció', () => {
+    expect(CambioEtapaOt.safeParse({ etapa: 'cotizada' }).success).toBe(false);
+    expect(CambioEtapaOt.safeParse({ etapa: 'borrador' }).success).toBe(true);
   });
 });
