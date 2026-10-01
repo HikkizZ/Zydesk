@@ -41,6 +41,18 @@ function transicionInvalida(
 
 // `inicio = hoy` al entrar en ejecución si falta (spec 4.5). Si `termino` ya es anterior a hoy el CHECK
 // de la tabla no lo permite: en ese caso `inicio` se deja como está.
+// Fija el contacto de la OT solo si aún no tiene uno (lo usa enviar cotización, sin escribir `ot` desde fuera).
+export async function asignarContactoSiVacio(
+  tx: EntityManager,
+  ot_id: number,
+  contacto_id: number,
+): Promise<void> {
+  await tx.query(`UPDATE ot SET contacto_id = COALESCE(contacto_id, $2) WHERE id = $1`, [
+    ot_id,
+    contacto_id,
+  ]);
+}
+
 export async function registrarEtapa(
   tx: EntityManager,
   actor: UsuarioSesion,

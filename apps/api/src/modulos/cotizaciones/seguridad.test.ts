@@ -593,3 +593,51 @@ describe('prueba 22: X-Request-Id', () => {
     for (const e of evs) expect(e.req_id).toBe(ok.headers['x-request-id']);
   });
 });
+
+// F4-SEC-01
+describe('totales fuera de rango de numeric(14,2)', () => {
+  it('PUT con cantidad y precio máximos: 400 VALIDACION con detalles.lineas, no 500', async () => {
+    const { agente } = await como('tecnico');
+    const { ot, contacto } = await otFacturable();
+    const c = await crearCotizacion(ot.id);
+    const r = await agente.put(`/api/cotizaciones/${c.id}`).send({
+      ...entrada(contacto.id),
+      lineas: [
+        {
+          tipo: 'servicio',
+          descripcion: 'x',
+          cantidad: 999999,
+          unidad: 'un',
+          precio_unitario: 999999999,
+          descuento_pct: 0,
+        },
+      ],
+    });
+    expect(r.status).toBe(400);
+    expect(r.body.error.codigo).toBe('VALIDACION');
+    expect(r.body.error.detalles.lineas).toBeDefined();
+  });
+});
+
+// F4-SEC-02
+describe('enviar con un contacto que ya no es del cliente de la OT', () => {
+  it('400 VALIDACION contacto_id; la cotización sigue en borrador y la OT sin contacto', async () => {
+    const { agente } = await como('coordinacion');
+    const { ot, contacto } = await otFacturable();
+    const c = await crearCotizacion(ot.id, {
+      contacto_id: contacto.id,
+      lineas: [{ cantidad: 1, precio_unitario: 1000 }],
+    });
+    const otro = await crearCliente();
+    const cambio = await agente.patch(`/api/ots/${ot.id}`).send({ cliente_id: otro.id });
+    expect(cambio.status).toBe(200);
+    const r = await agente.post(`/api/cotizaciones/${c.id}/enviar`);
+    expect(r.status).toBe(400);
+    expect(r.body.error.codigo).toBe('VALIDACION');
+    expect(r.body.error.detalles.contacto_id).toBeDefined();
+    const [cot] = await dataSource.query(`SELECT estado FROM cotizacion WHERE id = $1`, [c.id]);
+    expect(cot.estado).toBe('borrador');
+    const [o] = await dataSource.query(`SELECT contacto_id FROM ot WHERE id = $1`, [ot.id]);
+    expect(o.contacto_id).toBeNull();
+  });
+});

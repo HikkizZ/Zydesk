@@ -24,7 +24,7 @@ import {
   type OtBloqueada,
 } from '../ots/ots.acceso.js';
 import { errorValidacion, hoyEnSantiago, recortar } from '../ots/ots.comun.js';
-import { registrarEtapa } from '../ots/ots.etapas.service.js';
+import { asignarContactoSiVacio, registrarEtapa } from '../ots/ots.etapas.service.js';
 import { bloquearTicket, registrarActividadEnTicket } from '../tickets/tickets.service.js';
 import { cargarCotizacion, listarCotizaciones } from './cotizaciones.consulta.js';
 import type { MarcaDocumento } from '../../integraciones/documentos.js';
@@ -261,6 +261,22 @@ export interface LineaGuardable {
   descuento_pct: number;
 }
 
+const MENSAJE_CONTACTO = 'Debe ser un contacto activo del cliente de la OT';
+const MAX_NUMERIC = 999999999999.99; // límite de numeric(14,2)
+
+async function contactoDelCliente(
+  tx: EntityManager,
+  ot: OtBloqueada,
+  contacto_id: number,
+): Promise<boolean> {
+  if (ot.cliente_id === null) return false;
+  const f: unknown[] = await tx.query(
+    `SELECT 1 FROM contacto WHERE id = $1 AND cliente_id = $2 AND activo`,
+    [contacto_id, ot.cliente_id],
+  );
+  return f.length > 0;
+}
+
 // Escribe encabezado y líneas recalculando los totales con `calcularCotizacion`: el cliente nunca los
 // dicta y `iva_pct` es el snapshot de la cotización (ADR 0007). Lo comparten editar, importar y plantilla.
 async function escribirCotizacion(
@@ -269,23 +285,17 @@ async function escribirCotizacion(
   cot: CotizacionBloqueada,
   e: Omit<CotizacionEntradaDatos, 'lineas'> & { lineas: LineaGuardable[] },
 ): Promise<void> {
-  if (e.contacto_id !== null) {
-    const f: unknown[] =
-      ot.cliente_id === null
-        ? []
-        : await tx.query(`SELECT 1 FROM contacto WHERE id = $1 AND cliente_id = $2 AND activo`, [
-            e.contacto_id,
-            ot.cliente_id,
-          ]);
-    if (f.length === 0) {
-      throw errorValidacion({ contacto_id: ['Debe ser un contacto activo del cliente de la OT'] });
-    }
+  if (e.contacto_id !== null && !(await contactoDelCliente(tx, ot, e.contacto_id))) {
+    throw errorValidacion({ contacto_id: [MENSAJE_CONTACTO] });
   }
   const r = calcularCotizacion(e.lineas, {
     moneda: e.moneda,
     aplica_iva: e.aplica_iva,
     iva_pct: cot.iva_pct,
   });
+  if ([...r.lineas, r.subtotal, r.neto, r.iva, r.total].some((n) => Math.abs(n) > MAX_NUMERIC)) {
+    throw errorValidacion({ lineas: ['El total supera el máximo permitido'] });
+  }
   await tx.query(
     `UPDATE cotizacion SET contacto_id = $2, fecha_emision = $3, validez_dias = $4, moneda = $5, valor_uf = $6,
                            aplica_iva = $7, condiciones = $8, nota_interna = $9, subtotal = $10, descuentos = $11,
@@ -560,6 +570,9 @@ export async function enviarCotizacion(
     if (cuenta!.n === 0) errores['lineas'] = ['Agrega al menos una línea'];
     if (cot.contacto_id === null) {
       errores['contacto_id'] = ['Indica el contacto que recibe la cotización'];
+    } else if (ot.cliente_id !== null && !(await contactoDelCliente(tx, ot, cot.contacto_id))) {
+      // sin cliente, el error es el de cliente_id más abajo
+      errores['contacto_id'] = [MENSAJE_CONTACTO];
     }
     if (Object.keys(errores).length > 0) throw errorValidacion(errores);
 
@@ -589,10 +602,7 @@ export async function enviarCotizacion(
         WHERE ot_id = $1 AND id <> $2 AND estado = 'enviada'`,
       [ot.id, id],
     );
-    await tx.query(`UPDATE ot SET contacto_id = COALESCE(contacto_id, $2) WHERE id = $1`, [
-      ot.id,
-      cot.contacto_id,
-    ]);
+    await asignarContactoSiVacio(tx, ot.id, cot.contacto_id!);
     if (ot.etapa === 'borrador') {
       await registrarEtapa(tx, actor, ot, 'cotizada', {
         datos: { cotizacion_id: id, codigo: cot.codigo, version: cot.version },
