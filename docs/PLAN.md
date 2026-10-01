@@ -29,7 +29,7 @@
 **Revisión de seguridad al cierre de cada fase** (desde la Fase 3, antes del PR):
 
 ```
-a. Fable  → revisa el diff completo de la fase con la skill security-review (.claude/skills)
+a. Fable  → revisa el diff completo de la fase con la skill sentry-security-review (.claude/skills)
 b. Opus   → en paralelo, segunda revisión con /security-review de Claude Code
 c. Opus   → valida cada hallazgo (reproducible con test o petición) y descarta falsos positivos
 d. Sonnet → corrige cada hallazgo confirmado con un test que lo demuestre

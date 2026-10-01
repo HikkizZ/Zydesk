@@ -1,7 +1,7 @@
 {
   "version": 1,
   "skills": {
-    "security-review": {
+    "sentry-security-review": {
       "source": "getsentry/skills",
       "sourceType": "github",
       "skillPath": "skills/security-review/SKILL.md",
