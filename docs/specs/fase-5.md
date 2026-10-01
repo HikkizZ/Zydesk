@@ -414,14 +414,14 @@ En el navegador (1440 px y 390 px): `/horas` con `sdiaz` reproduce el diseño "R
   - PATCH con `descripcion: null` en "Sin ticket" → 400; con `tarea_id` en una fila de ticket o "Sin ticket" → 400.
   - Ver una planilla ajena sin permiso → 403, antes del 404 de un usuario inexistente.
   - En `clientes.test.ts`, el contrato vigente devuelve `horas_usadas_mes: 0`, ya no `null`.
-- Spec aprobada. **Siguiente** (pendiente desde 5C):
-  1. 5A (F5-T1, T2).
-  2. 5B (F5-T3 a T6).
-  3. 5C y 5D en paralelo (F5-T7 a T9).
-  4. F5-T13.
-  5. 5E (F5-T10).
-  6. Revisión de seguridad (F5-T11).
-  7. Documentación (F5-T12).
+- **F5-T7 y T8 (bloque 5C) hechos**: pantalla 13 según §8 (`features/horas/**`, `formatearHoras` en `lib/formato`).
+- **F5-T9 (bloque 5D) hecho**: columna **Reg.** en las tareas de OT, "Ver en la planilla" en el panel de la OT, horas usadas de la bolsa en la ficha del cliente, ayuda del redactor hacia `/horas`, fila 10 de la matriz.
+- **F5-T13 hecho**: `origen: 'registradas'` en importar horas; por tarea, una línea a `hora_normal` y otra "(fuera de horario)" a `hora_extendida`; las horas sin tarea en "Horas registradas sin tarea"; `TARIFA_FALTANTE { concepto: 'hora_extendida' }` solo si hay horas fuera de horario.
+- **F5-T10 hecho**. Desviaciones: la semilla de horas solo inserta lo que falta (nunca borra) y no siembra días futuros; las horas de TK-1048 de la Fase 2 pasan al viernes de la semana anterior para no ensuciar la planilla del diseño.
+- **F5-T11 hecho**: VULN-001 corregido en `dddfbb3` (al desvincular tareas, las filas manuales chocaban con `registro_horas_celda_manual_uq` → 500; `desvincularTareas` fusiona las celdas y `quitarTarea` la llama antes del `DELETE`). `/security-review` sin hallazgos. Detalle en ADR 0026.
+- **F5-T12 hecho**: ADR 0026, README de decisiones, CHANGELOG, manuales, guía de la API y `CLAUDE.md`. Suite final: API 664 tests + 2 omitidos; shared 287; web 281.
+- **Verificación en el navegador** (1440 y 390 px, `sdiaz`): la semana del diseño muestra 12 h (8,5 facturables / 3,5 internas / 0,5 fuera de horario); escribir en una celda guarda y vaciarla borra; el diálogo de celda corrige las 3 h del seguimiento de OT-0218 a 3,5 y `mensaje.horas` queda sincronizado; coordinación ve la planilla de `sdiaz` en solo lectura y `DELETE` → 403; lectura ve "Tu rol no registra horas" y `POST` → 403; en 390 px la vista por día con el total fijo sobre la barra inferior.
+- **Siguiente**: PR a `main` con CI verde, con confirmación del usuario.
 
 ## 16. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0026 "Precisiones de la Fase 5" al cerrar)
 

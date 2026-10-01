@@ -44,9 +44,10 @@ Para cambiar el rol o el departamento de alguien, usa los selectores de su fila.
 | Cerrar OT                            |       ✓        |      ✓       |    –    |      –       |
 | Marcar OT como facturada             |       ✓        |      ✓       |    –    |      –       |
 | Ver reportes y montos                |       ✓        |      ✓       |    –    |      ✓       |
+| Ver horas de todo el equipo          |       ✓        |      ✓       |    –    |      –       |
 | Cambiar configuración (esta sección) |       ✓        |      –       |    –    |      –       |
 
-Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
+Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. **Registrar horas** en la planilla va con "Crear y editar tickets" (cada persona registra solo las suyas); **Ver horas de todo el equipo** permite abrir la planilla de cualquier persona en solo lectura, sin editarla. Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
 
 ## 3. Restablecer una contraseña
 
@@ -72,7 +73,7 @@ En **Configuración → Departamentos y horarios**. Cada departamento tiene:
 - **Horario extendido desde**: desde esa hora se consideran "extendidas" las horas registradas (se cobra tarifa de horario extendido).
 - **Tiempo disponible para tickets (%)**: el resto se reserva para reuniones y trabajo interno; se usa para calcular la carga de cada persona.
 
-Qué afecta: el horario, la colación y los feriados se usan para **contar los plazos en horas hábiles**.
+Qué afecta: el horario, la colación y los feriados se usan para **contar los plazos en horas hábiles** y para la **jornada** de la planilla de **Horas**: cada día de la planilla se compara con las horas de ese día según el horario del departamento de la persona (0 en días libres y feriados, generales o del departamento). Una persona sin departamento no tiene jornada con la que comparar. "Horario extendido desde" no marca horas automáticamente: en la planilla, "fuera de horario" es una marca que pone la persona.
 
 Un departamento solo se puede **eliminar** si no tiene personas (activas o inactivas); si las tiene, el botón aparece deshabilitado.
 
@@ -94,7 +95,7 @@ En el menú **Clientes**. Los clientes y las **áreas internas** (por ejemplo, M
 - **Nuevo cliente** (solo Administración): el nombre es obligatorio y único; el RUT, si se escribe, debe ser válido y no repetirse. En un área interna no se piden RUT, dirección ni condiciones de pago.
 - **Desactivar** un cliente lo oculta de la lista (se ve con **Mostrar inactivos**); los clientes nunca se borran, porque los tickets futuros los usarán.
 - **Contactos**: personas del cliente con su área, correo, teléfono y si **aprueban cotizaciones**. Pueden agregarlos Administración, Coordinación y Técnicos.
-- **Bolsa de horas** (opcional): un contrato mensual de horas de soporte. Se agrega con **Agregar bolsa** (Administración o Coordinación): horas al mes, fecha desde la que rige y, si corresponde, hasta cuándo y fecha de renovación. Solo puede haber **una vigente a la vez**: si las fechas se solapan con otra, la app avisa. Para renovar, cierra el contrato anterior poniéndole fecha de término y agrega el nuevo. El cálculo de horas usadas llegará junto con las órdenes de trabajo.
+- **Bolsa de horas** (opcional): un contrato mensual de horas de soporte. Se agrega con **Agregar bolsa** (Administración o Coordinación): horas al mes, fecha desde la que rige y, si corresponde, hasta cuándo y fecha de renovación. Solo puede haber **una vigente a la vez**: si las fechas se solapan con otra, la app avisa. Para renovar, cierra el contrato anterior poniéndole fecha de término y agrega el nuevo. La ficha muestra las **horas usadas este mes** del contrato vigente: la suma de las horas registradas en las OT que descuentan de esa bolsa en el mes en curso.
 - **Tarifas por cliente**: en **Editar tarifas** se fijan valores propios para hora normal, horario extendido, fin de semana/urgencia y traslado por km. Si dejas marcada **Usar tarifa global**, el cliente usará la tarifa general de **Configuración → Tarifas** (sección 14). Los montos se entienden **más IVA**. La aplicación no trae tarifas cargadas: las define cada organización.
 
 ## 8. Categorías y plazos
@@ -172,11 +173,13 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Facturación.** Una OT facturable cerrada queda **Por facturar** aunque no haya resuelto el ticket; al cancelarla pasa a "No aplica". Marcar como facturada solo registra el número de factura: la app no emite documentos tributarios.
 
-**Bolsa de horas.** La casilla **Descuenta de la bolsa** de una OT solo aparece si el cliente tiene una bolsa vigente (sección 7). La OT muestra las horas usadas en el mes por las OT que descuentan de esa bolsa; la ficha del cliente aún no las muestra.
+**Bolsa de horas.** La casilla **Descuenta de la bolsa** de una OT solo aparece si el cliente tiene una bolsa vigente (sección 7). La OT y la ficha del cliente muestran las horas usadas en el mes por las OT que descuentan de esa bolsa.
 
 **Archivos de OT.** Las fotos y documentos de las OT se guardan en la misma carpeta `ARCHIVOS_DIR` y con las mismas reglas que los de los tickets (sección 12): mismos tipos, límites, huérfanos de 24 horas y respaldo. Cualquier persona con sesión puede verlos y descargarlos; las descargas de documentos y correos quedan en el registro de seguridad. Al copiar un mensaje de la OT al ticket no se duplican los archivos.
 
-**Lo que todavía no existe.** Planilla de horas, avisos y la pantalla completa de OT con indicadores en pesos y exportación llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
+**Horas.** Las horas de una OT se registran desde el redactor o desde la planilla **Horas** (ver [manual de tickets](usuario/01-tecnico.md#registrar-horas)), opcionalmente contra una tarea; una OT cerrada o cancelada no admite más horas. La planilla no deja rastro en el historial de la OT ni en el registro de seguridad: el registro es la propia fila de horas.
+
+**Lo que todavía no existe.** Avisos, exportación de horas, reportes de horas y la pantalla completa de OT con indicadores en pesos llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
 
 Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manual de coordinación](usuario/02-coordinacion.md).
 
@@ -189,7 +192,7 @@ En **Configuración → Tarifas**. Dos tarjetas y un solo botón **Guardar**:
 
 Qué afecta:
 
-- **Importar horas** en el Cotizador usa la tarifa de hora normal del cliente o, si no tiene, la global. Si ninguna está definida, la importación se detiene y pide configurarla aquí. Lo mismo para las líneas de plantilla sin precio (hora normal para `h`, traslado para `km`).
+- **Importar horas** en el Cotizador usa la tarifa de hora normal del cliente o, si no tiene, la global. Si ninguna está definida, la importación se detiene y pide configurarla aquí. Con origen **registradas**, las horas marcadas fuera de horario usan la tarifa de **horario extendido** (del cliente o la global), que también debe estar definida si hay horas de ese tipo. Lo mismo para las líneas de plantilla sin precio (hora normal para `h`, traslado para `km`).
 - **Cambiar el IVA solo afecta a cotizaciones nuevas**: cada cotización guarda el porcentaje con que nació y lo conserva al duplicarse.
 - **Costo interno**: las OT internas muestran horas registradas × esta tarifa. Sin ella, la tarjeta pide configurarla.
 

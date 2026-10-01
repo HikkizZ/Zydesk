@@ -121,6 +121,35 @@ Otras rutas: `GET /api/cotizaciones` (filtros `q`, `estado`, `cliente_id`, `ot_i
 
 Errores propios: `COTIZACION_NO_EDITABLE` (409, no es borrador o no es la vigente), `COTIZACION_APROBADA` (409, lo aprobado está congelado), `COTIZACION_REQUERIDA` (409, la OT necesita una cotización enviada; `detalles.cotizacion`) y `TARIFA_FALTANTE` (409, `detalles.concepto`). Cada descarga deja un `evento` en la OT y una fila `exportacion` en `auditoria`.
 
+## Horas
+
+La planilla semanal vive bajo `/api/horas`. `GET` acepta `semana` (cualquier día; la API la normaliza al lunes; sin ella, la semana actual en Santiago) y `usuario_id` (sin él, la persona de la sesión; otra persona exige `horas.ver_todas`, y la respuesta trae `editable: false`). Las mutaciones exigen `tickets.editar`, registran siempre para la sesión (`usuario_id` del cuerpo se descarta) y solo tocan filas propias. Una fila tiene `ticket_id`, `ot_id` (con `tarea_id` opcional de esa OT) o ninguno de los dos con `descripcion` obligatoria ("Sin ticket"); `horas` entre 0,25 y 24 en pasos de 0,25; `fecha` no posterior a hoy.
+
+```bash
+# Planilla de la semana que contiene el 1 de octubre (desde = lunes 28 sep)
+curl -b cookies.txt "http://localhost:3010/api/horas?semana=2026-10-01"
+
+# Planilla de otra persona (horas.ver_todas; 403 SIN_PERMISO sin él)
+curl -b cookies.txt "http://localhost:3010/api/horas?usuario_id=3&semana=2026-10-01"
+
+# Registrar 1,5 h en una OT contra una tarea (201; 409 CONFLICTO si la celda manual ya existe)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" \
+  -d '{"fecha":"2026-10-01","ot_id":1,"tarea_id":4,"horas":1.5}' http://localhost:3010/api/horas
+
+# Registrar trabajo sin ticket (descripcion obligatoria) fuera de horario
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" \
+  -d '{"fecha":"2026-10-01","descripcion":"Reunión de equipo","horas":1,"fuera_de_horario":true}' http://localhost:3010/api/horas
+
+# Corregir horas, fecha o marca (una fila nacida de un seguimiento sincroniza mensaje.horas)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -X PATCH \
+  -d '{"horas":2,"fecha":"2026-09-30"}' http://localhost:3010/api/horas/1
+
+# Borrar (204; si venía de un seguimiento, el mensaje queda sin horas)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X DELETE http://localhost:3010/api/horas/1
+```
+
+Errores: `VALIDACION` (400: ticket y OT a la vez, tarea sin OT o de otra OT, "Sin ticket" sin descripción, `fecha` futura, destino inexistente), `SIN_PERMISO` (403: planilla ajena sin `horas.ver_todas`, o `PATCH`/`DELETE` de una fila ajena), `NO_ENCONTRADO` (404), `CONFLICTO` (409, `detalles.registro_id`: ya hay una fila manual en esa celda; edítala) y `OT_CERRADA` (409, `detalles.horas`: la OT está cerrada o cancelada; vale para crear, editar y borrar). Una fila no cambia de destino (`ticket_id` y `ot_id` no se aceptan en el `PATCH`): se borra y se crea. Las horas no dejan `evento` ni `auditoria`. `POST /api/cotizaciones/:id/importar-horas` acepta además `{"origen":"registradas"}`.
+
 ## Regenerar `openapi.json`
 
 ```bash
