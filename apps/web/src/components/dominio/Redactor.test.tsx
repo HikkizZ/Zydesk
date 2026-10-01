@@ -41,6 +41,12 @@ it('alterna entre seguimiento y nota interna y deshabilita el botón sin texto',
   expect(boton('Guardar nota').disabled).toBe(false);
 });
 
+it('la ayuda de las horas explica la planilla y enlaza a /horas', async () => {
+  montar();
+  expect(screen.getByText(/Se suman a tu planilla de hoy; corrígelas en/)).toBeTruthy();
+  expect(screen.getByRole('link', { name: 'Horas' }).getAttribute('href')).toBe('/horas');
+});
+
 it('al teclear @ abre la lista, inserta el nombre y envía el id mencionado con las horas', async () => {
   const usuario = userEvent.setup();
   const onEnviado = vi.fn();

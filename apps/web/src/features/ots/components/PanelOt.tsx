@@ -7,7 +7,7 @@ import { Codigo } from '@/components/dominio/Codigo';
 import { Monto } from '@/components/dominio/Monto';
 import { PillEstadoCotizacion } from '@/components/dominio/PillEstadoCotizacion';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { diaMes, diaMesDeFecha, diaMesHora } from '@/components/dominio/formato-fecha';
+import { diaMes, diaMesDeFecha, diaMesHora, hoyIso } from '@/components/dominio/formato-fecha';
 import { Pill } from '@/components/dominio/Pill';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
@@ -280,6 +280,12 @@ export function PanelOt({
             <span className="font-mono">{horas(ot.horas.registradas)}</span>
           </Dato>
         </dl>
+        <Link
+          to={`/horas?semana=${hoyIso()}`}
+          className="mt-2 inline-block text-sm text-acento underline underline-offset-2"
+        >
+          Ver en la planilla
+        </Link>
       </Tarjeta>
 
       <Tarjeta titulo="Datos">

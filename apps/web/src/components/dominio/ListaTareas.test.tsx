@@ -102,6 +102,7 @@ function montarOt(cerrado = false) {
       ot_id: 5,
       horas_estimadas: 3,
       horas_reales: 3,
+      horas_registradas: 3,
     }),
     tarea(2, 'Carga de CAF', false, {
       ticket_id: null,
@@ -118,6 +119,18 @@ function montarOt(cerrado = false) {
   );
   return llamadas;
 }
+
+it('con horas: muestra las horas registradas de cada tarea de OT', () => {
+  montarOt();
+  const celda = screen.getByLabelText('3 h estimadas, 3 h reales, 3 h registradas');
+  expect(celda.textContent).toBe('3');
+  expect(screen.getByLabelText('4 h estimadas, 1 h reales, 0 h registradas').textContent).toBe('0');
+});
+
+it('en tareas de ticket no aparece la columna de registradas', () => {
+  montar(false);
+  expect(screen.queryByText('Reg.')).toBeNull();
+});
 
 it('con horas: la cabecera suma estimadas y reales', () => {
   montarOt();
