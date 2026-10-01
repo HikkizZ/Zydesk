@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { crearUsuario, ingresarComo } from '../../../test/fabricas.js';
+import { CONTRASENA_PRUEBA, crearUsuario, ingresarComo } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 import { dataSourceOwner } from '../../database/data-source-owner.js';
@@ -10,9 +10,9 @@ describe('GET /api/auditoria', () => {
   it('config.editar lista paginado por fecha descendente con la persona y el detalle', async () => {
     const a = app();
     const admin = await crearUsuario({ rol: 'admin', nombre: 'Admin Uno' });
-    const { agente } = await ingresarComo(a, admin);
+    const { agente } = await ingresarComo(a, admin, CONTRASENA_PRUEBA);
     const otro = await crearUsuario({ nombre: 'Otra Persona' });
-    await ingresarComo(a, otro);
+    await ingresarComo(a, otro, CONTRASENA_PRUEBA);
 
     const res = await agente.get('/api/auditoria');
     expect(res.status).toBe(200);
@@ -79,7 +79,11 @@ describe('GET /api/auditoria', () => {
 
   it('no hay escritura por API y otros roles reciben 403', async () => {
     const a = app();
-    const { agente } = await ingresarComo(a, await crearUsuario({ rol: 'coordinacion' }));
+    const { agente } = await ingresarComo(
+      a,
+      await crearUsuario({ rol: 'coordinacion' }),
+      CONTRASENA_PRUEBA,
+    );
     expect((await agente.get('/api/auditoria')).status).toBe(403);
     expect((await agente.post('/api/auditoria').send({})).status).toBe(404);
     const [{ n }] = await dataSource.query(`SELECT count(*)::int AS n FROM auditoria`);

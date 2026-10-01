@@ -588,6 +588,16 @@ En el navegador (1440 px y 390 px): `/cotizaciones/<COT-0218 v1>` reproduce el d
 10. ¿**Prefijo `COT-` fijo** en esta fase (decisión 11)? No bloquea. **Recomendación: fijo**; se configura cuando alguien lo pida.
 11. ¿**Validez** solo 15 o 30 días (spec 4.7) o número libre de días? No bloquea. **Recomendación: 15/30** como dice la spec; el campo es `integer` y ampliar es relajar un `CHECK`.
 
+### Respuestas del usuario (2026-10-01)
+
+1. Aceptado: se elimina la marca manual "Cotizada"; la OT pasa a `cotizada` solo al marcar una cotización como enviada, y la aprobación del cliente exige una cotización `enviada`, que queda congelada.
+2–11. Aceptadas todas las recomendaciones de esta sección tal como están escritas.
+
+### Estado de avance (2026-10-01)
+
+- **F4-T1 (bloque 4A) hecho**: suite de la API de 708 s a 334 s en local (492 tests + 2 omitidos); F4-T2 no fue necesaria.
+- **Siguiente**: bloque 4B (F4-T3 y F4-T4), luego 4C y 4D en paralelo, 4E y 4F en paralelo, y 4G, en el orden de §15.
+
 ## 20. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0025 "Precisiones de la Fase 4" al cerrar)
 
 - **ADR 0004**: `cotizada` se alcanza solo al marcar una cotización como enviada (la marca manual de ADR 0023.1 desaparece); `cotizada → borrador` marca la cotización vigente como `rechazada`; `aprobada` en facturable exige, además de `AprobacionCliente`, una cotización vigente `enviada`, que queda `aprobada` e inmutable; estados de versión de la cotización (`borrador`, `enviada`, `aprobada`, `rechazada`, `reemplazada`).

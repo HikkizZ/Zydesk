@@ -13,6 +13,8 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
+import { nombreCookie } from '../src/core/auth/cookie.js';
+import { crearSesion } from '../src/core/auth/sesiones.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Archivo } from '../src/modulos/archivos/archivo.entity.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
@@ -34,19 +36,22 @@ export const CONTRASENA_PRUEBA = 'Contrasena.Prueba.1';
 let secuencia = 0;
 const siguiente = (): number => ++secuencia;
 
-// Mismos parámetros que core/auth/contrasena.ts (§5.6); el hash de la contraseña por defecto se calcula una vez.
+// Mismos parámetros que core/auth/contrasena.ts (§5.6). Otras contraseñas se hashean al vuelo.
 const OPCIONES_HASH = {
   type: argon2.argon2id,
   memoryCost: 65536,
   timeCost: 3,
   parallelism: 1,
 } as const;
-let hashPorDefecto: Promise<string> | undefined;
+
+// argon2id de CONTRASENA_PRUEBA con los parámetros de producción, generado una vez (evita ~300 ms por archivo).
+// Si cambia la contraseña o la constante, falla el test de fabricas.test.ts que la verifica.
+export const HASH_CONTRASENA_PRUEBA =
+  '$argon2id$v=19$m=65536,p=1,t=3$gGfAP7vtYzeAzjID0Bwxfw$d67kReflrb9iLL7bYXopRHtdRR4cTOpH29OPSNf6gWY';
 
 async function hashear(contrasena: string): Promise<string> {
-  if (contrasena !== CONTRASENA_PRUEBA) return argon2.hash(contrasena, OPCIONES_HASH);
-  hashPorDefecto ??= argon2.hash(contrasena, OPCIONES_HASH);
-  return hashPorDefecto;
+  if (contrasena === CONTRASENA_PRUEBA) return HASH_CONTRASENA_PRUEBA;
+  return argon2.hash(contrasena, OPCIONES_HASH);
 }
 
 export async function crearUsuario(
@@ -430,13 +435,29 @@ export function archivoDePrueba(nombre: string): Buffer {
   return fs.readFileSync(fileURLToPath(new URL(`./fixtures/${nombre}`, import.meta.url)));
 }
 
-// Ingresa por la API y devuelve la cookie, la cabecera CSRF y un agente de Supertest que ya las envía.
+// Devuelve la cookie, la cabecera CSRF y un agente de Supertest que ya las envía. Sin `contrasena` crea
+// la sesión directo en BD (sin argon2; no deja `ingreso_ok` ni actualiza `ultimo_ingreso`); con
+// `contrasena` ingresa por la API real.
 export async function ingresarComo(
   app: Express,
-  usuario: Pick<Usuario, 'correo'>,
-  contrasena: string = CONTRASENA_PRUEBA,
+  usuario: Pick<Usuario, 'correo'> & Partial<Pick<Usuario, 'id'>>,
+  contrasena?: string,
   mantener = false,
 ): Promise<{ cookie: string; csrf: string; agente: ReturnType<typeof request.agent> }> {
+  if (contrasena === undefined) {
+    const usuario_id =
+      usuario.id ??
+      (await dataSource.manager.findOneByOrFail(Usuario, { correo: usuario.correo })).id;
+    const { token } = await crearSesion(dataSource.manager, {
+      usuario_id,
+      mantener,
+      ip: '127.0.0.1',
+      user_agent: 'vitest',
+    });
+    const cookie = `${nombreCookie('test')}=${token}`;
+    const agente = request.agent(app).set('X-Requested-With', 'Zydesk').set('Cookie', cookie);
+    return { cookie, csrf: 'Zydesk', agente };
+  }
   const agente = request.agent(app).set('X-Requested-With', 'Zydesk');
   const res = await agente
     .post('/api/auth/ingresar')
