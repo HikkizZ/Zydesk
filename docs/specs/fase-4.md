@@ -603,7 +603,16 @@ En el navegador (1440 px y 390 px): `/cotizaciones/<COT-0218 v1>` reproduce el d
   - Los 4 códigos de error nuevos se declaran en `shared/errores.ts` solo con su status; el mensaje va donde se lanzan (4C).
   - `crearCotizacion`: `descuento_pct` por línea es opcional (0 por defecto).
   - `OtSalida.cotizacion`, `costo_interno`, `puede_cotizar` y `OtResumen.neto` llevan valores provisionales (`// F4-T5`) en `ots.consulta.ts`.
-- **Siguiente**: bloques 4C y 4D en paralelo, luego 4E y 4F en paralelo, y 4G, en el orden de §16.
+- **F4-T8 (bloque 4D) hecho**: tarifas y plantillas; 404 en PUT/PATCH de una plantilla inexistente; el PATCH de `activo` sin cambio no audita.
+- **F4-T5, T6, T7 y T9 (bloque 4C) hechos** (API: 597 tests + 2 omitidos; shared 260; web 162). Desviaciones anotadas (para ADR 0025):
+  - La marca manual "Cotizada" se quitó aquí (pendiente de 4B). Se adaptaron 11 tests de la Fase 3, no 7: también las aprobaciones del cliente, que ahora exigen una cotización enviada. Ningún `expect` se relajó.
+  - Al enviar se bloquea primero el ticket, porque §5.7 llama a `registrarActividadEnTicket`. Así se respeta el orden ticket → OT → cotización de §1.2.
+  - Importar horas, o aplicar una plantilla con líneas que toman precio de la tarifa, sobre una cotización en UF → 400 `VALIDACION { moneda }`: las tarifas están en pesos.
+  - Importar horas o aplicar una plantilla que deje más de 100 líneas → 400 `VALIDACION { lineas }`.
+  - La aprobación del cliente responde 409 `COTIZACION_REQUERIDA` antes que los 400 de contacto y archivo.
+  - `registrarCambios` acepta `datos` opcional (para `cotizacion_id`); `contentDisposition` se movió a `core/http/descarga.ts`.
+  - El neto en el cierre (§6.1) se prueba con `netoVigenteClp` + `efectosCierreOt`, no con un test de `cierre.test.ts`.
+- **Siguiente**: bloques 4E y 4F en paralelo, y luego 4G, en el orden de §16.
 
 ## 20. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0025 "Precisiones de la Fase 4" al cerrar)
 
