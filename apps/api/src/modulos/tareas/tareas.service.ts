@@ -11,6 +11,7 @@ import type { UsuarioSesion } from '../../core/auth/tipos.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
+import { desvincularTareas } from '../horas/horas.service.js';
 import { bloquearOt, existeOt, otCerrada, registrarActividadEnOt } from '../ots/ots.acceso.js';
 import { Ticket } from '../tickets/ticket.entity.js';
 import { bloquearTicket, registrarActividadEnTicket } from '../tickets/tickets.service.js';
@@ -25,6 +26,7 @@ interface FilaTarea {
   ot_id: number | null;
   horas_estimadas: number | null;
   horas_reales: number | null;
+  horas_registradas: number;
   titulo: string;
   fecha: string | null;
   hecha: boolean;
@@ -38,9 +40,13 @@ interface FilaTarea {
   responsable_color: string | null;
 }
 
+// Σ de registro_horas con esa tarea (derivado: no escribe `horas_reales`, spec fase 5 §4.7); 0 en tareas de ticket.
+export const SQL_HORAS_REGISTRADAS = `COALESCE((SELECT sum(rh.horas) FROM registro_horas rh WHERE rh.tarea_id = t.id), 0)::float8`;
+
 const SELECT_TAREA = `
   SELECT t.id, t.ticket_id, t.ot_id, t.horas_estimadas::float8 AS horas_estimadas,
-         t.horas_reales::float8 AS horas_reales, t.titulo, t.fecha::text AS fecha, t.hecha, t.hecha_en, t.orden,
+         t.horas_reales::float8 AS horas_reales, ${SQL_HORAS_REGISTRADAS} AS horas_registradas,
+         t.titulo, t.fecha::text AS fecha, t.hecha, t.hecha_en, t.orden,
          t.creado_en, t.actualizado_en,
          (t.fecha IS NOT NULL AND t.fecha < (now() AT TIME ZONE 'America/Santiago')::date AND NOT t.hecha) AS vencida,
          u.id AS responsable_id, u.nombre AS responsable_nombre, u.color_avatar AS responsable_color
@@ -53,7 +59,7 @@ function aSalida(t: FilaTarea): TareaSalidaDatos {
     ot_id: t.ot_id,
     horas_estimadas: t.horas_estimadas,
     horas_reales: t.horas_reales,
-    horas_registradas: 0, // F5-T5
+    horas_registradas: t.horas_registradas,
     titulo: t.titulo,
     responsable:
       t.responsable_id === null
@@ -350,6 +356,11 @@ export async function moverTareasAbiertas(
       WHERE t.id = mover.id
       RETURNING t.id, t.titulo, t.orden`,
     [origen, hacia.ot_id],
+  );
+  // las horas ya registradas contra esas tareas se quedan en la OT original, sin tarea
+  await desvincularTareas(
+    tx,
+    filas.map((f) => f.id),
   );
   return filas.sort((a, b) => a.orden - b.orden).map(({ id, titulo }) => ({ id, titulo }));
 }
