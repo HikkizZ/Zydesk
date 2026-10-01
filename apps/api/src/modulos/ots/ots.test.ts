@@ -647,7 +647,9 @@ describe('PATCH /api/ots/:id — datos comerciales de una OT aprobada', () => {
     const r = await agente.patch(`/api/ots/${ot.id}`).send({ oc_cliente: 'OC-2' });
     expect(r.status).toBe(200);
     expect(await ocDe(ot.id)).toBe('OC-2');
-    expect((await eventos('ot', ot.id)).some((e) => e.campo === 'oc_cliente')).toBe(true);
+    expect(
+      (await eventos('ot', ot.id)).some((e: { campo: string | null }) => e.campo === 'oc_cliente'),
+    ).toBe(true);
   });
 
   it('técnico cambia oc_cliente en borrador → 200', async () => {
