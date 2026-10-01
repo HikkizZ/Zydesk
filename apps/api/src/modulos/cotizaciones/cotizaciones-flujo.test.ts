@@ -7,6 +7,7 @@ import {
   crearCotizacion,
   crearOt,
   crearPlantilla,
+  crearRegistroHoras,
   crearTarea,
   crearTicket,
   crearUsuario,
@@ -373,6 +374,117 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
     expect((await agente.post(`/api/cotizaciones/${ce.id}/importar-horas`).send({})).status).toBe(
       409,
     );
+  });
+});
+
+describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T13)', () => {
+  const importar = (agente: Awaited<ReturnType<typeof como>>['agente'], id: number) =>
+    agente.post(`/api/cotizaciones/${id}/importar-horas`).send({ origen: 'registradas' });
+  const resumen = (lineas: Record<string, unknown>[]) =>
+    lineas.map((l) => [l.descripcion, l.cantidad, l.precio_unitario, l.tipo, l.unidad]);
+
+  it('una línea por tarea a hora normal, otra fuera de horario a extendida y una "sin tarea"', async () => {
+    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+    const { agente, usuario } = await como();
+    const { ot, cliente } = await otFacturable();
+    await dataSource.query(
+      `INSERT INTO tarifa_cliente (cliente_id, concepto, valor) VALUES ($1, 'hora_extendida', 50000)`,
+      [cliente.id],
+    );
+    const t1 = await crearTarea({ ot_id: ot.id }, { titulo: 'Diagnóstico' });
+    const t2 = await crearTarea({ ot_id: ot.id }, { titulo: 'Pruebas' });
+    await crearTarea({ ot_id: ot.id }, { titulo: 'Sin registros' });
+    const reg = (d: Parameters<typeof crearRegistroHoras>[1]) =>
+      crearRegistroHoras(usuario.id, { ot_id: ot.id, ...d });
+    await reg({ tarea_id: t1.id, horas: 2 });
+    await reg({ tarea_id: t1.id, horas: 1.5, fecha: '2026-01-05' });
+    await reg({ tarea_id: t1.id, horas: 1, fuera_de_horario: true, fecha: '2026-01-06' });
+    await reg({ tarea_id: t2.id, horas: 0.75, fuera_de_horario: true });
+    await reg({ horas: 3 });
+    await reg({ horas: 2, fuera_de_horario: true, fecha: '2026-01-07' });
+    // horas de ticket (sin OT) o de otra OT no cuentan
+    await crearRegistroHoras(usuario.id, { ticket_id: ot.ticket_id, horas: 9 });
+    const c = await crearCotizacion(ot.id);
+    const r = await importar(agente, c.id);
+    expect(r.status).toBe(200);
+    expect(resumen(r.body.lineas)).toEqual([
+      ['Diagnóstico', 3.5, 38000, 'mano_de_obra', 'h'],
+      ['Diagnóstico (fuera de horario)', 1, 50000, 'mano_de_obra', 'h'],
+      ['Pruebas (fuera de horario)', 0.75, 50000, 'mano_de_obra', 'h'],
+      ['Horas registradas sin tarea', 3, 38000, 'mano_de_obra', 'h'],
+      ['Horas registradas sin tarea (fuera de horario)', 2, 50000, 'mano_de_obra', 'h'],
+    ]);
+    const evs = (await eventosOt(ot.id)).filter(
+      (e: { accion: string }) => e.accion === 'cotizacion_lineas_agregadas',
+    );
+    expect(evs[0].datos).toMatchObject({ cotizacion_id: c.id, n: 5, origen: 'registradas' });
+  });
+
+  it('sin tarifa del cliente usa la extendida global; con solo horas normales no exige extendida', async () => {
+    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+    const { agente, usuario } = await como();
+    const a = await otFacturable();
+    const ta = await crearTarea({ ot_id: a.ot.id }, { titulo: 'Soporte' });
+    await crearRegistroHoras(usuario.id, {
+      ot_id: a.ot.id,
+      tarea_id: ta.id,
+      horas: 2,
+      fuera_de_horario: true,
+    });
+    const ca = await crearCotizacion(a.ot.id);
+    const ra = await importar(agente, ca.id);
+    expect(resumen(ra.body.lineas)).toEqual([
+      ['Soporte (fuera de horario)', 2, 45000, 'mano_de_obra', 'h'],
+    ]);
+    await fijarTarifas({ hora_normal: 38000, hora_extendida: null });
+    const b = await otFacturable();
+    const tb = await crearTarea({ ot_id: b.ot.id }, { titulo: 'Soporte' });
+    await crearRegistroHoras(usuario.id, { ot_id: b.ot.id, tarea_id: tb.id, horas: 2 });
+    const cb = await crearCotizacion(b.ot.id);
+    const rb = await importar(agente, cb.id);
+    expect(rb.status).toBe(200);
+    expect(resumen(rb.body.lineas)).toEqual([['Soporte', 2, 38000, 'mano_de_obra', 'h']]);
+  });
+
+  it('horas fuera de horario sin tarifa extendida → 409 TARIFA_FALTANTE { concepto: hora_extendida }', async () => {
+    await fijarTarifas({ hora_normal: 38000, hora_extendida: null });
+    const { agente, usuario } = await como();
+    const { ot } = await otFacturable();
+    await crearRegistroHoras(usuario.id, { ot_id: ot.id, horas: 2, fuera_de_horario: true });
+    const c = await crearCotizacion(ot.id);
+    const r = await importar(agente, c.id);
+    expect(r.status).toBe(409);
+    expect(r.body.error.codigo).toBe('TARIFA_FALTANTE');
+    expect(r.body.error.detalles).toEqual({ concepto: 'hora_extendida' });
+    expect((await agente.get(`/api/cotizaciones/${c.id}`)).body.lineas).toHaveLength(0);
+  });
+
+  it('sin horas registradas → 400 origen; UF → 400 moneda; sin tarifa normal → 409; las otras fuentes no cambian', async () => {
+    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+    const { agente, usuario } = await como();
+    const { ot } = await otFacturable();
+    await crearTarea({ ot_id: ot.id }, { titulo: 'Con estimadas', horas_estimadas: 2 });
+    const c = await crearCotizacion(ot.id);
+    const vacio = await importar(agente, c.id);
+    expect(vacio.status).toBe(400);
+    expect(vacio.body.error.detalles).toHaveProperty('origen');
+    await crearRegistroHoras(usuario.id, { ot_id: ot.id, horas: 1 });
+    await dataSource.query(`UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000 WHERE id = $1`, [
+      c.id,
+    ]);
+    const uf = await importar(agente, c.id);
+    expect(uf.status).toBe(400);
+    expect(uf.body.error.detalles).toHaveProperty('moneda');
+    await dataSource.query(`UPDATE cotizacion SET moneda = 'CLP', valor_uf = NULL WHERE id = $1`, [
+      c.id,
+    ]);
+    await fijarTarifas({ hora_normal: null });
+    const sin = await importar(agente, c.id);
+    expect(sin.status).toBe(409);
+    expect(sin.body.error.detalles).toEqual({ concepto: 'hora_normal' });
+    await fijarTarifas({ hora_normal: 38000 });
+    const est = await agente.post(`/api/cotizaciones/${c.id}/importar-horas`).send({});
+    expect(resumen(est.body.lineas)).toEqual([['Con estimadas', 2, 38000, 'mano_de_obra', 'h']]);
   });
 });
 

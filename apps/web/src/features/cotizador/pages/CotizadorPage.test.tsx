@@ -431,6 +431,33 @@ it('"Importar horas" muestra la tarifa global y las horas de cada origen y llama
   });
 });
 
+it('"Importar horas" ofrece las horas registradas con su total, la tarifa extendida y llama a la API', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(borradorDePrueba(), {
+    manejador: ({ metodo, ruta }) =>
+      metodo === 'POST' && ruta === '/api/cotizaciones/5/importar-horas'
+        ? respuesta(200, borradorDePrueba({ actualizado_en: '2026-09-30T16:00:00.000Z' }))
+        : undefined,
+  });
+  await esperarCarga();
+  await usuario.click(boton('Importar horas de las tareas…') as HTMLButtonElement);
+  const dialogo = await screen.findByRole('dialog');
+  await within(dialogo).findByText('Tarifa global $38.000/h');
+  const registradas = within(dialogo).getByRole('radio', { name: /Registradas/ });
+  expect(within(dialogo).getByText(/3 h/)).toBeTruthy();
+  await usuario.click(registradas);
+  expect(
+    within(dialogo).getByText(
+      'Las horas fuera de horario se cotizan a la tarifa de hora extendida ($45.000/h).',
+    ),
+  ).toBeTruthy();
+  await usuario.click(within(dialogo).getByRole('button', { name: 'Importar' }));
+  await waitFor(() => expect(llamadas.some((l) => l.ruta.endsWith('/importar-horas'))).toBe(true));
+  expect(llamadas.find((l) => l.ruta.endsWith('/importar-horas'))?.cuerpo).toEqual({
+    origen: 'registradas',
+  });
+});
+
 it('"Importar horas" prefiere la tarifa del cliente', async () => {
   const usuario = userEvent.setup();
   montar(borradorDePrueba(), {

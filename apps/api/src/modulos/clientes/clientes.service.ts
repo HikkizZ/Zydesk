@@ -105,7 +105,29 @@ const SELECT_BOLSA = `SELECT id, cliente_id, horas_mes::float8 AS horas_mes, vig
 
 const SELECT_CONTACTO = `SELECT id, cliente_id, nombre, area, correo, telefono, aprueba_cotizaciones, activo FROM contacto`;
 
-function bolsaSalida(f: FilaBolsa, fechaHoy: string): ContratoBolsaSalidaDatos {
+// ADR 0015 / 0023.18: horas usadas en el mes calendario actual (Santiago) por todas las OT con ese contrato.
+export async function usadasMesDeContrato(
+  m: Pick<EntityManager, 'query'>,
+  contrato_id: number,
+): Promise<number> {
+  const [f]: { usadas_mes: number }[] = await m.query(
+    `SELECT COALESCE(sum(rh.horas), 0)::float8 AS usadas_mes
+       FROM registro_horas rh JOIN ot o ON o.id = rh.ot_id
+      WHERE o.contrato_id = $1
+        AND date_trunc('month', rh.fecha) = date_trunc('month', (now() AT TIME ZONE 'America/Santiago')::date)`,
+    [contrato_id],
+  );
+  return f!.usadas_mes;
+}
+
+// Solo el contrato vigente trae horas usadas; los del historial, null.
+async function bolsaSalida(
+  m: Pick<EntityManager, 'query'>,
+  f: FilaBolsa,
+  fechaHoy: string,
+): Promise<ContratoBolsaSalidaDatos> {
+  const vigente =
+    f.vigente_desde <= fechaHoy && (f.vigente_hasta === null || f.vigente_hasta >= fechaHoy);
   return {
     id: f.id,
     cliente_id: f.cliente_id,
@@ -115,9 +137,8 @@ function bolsaSalida(f: FilaBolsa, fechaHoy: string): ContratoBolsaSalidaDatos {
     fecha_renovacion: f.fecha_renovacion,
     notas: f.notas,
     // ADR 0015: vigente = desde ≤ hoy y (hasta nulo o ≥ hoy), en America/Santiago
-    vigente:
-      f.vigente_desde <= fechaHoy && (f.vigente_hasta === null || f.vigente_hasta >= fechaHoy),
-    horas_usadas_mes: null, // Fase 5
+    vigente,
+    horas_usadas_mes: vigente ? await usadasMesDeContrato(m, f.id) : null,
   };
 }
 
@@ -162,7 +183,8 @@ export async function obtenerCliente(
     `${SELECT_BOLSA} WHERE cliente_id = $1 ORDER BY vigente_desde DESC, id DESC`,
     [id],
   );
-  const historial = contratos.map((f) => bolsaSalida(f, fechaHoy));
+  const historial: ContratoBolsaSalidaDatos[] = [];
+  for (const f of contratos) historial.push(await bolsaSalida(m, f, fechaHoy));
   const tarifas: TarifaClienteSalidaDatos[] = await m.query(
     `SELECT concepto, valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1`,
     [id],
@@ -312,7 +334,7 @@ export async function crearBolsa(
       [clienteId, e.horas_mes, e.vigente_desde, e.vigente_hasta, e.fecha_renovacion, e.notas],
     )) as [{ id: number }];
     const [f]: FilaBolsa[] = await tx.query(`${SELECT_BOLSA} WHERE id = $1`, [id]);
-    return bolsaSalida(f!, await hoy(tx));
+    return bolsaSalida(tx, f!, await hoy(tx));
   });
 }
 
@@ -339,7 +361,7 @@ export async function editarBolsa(
     const { sql, valores } = armarSet(e, CAMPOS_BOLSA);
     await tx.query(`UPDATE contrato_bolsa SET ${sql} WHERE id = $1`, [contratoId, ...valores]);
     const [f]: FilaBolsa[] = await tx.query(`${SELECT_BOLSA} WHERE id = $1`, [contratoId]);
-    return bolsaSalida(f!, await hoy(tx));
+    return bolsaSalida(tx, f!, await hoy(tx));
   });
 }
 

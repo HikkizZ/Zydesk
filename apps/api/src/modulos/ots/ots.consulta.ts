@@ -3,7 +3,9 @@ import type { EntityManager } from 'typeorm';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { paginar } from '../../core/http/paginacion.js';
 import { archivoDeId, archivosDe } from '../archivos/archivos.service.js';
+import { usadasMesDeContrato } from '../clientes/clientes.service.js';
 import { cotizacionVigente } from '../cotizaciones/cotizaciones.consulta.js';
+import { SQL_HORAS_REGISTRADAS } from '../tareas/tareas.service.js';
 import { leerTarifas } from '../configuracion/configuracion.service.js';
 import type { OtResumenDatos, OtSalidaDatos, OtsQueryDatos } from './ots.tipos.js';
 
@@ -185,6 +187,7 @@ interface FilaTarea {
   hecha_en: Date | null;
   horas_estimadas: number | null;
   horas_reales: number | null;
+  horas_registradas: number;
   orden: number;
   creado_en: Date;
   actualizado_en: Date;
@@ -199,6 +202,7 @@ function tareaSalida(t: FilaTarea): TareaDatos {
     id: t.id,
     ticket_id: null,
     ot_id: t.ot_id,
+    horas_registradas: t.horas_registradas,
     titulo: t.titulo,
     responsable:
       t.responsable_id === null
@@ -278,7 +282,7 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
   const tareas: FilaTarea[] = await m.query(
     `SELECT t.id, t.ot_id, t.titulo, t.fecha::text AS fecha, t.hecha, t.hecha_en,
             t.horas_estimadas::float8 AS horas_estimadas, t.horas_reales::float8 AS horas_reales,
-            t.orden, t.creado_en, t.actualizado_en,
+            ${SQL_HORAS_REGISTRADAS} AS horas_registradas, t.orden, t.creado_en, t.actualizado_en,
             (t.fecha IS NOT NULL AND t.fecha < ${HOY_SANTIAGO} AND NOT t.hecha) AS vencida,
             u.id AS responsable_id, u.nombre AS responsable_nombre, u.color_avatar AS responsable_color
        FROM tarea t LEFT JOIN usuario u ON u.id = t.responsable_id
@@ -326,15 +330,17 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
   // ADR 0015: horas usadas en el mes calendario actual (Santiago) por todas las OT con ese contrato.
   let bolsa: OtSalidaDatos['bolsa'] = null;
   if (e.contrato_id !== null) {
-    const [b]: { horas_mes: number; usadas_mes: number }[] = await m.query(
-      `SELECT cb.horas_mes::float8 AS horas_mes,
-              COALESCE((SELECT sum(rh.horas) FROM registro_horas rh JOIN ot ob ON ob.id = rh.ot_id
-                         WHERE ob.contrato_id = cb.id
-                           AND date_trunc('month', rh.fecha) = date_trunc('month', ${HOY_SANTIAGO})), 0)::float8 AS usadas_mes
-         FROM contrato_bolsa cb WHERE cb.id = $1`,
+    const [b]: { horas_mes: number }[] = await m.query(
+      `SELECT horas_mes::float8 AS horas_mes FROM contrato_bolsa WHERE id = $1`,
       [e.contrato_id],
     );
-    if (b) bolsa = { contrato_id: e.contrato_id, horas_mes: b.horas_mes, usadas_mes: b.usadas_mes };
+    if (b) {
+      bolsa = {
+        contrato_id: e.contrato_id,
+        horas_mes: b.horas_mes,
+        usadas_mes: await usadasMesDeContrato(m, e.contrato_id),
+      };
+    }
   }
 
   const responsables: (PersonaFila & { principal: boolean })[] = await m.query(

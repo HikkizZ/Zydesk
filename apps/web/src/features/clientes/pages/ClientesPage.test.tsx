@@ -74,7 +74,7 @@ const FICHA: ClienteSalidaDatos = {
       fecha_renovacion: '2026-10-01',
       notas: null,
       vigente: true,
-      horas_usadas_mes: null,
+      horas_usadas_mes: 12.5,
     },
     historial: [
       {
@@ -249,6 +249,7 @@ it('administración ve la ficha completa con bolsa, tarifas y acciones de edici�
   expect(await screen.findByRole('heading', { level: 1, name: 'Viña Santa Clara' })).toBeTruthy();
   expect(screen.getByText(/RUT 76123456-K/)).toBeTruthy();
   expect(screen.getByText(/20 h al mes · Se renueva el 1 oct/)).toBeTruthy();
+  expect(screen.getByText('12,5 / 20 h usadas este mes')).toBeTruthy();
   expect(screen.getByText('$38.000 + IVA')).toBeTruthy();
   expect(screen.getAllByText('Tarifa global').length).toBe(3);
   expect(screen.getByText('Paula Herrera', { exact: false })).toBeTruthy();

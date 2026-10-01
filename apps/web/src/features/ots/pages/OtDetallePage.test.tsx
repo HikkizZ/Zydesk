@@ -284,6 +284,13 @@ it('con bolsa vigente aparece la casilla y las horas usadas del mes', async () =
   expect(screen.getByText('12,5 / 20 h usadas este mes')).toBeTruthy();
 });
 
+it('el panel de horas enlaza a la planilla propia de la semana de hoy', async () => {
+  montar(otDePrueba(), 'tecnico');
+  const panel = await screen.findByRole('region', { name: 'Horas' });
+  const enlace = within(panel).getByRole('link', { name: 'Ver en la planilla' });
+  expect(enlace.getAttribute('href')).toMatch(/^\/horas\?semana=\d{4}-\d{2}-\d{2}$/);
+});
+
 it('OT inexistente muestra "OT no encontrada"', async () => {
   simularFetch(() => undefined);
   render(

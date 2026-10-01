@@ -213,6 +213,7 @@ export function ListaTareas({
         >
           <span className="w-[72px] text-right">Est.</span>
           <span className="w-[72px] text-right">Real</span>
+          <span className="w-12 text-right">Reg.</span>
         </p>
       ) : null}
       <ul className="flex flex-col">
@@ -281,6 +282,16 @@ export function ListaTareas({
                     guardarHoras.mutate({ tarea: t, campo: 'horas_reales', horas })
                   }
                 />
+                <span aria-hidden="true" className="text-xs text-tinta-2 sm:hidden">
+                  Reg.
+                </span>
+                <span
+                  role="img"
+                  aria-label={`${formatoHoras.format(t.horas_estimadas ?? 0)} h estimadas, ${formatoHoras.format(t.horas_reales ?? 0)} h reales, ${formatoHoras.format(t.horas_registradas)} h registradas`}
+                  className="w-12 text-right font-mono text-sm"
+                >
+                  {formatoHoras.format(t.horas_registradas)}
+                </span>
               </span>
             ) : null}
             {puedeEditar && !cerrado ? (

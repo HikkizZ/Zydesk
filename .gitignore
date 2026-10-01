@@ -10,3 +10,4 @@ datos/
 
 # Configuración local de Claude Code (no versionar)
 .claude/settings.local.json
+.claude/launch.json

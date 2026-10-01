@@ -76,3 +76,23 @@ it('muestra la matriz de roles con Permitido / No permitido', async () => {
     'No permitido',
   ]);
 });
+
+it('la matriz muestra las 10 acciones, incluida "Ver horas de todo el equipo"', async () => {
+  fetchSimulado.mockImplementation(() => Promise.resolve(respuesta(200, [])));
+  render(
+    <ConSesion yo={yoDePrueba({ rol: 'admin' })}>
+      <EquipoTab />
+    </ConSesion>,
+  );
+  const fila = (await screen.findByText('Ver horas de todo el equipo')).closest(
+    'tr',
+  ) as HTMLElement;
+  const tabla = fila.closest('table') as HTMLElement;
+  expect(within(tabla).getAllByRole('row').length).toBe(11);
+  expect(
+    within(fila)
+      .getAllByRole('cell')
+      .slice(1)
+      .map((c) => c.getAttribute('aria-label')),
+  ).toEqual(['Permitido', 'Permitido', 'No permitido', 'No permitido']);
+});

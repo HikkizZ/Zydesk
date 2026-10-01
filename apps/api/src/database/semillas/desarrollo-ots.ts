@@ -395,10 +395,17 @@ async function detalle218(
     `INSERT INTO mensaje (ot_id, tipo, autor_id, texto, creado_en) VALUES ($1, 'seguimiento', $2, $3, $4) RETURNING id`,
     [id, sd, 'Diagnóstico terminado: 3 h', cuando],
   );
+  // Lunes de la semana actual y tarea del diagnóstico (la primera), para que la planilla cuadre con el diseño
+  const [{ f: lunes }] = await tx.query(
+    `SELECT to_char(date_trunc('week', now() AT TIME ZONE 'America/Santiago')::date, 'YYYY-MM-DD') AS f`,
+  );
+  const [tarea] = await tx.query(`SELECT id FROM tarea WHERE ot_id = $1 ORDER BY orden LIMIT 1`, [
+    id,
+  ]);
   await tx.query(
-    `INSERT INTO registro_horas (usuario_id, fecha, ot_id, mensaje_id, horas, creado_en, actualizado_en)
-     VALUES ($1, $2, $3, $4, 3, $5, $5)`,
-    [sd, await fechaRelativa(tx, 1), id, mensaje_id, cuando],
+    `INSERT INTO registro_horas (usuario_id, fecha, ot_id, tarea_id, mensaje_id, horas, creado_en, actualizado_en)
+     VALUES ($1, $2, $3, $4, $5, 3, $6, $6)`,
+    [sd, lunes, id, tarea.id, mensaje_id, cuando],
   );
 }
 

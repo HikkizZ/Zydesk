@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
 import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { SubidaArchivos } from '@/components/dominio/SubidaArchivos';
 import { useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
@@ -323,9 +324,16 @@ export function Redactor({
               </div>
             </div>
             <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
-              {horasOk
-                ? 'Se registra en tu planilla de hoy'
-                : 'Usa múltiplos de 0,25 entre 0,25 y 24'}
+              {horasOk ? (
+                <>
+                  Se suman a tu planilla de hoy; corrígelas en{' '}
+                  <Link to="/horas" className="text-acento underline underline-offset-2">
+                    Horas
+                  </Link>
+                </>
+              ) : (
+                'Usa múltiplos de 0,25 entre 0,25 y 24'
+              )}
             </p>
           </>
         )}

@@ -222,7 +222,7 @@ describe('bolsa de horas', () => {
     expect(r.body).toMatchObject({
       horas_mes: 20.5,
       vigente: true,
-      horas_usadas_mes: null,
+      horas_usadas_mes: 0,
       cliente_id: c.id,
     });
     const ficha = (await coord.get(`/api/clientes/${c.id}`)).body;

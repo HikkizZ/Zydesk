@@ -10,6 +10,7 @@ import {
 } from '../../modulos/clientes/clientes.service.js';
 import { versionTerminosVigente } from '../../modulos/legal/legal.service.js';
 import { sembrarPlantillas } from './desarrollo-cotizaciones.js';
+import { sembrarHoras } from './desarrollo-horas.js';
 import { sembrarOts } from './desarrollo-ots.js';
 import { sembrarTickets } from './desarrollo-tickets.js';
 
@@ -284,4 +285,5 @@ export async function sembrarDesarrollo(contrasena: string | undefined): Promise
   await sembrarTarifas(); // antes de las OT: las cotizaciones toman de ahí IVA, validez y condiciones
   await sembrarPlantillas();
   await sembrarOts(personas);
+  await sembrarHoras(personas);
 }

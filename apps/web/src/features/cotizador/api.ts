@@ -59,7 +59,7 @@ export const crearCotizacion = (otId: number) =>
 export const guardarCotizacion = (id: number, entrada: CotizacionEntradaDatos) =>
   enviar<CotizacionSalidaDatos>('PUT', `/api/cotizaciones/${id}`, entrada);
 
-export const importarHoras = (id: number, origen: 'estimadas' | 'reales') =>
+export const importarHoras = (id: number, origen: 'estimadas' | 'reales' | 'registradas') =>
   enviar<CotizacionSalidaDatos>('POST', `/api/cotizaciones/${id}/importar-horas`, { origen });
 
 export const aplicarPlantilla = (id: number, plantillaId: number) =>

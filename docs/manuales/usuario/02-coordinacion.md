@@ -62,6 +62,16 @@ Qué queda después:
 
 Una vez aprobada la OT, solo Coordinación y Administración pueden cambiar la **OC del cliente**, la **condición de pago** y **Descuenta de la bolsa**; el resto de los datos los siguen editando los técnicos. En una OT cerrada o cancelada se pueden escribir mensajes, pero ya no se registran horas.
 
+## Ver las horas del equipo
+
+Coordinación y Administración tienen el permiso **Ver horas de todo el equipo**. En **Horas**, el selector de persona (arriba, junto a la semana) muestra a las personas activas; al elegir a otra aparece "Estás viendo la planilla de … · solo lectura": ves sus filas, celdas, totales y resumen frente a su jornada, pero no puedes escribir ni borrar nada (cada persona corrige sus propias horas). También se puede ver la planilla de una persona desactivada, como historial. Cómo se registran y corrigen las horas está en [Registrar horas](01-tecnico.md#registrar-horas).
+
+Dónde se ven las horas acumuladas:
+
+- **OT**: la tarjeta **Horas** del panel suma las registradas, y cada tarea muestra las suyas en la columna **Reg.**. En una OT interna, la tarjeta **Costo interno** multiplica las horas registradas por la tarifa de costo interno.
+- **Ficha del cliente**: la tarjeta **Bolsa de horas** muestra "12,5 / 20 h usadas este mes" para el contrato vigente (en rojo si supera la bolsa), sumando las horas registradas en las OT que descuentan de esa bolsa en el mes en curso. La OT muestra la misma cifra junto a la casilla **Descuenta de la bolsa**.
+- **Cotizador**: **Importar horas** con origen **registradas** lleva las horas de la planilla a la cotización, con las de fuera de horario a tarifa extendida.
+
 ## Cancelar una OT
 
 Mientras una OT no esté cerrada ni cancelada, **Cancelar OT…** pide un **motivo obligatorio**. La OT queda **Cancelada** (se muestra tachada), no se factura aunque fuera facturable, sus tareas pendientes se quedan en ella y el ticket registra "canceló OT-0218" con el motivo. El estado del ticket no cambia. Una OT cancelada ya no cuenta como abierta: deja de impedir que se cierre el ticket.
@@ -79,4 +89,4 @@ Un ticket con una OT abierta no se puede resolver, descartar ni marcar como dupl
 
 ## Lo que todavía no está
 
-La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y los avisos en la app y la pantalla de OT con indicadores en pesos llegan en fases posteriores.
+La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y los avisos en la app, la pantalla de OT con indicadores en pesos, la exportación de horas y los reportes de horas llegan en fases posteriores. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes.

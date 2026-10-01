@@ -46,7 +46,7 @@ export const CotizacionEntrada = z
   });
 
 export const ImportarHorasEntrada = z.object({
-  origen: z.enum(['estimadas', 'reales']).default('estimadas'),
+  origen: z.enum(['estimadas', 'reales', 'registradas']).default('estimadas'),
 });
 
 export const AplicarPlantillaEntrada = z.object({ plantilla_id: id });

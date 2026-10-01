@@ -72,9 +72,17 @@ function Bolsa({ c }: { c: ClienteSalidaDatos }) {
       ) : (
         <p className="font-medium">Sin contrato vigente</p>
       )}
-      <p className="mt-1 text-sm text-tinta-2">
-        Las horas usadas se calcularán cuando existan OT (Fase 5)
-      </p>
+      {vigente && vigente.horas_usadas_mes !== null ? (
+        <p
+          className={
+            vigente.horas_usadas_mes > vigente.horas_mes
+              ? 'mt-1 text-sm font-semibold text-urgente'
+              : 'mt-1 text-sm text-tinta-2'
+          }
+        >
+          {`${formatearHoras(vigente.horas_usadas_mes)} / ${formatearHoras(vigente.horas_mes)} h usadas este mes`}
+        </p>
+      ) : null}
       <h3 className="mt-4 mb-2 text-sm font-semibold text-tinta-2">Historial de contratos</h3>
       <ul className="divide-y divide-borde text-sm">
         {historial.map((h) => (

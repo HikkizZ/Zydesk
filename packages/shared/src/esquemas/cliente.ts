@@ -96,7 +96,7 @@ export const ContratoBolsaSalida = ContratoBolsaBase.extend({
   id,
   cliente_id: id,
   vigente: z.boolean(),
-  horas_usadas_mes: z.null(), // null en Fase 1 (sin OT); Fase 5 lo calcula (ADR 0015)
+  horas_usadas_mes: z.number().nullable(), // número en el contrato vigente, null en el historial (ADR 0015, 0023.18)
 });
 
 export const TarifaClienteSalida = z.object({

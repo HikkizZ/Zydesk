@@ -48,7 +48,23 @@ Escribe `@` en el redactor y elige a una persona activa de la lista. Su nombre q
 
 ## Horas desde el redactor
 
-En el redactor puedes indicar las **horas** trabajadas (por ejemplo 1,5). Al guardar, el mensaje muestra "· 1,5 h registradas" y las horas quedan a tu nombre, con la fecha de hoy. La planilla de horas llega en una fase posterior.
+En el redactor puedes indicar las **horas** trabajadas (por ejemplo 1,5). Al guardar, el mensaje muestra "· 1,5 h registradas" y las horas quedan a tu nombre, con la fecha de hoy, en tu planilla de **Horas**. Si te equivocaste de día o de cantidad, corrígelas desde la planilla (ver [Registrar horas](#registrar-horas)); el mensaje no se edita.
+
+## Registrar horas
+
+**Horas** (menú, grupo Trabajo; en el celular, en **Más**) es tu planilla semanal. Una fila por ticket, OT (con una tarea de la OT, si quieres) o trabajo **Sin ticket** (reuniones, trabajo interno: con una descripción obligatoria), y una columna por día, de lunes a domingo. Puedes registrar horas en Administración, Coordinación y Técnico; **Solo lectura** ve su planilla vacía con el aviso "Tu rol no registra horas".
+
+- **Semana**: con las flechas cambias de semana y **Hoy** vuelve a la actual. No se registran horas en días futuros: esas columnas quedan deshabilitadas.
+- **Agregar fila**: elige Ticket, OT o Sin ticket; busca por código o título. En una OT puedes elegir una **tarea**: las horas se suman a esa tarea (columna **Reg.** en la OT). La fila nueva aparece vacía y solo se guarda cuando escribes horas; si cambias de semana sin horas, desaparece.
+- **Celdas**: escribe las horas (coma o punto; en pasos de 0,25, hasta 24) y sal del campo o pulsa Enter: se guarda al momento, sin botón "Guardar". Vaciar la celda borra esas horas. El botón de luna marca la celda como **Fuera de horario** (trabajo fuera de tu jornada; se cobra a tarifa extendida en las OT facturables).
+- **Totales**: cada fila suma la semana; cada día se compara con tu **jornada** (sale del horario y los feriados de tu departamento): en rojo si registraste más que la jornada, en ámbar si un día pasado quedó corto. Es solo una referencia: nada te impide guardar. Si no tienes departamento, la app lo avisa y no compara.
+- **Resumen**: total de la semana frente a la jornada semanal, y cuánto fue **facturable** (OT facturables), **interno** (tickets, OT internas y Sin ticket) y **fuera de horario**.
+
+**Horas desde un seguimiento.** Las horas que escribiste en el redactor aparecen en la celda de ese día con un ícono de mensaje; la celda no se edita directo: pulsa el total para abrir el **detalle de la celda**, que lista cada registro (manual o seguimiento, con enlace al mensaje). Ahí corriges las horas, la **fecha** y la marca "Fuera de horario" de cada uno, o lo quitas; el seguimiento se conserva y muestra el nuevo valor (o deja de mostrar horas). El detalle también sirve para agregar horas manuales a una celda que ya tiene un seguimiento.
+
+**OT cerrada o cancelada.** No admite horas (ni nuevas ni corregir las que tiene): sus celdas quedan de solo lectura con el aviso "La OT está cerrada: no se registran horas". Un ticket cerrado sí admite horas. Si una tarea con horas se mueve a otra OT (al cerrar con nueva OT) o se quita, sus horas se quedan en la OT original, sin tarea.
+
+**En el celular** (menos de 768 px) la planilla se muestra **por día**: los chips L · M · X · J · V · S · D (con el total de cada día) eligen el día y cada fila es una tarjeta con su campo de horas y la marca de fuera de horario; el total del día frente a la jornada queda fijo al pie.
 
 ## Tareas
 
@@ -96,7 +112,7 @@ Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordina
 
 **Tipo y datos.** El **tipo** y el **cliente** solo se cambian en **Borrador**. Cambiar el tipo limpia los campos del otro tipo (la app te pide confirmar). Una OT facturable tiene cliente, contacto, N° de orden de compra, condición de pago y la casilla de bolsa ("12,5 / 20 h usadas este mes"); una interna tiene área solicitante, centro de costo y quién aprueba (una persona de Coordinación o Administración). Pulsa **Guardar** para aplicar los cambios. Con la OT cerrada o cancelada todo queda en solo lectura.
 
-**Tareas con horas.** La tarjeta **Tareas** de la OT agrega las columnas **Est.** (horas estimadas) y **Real** (horas reales), en pasos de 0,25 h; se guardan al salir del campo. La cabecera suma ("Tareas · 2/4 · 10 h estimadas · 4 h reales"). Las horas que registras en el redactor se suman aparte como **horas registradas**. En una OT cerrada o cancelada solo se pueden marcar y desmarcar tareas, y el redactor no registra horas. En una OT aprobada o en ejecución, la OC del cliente, la condición de pago y "Descuenta de la bolsa" solo las cambia Coordinación o Administración.
+**Tareas con horas.** La tarjeta **Tareas** de la OT agrega las columnas **Est.** (horas estimadas) y **Real** (horas reales), en pasos de 0,25 h; se guardan al salir del campo. La cabecera suma ("Tareas · 2/4 · 10 h estimadas · 4 h reales"). La columna **Reg.** muestra las horas que registraste en la planilla contra esa tarea; las horas de la OT (del redactor y de la planilla) se suman aparte como **horas registradas** en el panel, con el enlace **Ver en la planilla**. En una OT cerrada o cancelada solo se pueden marcar y desmarcar tareas, el redactor no registra horas y la planilla tampoco. En una OT aprobada o en ejecución, la OC del cliente, la condición de pago y "Descuenta de la bolsa" solo las cambia Coordinación o Administración.
 
 **Fotos y archivos.** La tarjeta **Fotos y archivos** junta los archivos de la OT, los de sus seguimientos, el respaldo de la aprobación del cliente y los del ticket de origen, con pestañas **Todo**, **Fotos**, **Documentos** y **Correos**. **Subir fotos** abre la cámara en el celular; **Subir archivo** abre el selector. Se aplican los mismos tipos y límites que en los tickets.
 
@@ -129,7 +145,7 @@ Con cambios sin guardar, **Importar horas**, **Aplicar plantilla** y **Marcar co
 
 ### Importar horas de las tareas
 
-**Importar horas de las tareas…** agrega una línea de mano de obra por cada tarea de la OT con horas, con el título de la tarea como descripción. Eliges el origen: **estimadas** (por defecto) o **reales**. El precio es la tarifa de **hora normal** del cliente o, si no tiene, la global; el diálogo te dice cuál usará. Si ninguna está definida, la app pide configurarla (Administración, en **Configuración → Tarifas**). Las horas en horario extendido las ajustas a mano en la línea. No se puede importar en una cotización en UF (las tarifas están en pesos).
+**Importar horas de las tareas…** agrega una línea de mano de obra por cada tarea de la OT con horas, con el título de la tarea como descripción. Eliges el origen: **estimadas** (por defecto), **reales** o **registradas** (las de la planilla de horas). El precio es la tarifa de **hora normal** del cliente o, si no tiene, la global; el diálogo te dice cuál usará. Si ninguna está definida, la app pide configurarla (Administración, en **Configuración → Tarifas**). Con **registradas**, las horas marcadas **fuera de horario** van en una línea aparte ("Diagnóstico (fuera de horario)") a la tarifa de **hora extendida**, que debe estar definida si hay horas de ese tipo; las horas registradas sin tarea van en la línea "Horas registradas sin tarea". No se puede importar en una cotización en UF (las tarifas están en pesos).
 
 ### Aplicar una plantilla
 

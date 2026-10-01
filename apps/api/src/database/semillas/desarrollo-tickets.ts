@@ -379,7 +379,11 @@ async function sembrar1048(tx: Tx, id: number, p: (u: string) => number): Promis
     'Llevo 3 h de diagnóstico y 1 h de pruebas. Falta el paso a producción, calculo unas 2 h.',
     cuando,
   );
-  const fecha = await fechaRelativa(tx, 1);
+  // Viernes de la semana anterior (lunesDe(hoy) − 3 días): así estas horas no entran en la planilla de la
+  // semana actual de sdiaz, que reproduce el diseño (spec fase 5 §10).
+  const [{ f: fecha }] = await tx.query(
+    `SELECT to_char(date_trunc('week', now() AT TIME ZONE 'America/Santiago')::date - 3, 'YYYY-MM-DD') AS f`,
+  );
   await registroHoras(tx, sd, id, nota, 3, cuando, fecha);
   await registroHoras(tx, sd, id, nota, 1, cuando, fecha);
 }

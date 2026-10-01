@@ -13,12 +13,16 @@ export class RegistroHoras {
   @Column({ type: 'date' })
   fecha!: string;
 
-  // ticket_id y ot_id no pueden ir ambos con valor; Fase 5 permite ambos NULL ("Sin ticket")
+  // ticket_id y ot_id no pueden ir ambos con valor; ambos NULL = "Sin ticket" (exige descripcion)
   @Column({ type: 'integer', nullable: true })
   ticket_id!: number | null;
 
   @Column({ type: 'integer', nullable: true })
   ot_id!: number | null;
+
+  // solo con ot_id; la tarea debe ser de esa OT (lo valida el servicio)
+  @Column({ type: 'integer', nullable: true })
+  tarea_id!: number | null;
 
   @Column({ type: 'integer', nullable: true })
   mensaje_id!: number | null;

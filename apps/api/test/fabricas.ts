@@ -1,10 +1,12 @@
 import {
   ESTADOS_TICKET_CERRADOS,
+  ZONA,
   calcularCotizacion,
   type EstadoCotizacion,
   type EstadoFacturacion,
   type EstadoTicket,
   type EtapaOt,
+  type HorarioDia as HorarioDiaDatos,
   type Moneda,
   type TarifasSalidaDatos,
   type TipoLinea,
@@ -34,6 +36,7 @@ import { LineaCotizacion } from '../src/modulos/cotizaciones/linea-cotizacion.en
 import { ContratoBolsa } from '../src/modulos/clientes/contrato-bolsa.entity.js';
 import { Departamento } from '../src/modulos/departamentos/departamento.entity.js';
 import { HorarioDia } from '../src/modulos/departamentos/horario-dia.entity.js';
+import { RegistroHoras } from '../src/modulos/horas/registro-horas.entity.js';
 import { versionTerminosVigente } from '../src/modulos/legal/legal.service.js';
 import { Mensaje } from '../src/modulos/mensajes/mensaje.entity.js';
 import { Ot } from '../src/modulos/ots/ot.entity.js';
@@ -95,26 +98,31 @@ export async function crearUsuario(
   });
 }
 
-// L-V activos 08:30-18:00 con colación 13:00/60; sábado y domingo libres (0 = domingo).
+// Por defecto: L-V activos 08:30-18:00 con colación 13:00/60; sábado y domingo libres (0 = domingo).
+// `horario` (7 días) reemplaza ese horario para probar jornadas distintas.
 export async function crearDepartamento(
-  datos: { nombre?: string; capacidad_tickets_pct?: number } = {},
+  datos: { nombre?: string; capacidad_tickets_pct?: number; horario?: HorarioDiaDatos[] } = {},
 ): Promise<Departamento> {
   const departamento = await dataSource.manager.save(Departamento, {
     nombre: datos.nombre ?? `Departamento ${siguiente()}`,
     hora_extendida_desde: '19:00',
     capacidad_tickets_pct: datos.capacidad_tickets_pct ?? 80,
   });
-  for (let dia = 0; dia <= 6; dia++) {
-    const laboral = dia >= 1 && dia <= 5;
-    await dataSource.manager.save(HorarioDia, {
-      departamento_id: departamento.id,
-      dia_semana: dia,
-      activo: laboral,
-      entrada: laboral ? '08:30' : '09:00',
-      salida: laboral ? '18:00' : '13:00',
-      colacion_inicio: '13:00',
-      colacion_min: laboral ? 60 : 0,
+  const horario: HorarioDiaDatos[] =
+    datos.horario ??
+    [0, 1, 2, 3, 4, 5, 6].map((dia) => {
+      const laboral = dia >= 1 && dia <= 5;
+      return {
+        dia_semana: dia,
+        activo: laboral,
+        entrada: laboral ? '08:30' : '09:00',
+        salida: laboral ? '18:00' : '13:00',
+        colacion_inicio: '13:00',
+        colacion_min: laboral ? 60 : 0,
+      };
     });
+  for (const dia of horario) {
+    await dataSource.manager.save(HorarioDia, { departamento_id: departamento.id, ...dia });
   }
   return departamento;
 }
@@ -282,6 +290,37 @@ export async function crearTarea(
     horas_estimadas: datos.horas_estimadas ?? null,
     horas_reales: datos.horas_reales ?? null,
     orden: fila!.n,
+  });
+}
+
+// Inserta directo una fila de `registro_horas`. `fecha` = hoy en Santiago; `horas` 1; sin ticket ni OT
+// ("Sin ticket") la `descripcion` es obligatoria: si falta, `'Sin ticket de prueba'`.
+export async function crearRegistroHoras(
+  usuario_id: number,
+  datos: {
+    fecha?: string;
+    ticket_id?: number | null;
+    ot_id?: number | null;
+    tarea_id?: number | null;
+    mensaje_id?: number | null;
+    descripcion?: string | null;
+    horas?: number;
+    fuera_de_horario?: boolean;
+  } = {},
+): Promise<RegistroHoras> {
+  const ticket_id = datos.ticket_id ?? null;
+  const ot_id = datos.ot_id ?? null;
+  const sinDestino = ticket_id === null && ot_id === null;
+  return dataSource.manager.save(RegistroHoras, {
+    usuario_id,
+    fecha: datos.fecha ?? new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date()),
+    ticket_id,
+    ot_id,
+    tarea_id: datos.tarea_id ?? null,
+    mensaje_id: datos.mensaje_id ?? null,
+    descripcion: datos.descripcion ?? (sinDestino ? 'Sin ticket de prueba' : null),
+    horas: datos.horas ?? 1,
+    fuera_de_horario: datos.fuera_de_horario ?? false,
   });
 }
 
