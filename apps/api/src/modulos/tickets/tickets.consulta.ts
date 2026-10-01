@@ -16,6 +16,12 @@ type Consulta = Pick<EntityManager, 'query'>;
 
 const HOY_SANTIAGO = `(now() AT TIME ZONE 'America/Santiago')::date`;
 
+// OT vinculada (spec fase 3 §4.9): la abierta más reciente; si no hay abiertas, la cerrada más reciente;
+// nunca una cancelada.
+const OT_VINCULADA = `
+  FROM ot o WHERE o.ticket_id = t.id AND o.etapa <> 'cancelada'
+  ORDER BY (o.etapa = 'cerrada') ASC, o.creado_en DESC, o.id DESC LIMIT 1`;
+
 // Resumen de ticket (spec §5.2): una consulta con subconsultas; `vencido`/`vence_hoy` se calculan en SQL.
 const SELECT_RESUMEN = `
   SELECT t.id, t.numero, t.codigo, t.asunto, t.estado, t.espera_de, t.espera_detalle, t.prioridad,
@@ -34,7 +40,8 @@ const SELECT_RESUMEN = `
          EXISTS (SELECT 1 FROM correo_adjunto ca WHERE ca.ticket_id = t.id) AS tiene_correo,
          (SELECT count(*)::int FROM mensaje m WHERE m.ticket_id = t.id) AS n_mensajes,
          CASE WHEN d.id IS NULL THEN NULL
-              ELSE json_build_object('id', d.id, 'codigo', d.codigo) END AS duplicado_de
+              ELSE json_build_object('id', d.id, 'codigo', d.codigo) END AS duplicado_de,
+         (SELECT json_build_object('id', o.id, 'codigo', o.codigo, 'tipo', o.tipo) ${OT_VINCULADA}) AS ot_vinculada
     FROM ticket t
     LEFT JOIN cliente c ON c.id = t.cliente_id
     LEFT JOIN ticket d ON d.id = t.duplicado_de_id`;
@@ -62,6 +69,7 @@ interface FilaResumen {
   tiene_correo: boolean;
   n_mensajes: number;
   duplicado_de: { id: number; codigo: string } | null;
+  ot_vinculada: TicketResumenDatos['ot_vinculada'];
 }
 
 const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
@@ -92,8 +100,8 @@ function aResumen(f: FilaResumen): TicketResumenDatos {
     n_mensajes: f.n_mensajes,
     motivo_cierre: f.motivo_cierre,
     duplicado_de: f.duplicado_de,
-    tipo: 'ticket', // Fase 3: OT vinculada
-    ot_vinculada: null,
+    tipo: f.ot_vinculada ? (`ot_${f.ot_vinculada.tipo}` as const) : 'ticket',
+    ot_vinculada: f.ot_vinculada,
     creado_en: f.creado_en.toISOString(),
     actualizado_en: f.actualizado_en.toISOString(),
     cerrado_en: iso(f.cerrado_en),
@@ -116,6 +124,8 @@ type FiltrosListado = Partial<
     | 'categoria_id'
     | 'vencen_hoy'
     | 'vencidos'
+    | 'con_ot'
+    | 'tipo'
   >
 >;
 
@@ -172,6 +182,16 @@ function armarWhere(
     );
   }
   if (q.vencidos === 'true') condiciones.push(`(t.cerrado_en IS NULL AND t.fecha_limite < now())`);
+  if (q.con_ot !== undefined) {
+    condiciones.push(
+      `${q.con_ot === 'true' ? '' : 'NOT '}EXISTS (SELECT 1 FROM ot o WHERE o.ticket_id = t.id AND o.etapa <> 'cancelada')`,
+    );
+  }
+  if (q.tipo) {
+    condiciones.push(
+      `COALESCE('ot_' || (SELECT o.tipo ${OT_VINCULADA}), 'ticket') = ANY(${param(q.tipo)}::text[])`,
+    );
+  }
   return { where: condiciones.join(' AND '), valores };
 }
 
@@ -236,7 +256,7 @@ function tareaSalida(t: FilaTarea): TareaSalidaDatos {
   return {
     id: t.id,
     ticket_id: t.ticket_id,
-    ot_id: null, // Fase 3: las tareas de OT las sirve el bloque 3C
+    ot_id: null,
     horas_estimadas: null,
     horas_reales: null,
     titulo: t.titulo,
@@ -300,6 +320,15 @@ export async function cargarTicket(m: EntityManager, id: number): Promise<Ticket
     [id],
   );
 
+  const ots: (Omit<TicketSalidaDatos['ots'][number], 'creado_en' | 'cerrada_en'> & {
+    creado_en: Date;
+    cerrada_en: Date | null;
+  })[] = await m.query(
+    `SELECT id, numero, codigo, titulo, tipo, etapa, estado_facturacion, resolvio_ticket, creado_en, cerrada_en
+       FROM ot WHERE ticket_id = $1 ORDER BY creado_en DESC, id DESC`,
+    [id],
+  );
+
   const [correo]: {
     id: number;
     origen: 'eml' | 'msg' | 'texto';
@@ -355,6 +384,17 @@ export async function cargarTicket(m: EntityManager, id: number): Promise<Ticket
     tareas: tareas.map(tareaSalida),
     creado_por:
       e.creado_por === null ? null : { id: e.creado_por, nombre: e.creado_por_nombre ?? '' },
-    ots: [],
+    ots: ots.map((o) => ({
+      id: o.id,
+      numero: o.numero,
+      codigo: o.codigo,
+      titulo: o.titulo,
+      tipo: o.tipo,
+      etapa: o.etapa,
+      estado_facturacion: o.estado_facturacion,
+      resolvio_ticket: o.resolvio_ticket,
+      creado_en: o.creado_en.toISOString(),
+      cerrada_en: iso(o.cerrada_en),
+    })),
   };
 }

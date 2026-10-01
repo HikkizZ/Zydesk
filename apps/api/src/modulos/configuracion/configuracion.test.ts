@@ -1,11 +1,11 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
-import { crearUsuario, ingresarComo } from '../../../test/fabricas.js';
+import { crearOt, crearTicket, crearUsuario, ingresarComo } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import { fuenteNumeros } from '../../core/numeracion/fuente.js';
-import { fuenteNumerosFase1, siguienteNumero } from '../../core/numeracion/numeracion.js';
+import { siguienteNumero } from '../../core/numeracion/numeracion.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 
@@ -208,7 +208,7 @@ describe('numeración', () => {
 
   it('el rechazo revierte toda la transacción (la otra clave tampoco cambia)', async () => {
     const { agente } = await como('admin');
-    await enTransaccion((tx) => siguienteNumero(tx, 'ot', fuenteNumerosFase1)); // 200
+    await crearOt((await crearTicket()).id, { numero: 200 }); // OT real: la numeración cuenta sobre la tabla
     const r = await agente
       .put('/api/config/numeracion')
       .send(numeracion({ ticket: { prefijo: 'NUEVO-' }, ot: { inicial: 200, prefijo: 'X-' } }));

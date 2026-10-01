@@ -10,7 +10,12 @@ export const TareaEntrada = z.object({
   horas_estimadas: horasTarea.nullable().default(null), // solo OT; en ticket debe ser null (400)
 });
 
-export const TareaEditarEntrada = TareaEntrada.partial().extend({
+// Sin `.partial()` de TareaEntrada: en Zod 4 aplicaría los `default(null)` y un PATCH parcial borraría campos.
+export const TareaEditarEntrada = z.object({
+  titulo: texto(200).optional(),
+  responsable_id: id.nullable().optional(),
+  fecha: fechaIso.nullable().optional(),
+  horas_estimadas: horasTarea.nullable().optional(),
   hecha: z.boolean().optional(),
   horas_reales: horasTarea.nullable().optional(),
 });
