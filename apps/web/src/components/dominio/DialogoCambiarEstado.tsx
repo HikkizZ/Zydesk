@@ -3,6 +3,7 @@ import {
   ESPERA_DE,
   ETIQUETA_ESPERA_DE,
   ETIQUETA_ESTADO_TICKET,
+  ETIQUETA_ETAPA_OT,
   esCerrado,
   transicionesDesde,
   type CambioEstadoTicketDatos,
@@ -48,7 +49,7 @@ export type TicketParaEstado = Pick<TicketResumenDatos, 'id' | 'codigo' | 'estad
 interface OtAbierta {
   id: number;
   codigo: string;
-  etapa?: string;
+  etapa?: keyof typeof ETIQUETA_ETAPA_OT;
 }
 
 const ETIQUETAS_ESPERA = ESPERA_DE.map((valor) => ({
@@ -214,7 +215,12 @@ function Contenido({
               <Link to={`/ots/${ot.id}`} className="text-acento underline underline-offset-2">
                 {ot.codigo}
               </Link>
-              {ot.etapa ? <span className="text-sm text-tinta-2"> · {ot.etapa}</span> : null}
+              {ot.etapa ? (
+                <span className="text-sm text-tinta-2">
+                  {' '}
+                  · {ETIQUETA_ETAPA_OT[ot.etapa] ?? ot.etapa}
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>

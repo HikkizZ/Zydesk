@@ -81,4 +81,54 @@ describe('describirEvento', () => {
       'El sistema archivó el ticket',
     );
   });
+  it('convertido_en_ot con chip y origen', () => {
+    expect(
+      describirEvento(
+        evento({
+          accion: 'convertido_en_ot',
+          valor_nuevo: 'OT-0218 · Facturable',
+          datos: { ot_id: 5, codigo: 'OT-0218', desde_ot: { id: 4, codigo: 'OT-0217' } },
+        }),
+      ),
+    ).toEqual({
+      texto: 'convirtió el ticket en',
+      cambio: 'OT-0218 · Facturable',
+      detalle: 'A partir de OT-0217',
+    });
+  });
+
+  it('ot_cerrada indica si resolvió y recorta el resumen', () => {
+    const d = describirEvento(
+      evento({
+        accion: 'ot_cerrada',
+        datos: { codigo: 'OT-0218', resolvio_ticket: false, resumen: 'x'.repeat(200) },
+      }),
+    );
+    expect(d.texto).toBe('cerró');
+    expect(d.cambio).toBe('OT-0218 · no resolvió el ticket');
+    expect(d.detalle).toHaveLength(120);
+    expect(
+      describirEvento(
+        evento({ accion: 'ot_cerrada', datos: { codigo: 'OT-0218', resolvio_ticket: true } }),
+      ).cambio,
+    ).toBe('OT-0218 · resolvió el ticket');
+  });
+
+  it('ot_cancelada muestra el motivo', () => {
+    expect(
+      describirEvento(
+        evento({
+          accion: 'ot_cancelada',
+          datos: { codigo: 'OT-0218', motivo: 'Cliente desistió' },
+        }),
+      ),
+    ).toEqual({ texto: 'canceló OT-0218', detalle: 'Cliente desistió' });
+  });
+
+  it('seguimiento_copiado', () => {
+    expect(
+      describirEvento(evento({ accion: 'seguimiento_copiado', datos: { codigo: 'OT-0218' } }))
+        .texto,
+    ).toBe('copió un seguimiento desde OT-0218');
+  });
 });

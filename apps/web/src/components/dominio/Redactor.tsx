@@ -6,10 +6,12 @@ import { SubidaArchivos } from '@/components/dominio/SubidaArchivos';
 import { useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
 import { Avatar } from '@/components/dominio/Avatar';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
 import { Textarea } from '@/components/ui/textarea';
+import { crearMensajeOt, invalidarOt } from '@/features/ots/api';
 import {
   crearMensaje,
   invalidarTicket,
@@ -57,13 +59,34 @@ function horasValidas(texto: string): boolean {
   return Number.isFinite(n) && n >= 0.25 && n <= 24 && Number.isInteger(n * 4);
 }
 
-export function Redactor({ ticketId, onEnviado }: { ticketId: number; onEnviado?: () => void }) {
+export interface DestinoMensajes {
+  tipo: 'ticket' | 'ot';
+  id: number;
+}
+
+// Redactor de seguimientos y notas de un ticket o de una OT. `ticketId` es la forma anterior de
+// `destino`. Con `copiaAlTicket` (solo OT) ofrece "Copiar al ticket"; `codigoTicket` lo nombra.
+export function Redactor({
+  destino: destinoProp,
+  ticketId,
+  onEnviado,
+  copiaAlTicket = false,
+  codigoTicket,
+}: {
+  destino?: DestinoMensajes;
+  ticketId?: number;
+  onEnviado?: () => void;
+  copiaAlTicket?: boolean;
+  codigoTicket?: string;
+}) {
+  const destino: DestinoMensajes = destinoProp ?? { tipo: 'ticket', id: ticketId ?? 0 };
   const queryClient = useQueryClient();
   const usuarios = useUsuariosActivos();
   const areaTexto = useRef<HTMLTextAreaElement>(null);
   const [modo, setModo] = useState<TipoMensaje>('seguimiento');
   const [texto, setTexto] = useState('');
   const [horas, setHoras] = useState('');
+  const [copiar, setCopiar] = useState(false);
   const [archivos, setArchivos] = useState<ArchivoDatos[]>([]);
   const [elegidos, setElegidos] = useState<Map<number, string>>(new Map());
   const [mencion, setMencion] = useState<Mencion | null>(null);
@@ -81,15 +104,21 @@ export function Redactor({ ticketId, onEnviado }: { ticketId: number; onEnviado?
   const puedeEnviar = texto.trim() !== '' && horasOk;
 
   const enviarMensaje = useMutation({
-    mutationFn: (entrada: MensajeEntradaDatos) => crearMensaje(ticketId, entrada),
+    mutationFn: (entrada: MensajeEntradaDatos) =>
+      destino.tipo === 'ot'
+        ? crearMensajeOt(destino.id, entrada)
+        : crearMensaje(destino.id, entrada),
     onSuccess: async () => {
       toast.success(textos.ok);
       setTexto('');
       setHoras('');
+      setCopiar(false);
       setArchivos([]);
       setElegidos(new Map());
       setMencion(null);
-      await invalidarTicket(queryClient, ticketId);
+      await (destino.tipo === 'ot'
+        ? invalidarOt(queryClient, destino.id)
+        : invalidarTicket(queryClient, destino.id));
       onEnviado?.();
     },
     onError: (err) =>
@@ -111,6 +140,7 @@ export function Redactor({ ticketId, onEnviado }: { ticketId: number; onEnviado?
       archivo_ids: archivos.map((a) => a.id),
       mencionados_ids,
       horas: horas.trim() === '' ? null : Number(horas),
+      ...(copiaAlTicket && copiar ? { copiar_al_ticket: true } : {}),
     });
   }
 
@@ -247,12 +277,29 @@ export function Redactor({ ticketId, onEnviado }: { ticketId: number; onEnviado?
 
       <SubidaArchivos compacto archivos={archivos} onChange={setArchivos} />
 
+      {copiaAlTicket ? (
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id={`copiar-${destino.id}`}
+            checked={copiar}
+            onCheckedChange={(v) => setCopiar(v === true)}
+            className="mt-0.5 size-5"
+          />
+          <div className="flex flex-col">
+            <Label htmlFor={`copiar-${destino.id}`}>Copiar al ticket</Label>
+            <p className="text-sm text-tinta-2">
+              El avance también queda en {codigoTicket ?? 'el ticket'}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-end gap-3">
         <div className="flex flex-col gap-1">
-          <Label htmlFor={`horas-${ticketId}`}>Horas</Label>
+          <Label htmlFor={`horas-${destino.tipo}-${destino.id}`}>Horas</Label>
           <div className="flex items-center gap-1.5">
             <Input
-              id={`horas-${ticketId}`}
+              id={`horas-${destino.tipo}-${destino.id}`}
               type="number"
               step={0.25}
               min={0.25}

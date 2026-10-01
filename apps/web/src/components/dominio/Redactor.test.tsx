@@ -81,3 +81,39 @@ it('no envía la mención si se borra el nombre del texto', async () => {
   await waitFor(() => expect(llamadas.some((l) => l.metodo === 'POST')).toBe(true));
   expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toMatchObject({ mencionados_ids: [] });
 });
+
+it('en una OT con copiaAlTicket envía copiar_al_ticket al endpoint de la OT', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = simularFetch(({ metodo, ruta }) => {
+    if (metodo === 'GET' && ruta.startsWith('/api/usuarios'))
+      return respuesta(200, USUARIOS_PRUEBA);
+    if (metodo === 'POST' && ruta === '/api/ots/5/mensajes') return respuesta(201, { id: 1 });
+    return undefined;
+  });
+  render(
+    <ConSesion yo={yoDePrueba()}>
+      <Redactor destino={{ tipo: 'ot', id: 5 }} copiaAlTicket codigoTicket="TK-1048" />
+      <Toaster />
+    </ConSesion>,
+  );
+  expect(screen.getByText('El avance también queda en TK-1048')).toBeTruthy();
+  await usuario.type(screen.getByLabelText('Texto del mensaje'), 'Listo');
+  await usuario.click(screen.getByRole('checkbox', { name: 'Copiar al ticket' }));
+  await usuario.click(boton('Registrar seguimiento'));
+  await waitFor(() => expect(llamadas.some((l) => l.metodo === 'POST')).toBe(true));
+  expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toMatchObject({
+    tipo: 'seguimiento',
+    texto: 'Listo',
+    copiar_al_ticket: true,
+  });
+});
+
+it('sin copiaAlTicket no hay casilla ni se envía copiar_al_ticket', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar();
+  expect(screen.queryByRole('checkbox', { name: 'Copiar al ticket' })).toBeNull();
+  await usuario.type(screen.getByLabelText('Texto del mensaje'), 'Algo');
+  await usuario.click(boton('Registrar seguimiento'));
+  await waitFor(() => expect(llamadas.some((l) => l.metodo === 'POST')).toBe(true));
+  expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).not.toHaveProperty('copiar_al_ticket');
+});

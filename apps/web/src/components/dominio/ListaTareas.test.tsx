@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { TareaDatos } from '@/features/tickets/api';
@@ -86,4 +86,90 @@ it('sin permiso de edición todo queda de solo lectura', () => {
   montar(false, 'lectura');
   expect(screen.queryByLabelText('Nueva tarea')).toBeNull();
   expect(casilla().disabled).toBe(true);
+});
+
+function montarOt(cerrado = false) {
+  const llamadas = simularFetch(({ ruta, metodo }) => {
+    if (ruta.startsWith('/api/usuarios')) return respuesta(200, USUARIOS_PRUEBA);
+    if (metodo === 'PATCH') return respuesta(200, tarea(1, 'Diagnóstico', true));
+    if (metodo === 'POST') return respuesta(201, tarea(9, 'Nueva', false));
+    return undefined;
+  });
+  const tareasOt = [
+    tarea(1, 'Diagnóstico', true, {
+      ticket_id: null,
+      ot_id: 5,
+      horas_estimadas: 3,
+      horas_reales: 3,
+    }),
+    tarea(2, 'Carga de CAF', false, {
+      ticket_id: null,
+      ot_id: 5,
+      horas_estimadas: 4,
+      horas_reales: 1,
+    }),
+    tarea(3, 'Paso a producción', false, { ticket_id: null, ot_id: 5, horas_estimadas: 2 }),
+  ];
+  render(
+    <ConSesion yo={yoDePrueba()}>
+      <ListaTareas destino={{ tipo: 'ot', id: 5 }} tareas={tareasOt} cerrado={cerrado} conHoras />
+    </ConSesion>,
+  );
+  return llamadas;
+}
+
+it('con horas: la cabecera suma estimadas y reales', () => {
+  montarOt();
+  expect(
+    screen.getByRole('heading', { name: 'Tareas · 1/3 · 9 h estimadas · 4 h reales' }),
+  ).toBeTruthy();
+});
+
+it('con horas: al perder el foco con un valor nuevo hace PATCH; sin cambio no', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montarOt();
+  const real = screen.getByLabelText('Horas reales de Paso a producción');
+  await usuario.click(real);
+  await usuario.tab();
+  expect(llamadas.some((l) => l.metodo === 'PATCH')).toBe(false);
+
+  await usuario.type(real, '1.5');
+  await usuario.tab();
+  await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PATCH')).toBe(true));
+  const patch = llamadas.find((l) => l.metodo === 'PATCH');
+  expect(patch?.ruta).toBe('/api/tareas/3');
+  expect(patch?.cuerpo).toEqual({ horas_reales: 1.5 });
+});
+
+it('con horas: valores que no son múltiplos de 0,25 no se envían', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montarOt();
+  const est = screen.getByLabelText('Horas estimadas de Carga de CAF');
+  await usuario.clear(est);
+  await usuario.type(est, '1.3');
+  await usuario.tab();
+  expect(llamadas.some((l) => l.metodo === 'PATCH')).toBe(false);
+});
+
+it('con horas: el alta de una tarea de OT envía horas_estimadas a la OT', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montarOt();
+  await usuario.type(screen.getByLabelText('Nueva tarea'), 'Capacitación');
+  await usuario.type(screen.getByLabelText('Horas est.'), '1');
+  await usuario.click(screen.getByRole('button', { name: 'Agregar' }));
+  await waitFor(() => expect(llamadas.some((l) => l.metodo === 'POST')).toBe(true));
+  const post = llamadas.find((l) => l.metodo === 'POST');
+  expect(post?.ruta).toBe('/api/ots/5/tareas');
+  expect(post?.cuerpo).toMatchObject({ titulo: 'Capacitación', horas_estimadas: 1 });
+});
+
+it('con la OT cerrada las horas quedan deshabilitadas pero se puede marcar', () => {
+  montarOt(true);
+  expect(
+    (screen.getByLabelText('Horas estimadas de Carga de CAF') as HTMLInputElement).disabled,
+  ).toBe(true);
+  expect(
+    (screen.getByRole('checkbox', { name: 'Tarea hecha: Carga de CAF' }) as HTMLButtonElement)
+      .disabled,
+  ).toBe(false);
 });

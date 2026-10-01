@@ -12,6 +12,7 @@ import { FechaLimite } from '@/components/dominio/FechaLimite';
 import { Pill } from '@/components/dominio/Pill';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
+import { PillTipo } from '@/components/dominio/PillTipo';
 import { ListaTareas } from '@/components/dominio/ListaTareas';
 import { Redactor } from '@/components/dominio/Redactor';
 import { Button } from '@/components/ui/button';
@@ -27,7 +28,9 @@ import {
 } from '@/features/tickets/api';
 import { ErrorApi } from '@/lib/api';
 import { ActividadLista } from '../components/ActividadLista';
+import { BotonConvertir } from '../components/BotonConvertir';
 import { CorreoOriginal } from '../components/CorreoOriginal';
+import { DialogoConvertirEnOt } from '../components/DialogoConvertirEnOt';
 import { DialogoEditarTicket } from '../components/DialogoEditarTicket';
 import {
   etiquetaDeMensaje,
@@ -57,21 +60,6 @@ function Tarjeta({ titulo, children }: { titulo: string; children: ReactNode }) 
   );
 }
 
-function BotonDeshabilitado({ texto, pista }: { texto: string; pista: string }) {
-  return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="inline-flex">
-          <Button type="button" variant="outline" disabled>
-            {texto}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{pista}</TooltipContent>
-    </Tooltip>
-  );
-}
-
 function NoEncontrado() {
   return (
     <EstadoVacio
@@ -96,6 +84,7 @@ export function TicketDetallePage() {
   const tipo: TipoActividad = TIPOS.find((t) => t === pedido) ?? 'todo';
   const [estadoAbierto, setEstadoAbierto] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [convirtiendo, setConvirtiendo] = useState(false);
   const ultimo = useRef<HTMLDivElement>(null);
 
   const consulta = useQuery({
@@ -173,6 +162,7 @@ export function TicketDetallePage() {
         <div className="flex flex-wrap items-center gap-2">
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
           <PillPrioridad prioridad={t.prioridad} />
+          {t.ot_vinculada ? <PillTipo tipo={t.tipo} codigo={t.ot_vinculada.codigo} /> : null}
           <FechaLimite
             fecha_limite={t.fecha_limite}
             vencido={t.vencido}
@@ -208,7 +198,9 @@ export function TicketDetallePage() {
           ) : (
             <span className="text-sm text-tinta-2">Solo lectura</span>
           )}
-          <BotonDeshabilitado texto="Convertir en OT" pista="Fase 3" />
+          {puedeEditar ? (
+            <BotonConvertir ticket={t} onConvertir={() => setConvirtiendo(true)} />
+          ) : null}
         </div>
       </header>
 
@@ -302,6 +294,7 @@ export function TicketDetallePage() {
           ticket={t}
           puedeEditar={puedeEditar}
           onCambiarEstado={() => setEstadoAbierto(true)}
+          onConvertir={() => setConvirtiendo(true)}
         />
       </div>
 
@@ -311,6 +304,11 @@ export function TicketDetallePage() {
         onCerrar={() => setEstadoAbierto(false)}
       />
       <DialogoEditarTicket ticket={t} abierto={editando} onCerrar={() => setEditando(false)} />
+      <DialogoConvertirEnOt
+        ticket={t}
+        abierto={convirtiendo}
+        onCerrar={() => setConvirtiendo(false)}
+      />
     </>
   );
 }

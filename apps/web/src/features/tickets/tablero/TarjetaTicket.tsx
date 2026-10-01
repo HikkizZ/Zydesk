@@ -6,6 +6,7 @@ import { Codigo } from '@/components/dominio/Codigo';
 import { FechaLimite } from '@/components/dominio/FechaLimite';
 import { Pill } from '@/components/dominio/Pill';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
+import { PillTipo } from '@/components/dominio/PillTipo';
 import type { TicketResumenDatos } from '@/features/tickets/api';
 
 const recortar = (texto: string, max: number) =>
@@ -29,10 +30,17 @@ function EtiquetaCierre({ ticket }: { ticket: TicketResumenDatos }) {
 }
 
 function Etiquetas({ ticket }: { ticket: TicketResumenDatos }) {
-  const hay = ticket.tiene_correo || ticket.estado === 'en_espera' || esCerrado(ticket.estado);
+  const hay =
+    ticket.ot_vinculada !== null ||
+    ticket.tiene_correo ||
+    ticket.estado === 'en_espera' ||
+    esCerrado(ticket.estado);
   if (!hay) return null;
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      {ticket.ot_vinculada ? (
+        <PillTipo tipo={ticket.tipo} codigo={ticket.ot_vinculada.codigo} />
+      ) : null}
       {ticket.tiene_correo ? (
         <Pill tono="neutro">
           <Mail aria-hidden="true" className="size-3" />

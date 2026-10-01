@@ -32,6 +32,7 @@ import { DialogoBolsa } from '../components/DialogoBolsa';
 import { DialogoCliente } from '../components/DialogoCliente';
 import { DialogoContacto } from '../components/DialogoContacto';
 import { DialogoTarifas } from '../components/DialogoTarifas';
+import { OtsDelCliente } from '../components/OtsDelCliente';
 import { TicketsDelCliente } from '../components/TicketsDelCliente';
 import { formatearDia, formatearDiaAnio, formatearHoras } from '../formato';
 
@@ -320,8 +321,18 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
       >
         <TicketsDelCliente clienteId={c.id} />
       </Tarjeta>
-      <Tarjeta titulo="Órdenes de trabajo">
-        <EstadoVacio titulo="Disponible en la Fase 3" />
+      <Tarjeta
+        titulo="Órdenes de trabajo"
+        acciones={
+          <Link
+            to={`/ots?cliente_id=${c.id}`}
+            className="text-sm text-acento underline underline-offset-2"
+          >
+            Ver todas
+          </Link>
+        }
+      >
+        <OtsDelCliente clienteId={c.id} />
       </Tarjeta>
 
       <DialogoCliente abierto={editando} alCambiar={setEditando} cliente={c} />

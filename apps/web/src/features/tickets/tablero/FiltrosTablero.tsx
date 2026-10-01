@@ -1,4 +1,10 @@
-import { PRIORIDADES, ETIQUETA_PRIORIDAD, type Prioridad } from '@zydesk/shared';
+import {
+  PRIORIDADES,
+  ETIQUETA_PRIORIDAD,
+  TIPOS_TICKET,
+  type Prioridad,
+  type TipoTicket,
+} from '@zydesk/shared';
 import { ChevronDown } from 'lucide-react';
 import { SelectorPersonas } from '@/components/dominio/SelectorPersonas';
 import { Button } from '@/components/ui/button';
@@ -10,7 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { ETIQUETA_TIPO_TICKET } from '../tipos';
 import { BuscadorTickets } from './BuscadorTickets';
 
 export interface ValoresFiltrosTablero {
@@ -18,6 +24,7 @@ export interface ValoresFiltrosTablero {
   responsable: number | null;
   prioridad: Prioridad[];
   soloMios: boolean;
+  tipo: TipoTicket[];
 }
 
 // Barra de filtros del tablero; el estado vive en la URL (lo maneja la página).
@@ -32,6 +39,11 @@ export function FiltrosTablero({
     valores.prioridad.length === 0
       ? 'Prioridad'
       : `Prioridad: ${valores.prioridad.map((p) => ETIQUETA_PRIORIDAD[p]).join(', ')}`;
+
+  const etiquetaTipo =
+    valores.tipo.length === 0
+      ? 'Tipo'
+      : `Tipo: ${valores.tipo.map((t) => ETIQUETA_TIPO_TICKET[t]).join(', ')}`;
 
   return (
     <div
@@ -84,17 +96,31 @@ export function FiltrosTablero({
         />
         Solo míos
       </Label>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <span tabIndex={0} className="inline-flex">
-            <Button variant="outline" disabled className="font-normal">
-              Tipo
-              <ChevronDown aria-hidden="true" className="opacity-50" />
-            </Button>
-          </span>
-        </TooltipTrigger>
-        <TooltipContent>Disponible en la Fase 3</TooltipContent>
-      </Tooltip>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" aria-label={etiquetaTipo} className="font-normal">
+            {etiquetaTipo}
+            <ChevronDown aria-hidden="true" className="opacity-50" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {TIPOS_TICKET.map((t) => (
+            <DropdownMenuCheckboxItem
+              key={t}
+              className="min-h-11 lg:min-h-8"
+              checked={valores.tipo.includes(t)}
+              onSelect={(e) => e.preventDefault()}
+              onCheckedChange={(marcado) =>
+                onCambio({
+                  tipo: TIPOS_TICKET.filter((x) => (x === t ? marcado : valores.tipo.includes(x))),
+                })
+              }
+            >
+              {ETIQUETA_TIPO_TICKET[t]}
+            </DropdownMenuCheckboxItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

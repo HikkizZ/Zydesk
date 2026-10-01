@@ -7,7 +7,7 @@ export type ClaveChip =
 export const CHIPS: {
   clave: ClaveChip;
   etiqueta: string;
-  param: 'solo_mios' | 'sin_asignar' | 'vencen_hoy' | 'vencidos' | 'archivados' | null;
+  param: 'solo_mios' | 'sin_asignar' | 'vencen_hoy' | 'vencidos' | 'con_ot' | 'archivados' | null;
   /** Texto del tooltip si el chip aún no está disponible. */
   deshabilitado?: string;
 }[] = [
@@ -16,7 +16,7 @@ export const CHIPS: {
   { clave: 'sin_asignar', etiqueta: 'Sin asignar', param: 'sin_asignar' },
   { clave: 'vencen_hoy', etiqueta: 'Vencen hoy', param: 'vencen_hoy' },
   { clave: 'vencidos', etiqueta: 'Vencidos', param: 'vencidos' },
-  { clave: 'con_ot', etiqueta: 'Con OT', param: null, deshabilitado: 'Disponible en la Fase 3' },
+  { clave: 'con_ot', etiqueta: 'Con OT', param: 'con_ot' },
   { clave: 'archivados', etiqueta: 'Archivados', param: 'archivados' },
 ];
 
@@ -37,6 +37,8 @@ export function consultaDeChip(clave: ClaveChip): ConsultaTickets {
       return { vencen_hoy: true };
     case 'vencidos':
       return { vencidos: true };
+    case 'con_ot':
+      return { con_ot: true };
     case 'archivados':
       return { archivados: true };
     default:

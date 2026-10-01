@@ -36,6 +36,11 @@ function tituloDeTarea(e: EventoDatos): string {
   return titulo ? `«${titulo}»` : '';
 }
 
+function codigoDeOt(valor: unknown): string | null {
+  if (typeof valor !== 'object' || valor === null) return null;
+  return texto((valor as Record<string, unknown>)['codigo']);
+}
+
 const conTarea = (frase: string, e: EventoDatos) => `${frase} ${tituloDeTarea(e)}`.trim();
 
 function describirCambio(e: EventoDatos): DescripcionEvento {
@@ -85,6 +90,37 @@ export function describirEvento(e: EventoDatos): DescripcionEvento {
       return { texto: conTarea('quitó la tarea', e) };
     case 'tarea_editada':
       return { texto: conTarea('editó la tarea', e) };
+    case 'convertido_en_ot': {
+      const desde = codigoDeOt(e.datos?.['desde_ot']);
+      return {
+        texto: 'convirtió el ticket en',
+        cambio: e.valor_nuevo ?? texto(e.datos?.['codigo']) ?? 'OT',
+        ...(desde ? { detalle: `A partir de ${desde}` } : {}),
+      };
+    }
+    case 'ot_cerrada': {
+      const codigo = texto(e.datos?.['codigo']) ?? 'la OT';
+      const resumen = texto(e.datos?.['resumen']);
+      const resolvio = e.datos?.['resolvio_ticket'] === true;
+      return {
+        texto: 'cerró',
+        cambio: `${codigo} · ${resolvio ? 'resolvió' : 'no resolvió'} el ticket`,
+        ...(resumen
+          ? { detalle: resumen.length > 120 ? `${resumen.slice(0, 119)}…` : resumen }
+          : {}),
+      };
+    }
+    case 'ot_cancelada': {
+      const motivo = texto(e.datos?.['motivo']);
+      return {
+        texto: `canceló ${texto(e.datos?.['codigo']) ?? 'la OT'}`,
+        ...(motivo ? { detalle: motivo } : {}),
+      };
+    }
+    case 'seguimiento_copiado':
+      return {
+        texto: `copió un seguimiento desde ${texto(e.datos?.['codigo']) ?? 'la OT'}`,
+      };
     case 'archivado':
       return { texto: 'El sistema archivó el ticket' };
     default:
