@@ -5,7 +5,10 @@ import type {
   MarcaSalidaDatos,
   NumeracionEntradaDatos,
   NumeracionSalidaDatos,
+  TarifasEntradaDatos,
+  TarifasSalidaDatos,
 } from '@zydesk/shared';
+import { TarifasSalida } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
@@ -42,6 +45,45 @@ async function guardarClave(m: EntityManager, clave: string, valor: unknown): Pr
      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor, actualizado_en = now()`,
     [clave, JSON.stringify(valor)],
   );
+}
+
+const TARIFAS_DEFECTO: TarifasSalidaDatos = {
+  hora_normal: null,
+  hora_extendida: null,
+  hora_urgencia: null,
+  traslado_km: null,
+  costo_interno: null,
+  iva_pct: 19,
+  validez_dias_defecto: 30,
+  condiciones_defecto: null,
+};
+
+// Spec fase 4 §8.1: la usan cotizaciones y cargarOt; sin la clave (base antigua) devuelve los valores por defecto.
+export async function leerTarifas(
+  m: EntityManager = dataSource.manager,
+): Promise<TarifasSalidaDatos> {
+  const valor = await leerClave(m, 'tarifas');
+  return valor === null ? { ...TARIFAS_DEFECTO } : TarifasSalida.parse(valor);
+}
+
+// Spec fase 4 §8.1: el detalle de auditoría lleva solo los nombres de los campos cambiados, nunca los montos.
+export async function guardarTarifas(
+  actor: UsuarioSesion,
+  e: TarifasEntradaDatos,
+): Promise<TarifasSalidaDatos> {
+  return enTransaccion(async (tx) => {
+    const actual = await leerTarifas(tx);
+    const campos = (Object.keys(e) as (keyof TarifasEntradaDatos)[]).filter(
+      (k) => e[k] !== actual[k],
+    );
+    await guardarClave(tx, 'tarifas', e);
+    await registrarAuditoria(tx, {
+      accion: 'config_cambiada',
+      usuario_id: actor.id,
+      detalle: { seccion: 'tarifas', campos },
+    });
+    return leerTarifas(tx);
+  });
 }
 
 export async function obtenerMarca(
