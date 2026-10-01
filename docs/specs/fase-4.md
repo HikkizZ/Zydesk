@@ -612,7 +612,18 @@ En el navegador (1440 px y 390 px): `/cotizaciones/<COT-0218 v1>` reproduce el d
   - La aprobación del cliente responde 409 `COTIZACION_REQUERIDA` antes que los 400 de contacto y archivo.
   - `registrarCambios` acepta `datos` opcional (para `cotizacion_id`); `contentDisposition` se movió a `core/http/descarga.ts`.
   - El neto en el cierre (§6.1) se prueba con `netoVigenteClp` + `efectosCierreOt`, no con un test de `cierre.test.ts`.
-- **Siguiente**: bloques 4E y 4F en paralelo, y luego 4G, en el orden de §16.
+- **F4-T13 (bloque 4F) hecho**. Desviaciones:
+  - "Ver inactivas" es un `Switch`, como "Mostrar inactivos" en Equipo.
+  - Se agrega "Reactivar" en la vista de inactivas (la API ya lo admite).
+  - "Desactivar…" pide confirmación.
+  - Un 409 `CONFLICTO` se muestra bajo Nombre.
+- **F4-T10, T11 y T12 (bloque 4E) hechos** (web: 236 tests). Desviaciones:
+  - Los descuentos usan guion ASCII (`-$9.000`, `formatearMonto`).
+  - "Importar horas" y "Aplicar plantilla" también piden "Guarda primero" con cambios sin guardar.
+  - `CotizacionBreve` no trae `vence_el` ni `contacto`: el panel de la OT los lee con `GET /api/cotizaciones/:id`.
+  - En UF, "Agregar línea" deja el precio en 0.
+  - `/cotizaciones` muestra solo las vigentes; las versiones anteriores se abren desde el panel de versiones.
+- **Siguiente**: bloque 4G (F4-T14 semillas), verificación en el navegador, F4-T15 revisión de seguridad y F4-T16 documentación y cierre.
 
 ## 20. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0025 "Precisiones de la Fase 4" al cerrar)
 
