@@ -393,6 +393,27 @@ En el navegador (1440 px y 390 px): `/horas` con `sdiaz` reproduce el diseño "R
 10. ¿Agregar en esta fase **"Importar horas registradas"** al cotizador (F5-T13: una línea por tarea a tarifa normal y otra con las horas fuera de horario a tarifa extendida), que es lo que B4 ("aplica tarifa extendida") y ADR 0025.16 dejaron para la Fase 5? No bloquea el resto. **Recomendación: sí**, es pequeño y cierra B4; si prefieres, queda para la Fase 7 junto a los reportes.
 11. ¿Las horas registradas en una OT deben actualizar `actualizado_en` de la OT (aparecería "actualizada hace 5 min" en `/ots`)? No bloquea. **Recomendación: no.**
 
+### Respuestas del usuario (2026-10-01)
+
+1–4. El usuario aceptó las recomendaciones de las preguntas que bloquean:
+  - Las horas registradas van aparte y `horas_reales` no se toca.
+  - Se crea el permiso nuevo `horas.ver_todas`.
+  - Coordinación y Administración solo ven las horas ajenas.
+  - Las filas de seguimiento se corrigen desde la planilla, con sincronía de `mensaje.horas`.
+
+5–11. No bloquean; se resuelven con la recomendación de esta sección. La 10 se acepta: **F5-T13 entra en la fase**. Va después de 5C y 5D, como tarea propia, porque toca `cotizaciones` y `features/cotizador`, que no son de ningún bloque.
+
+### Estado de avance (2026-10-01)
+
+- Spec aprobada. **Siguiente**:
+  1. 5A (F5-T1, T2).
+  2. 5B (F5-T3 a T6).
+  3. 5C y 5D en paralelo (F5-T7 a T9).
+  4. F5-T13.
+  5. 5E (F5-T10).
+  6. Revisión de seguridad (F5-T11).
+  7. Documentación (F5-T12).
+
 ## 16. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0026 "Precisiones de la Fase 5" al cerrar)
 
 - **ADR 0002 / spec §2**: permiso `horas.ver_todas` (Administración, Coordinación) y fila 10 "Ver horas de todo el equipo" en la matriz; la planilla ajena es de solo lectura; Solo lectura no registra horas (B10) ni ve las ajenas.
