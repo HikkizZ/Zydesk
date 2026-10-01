@@ -7,6 +7,7 @@ import {
   ArchivosOtEntrada,
   CambioEtapaOt,
   CancelarOt,
+  CierreOt,
   FacturarOt,
   OtCrearEntrada,
   OtEditarEntrada,
@@ -23,6 +24,7 @@ import {
   facturarOt,
   registrarAprobacionCliente,
 } from './ots.etapas.service.js';
+import { cerrarOt } from './ots.cierre.service.js';
 import { agregarArchivos, convertirEnOt, editarOt, listar, obtenerOt } from './ots.service.js';
 
 const paramsId = z.object({ id: z.coerce.number().int().positive() });
@@ -134,6 +136,18 @@ export function crearRutasOts(): Router {
     body: CancelarOt,
     respuesta: OtSalida,
     handler: async ({ params, body, actor }) => cancelarOt(actorRequerido(actor), params.id, body),
+  });
+
+  ruta(router, {
+    metodo: 'post',
+    path: '/api/ots/:id/cerrar',
+    resumen: 'Cerrar una OT en ejecución (resuelve o no el ticket, con resumen obligatorio)',
+    etiqueta: ETIQUETA,
+    permiso: 'ots.cerrar',
+    params: paramsId,
+    body: CierreOt,
+    respuesta: OtSalida,
+    handler: async ({ params, body, actor }) => cerrarOt(actorRequerido(actor), params.id, body),
   });
 
   ruta(router, {

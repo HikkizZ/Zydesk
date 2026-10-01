@@ -119,7 +119,7 @@ async function aSalidas(m: EntityManager, filas: Mensaje[]): Promise<MensajeSali
 // ---- Crear (spec §6.1) ----
 
 // Valida las menciones, inserta el mensaje y asocia archivos, menciones y horas (destino ya bloqueado).
-async function insertarMensaje(
+export async function insertarMensaje(
   tx: EntityManager,
   actor: UsuarioSesion,
   destino: { ticket_id: number } | { ot_id: number },
@@ -222,7 +222,7 @@ export async function crearMensajeDeOt(
 // ---- Copiar al ticket (spec §6.2) ----
 
 // Ticket y OT del mensaje ya bloqueados por el llamador. No duplica archivos, menciones ni horas.
-async function copiarAlTicket(
+export async function copiarAlTicket(
   tx: EntityManager,
   actor: UsuarioSesion,
   mensaje: Mensaje,

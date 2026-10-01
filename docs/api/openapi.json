@@ -22155,6 +22155,1446 @@
         }
       }
     },
+    "/ots/{id}/cerrar": {
+      "post": {
+        "summary": "Cerrar una OT en ejecución (resuelve o no el ticket, con resumen obligatorio)",
+        "description": "Permiso: ots.cerrar",
+        "tags": [
+          "Órdenes de trabajo"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "required": true
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "resolvio_ticket": {
+                        "type": "boolean",
+                        "const": true
+                      },
+                      "resumen": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5000
+                      }
+                    },
+                    "required": [
+                      "resolvio_ticket",
+                      "resumen"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "resolvio_ticket": {
+                        "type": "boolean",
+                        "const": false
+                      },
+                      "resumen": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 5000
+                      },
+                      "siguiente": {
+                        "oneOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "accion": {
+                                "type": "string",
+                                "const": "en_curso"
+                              },
+                              "responsable_id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "accion",
+                              "responsable_id"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "accion": {
+                                "type": "string",
+                                "const": "en_espera"
+                              },
+                              "responsable_id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "espera_de": {
+                                "type": "string",
+                                "enum": [
+                                  "cliente",
+                                  "proveedor",
+                                  "repuesto",
+                                  "aprobacion"
+                                ]
+                              },
+                              "espera_detalle": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 120
+                              }
+                            },
+                            "required": [
+                              "accion",
+                              "responsable_id",
+                              "espera_de"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "accion": {
+                                "type": "string",
+                                "const": "nueva_ot"
+                              },
+                              "responsable_id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "required": [
+                              "accion",
+                              "responsable_id"
+                            ]
+                          }
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "resolvio_ticket",
+                      "resumen",
+                      "siguiente"
+                    ]
+                  }
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "numero": {
+                      "type": "number"
+                    },
+                    "codigo": {
+                      "type": "string"
+                    },
+                    "titulo": {
+                      "type": "string"
+                    },
+                    "tipo": {
+                      "type": "string",
+                      "enum": [
+                        "facturable",
+                        "interna"
+                      ]
+                    },
+                    "etapa": {
+                      "type": "string",
+                      "enum": [
+                        "borrador",
+                        "cotizada",
+                        "aprobada",
+                        "en_ejecucion",
+                        "cerrada",
+                        "cancelada"
+                      ]
+                    },
+                    "estado_facturacion": {
+                      "type": "string",
+                      "enum": [
+                        "no_aplica",
+                        "pendiente",
+                        "por_facturar",
+                        "facturada"
+                      ]
+                    },
+                    "resolvio_ticket": {
+                      "type": [
+                        "boolean",
+                        "null"
+                      ]
+                    },
+                    "creado_en": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "cerrada_en": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "ticket": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "asunto": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "codigo",
+                        "asunto"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cliente": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "es_interno": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre",
+                            "es_interno"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "responsable_tecnico": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "iniciales": {
+                              "type": "string"
+                            },
+                            "color_avatar": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre",
+                            "iniciales",
+                            "color_avatar"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "aprobador": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "iniciales": {
+                              "type": "string"
+                            },
+                            "color_avatar": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre",
+                            "iniciales",
+                            "color_avatar"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "neto": {
+                      "type": "null"
+                    },
+                    "horas": {
+                      "type": "object",
+                      "properties": {
+                        "estimadas": {
+                          "type": "number"
+                        },
+                        "reales": {
+                          "type": "number"
+                        },
+                        "registradas": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "estimadas",
+                        "reales",
+                        "registradas"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "inicio": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "termino": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "vencida": {
+                      "type": "boolean"
+                    },
+                    "n_mensajes": {
+                      "type": "number"
+                    },
+                    "actualizado_en": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "alcance": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "cliente_id": {
+                      "anyOf": [
+                        {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "contacto": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "correo": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            },
+                            "area": {
+                              "type": [
+                                "string",
+                                "null"
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre",
+                            "correo",
+                            "area"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "oc_cliente": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "condicion_pago": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "bolsa": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "contrato_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "horas_mes": {
+                              "type": "number"
+                            },
+                            "usadas_mes": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "contrato_id",
+                            "horas_mes",
+                            "usadas_mes"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "centro_costo": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "area_solicitante": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "aprobada_por": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "aprobada_en": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "aprobacion": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "contacto": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "correo": {
+                                  "type": [
+                                    "string",
+                                    "null"
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "correo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "fecha": {
+                              "type": "string",
+                              "format": "date",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                            },
+                            "forma": {
+                              "type": "string",
+                              "enum": [
+                                "orden_de_compra",
+                                "correo",
+                                "cotizacion_firmada"
+                              ]
+                            },
+                            "archivo": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre_original": {
+                                  "type": "string"
+                                },
+                                "tipo_mime": {
+                                  "type": "string"
+                                },
+                                "tamano": {
+                                  "type": "number"
+                                },
+                                "categoria": {
+                                  "type": "string",
+                                  "enum": [
+                                    "foto",
+                                    "documento",
+                                    "correo"
+                                  ]
+                                },
+                                "url": {
+                                  "type": "string"
+                                },
+                                "es_imagen": {
+                                  "type": "boolean"
+                                },
+                                "subido_por": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "integer",
+                                          "exclusiveMinimum": 0,
+                                          "maximum": 9007199254740991
+                                        },
+                                        "nombre": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "nombre"
+                                      ],
+                                      "additionalProperties": false
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "subido_en": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                "origen_correo": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre_original",
+                                "tipo_mime",
+                                "tamano",
+                                "categoria",
+                                "url",
+                                "es_imagen",
+                                "subido_por",
+                                "subido_en",
+                                "origen_correo"
+                              ],
+                              "additionalProperties": false
+                            },
+                            "registrada_por": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "integer",
+                                      "exclusiveMinimum": 0,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "nombre": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "nombre"
+                                  ],
+                                  "additionalProperties": false
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "registrada_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            }
+                          },
+                          "required": [
+                            "contacto",
+                            "fecha",
+                            "forma",
+                            "archivo",
+                            "registrada_por",
+                            "registrada_en"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "n_factura": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "facturada_en": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "facturada_por": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "resumen_cierre": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "cerrada_por": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "motivo_cancelacion": {
+                      "type": [
+                        "string",
+                        "null"
+                      ]
+                    },
+                    "cancelada_en": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "tareas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "ticket_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "responsable": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fecha": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hecha": {
+                            "type": "boolean"
+                          },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "hecha_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "orden": {
+                            "type": "number"
+                          },
+                          "vencida": {
+                            "type": "boolean"
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ticket_id",
+                          "ot_id",
+                          "titulo",
+                          "responsable",
+                          "fecha",
+                          "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
+                          "hecha_en",
+                          "orden",
+                          "vencida",
+                          "creado_en",
+                          "actualizado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "archivos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "nombre_original": {
+                            "type": "string"
+                          },
+                          "tipo_mime": {
+                            "type": "string"
+                          },
+                          "tamano": {
+                            "type": "number"
+                          },
+                          "categoria": {
+                            "type": "string",
+                            "enum": [
+                              "foto",
+                              "documento",
+                              "correo"
+                            ]
+                          },
+                          "url": {
+                            "type": "string"
+                          },
+                          "es_imagen": {
+                            "type": "boolean"
+                          },
+                          "subido_por": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "subido_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "origen_correo": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "nombre_original",
+                          "tipo_mime",
+                          "tamano",
+                          "categoria",
+                          "url",
+                          "es_imagen",
+                          "subido_por",
+                          "subido_en",
+                          "origen_correo"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "ticket_origen": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "integer",
+                          "exclusiveMinimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "asunto": {
+                          "type": "string"
+                        },
+                        "estado": {
+                          "type": "string",
+                          "enum": [
+                            "nuevo",
+                            "en_curso",
+                            "en_espera",
+                            "resuelto",
+                            "descartado",
+                            "duplicado"
+                          ]
+                        },
+                        "cliente": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "es_interno": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "es_interno"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "responsables": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "iniciales": {
+                                "type": "string"
+                              },
+                              "color_avatar": {
+                                "type": "string"
+                              },
+                              "principal": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre",
+                              "iniciales",
+                              "color_avatar",
+                              "principal"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "seguidores": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "iniciales": {
+                                "type": "string"
+                              },
+                              "color_avatar": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre",
+                              "iniciales",
+                              "color_avatar"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "otras_ots_abiertas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "codigo": {
+                                "type": "string"
+                              },
+                              "etapa": {
+                                "type": "string",
+                                "enum": [
+                                  "borrador",
+                                  "cotizada",
+                                  "aprobada",
+                                  "en_ejecucion",
+                                  "cerrada",
+                                  "cancelada"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "codigo",
+                              "etapa"
+                            ],
+                            "additionalProperties": false
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "codigo",
+                        "asunto",
+                        "estado",
+                        "cliente",
+                        "responsables",
+                        "seguidores",
+                        "otras_ots_abiertas"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "cotizacion": {
+                      "type": "null"
+                    },
+                    "costo_interno": {
+                      "type": "null"
+                    },
+                    "tipo_cambiable": {
+                      "type": "boolean"
+                    },
+                    "creado_por": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "numero",
+                    "codigo",
+                    "titulo",
+                    "tipo",
+                    "etapa",
+                    "estado_facturacion",
+                    "resolvio_ticket",
+                    "creado_en",
+                    "cerrada_en",
+                    "ticket",
+                    "cliente",
+                    "responsable_tecnico",
+                    "aprobador",
+                    "neto",
+                    "horas",
+                    "inicio",
+                    "termino",
+                    "vencida",
+                    "n_mensajes",
+                    "actualizado_en",
+                    "alcance",
+                    "cliente_id",
+                    "contacto",
+                    "oc_cliente",
+                    "condicion_pago",
+                    "bolsa",
+                    "centro_costo",
+                    "area_solicitante",
+                    "aprobada_por",
+                    "aprobada_en",
+                    "aprobacion",
+                    "n_factura",
+                    "facturada_en",
+                    "facturada_por",
+                    "resumen_cierre",
+                    "cerrada_por",
+                    "motivo_cancelacion",
+                    "cancelada_en",
+                    "tareas",
+                    "archivos",
+                    "ticket_origen",
+                    "cotizacion",
+                    "costo_interno",
+                    "tipo_cambiable",
+                    "creado_por"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/ots/{id}/facturar": {
       "post": {
         "summary": "Marcar una OT cerrada como facturada",
