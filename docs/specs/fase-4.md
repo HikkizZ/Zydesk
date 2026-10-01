@@ -596,7 +596,14 @@ En el navegador (1440 px y 390 px): `/cotizaciones/<COT-0218 v1>` reproduce el d
 ### Estado de avance (2026-10-01)
 
 - **F4-T1 (bloque 4A) hecho**: suite de la API de 708 s a 334 s en local (492 tests + 2 omitidos); F4-T2 no fue necesaria.
-- **Siguiente**: bloque 4B (F4-T3 y F4-T4), luego 4C y 4D en paralelo, 4E y 4F en paralelo, y 4G, en el orden de §15.
+- **F4-T3 y F4-T4 (bloque 4B) hechos** (API: 498 tests + 2 omitidos; shared 259; web 162). Desviaciones anotadas:
+  - `CambioEtapaOt` sigue aceptando `cotizada`: quitarlo rompe 7 tests de la Fase 3 (`etapas`, `eventos`, `seguridad`). Pasa a F4-T6 junto con `ots.etapas.service.ts` y el botón de `AccionesOt.tsx`.
+  - La clave `cotizacion` de `configuracion` no se siembra: IVA, validez y condiciones viven en `tarifas` (§8.1).
+  - `test/bd.ts` ya no reinicia `migracion_id_seq`: rompía las migraciones nuevas sobre una base de test ya usada.
+  - Los 4 códigos de error nuevos se declaran en `shared/errores.ts` solo con su status; el mensaje va donde se lanzan (4C).
+  - `crearCotizacion`: `descuento_pct` por línea es opcional (0 por defecto).
+  - `OtSalida.cotizacion`, `costo_interno`, `puede_cotizar` y `OtResumen.neto` llevan valores provisionales (`// F4-T5`) en `ots.consulta.ts`.
+- **Siguiente**: bloques 4C y 4D en paralelo, luego 4E y 4F en paralelo, y 4G, en el orden de §16.
 
 ## 20. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0025 "Precisiones de la Fase 4" al cerrar)
 
