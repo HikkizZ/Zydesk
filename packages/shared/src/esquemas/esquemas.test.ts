@@ -12,7 +12,7 @@ import { OtCrearEntrada, OtEditarEntrada, OtsQuery } from './ot.js';
 import { TareaEntrada } from './tarea.js';
 import { MensajeEntrada } from './mensaje.js';
 import { CambioEtapaOt, CierreOt } from '../estados/ot.js';
-import { CotizacionEntrada } from './cotizacion.js';
+import { CotizacionEntrada, ImportarHorasEntrada } from './cotizacion.js';
 import { PlantillaLineaEntrada, TarifasEntrada } from './configuracion.js';
 
 describe('rut', () => {
@@ -229,6 +229,16 @@ describe('CotizacionEntrada', () => {
     expect(r).not.toHaveProperty('total');
     expect(r).not.toHaveProperty('neto');
     expect(r).not.toHaveProperty('iva_pct');
+  });
+});
+
+describe('ImportarHorasEntrada', () => {
+  it('acepta estimadas, reales y registradas; por defecto estimadas; rechaza otro origen', () => {
+    expect(ImportarHorasEntrada.parse({}).origen).toBe('estimadas');
+    for (const origen of ['estimadas', 'reales', 'registradas']) {
+      expect(ImportarHorasEntrada.parse({ origen }).origen).toBe(origen);
+    }
+    expect(ImportarHorasEntrada.safeParse({ origen: 'otras' }).success).toBe(false);
   });
 });
 

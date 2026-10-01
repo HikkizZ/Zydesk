@@ -24,7 +24,13 @@ import {
   type CotizacionSalidaDatos,
 } from '../api';
 
-type Origen = 'estimadas' | 'reales';
+type Origen = 'estimadas' | 'reales' | 'registradas';
+
+const ETIQUETA_ORIGEN: Record<Origen, string> = {
+  estimadas: 'Estimadas',
+  reales: 'Reales',
+  registradas: 'Registradas',
+};
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
@@ -68,9 +74,13 @@ function Contenido({
   });
 
   const horas = ot.data?.horas;
-  const horasDe = (o: Origen) => (horas ? horas[o === 'estimadas' ? 'estimadas' : 'reales'] : null);
+  const horasDe = (o: Origen) => (horas ? horas[o] : null);
   const tarifaCliente = cliente.data?.tarifas.find((t) => t.concepto === 'hora_normal')?.valor;
   const tarifaGlobal = tarifas.data?.hora_normal ?? null;
+  const tarifaExtendida =
+    cliente.data?.tarifas.find((t) => t.concepto === 'hora_extendida')?.valor ??
+    tarifas.data?.hora_extendida ??
+    null;
   const tarifa =
     tarifaCliente !== undefined
       ? { texto: `Tarifa del cliente ${formatearCLP(tarifaCliente)}/h` }
@@ -102,7 +112,7 @@ function Contenido({
       >
         <fieldset className="flex flex-col gap-2">
           <legend className="mb-1 text-sm font-medium">Horas a importar</legend>
-          {(['estimadas', 'reales'] as const).map((o) => (
+          {(['estimadas', 'reales', 'registradas'] as const).map((o) => (
             <label
               key={o}
               className={cn(
@@ -118,7 +128,7 @@ function Contenido({
                 className="size-4 accent-[var(--color-acento)]"
               />
               <span className="text-sm">
-                <span className="font-semibold">{o === 'estimadas' ? 'Estimadas' : 'Reales'}</span>
+                <span className="font-semibold">{ETIQUETA_ORIGEN[o]}</span>
                 {horasDe(o) !== null ? (
                   <span className="text-tinta-2"> · {formatoHoras.format(horasDe(o) ?? 0)} h</span>
                 ) : null}
@@ -152,8 +162,19 @@ function Contenido({
             )}
           </p>
         )}
+        {origen === 'registradas' && !cargando && !enUf ? (
+          <p className="text-sm text-tinta-2">
+            {tarifaExtendida !== null
+              ? `Las horas fuera de horario se cotizan a la tarifa de hora extendida (${formatearCLP(tarifaExtendida)}/h).`
+              : 'Las horas fuera de horario se cotizan a la tarifa de hora extendida, que no está configurada.'}
+          </p>
+        ) : null}
         {sinHoras ? (
-          <p className="text-sm text-tinta-2">Las tareas no tienen horas {origen}.</p>
+          <p className="text-sm text-tinta-2">
+            {origen === 'registradas'
+              ? 'La OT no tiene horas registradas.'
+              : `Las tareas no tienen horas ${origen}.`}
+          </p>
         ) : null}
         {error ? (
           <p role="alert" className="text-sm text-urgente">

@@ -382,7 +382,7 @@ async function lineasActuales(tx: EntityManager, id: number): Promise<LineaGuard
 async function tarifaDe(
   tx: EntityManager,
   cliente_id: number | null,
-  concepto: 'hora_normal' | 'traslado_km',
+  concepto: 'hora_normal' | 'hora_extendida' | 'traslado_km',
 ): Promise<number | null> {
   if (cliente_id !== null) {
     const [t]: { valor: number }[] = await tx.query(
@@ -450,6 +450,47 @@ async function agregarLineas(
   await registrarActividadEnOt(tx, ot.id);
 }
 
+// Origen 'registradas' (F5-T13): una línea por tarea con horas registradas a hora normal y otra con las
+// marcadas fuera de horario a hora extendida; las horas de la OT sin tarea van en "Horas registradas sin tarea"
+// con la misma separación. La tarifa extendida solo se exige si hay horas fuera de horario.
+async function lineasDeHorasRegistradas(
+  tx: EntityManager,
+  cliente_id: number | null,
+  ot_id: number,
+  tarifaNormal: number,
+): Promise<LineaGuardable[]> {
+  const filas: { titulo: string | null; normales: number; extendidas: number }[] = await tx.query(
+    `SELECT t.titulo,
+            COALESCE(SUM(r.horas) FILTER (WHERE NOT r.fuera_de_horario), 0)::float8 AS normales,
+            COALESCE(SUM(r.horas) FILTER (WHERE r.fuera_de_horario), 0)::float8 AS extendidas
+       FROM registro_horas r LEFT JOIN tarea t ON t.id = r.tarea_id
+      WHERE r.ot_id = $1
+      GROUP BY t.id, t.titulo, t.orden
+      ORDER BY (t.id IS NULL), t.orden, t.id`,
+    [ot_id],
+  );
+  let tarifaExtendida: number | null = null;
+  const lineas: LineaGuardable[] = [];
+  const linea = (descripcion: string, cantidad: number, precio: number): LineaGuardable => ({
+    tipo: 'mano_de_obra',
+    descripcion,
+    cantidad,
+    unidad: 'h',
+    precio_unitario: precio,
+    descuento_pct: 0,
+  });
+  for (const f of filas) {
+    const nombre = f.titulo ?? 'Horas registradas sin tarea';
+    if (f.normales > 0) lineas.push(linea(nombre, f.normales, tarifaNormal));
+    if (f.extendidas > 0) {
+      tarifaExtendida ??= await tarifaDe(tx, cliente_id, 'hora_extendida');
+      if (tarifaExtendida === null) throw tarifaFaltante('hora_extendida');
+      lineas.push(linea(`${nombre} (fuera de horario)`, f.extendidas, tarifaExtendida));
+    }
+  }
+  return lineas;
+}
+
 export async function importarHoras(
   actor: UsuarioSesion,
   id: number,
@@ -461,6 +502,15 @@ export async function importarHoras(
     const tarifaHora = await tarifaDe(tx, ot.cliente_id, 'hora_normal');
     if (tarifaHora === null) throw tarifaFaltante('hora_normal');
     if (cot.moneda === 'UF') throw tarifaEnPesos();
+
+    if (e.origen === 'registradas') {
+      const lineas = await lineasDeHorasRegistradas(tx, ot.cliente_id, ot.id, tarifaHora);
+      if (lineas.length === 0) {
+        throw errorValidacion({ origen: ['La OT no tiene horas registradas'] });
+      }
+      await agregarLineas(tx, actor, ot, cot, lineas, {}, { origen: 'registradas' });
+      return cargarCotizacion(tx, id);
+    }
 
     const columna = e.origen === 'reales' ? 'horas_reales' : 'horas_estimadas';
     const tareas: { titulo: string; horas: number }[] = await tx.query(
