@@ -63,8 +63,35 @@ export async function registrarHorasDesdeMensaje(
 
 // Las tareas se movieron a otra OT: sus horas se trabajaron en la OT original y conservan `ot_id` (spec §5.5).
 // Mismo `tx` del llamador, que ya tiene bloqueadas las OT.
+// Al quedar sin tarea, las filas manuales de una misma celda (persona, día, destino, descripción) chocarían con el
+// índice único parcial: se fusionan antes en una sola (suma de horas), que prefiere la que ya no tenía tarea.
+// La suma no se recorta: puede superar las 24 h por fila que valida el esquema (la columna admite hasta 999,99).
 export async function desvincularTareas(tx: EntityManager, tarea_ids: number[]): Promise<void> {
   if (tarea_ids.length === 0) return;
+  await tx.query(
+    `WITH cand AS (
+       SELECT id, horas, fuera_de_horario, tarea_id,
+              usuario_id, fecha, COALESCE(ticket_id, 0) AS t, COALESCE(ot_id, 0) AS o, COALESCE(descripcion, '') AS d
+         FROM registro_horas
+        WHERE mensaje_id IS NULL AND (tarea_id IS NULL OR tarea_id = ANY($1::int[]))
+     ), w AS (
+       SELECT id, tarea_id,
+              count(*) OVER celda AS n,
+              count(*) FILTER (WHERE tarea_id = ANY($1::int[])) OVER celda AS n_desv,
+              row_number() OVER (celda ORDER BY (tarea_id IS NULL) DESC, id) AS rn,
+              sum(horas) OVER celda AS total,
+              bool_or(fuera_de_horario) OVER celda AS fuera
+         FROM cand
+       WINDOW celda AS (PARTITION BY usuario_id, fecha, t, o, d)
+     ), fusion AS (
+       SELECT * FROM w WHERE n > 1 AND n_desv > 0
+     ), borradas AS (
+       DELETE FROM registro_horas WHERE id IN (SELECT id FROM fusion WHERE rn > 1)
+     )
+     UPDATE registro_horas r SET horas = f.total, fuera_de_horario = f.fuera, actualizado_en = now()
+       FROM fusion f WHERE r.id = f.id AND f.rn = 1`,
+    [tarea_ids],
+  );
   await tx.query(
     `UPDATE registro_horas SET tarea_id = NULL, actualizado_en = now() WHERE tarea_id = ANY($1::int[])`,
     [tarea_ids],

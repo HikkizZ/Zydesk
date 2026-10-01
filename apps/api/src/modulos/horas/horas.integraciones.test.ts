@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   crearBolsa,
   crearCliente,
+  crearMensaje,
   crearOt,
   crearRegistroHoras,
   crearTarea,
@@ -105,6 +106,91 @@ describe('integración: cierre con nueva_ot (prueba 13)', () => {
       filaHecha.id,
     ]);
     expect(h).toEqual({ ot_id: ot.id, tarea_id: hecha.id });
+  });
+});
+
+describe('integración: fusión de celdas manuales al desvincular tareas (VULN-001)', () => {
+  const filasManuales = (ot_id: number) =>
+    dataSource.query(
+      `SELECT tarea_id, horas::float8 AS horas, fuera_de_horario FROM registro_horas
+        WHERE ot_id = $1 AND mensaje_id IS NULL ORDER BY id`,
+      [ot_id],
+    ) as Promise<{ tarea_id: number | null; horas: number; fuera_de_horario: boolean }[]>;
+
+  async function montaje() {
+    const coord = await como('coordinacion');
+    const principal = await crearUsuario();
+    const ticket = await crearTicket({ estado: 'en_curso', principal_id: principal.id });
+    const ot = await crearOt(ticket.id, { etapa: 'en_ejecucion' });
+    const tarea = await crearTarea({ ot_id: ot.id }, { titulo: 'X' });
+    await crearRegistroHoras(coord.usuario.id, { ot_id: ot.id, horas: 1 });
+    await crearRegistroHoras(coord.usuario.id, { ot_id: ot.id, tarea_id: tarea.id, horas: 2 });
+    return { coord, ot, tarea };
+  }
+
+  it('cierre con nueva_ot: la fila de la tarea se suma a la fila sin tarea de la misma celda', async () => {
+    const { coord, ot } = await montaje();
+    const r = await coord.agente.post(`/api/ots/${ot.id}/cerrar`).send({
+      resolvio_ticket: false,
+      resumen: 'Sigue',
+      siguiente: { accion: 'nueva_ot', responsable_id: (await crearUsuario()).id },
+    });
+    expect(r.status).toBe(200);
+    expect(await filasManuales(ot.id)).toEqual([
+      { tarea_id: null, horas: 3, fuera_de_horario: false },
+    ]);
+  });
+
+  it('quitar la tarea: una sola fila sin tarea con la suma', async () => {
+    const { coord, ot, tarea } = await montaje();
+    const r = await coord.agente.delete(`/api/tareas/${tarea.id}`);
+    expect(r.status).toBeLessThan(300);
+    expect(await filasManuales(ot.id)).toEqual([
+      { tarea_id: null, horas: 3, fuera_de_horario: false },
+    ]);
+  });
+
+  it('dos tareas distintas de la misma celda, ambas desvinculadas: una fila con la suma', async () => {
+    const coord = await como('coordinacion');
+    const principal = await crearUsuario();
+    const ticket = await crearTicket({ estado: 'en_curso', principal_id: principal.id });
+    const ot = await crearOt(ticket.id, { etapa: 'en_ejecucion' });
+    const a = await crearTarea({ ot_id: ot.id }, { titulo: 'A' });
+    const b = await crearTarea({ ot_id: ot.id }, { titulo: 'B' });
+    await crearRegistroHoras(coord.usuario.id, { ot_id: ot.id, tarea_id: a.id, horas: 1.5 });
+    await crearRegistroHoras(coord.usuario.id, {
+      ot_id: ot.id,
+      tarea_id: b.id,
+      horas: 2,
+      fuera_de_horario: true,
+    });
+    const r = await coord.agente.post(`/api/ots/${ot.id}/cerrar`).send({
+      resolvio_ticket: false,
+      resumen: 'Sigue',
+      siguiente: { accion: 'nueva_ot', responsable_id: (await crearUsuario()).id },
+    });
+    expect(r.status).toBe(200);
+    expect(await filasManuales(ot.id)).toEqual([
+      { tarea_id: null, horas: 3.5, fuera_de_horario: true },
+    ]);
+  });
+
+  it('un registro de seguimiento (con mensaje) queda sin tarea con sus horas intactas', async () => {
+    const { coord, ot, tarea } = await montaje();
+    const m = await crearMensaje({ ot_id: ot.id }, { autor_id: coord.usuario.id, horas: 4 });
+    await crearRegistroHoras(coord.usuario.id, {
+      ot_id: ot.id,
+      tarea_id: tarea.id,
+      mensaje_id: m.id,
+      horas: 4,
+    });
+    const r = await coord.agente.delete(`/api/tareas/${tarea.id}`);
+    expect(r.status).toBeLessThan(300);
+    const filas = await dataSource.query(
+      `SELECT tarea_id, horas::float8 AS horas FROM registro_horas WHERE mensaje_id = $1`,
+      [m.id],
+    );
+    expect(filas).toEqual([{ tarea_id: null, horas: 4 }]);
   });
 });
 

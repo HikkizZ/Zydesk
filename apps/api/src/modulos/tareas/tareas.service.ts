@@ -320,6 +320,8 @@ export async function quitarTarea(actor: UsuarioSesion, id: number): Promise<voi
   await enTransaccion(async (tx) => {
     const { tarea, cerrado } = await bloquearTareaYDestino(tx, id);
     if (cerrado) throw tarea.ot_id !== null ? otCerrada() : ticketCerrado();
+    // las horas de la tarea quedan en la OT sin tarea (fusionando celdas) en vez de depender del ON DELETE SET NULL
+    await desvincularTareas(tx, [id]);
     await tx.query(`DELETE FROM tarea WHERE id = $1`, [id]);
     await registrarEvento(tx, {
       ...duenoDe(tarea),
