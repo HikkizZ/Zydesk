@@ -13,6 +13,22 @@ export async function sembrarBase(manager: EntityManager): Promise<void> {
        ('ot', 'OT-', 200, 4, 'correlativo', 199)
      ON CONFLICT (clave) DO NOTHING`,
   );
+  // Tarifas globales, IVA y validez por defecto (ADR 0007, spec fase 4 §8.1); los valores del diseño van en la semilla de desarrollo.
+  await manager.query(
+    `INSERT INTO configuracion (clave, valor) VALUES ('tarifas', $1::jsonb) ON CONFLICT (clave) DO NOTHING`,
+    [
+      JSON.stringify({
+        hora_normal: null,
+        hora_extendida: null,
+        hora_urgencia: null,
+        traslado_km: null,
+        costo_interno: null,
+        iva_pct: 19,
+        validez_dias_defecto: 30,
+        condiciones_defecto: null,
+      }),
+    ],
+  );
   // Feriados generales (departamento_id NULL); la unicidad (fecha, departamento_id) trata NULL como igual.
   await manager.query(
     `INSERT INTO feriado (fecha, nombre, departamento_id)

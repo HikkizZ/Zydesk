@@ -34,7 +34,7 @@ describe('reiniciarBd', () => {
     const tablas: { tablename: string }[] = await dataSource.query(
       `SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename <> 'migracion'`,
     );
-    const esperadas: Record<string, number> = { configuracion: 2, contador: 2, feriado: 33 };
+    const esperadas: Record<string, number> = { configuracion: 3, contador: 2, feriado: 33 };
     for (const { tablename } of tablas) {
       const [fila]: { n: number }[] = await dataSource.query(
         `SELECT count(*)::int AS n FROM "${tablename}"`,

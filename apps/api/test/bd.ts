@@ -99,10 +99,12 @@ export async function reiniciarBd(): Promise<void> {
       if (conFilas.has(t)) await o.query(`DELETE FROM "${t}"`);
     }
   }
-  // Secuencias usadas (también las de tablas que recibieron filas y las perdieron por un rollback).
+  // Secuencias usadas (también las de tablas que recibieron filas y las perdieron por un rollback),
+  // salvo la de `migracion`: reiniciarla rompe la siguiente migración nueva en una base existente.
   const secuencias: { s: string }[] = await o.query(
     `SELECT quote_ident(schemaname) || '.' || quote_ident(sequencename) AS s
-       FROM pg_sequences WHERE schemaname = 'public' AND last_value IS NOT NULL`,
+       FROM pg_sequences
+      WHERE schemaname = 'public' AND last_value IS NOT NULL AND sequencename <> 'migracion_id_seq'`,
   );
   for (const { s } of secuencias) await o.query(`ALTER SEQUENCE ${s} RESTART`);
   await sembrarBase(dataSource.manager);

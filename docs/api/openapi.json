@@ -12911,7 +12911,10 @@
                             ]
                           },
                           "neto": {
-                            "type": "null"
+                            "type": [
+                              "number",
+                              "null"
+                            ]
                           },
                           "horas": {
                             "type": "object",
@@ -13333,7 +13336,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -14187,10 +14193,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -14266,6 +14392,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -14774,7 +14901,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -15628,10 +15758,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -15707,6 +15957,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -16735,7 +16986,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -17589,10 +17843,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -17668,6 +18042,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -18068,7 +18443,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -18922,10 +19300,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -19001,6 +19499,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -19709,7 +20208,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -20563,10 +21065,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -20642,6 +21264,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -21046,7 +21669,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -21900,10 +22526,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -21979,6 +22725,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -22486,7 +23233,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -23340,10 +24090,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -23419,6 +24289,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -23823,7 +24694,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -24677,10 +25551,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -24756,6 +25750,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
@@ -34248,7 +35243,10 @@
                       ]
                     },
                     "neto": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     },
                     "horas": {
                       "type": "object",
@@ -35102,10 +36100,130 @@
                       "additionalProperties": false
                     },
                     "cotizacion": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "ot_id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "codigo": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "estado": {
+                              "type": "string",
+                              "enum": [
+                                "borrador",
+                                "enviada",
+                                "aprobada",
+                                "rechazada",
+                                "reemplazada"
+                              ]
+                            },
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "neto": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "neto_clp": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "enviada_en": {
+                              "anyOf": [
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "actualizado_en": {
+                              "type": "string",
+                              "format": "date-time",
+                              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                            },
+                            "n_versiones": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "ot_id",
+                            "codigo",
+                            "version",
+                            "estado",
+                            "moneda",
+                            "neto",
+                            "total",
+                            "neto_clp",
+                            "enviada_en",
+                            "actualizado_en",
+                            "n_versiones"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "costo_interno": {
-                      "type": "null"
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "horas": {
+                              "type": "number"
+                            },
+                            "tarifa": {
+                              "type": "number"
+                            },
+                            "monto": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "horas",
+                            "tarifa",
+                            "monto"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "puede_cotizar": {
+                      "type": "boolean"
                     },
                     "tipo_cambiable": {
                       "type": "boolean"
@@ -35181,6 +36299,7 @@
                     "ticket_origen",
                     "cotizacion",
                     "costo_interno",
+                    "puede_cotizar",
                     "tipo_cambiable",
                     "creado_por"
                   ],
