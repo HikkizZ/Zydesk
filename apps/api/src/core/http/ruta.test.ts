@@ -1,8 +1,9 @@
 import express, { Router } from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { crearApp } from '../../app.js';
+import { logger } from '../../config/logger.js';
 import { manejadorErrores } from '../errores/manejador.js';
 import { esquemaPaginacion, paginar } from './paginacion.js';
 import { generarDocumento, rutasRegistradas } from './openapi.js';
@@ -43,6 +44,23 @@ describe('ruta() y validar', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.codigo).toBe('VALIDACION');
     expect(res.body.error.detalles.nombre).toHaveLength(1);
+  });
+
+  it('JSON malformado → 400 VALIDACION sin registrar el contenido del body', async () => {
+    const espias = (['error', 'warn', 'info', 'debug'] as const).map((n) =>
+      vi.spyOn(logger, n).mockImplementation((() => undefined) as never),
+    );
+    const res = await request(appDePrueba())
+      .post('/api/prueba/3')
+      .set('X-Requested-With', 'Zydesk')
+      .set('Content-Type', 'application/json')
+      .send('{"nombre":"secreto-del-body",');
+    const registrado = JSON.stringify(espias.flatMap((e) => e.mock.calls));
+    espias.forEach((e) => e.mockRestore());
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({ codigo: 'VALIDACION', mensaje: 'Datos inválidos' });
+    expect(res.body.error.detalles.body).toHaveLength(1);
+    expect(registrado).not.toContain('secreto-del-body');
   });
 
   it('params inválidos → 400', async () => {

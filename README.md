@@ -18,7 +18,7 @@ Monorepo con API (Express), web (React + Vite) y un paquete compartido de tipos 
 4. Levantar Postgres: `docker compose -f docker-compose.dev.yml up -d`.
    Si ya existía un volumen de una versión anterior a la Fase 1, o si cambian los roles o las bases en `docker/postgres-init/`, hay que recrearlo (**borra los datos de desarrollo**): `docker compose -f docker-compose.dev.yml down -v` y luego `up -d`.
 5. Aplicar las migraciones: `npm run db:migrar`.
-6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 16 tickets de ejemplo, TK-1012 a TK-1051; `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
+6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053) y 6 órdenes de trabajo (OT-0214 a OT-0219); `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
    Para una instalación real, en vez de sembrar, crear la primera cuenta: `npm run db:admin -- --correo admin@ejemplo.cl --nombre "Nombre Apellido"`.
 7. Arrancar shared (watch), API y web: `npm run dev`.
 8. Abrir <http://localhost:5173>.
@@ -41,9 +41,9 @@ Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el scr
 
 Para correr los tests sin pisar otra ejecución en paralelo, crea una base propia con `npm run db:test:crear -- <sufijo>` (por ejemplo `2h`) y usa `TEST_BD_SUFIJO=<sufijo>` al correr `npm run test -w @zydesk/api` (con `npx cross-env` en Windows).
 
-## Archivos de tickets
+## Archivos de tickets y OT
 
-Las fotos, documentos y correos de los tickets se guardan en disco en `ARCHIVOS_DIR` (por defecto `./datos/archivos`, carpeta ignorada por git). Respáldala junto con la base de datos. Más detalles en la sección 12 del [manual de administración](docs/manuales/administracion.md).
+Las fotos, documentos y correos de los tickets y de las órdenes de trabajo se guardan en disco en `ARCHIVOS_DIR` (por defecto `./datos/archivos`, carpeta ignorada por git). Respáldala junto con la base de datos. Más detalles en la sección 12 del [manual de administración](docs/manuales/administracion.md).
 
 ## Integración continua
 
@@ -86,6 +86,7 @@ docs            Plan, decisiones (ADR), especificaciones por fase, manuales y AP
 - [Manual de administración](docs/manuales/administracion.md)
 - [Manual de usuario: primeros pasos](docs/manuales/usuario/00-primeros-pasos.md)
 - [Manual de tickets para el equipo](docs/manuales/usuario/01-tecnico.md)
+- [Manual de coordinación: aprobar, cerrar y facturar OT](docs/manuales/usuario/02-coordinacion.md)
 - [Guía de la API](docs/api/README.md)
 - [Documentos legales (borradores)](docs/legal/README.md)
 - [Cambios por versión](docs/CHANGELOG.md)

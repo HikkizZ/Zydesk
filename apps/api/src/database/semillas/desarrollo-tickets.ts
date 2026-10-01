@@ -3,9 +3,9 @@ import { dataSource } from '../../config/db.js';
 import { formatearCodigo } from '../../core/numeracion/numeracion.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 
-// Semillas de tickets de desarrollo (spec §13): 16 tickets de los diseños "Tablero" y "Tabla" (sin las
-// etiquetas de OT, que llegan en la Fase 3). Idempotentes por `codigo`. Insertan con `numero` explícito
-// y al final suben el contador a 1051. Las fechas son relativas a "hoy" en Santiago.
+// Semillas de tickets de desarrollo (spec §13): 16 tickets de los diseños "Tablero" y "Tabla" más TK-1053
+// y TK-1019 de la Fase 3 (las OT se siembran en `desarrollo-ots.ts`). Idempotentes por `codigo`. Insertan
+// con `numero` explícito y al final suben el contador a 1053. Las fechas son relativas a "hoy" en Santiago.
 
 type Estado = 'nuevo' | 'en_curso' | 'en_espera' | 'resuelto' | 'descartado' | 'duplicado';
 type EsperaDe = 'cliente' | 'proveedor' | 'repuesto' | 'aprobacion';
@@ -29,6 +29,7 @@ interface TicketSemilla {
   duplicado_de?: number;
   correo?: boolean;
   mensajes: Mensaje[];
+  tareas?: [titulo: string, responsable: string][]; // abiertas, sin fecha
 }
 
 const ETIQUETA_ESTADO: Record<Estado, string> = {
@@ -42,6 +43,7 @@ const ETIQUETA_ESTADO: Record<Estado, string> = {
 
 // prettier-ignore
 const TICKETS: TicketSemilla[] = [
+  { numero: 1019, asunto: 'Mantención preventiva trimestral', cliente: 'Clínica Los Robles', estado: 'resuelto', prioridad: 'media', responsables: ['imorales'], vence: -1, categoria: 'Hardware y equipos', creado: 10, cerrado: 1, mensajes: [] },
   { numero: 1012, asunto: 'Cableado estructurado oficina Temuco', cliente: 'Transportes Austral', estado: 'resuelto', prioridad: 'media', responsables: ['treyes'], vence: -20, categoria: 'Redes y VPN', creado: 28, cerrado: 20, archivado: 13, mensajes: [['seguimiento', 'treyes', 'Cableado terminado y certificado en los 14 puntos.']] },
   { numero: 1024, asunto: 'Restablecer acceso a portal de proveedores', cliente: 'Clínica Los Robles', estado: 'resuelto', prioridad: 'alta', responsables: ['imorales', 'jperez'], vence: -2, categoria: 'Accesos y usuarios', creado: 6, cerrado: 2, correo: true, mensajes: [['seguimiento', 'imorales', 'Se restableció la contraseña y se verificó el ingreso con el usuario.'], ['nota_interna', 'jperez', 'El portal bloquea tras 3 intentos; avisar al cliente.']] },
   { numero: 1026, asunto: 'Impresora del piso 3 atasca papel', cliente: 'Oficina central', estado: 'resuelto', prioridad: 'media', responsables: ['sdiaz'], vence: -2, categoria: 'Hardware y equipos', creado: 5, cerrado: 1, mensajes: [['seguimiento', 'sdiaz', 'Se limpió el rodillo de arrastre y se cambió la bandeja.']] },
@@ -57,7 +59,8 @@ const TICKETS: TicketSemilla[] = [
   { numero: 1048, asunto: 'Error al emitir facturas desde el ERP', cliente: 'Viña Santa Clara', estado: 'en_curso', prioridad: 'alta', responsables: ['sdiaz', 'crojas'], vence: 0, categoria: 'ERP / Facturación', creado: 2, correo: true, mensajes: [] },
   { numero: 1049, asunto: 'Alta de usuario para nueva contadora', cliente: 'Administración y Finanzas', estado: 'nuevo', prioridad: 'baja', responsables: ['jperez'], vence: 5, categoria: 'Accesos y usuarios', creado: 2, mensajes: [] },
   { numero: 1050, asunto: 'Solicitud de cotización: mantención preventiva de 12 equipos', cliente: 'Clínica Los Robles', estado: 'nuevo', prioridad: 'media', responsables: [], vence: 2, categoria: 'Hardware y equipos', creado: 1, correo: true, mensajes: [] },
-  { numero: 1051, asunto: 'Servidor de archivos no responde en sucursal Temuco', cliente: 'Transportes Austral', estado: 'nuevo', prioridad: 'urgente', responsables: ['dmunoz'], vence: 0, categoria: 'Redes y VPN', creado: 0, correo: true, mensajes: [] },
+  { numero: 1051, asunto: 'Servidor de archivos no responde en sucursal Temuco', cliente: 'Transportes Austral', estado: 'nuevo', prioridad: 'urgente', responsables: ['dmunoz'], vence: 0, categoria: 'Redes y VPN', creado: 0, correo: true, mensajes: [], tareas: [['Revisar el estado del servidor de archivos en la sucursal', 'dmunoz']] },
+  { numero: 1053, asunto: 'Reemplazo de UPS en sala de servidores', cliente: 'Operaciones', estado: 'en_curso', prioridad: 'media', responsables: ['vsoto'], vence: 4, categoria: 'Hardware y equipos', creado: 2, mensajes: [] },
 ];
 
 // TK-1048 reproduce la pantalla "Ticket TK-1048" (sin los eventos de OT/COT). `dia` = días atrás.
@@ -70,9 +73,9 @@ const TAREAS_1048: { titulo: string; quien: string; dia: number; hecha: boolean 
   { titulo: 'Confirmar con Fernanda si se descuenta de la bolsa de horas', quien: 'crojas', dia: 0, hecha: false },
 ];
 
-type Tx = Pick<EntityManager, 'query'>;
+export type Tx = Pick<EntityManager, 'query'>;
 
-async function instante(tx: Tx, dias: number, hora: string): Promise<Date> {
+export async function instante(tx: Tx, dias: number, hora: string): Promise<Date> {
   const [{ t }] = await tx.query(
     `SELECT (((now() AT TIME ZONE 'America/Santiago')::date - $1::int + $2::time) AT TIME ZONE 'America/Santiago') AS t`,
     [dias, hora],
@@ -80,7 +83,7 @@ async function instante(tx: Tx, dias: number, hora: string): Promise<Date> {
   return t as Date;
 }
 
-async function fechaRelativa(tx: Tx, dias: number): Promise<string> {
+export async function fechaRelativa(tx: Tx, dias: number): Promise<string> {
   const [{ f }] = await tx.query(
     `SELECT to_char((now() AT TIME ZONE 'America/Santiago')::date - $1::int, 'YYYY-MM-DD') AS f`,
     [dias],
@@ -232,6 +235,13 @@ async function sembrarTicket(
         [id, p(u), i === 0],
       );
     }
+    for (const [i, [titulo, quien]] of (t.tareas ?? []).entries()) {
+      await tx.query(
+        `INSERT INTO tarea (ticket_id, titulo, responsable_id, hecha, orden, creado_por)
+         VALUES ($1, $2, $3, false, $4, $5)`,
+        [id, titulo, p(quien), i + 1, camila],
+      );
+    }
     if (t.correo) {
       await tx.query(
         `INSERT INTO correo_adjunto (ticket_id, archivo_id, origen, de, para, fecha, asunto, cuerpo)
@@ -374,7 +384,7 @@ async function sembrar1048(tx: Tx, id: number, p: (u: string) => number): Promis
   await registroHoras(tx, sd, id, nota, 1, cuando, fecha);
 }
 
-// Sube el contador para que el siguiente ticket sea TK-1052 (spec §13).
+// Sube el contador hasta TK-1053 (el último sembrado): el siguiente ticket es TK-1054.
 export async function sembrarTickets(personas: Map<string, number>): Promise<void> {
   const [c] = await dataSource.query(
     `SELECT prefijo, digitos FROM contador WHERE clave = 'ticket'`,
@@ -395,6 +405,6 @@ export async function sembrarTickets(personas: Map<string, number>): Promise<voi
   };
   for (const t of TICKETS) await sembrarTicket(t, ctx);
   await dataSource.query(
-    `UPDATE contador SET valor = GREATEST(valor, 1051) WHERE clave = 'ticket'`,
+    `UPDATE contador SET valor = GREATEST(valor, 1053) WHERE clave = 'ticket'`,
   );
 }

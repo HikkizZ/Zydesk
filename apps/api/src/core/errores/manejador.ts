@@ -17,6 +17,17 @@ export const manejadorErrores: ErrorRequestHandler = (err, _req, res, _next) => 
     });
     return;
   }
+  // JSON malformado: error del cliente. El error trae el texto del body: no se registra.
+  if ((err as { type?: unknown } | null)?.type === 'entity.parse.failed') {
+    res.status(400).json({
+      error: {
+        codigo: 'VALIDACION',
+        mensaje: 'Datos inválidos',
+        detalles: { body: ['JSON malformado'] },
+      },
+    });
+    return;
+  }
   logger.error({ err }, 'error no controlado');
   res.status(500).json({ error: { codigo: 'INTERNO', mensaje: 'Error interno' } });
 };

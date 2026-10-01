@@ -57,7 +57,37 @@ curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/
 curl -b cookies.txt -OJ http://localhost:3010/api/archivos/1
 ```
 
-Errores propios de esta parte: `ARCHIVO_NO_PERMITIDO` (400), `ARCHIVO_MUY_GRANDE` (413), `DEMASIADOS_ARCHIVOS` (400), `CORREO_ILEGIBLE` (400), `TRANSICION_INVALIDA` (409), `TICKET_CERRADO` (409) y `OT_ABIERTA` (409, reservado para la Fase 3). Las rutas de tickets, mensajes, tareas y archivos están en `openapi.json`.
+Errores propios de esta parte: `ARCHIVO_NO_PERMITIDO` (400), `ARCHIVO_MUY_GRANDE` (413), `DEMASIADOS_ARCHIVOS` (400), `CORREO_ILEGIBLE` (400), `TRANSICION_INVALIDA` (409), `TICKET_CERRADO` (409) y `OT_ABIERTA` (409, `detalles.ots` con id, código y etapa de las OT abiertas del ticket; bloquea Resuelto, Descartado y Duplicado). Las rutas de tickets, mensajes, tareas y archivos están en `openapi.json`.
+
+## Órdenes de trabajo
+
+Una OT nace de un ticket (`POST /api/tickets/:id/convertir-en-ot`) y se opera bajo `/api/ots`. Los permisos: `tickets.editar` para convertir, editar, cambiar etapas simples, tareas, mensajes y archivos; `ots.aprobar` para `/aprobar` y `/aprobacion`; `ots.cerrar` para `/cerrar` y `/cancelar`; `ots.facturar` para `/facturar`. Con `Content-Type: application/json` y la cabecera `X-Requested-With: Zydesk` en toda mutación. En Windows, envía los cuerpos con acentos desde un archivo UTF-8 (`--data-binary @cuerpo.json`).
+
+```bash
+# Convertir un ticket en OT (201 con la OT en borrador; las tareas pendientes del ticket pasan a ella)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"tipo":"facturable"}' http://localhost:3010/api/tickets/1/convertir-en-ot
+
+# Etapas sin permiso especial: borrador, cotizada y en_ejecucion
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"etapa":"en_ejecucion"}' http://localhost:3010/api/ots/1/cambiar-etapa
+
+# Cerrar resolviendo el ticket (409 OT_ABIERTA si el ticket tiene otras OT abiertas)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"resolvio_ticket":true,"resumen":"Trabajo terminado y probado"}' http://localhost:3010/api/ots/1/cerrar
+
+# Cerrar sin resolver: el ticket sigue abierto (accion: en_curso | en_espera | nueva_ot)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"resolvio_ticket":false,"resumen":"Falta el repuesto","siguiente":{"accion":"en_espera","responsable_id":2,"espera_de":"repuesto"}}'   http://localhost:3010/api/ots/1/cerrar
+
+# Marcar facturada (solo una OT facturable cerrada y por facturar)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"n_factura":"F-1001"}' http://localhost:3010/api/ots/1/facturar
+
+# Copiar un mensaje de la OT al ticket de origen (una copia por mensaje)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/mensajes/1/copiar-al-ticket
+```
+
+Otras rutas: `GET /api/ots` (filtros `q`, `ticket_id`, `cliente_id`, `tipo`, `etapa`, `estado_facturacion`, `abiertas`, `responsable_id`, `aprobador_id`), `GET|PATCH /api/ots/:id`, `POST /api/ots/:id/aprobar` (interna), `PUT /api/ots/:id/aprobacion` (aprobación del cliente con respaldo adjunto), `POST /api/ots/:id/cancelar`, `POST /api/ots/:id/archivos`, `GET|POST /api/ots/:id/tareas`, `GET|POST /api/ots/:id/mensajes` y `GET /api/ots/:id/actividad`. Las tareas se editan por `PATCH|DELETE /api/tareas/:id` también en las OT.
+
+Errores propios: `OT_CERRADA` (409, la OT está cerrada o cancelada), `OT_TIPO_BLOQUEADO` (409, el tipo y el cliente solo cambian en Borrador), `MENSAJE_YA_COPIADO` (409) y `TRANSICION_INVALIDA` (409, con `detalles.entidad = 'ot'`).
+
+Un cuerpo JSON mal formado responde `400 VALIDACION` (`detalles.body`).
 
 ## Regenerar `openapi.json`
 

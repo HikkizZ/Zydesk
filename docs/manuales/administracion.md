@@ -155,6 +155,30 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Crear tickets desde correos.** No hay un buzón conectado: la persona arrastra un `.eml`/`.msg` o pega el texto del correo al crear el ticket (ver el [manual de tickets](usuario/01-tecnico.md)).
 
-## 13. Referencia de la API
+## 13. Órdenes de trabajo
+
+**Numeración.** Las OT (`OT-0218`) siempre son correlativas y se configuran en **Configuración → Numeración y marca**, igual que los tickets (sección 9). El número inicial debe ser mayor que el último usado; los cambios solo afectan a códigos futuros. Una conversión que falla no consume número.
+
+**Quién puede qué** (matriz de la sección 2):
+
+- **Convertir un ticket en OT, editarla, cambiar sus etapas simples** (marcar como cotizada, volver a borrador, iniciar ejecución), **gestionar sus tareas, mensajes y archivos**: quien puede editar tickets (Administración, Coordinación y Técnico).
+- **Aprobar** (OT interna y aprobación del cliente de una facturable): permiso de aprobar (Administración y Coordinación). La persona elegida como "quién aprueba" debe tener ese permiso; con todo, cualquiera que lo tenga puede aprobar.
+- **Cerrar** y **cancelar**: permiso de cerrar OT (Administración y Coordinación). Cancelar se considera una forma de cierre.
+- **Marcar como facturada**: permiso de facturar (Administración y Coordinación).
+- **Solo lectura** ve todas las OT, sus notas internas y sus archivos, sin poder cambiar nada.
+
+**Ticket y OT.** Mientras un ticket tenga una OT abierta (que no esté Cerrada ni Cancelada) no se puede resolver, descartar ni marcar como duplicado. Si hay que desbloquearlo, se cierra o cancela la OT.
+
+**Facturación.** Una OT facturable cerrada queda **Por facturar** aunque no haya resuelto el ticket; al cancelarla pasa a "No aplica". Marcar como facturada solo registra el número de factura: la app no emite documentos tributarios.
+
+**Bolsa de horas.** La casilla **Descuenta de la bolsa** de una OT solo aparece si el cliente tiene una bolsa vigente (sección 7). La OT muestra las horas usadas en el mes por las OT que descuentan de esa bolsa; la ficha del cliente aún no las muestra.
+
+**Archivos de OT.** Las fotos y documentos de las OT se guardan en la misma carpeta `ARCHIVOS_DIR` y con las mismas reglas que los de los tickets (sección 12): mismos tipos, límites, huérfanos de 24 horas y respaldo. Cualquier persona con sesión puede verlos y descargarlos; las descargas de documentos y correos quedan en el registro de seguridad. Al copiar un mensaje de la OT al ticket no se duplican los archivos.
+
+**Lo que todavía no existe.** Cotizador y montos, planilla de horas, avisos y la pantalla completa de OT con indicadores y exportación llegan en fases posteriores. La lista `/ots` es una vista de solo lectura.
+
+Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manual de coordinación](usuario/02-coordinacion.md).
+
+## 14. Referencia de la API
 
 Para integraciones y el bot futuro: con sesión de Administración, abre `/api/docs` (por ejemplo `http://localhost:3010/api/docs`) para ver todas las rutas. La guía de uso está en `docs/api/README.md`.
