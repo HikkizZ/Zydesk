@@ -1,6 +1,6 @@
 # ADR 0022 — Tablero de solo lectura
 
-**Estado**: aceptada · 2026-09-30 · precisa a ADR 0011 (Kanban con dnd-kit); sustituye A7 de `preguntas-abiertas.md`
+**Estado**: aceptada · 2026-09-30 · precisa a ADR 0011 (Kanban con dnd-kit); sustituye A7 de `preguntas-abiertas.md` · precisada por ADR 0023 (Fase 3)
 
 ## Contexto
 

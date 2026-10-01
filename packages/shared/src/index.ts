@@ -5,3 +5,4 @@ export * from './enums/index.js';
 export * from './estados/index.js';
 export * from './horas-habiles/index.js';
 export * from './esquemas/index.js';
+export * from './eventos.js';

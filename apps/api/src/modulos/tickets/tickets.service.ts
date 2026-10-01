@@ -83,7 +83,7 @@ function errorValidacion(errores: Record<string, string[]>): ErrorApp {
 const ticketCerrado = (): ErrorApp =>
   new ErrorApp('TICKET_CERRADO', 'Reabre el ticket para editarlo');
 
-interface FilaBloqueada {
+export interface FilaBloqueada {
   id: number;
   codigo: string;
   estado: EstadoTicket;
@@ -141,12 +141,16 @@ async function departamentoDe(
 
 // ---- Fase 3 ----
 
-// Fase 3: consulta ot WHERE ticket_id = $1 AND etapa NOT IN ('cerrada','cancelada') (ADR 0004)
+// OT del ticket que no están cerradas ni canceladas (ADR 0004, B1).
 export async function otsAbiertas(
-  _tx: EntityManager,
-  _ticket_id: number,
+  tx: EntityManager,
+  ticket_id: number,
 ): Promise<Array<{ id: number; codigo: string; etapa: string }>> {
-  return [];
+  return tx.query(
+    `SELECT id, codigo, etapa FROM ot
+      WHERE ticket_id = $1 AND etapa NOT IN ('cerrada','cancelada') ORDER BY creado_en, id`,
+    [ticket_id],
+  );
 }
 
 // ---- Crear (spec §5.3) ----
@@ -498,61 +502,71 @@ export async function editarTicket(
 
 // ---- Cambiar estado (spec §5.4, ADR 0004) ----
 
-export async function cambiarEstado(
+export function cambiarEstado(
   actor: UsuarioSesion,
   id: number,
   p: CambioEstadoTicketDatos,
 ): Promise<TicketSalidaDatos> {
-  return enTransaccion(async (tx) => {
-    const t = await bloquearTicket(tx, id);
-    if (!puedeTransicionar(t.estado, p.estado)) {
-      throw new ErrorApp('TRANSICION_INVALIDA', 'Ese cambio de estado no está permitido', {
-        desde: t.estado,
-        hasta: p.estado,
-        permitidas: transicionesDesde(t.estado),
-      });
-    }
+  return enTransaccion((tx) => cambiarEstadoEnTx(tx, actor, id, p));
+}
 
-    if (p.estado === 'resuelto') {
-      const abiertas = await otsAbiertas(tx, id);
-      if (abiertas.length > 0) {
-        throw new ErrorApp('OT_ABIERTA', 'El ticket tiene OT abiertas', { ots: abiertas });
-      }
-    }
+// Cuerpo de `cambiarEstado`; `ots` lo orquesta (cierre de OT) con el ticket ya bloqueado.
+export async function cambiarEstadoEnTx(
+  tx: EntityManager,
+  actor: UsuarioSesion,
+  id: number,
+  p: CambioEstadoTicketDatos,
+  opciones: { ticket?: FilaBloqueada } = {},
+): Promise<TicketSalidaDatos> {
+  const t = opciones.ticket ?? (await bloquearTicket(tx, id));
+  if (!puedeTransicionar(t.estado, p.estado)) {
+    throw new ErrorApp('TRANSICION_INVALIDA', 'Ese cambio de estado no está permitido', {
+      desde: t.estado,
+      hasta: p.estado,
+      permitidas: transicionesDesde(t.estado),
+    });
+  }
 
-    let duplicado_de_id: number | null = null;
-    let duplicado_de_codigo: string | null = null;
-    if (p.estado === 'duplicado') {
-      const [original]: { id: number; codigo: string; estado: EstadoTicket }[] = await tx.query(
-        `SELECT id, codigo, estado FROM ticket WHERE id = $1`,
-        [p.duplicado_de_id],
-      );
-      const mensaje = !original
-        ? 'El ticket original no existe'
-        : original.id === id
-          ? 'Un ticket no puede ser duplicado de sí mismo'
-          : original.estado === 'duplicado'
-            ? 'El ticket original ya está marcado como duplicado'
-            : null;
-      if (mensaje !== null || !original) {
-        throw errorValidacion({ duplicado_de_id: [mensaje ?? 'El ticket original no existe'] });
-      }
-      duplicado_de_id = original.id;
-      duplicado_de_codigo = original.codigo;
+  if (esCerrado(p.estado)) {
+    const abiertas = await otsAbiertas(tx, id);
+    if (abiertas.length > 0) {
+      throw new ErrorApp('OT_ABIERTA', 'El ticket tiene OT abiertas', { ots: abiertas });
     }
+  }
 
-    const espera_de = p.estado === 'en_espera' ? p.espera_de : null;
-    const espera_detalle = p.estado === 'en_espera' ? (p.espera_detalle ?? null) : null;
-    const motivo_cierre =
-      p.estado === 'descartado'
-        ? p.motivo
-        : p.estado === 'duplicado'
-          ? `Duplicado de ${duplicado_de_codigo}`
+  let duplicado_de_id: number | null = null;
+  let duplicado_de_codigo: string | null = null;
+  if (p.estado === 'duplicado') {
+    const [original]: { id: number; codigo: string; estado: EstadoTicket }[] = await tx.query(
+      `SELECT id, codigo, estado FROM ticket WHERE id = $1`,
+      [p.duplicado_de_id],
+    );
+    const mensaje = !original
+      ? 'El ticket original no existe'
+      : original.id === id
+        ? 'Un ticket no puede ser duplicado de sí mismo'
+        : original.estado === 'duplicado'
+          ? 'El ticket original ya está marcado como duplicado'
           : null;
-    const cierra = esCerrado(p.estado);
+    if (mensaje !== null || !original) {
+      throw errorValidacion({ duplicado_de_id: [mensaje ?? 'El ticket original no existe'] });
+    }
+    duplicado_de_id = original.id;
+    duplicado_de_codigo = original.codigo;
+  }
 
-    await tx.query(
-      `UPDATE ticket
+  const espera_de = p.estado === 'en_espera' ? p.espera_de : null;
+  const espera_detalle = p.estado === 'en_espera' ? (p.espera_detalle ?? null) : null;
+  const motivo_cierre =
+    p.estado === 'descartado'
+      ? p.motivo
+      : p.estado === 'duplicado'
+        ? `Duplicado de ${duplicado_de_codigo}`
+        : null;
+  const cierra = esCerrado(p.estado);
+
+  await tx.query(
+    `UPDATE ticket
           SET estado = $2, espera_de = $3, espera_detalle = $4, motivo_cierre = $5, duplicado_de_id = $6,
               cerrado_en = CASE WHEN $7::boolean THEN COALESCE(cerrado_en, now()) ELSE NULL END,
               archivado_en = CASE WHEN $7::boolean THEN archivado_en ELSE NULL END,
@@ -560,29 +574,28 @@ export async function cambiarEstado(
                                           ELSE primera_respuesta_en END,
               actualizado_en = now()
         WHERE id = $1`,
-      [id, p.estado, espera_de, espera_detalle, motivo_cierre, duplicado_de_id, cierra],
-    );
+    [id, p.estado, espera_de, espera_detalle, motivo_cierre, duplicado_de_id, cierra],
+  );
 
-    const datos =
-      p.estado === 'en_espera'
-        ? { espera_de: p.espera_de, espera_detalle }
-        : p.estado === 'descartado'
-          ? { motivo: p.motivo }
-          : p.estado === 'duplicado'
-            ? { duplicado_de_id, duplicado_de_codigo }
-            : null;
-    await registrarEvento(tx, {
-      entidad: 'ticket',
-      entidad_id: id,
-      actor,
-      accion: 'cambio',
-      campo: 'estado',
-      valor_anterior: ETIQUETA_ESTADO_TICKET[t.estado],
-      valor_nuevo: ETIQUETA_ESTADO_TICKET[p.estado],
-      datos,
-    });
-    return cargarTicket(tx, id);
+  const datos =
+    p.estado === 'en_espera'
+      ? { espera_de: p.espera_de, espera_detalle }
+      : p.estado === 'descartado'
+        ? { motivo: p.motivo }
+        : p.estado === 'duplicado'
+          ? { duplicado_de_id, duplicado_de_codigo }
+          : null;
+  await registrarEvento(tx, {
+    entidad: 'ticket',
+    entidad_id: id,
+    actor,
+    accion: 'cambio',
+    campo: 'estado',
+    valor_anterior: ETIQUETA_ESTADO_TICKET[t.estado],
+    valor_nuevo: ETIQUETA_ESTADO_TICKET[p.estado],
+    datos,
   });
+  return cargarTicket(tx, id);
 }
 
 // ---- Responsables y seguidores ----
@@ -611,64 +624,73 @@ async function leerEquipo(
 }
 
 // Reemplaza el conjunto. B7: no recalcula fechas.
-export async function guardarResponsables(
+export function guardarResponsables(
   actor: UsuarioSesion,
   id: number,
   e: ResponsablesEntradaDatos,
 ): Promise<TicketSalidaDatos> {
-  return enTransaccion(async (tx) => {
-    const t = await bloquearTicket(tx, id);
-    if (t.cerrado_en !== null) throw ticketCerrado();
+  return enTransaccion((tx) => guardarResponsablesEnTx(tx, actor, id, e));
+}
 
-    const otros = unicos(e.otros_ids).filter((i) => i !== e.principal_id);
-    const errores: Record<string, string[]> = {};
-    if (e.principal_id !== null && (await usuariosNoValidos(tx, [e.principal_id])).length > 0) {
-      errores['principal_id'] = ['No existe o está inactivo'];
-    }
-    if ((await usuariosNoValidos(tx, otros)).length > 0) {
-      errores['otros_ids'] = ['Hay usuarios que no existen o están inactivos'];
-    }
-    if (Object.keys(errores).length > 0) throw errorValidacion(errores);
+// Cuerpo de `guardarResponsables`; `ots` lo orquesta (cierre de OT) con el ticket ya bloqueado.
+export async function guardarResponsablesEnTx(
+  tx: EntityManager,
+  actor: UsuarioSesion,
+  id: number,
+  e: ResponsablesEntradaDatos,
+  opciones: { ticket?: FilaBloqueada } = {},
+): Promise<TicketSalidaDatos> {
+  const t = opciones.ticket ?? (await bloquearTicket(tx, id));
+  if (t.cerrado_en !== null) throw ticketCerrado();
 
-    const antes = await leerEquipo(tx, id);
-    await tx.query(`DELETE FROM ticket_responsable WHERE ticket_id = $1`, [id]);
-    if (e.principal_id !== null) {
-      await tx.query(
-        `INSERT INTO ticket_responsable (ticket_id, usuario_id, principal) VALUES ($1, $2, true)`,
-        [id, e.principal_id],
-      );
-    }
-    for (const usuario_id of otros) {
-      await tx.query(
-        `INSERT INTO ticket_responsable (ticket_id, usuario_id, principal) VALUES ($1, $2, false)`,
-        [id, usuario_id],
-      );
-    }
-    await tx.query(`UPDATE ticket SET actualizado_en = now() WHERE id = $1`, [id]);
+  const otros = unicos(e.otros_ids).filter((i) => i !== e.principal_id);
+  const errores: Record<string, string[]> = {};
+  if (e.principal_id !== null && (await usuariosNoValidos(tx, [e.principal_id])).length > 0) {
+    errores['principal_id'] = ['No existe o está inactivo'];
+  }
+  if ((await usuariosNoValidos(tx, otros)).length > 0) {
+    errores['otros_ids'] = ['Hay usuarios que no existen o están inactivos'];
+  }
+  if (Object.keys(errores).length > 0) throw errorValidacion(errores);
 
-    const nombres = await nombresUsuarios(tx, [
-      ...[antes.principal, e.principal_id].filter((i): i is number => i !== null),
-      ...antes.otros,
-      ...otros,
-    ]);
-    const nombrePrincipal = (i: number | null): string | null =>
-      i === null ? null : (nombres.get(i) ?? null);
-    await registrarCambios(tx, {
-      entidad: 'ticket',
-      entidad_id: id,
-      actor,
-      antes: {
-        responsable_principal: nombrePrincipal(antes.principal),
-        responsables: nombresOrdenados(antes.otros, nombres),
-      },
-      despues: {
-        responsable_principal: nombrePrincipal(e.principal_id),
-        responsables: nombresOrdenados(otros, nombres),
-      },
-      campos: ['responsable_principal', 'responsables'],
-    });
-    return cargarTicket(tx, id);
+  const antes = await leerEquipo(tx, id);
+  await tx.query(`DELETE FROM ticket_responsable WHERE ticket_id = $1`, [id]);
+  if (e.principal_id !== null) {
+    await tx.query(
+      `INSERT INTO ticket_responsable (ticket_id, usuario_id, principal) VALUES ($1, $2, true)`,
+      [id, e.principal_id],
+    );
+  }
+  for (const usuario_id of otros) {
+    await tx.query(
+      `INSERT INTO ticket_responsable (ticket_id, usuario_id, principal) VALUES ($1, $2, false)`,
+      [id, usuario_id],
+    );
+  }
+  await tx.query(`UPDATE ticket SET actualizado_en = now() WHERE id = $1`, [id]);
+
+  const nombres = await nombresUsuarios(tx, [
+    ...[antes.principal, e.principal_id].filter((i): i is number => i !== null),
+    ...antes.otros,
+    ...otros,
+  ]);
+  const nombrePrincipal = (i: number | null): string | null =>
+    i === null ? null : (nombres.get(i) ?? null);
+  await registrarCambios(tx, {
+    entidad: 'ticket',
+    entidad_id: id,
+    actor,
+    antes: {
+      responsable_principal: nombrePrincipal(antes.principal),
+      responsables: nombresOrdenados(antes.otros, nombres),
+    },
+    despues: {
+      responsable_principal: nombrePrincipal(e.principal_id),
+      responsables: nombresOrdenados(otros, nombres),
+    },
+    campos: ['responsable_principal', 'responsables'],
   });
+  return cargarTicket(tx, id);
 }
 
 // Permitido en tickets cerrados.

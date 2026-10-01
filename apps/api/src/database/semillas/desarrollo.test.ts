@@ -68,12 +68,12 @@ describe('sembrarDesarrollo', () => {
     await expect(sembrarDesarrollo('corta')).rejects.toThrow('SEMILLA_PASSWORD');
   });
 
-  it('siembra 16 tickets (1 archivado), TK-1048 completo y deja el contador listo para TK-1052', async () => {
+  it('siembra 18 tickets (1 archivado), TK-1048 completo y deja el contador listo para TK-1054', async () => {
     await sembrarDesarrollo(CLAVE);
     await sembrarDesarrollo(CLAVE);
-    expect(await contar('ticket')).toBe(16);
+    expect(await contar('ticket')).toBe(18);
     expect(await contar('ticket', 'archivado_en IS NOT NULL')).toBe(1);
-    expect(await contar('ticket', "estado IN ('resuelto','descartado','duplicado')")).toBe(5);
+    expect(await contar('ticket', "estado IN ('resuelto','descartado','duplicado')")).toBe(6);
     expect(await contar('correo_adjunto')).toBe(7);
     const [t] = await dataSource.query(`SELECT id FROM ticket WHERE codigo = 'TK-1048'`);
     expect(await contar('tarea', `ticket_id = ${t.id}`)).toBe(5);
@@ -82,10 +82,55 @@ describe('sembrarDesarrollo', () => {
     expect(await contar('mensaje', `ticket_id = ${t.id} AND tipo = 'nota_interna'`)).toBe(2);
     expect(await contar('mencion')).toBe(1);
     expect(await contar('registro_horas', `ticket_id = ${t.id}`)).toBe(2);
-    expect(await contar('evento', `entidad = 'ticket' AND entidad_id = '${t.id}'`)).toBe(5);
+    expect(await contar('evento', `entidad = 'ticket' AND entidad_id = '${t.id}'`)).toBe(6);
     const [{ valor }] = await dataSource.query(`SELECT valor FROM contador WHERE clave = 'ticket'`);
-    expect(valor).toBeGreaterThanOrEqual(1051);
+    expect(valor).toBeGreaterThanOrEqual(1053);
     const siguiente = await enTransaccion((tx) => siguienteNumero(tx, 'ticket', fuenteNumeros));
-    expect(siguiente.codigo).toBe('TK-1052');
+    expect(siguiente.codigo).toBe('TK-1054');
+  });
+
+  it('siembra 6 OT idempotentes, OT-0218 completa y el contador de OT listo para OT-0220', async () => {
+    await sembrarDesarrollo(CLAVE);
+    await sembrarDesarrollo(CLAVE);
+    expect(await contar('ot')).toBe(6);
+    expect(await contar('aprobacion_cliente')).toBe(2);
+    const [o] = await dataSource.query(`SELECT id, etapa, tipo FROM ot WHERE codigo = 'OT-0218'`);
+    expect(o).toMatchObject({ etapa: 'cotizada', tipo: 'facturable' });
+    expect(await contar('tarea', `ot_id = ${o.id}`)).toBe(4);
+    const [{ h }] = await dataSource.query(
+      `SELECT sum(horas_estimadas)::float8 AS h FROM tarea WHERE ot_id = ${o.id}`,
+    );
+    expect(h).toBe(10);
+    expect(await contar('archivo', `entidad = 'ot' AND entidad_id = ${o.id}`)).toBe(3);
+    expect(await contar('mensaje', `ot_id = ${o.id}`)).toBe(1);
+    expect(await contar('registro_horas', `ot_id = ${o.id} AND horas = 3`)).toBe(1);
+    expect(await contar('evento', `entidad = 'ot' AND entidad_id = '${o.id}'`)).toBe(6);
+    const [o216] = await dataSource.query(
+      `SELECT o.id, o.etapa, o.estado_facturacion, o.resolvio_ticket FROM ot o WHERE codigo = 'OT-0216'`,
+    );
+    expect(o216).toMatchObject({
+      etapa: 'cerrada',
+      estado_facturacion: 'por_facturar',
+      resolvio_ticket: true,
+    });
+    expect(await contar('aprobacion_cliente', `ot_id = ${o216.id}`)).toBe(1);
+    expect(await contar('mensaje', 'copiado_desde_id IS NOT NULL')).toBe(1);
+    const [{ valor }] = await dataSource.query(`SELECT valor FROM contador WHERE clave = 'ot'`);
+    expect(valor).toBeGreaterThanOrEqual(219);
+    const siguiente = await enTransaccion((tx) => siguienteNumero(tx, 'ot', fuenteNumeros));
+    expect(siguiente.codigo).toBe('OT-0220');
+
+    const agente = request
+      .agent(crearApp({ comprobarBd: async () => true }))
+      .set('X-Requested-With', 'Zydesk');
+    await agente
+      .post('/api/auth/ingresar')
+      .send({ correo: 'hikki@zydesk.local', contrasena: CLAVE });
+    const [t] = await dataSource.query(`SELECT id FROM ticket WHERE codigo = 'TK-1048'`);
+    const res = await agente.get(`/api/tickets/${t.id}`);
+    expect(res.status).toBe(200);
+    expect(res.body.ots.map((x: { codigo: string }) => x.codigo)).toEqual(['OT-0218']);
+    const lista = await agente.get('/api/tickets?q=1048');
+    expect(lista.body.datos[0].ot_vinculada.codigo).toBe('OT-0218');
   });
 });

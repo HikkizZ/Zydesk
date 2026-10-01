@@ -9,6 +9,7 @@ import {
   reemplazarTarifas,
 } from '../../modulos/clientes/clientes.service.js';
 import { versionTerminosVigente } from '../../modulos/legal/legal.service.js';
+import { sembrarOts } from './desarrollo-ots.js';
 import { sembrarTickets } from './desarrollo-tickets.js';
 
 export class ErrorSemilla extends Error {}
@@ -252,4 +253,5 @@ export async function sembrarDesarrollo(contrasena: string | undefined): Promise
   await sembrarCategorias(personas);
   await sembrarClientes();
   await sembrarTickets(personas);
+  await sembrarOts(personas);
 }

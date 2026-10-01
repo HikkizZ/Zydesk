@@ -29,3 +29,10 @@ export const UsuarioBreve = z.object({
   iniciales: z.string(),
   color_avatar: z.string(),
 });
+
+export const Responsable = UsuarioBreve.extend({ principal: z.boolean() });
+export const ClienteBreve = z.object({ id, nombre: z.string(), es_interno: z.boolean() });
+
+// Parámetros de query (vienen como texto)
+export const booleanoTexto = z.enum(['true', 'false']);
+export const idQuery = z.coerce.number().int().positive();

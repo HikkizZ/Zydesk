@@ -20,6 +20,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { usePermiso } from '@/features/auth/SesionProvider';
+import { crearTareaOt, invalidarOt } from '@/features/ots/api';
 import {
   crearTarea,
   editarTarea,
@@ -33,44 +34,140 @@ import { cn } from '@/lib/utils';
 const mensajeError = (err: unknown) =>
   err instanceof ErrorApi ? err.message : 'No se pudo conectar. Intenta de nuevo.';
 
-// Tareas del ticket: progreso, marcar, quitar (con confirmación) y alta al pie. Con `cerrado` no se
-// puede agregar ni quitar, pero sí marcar (spec fase 2 §6.2).
+export interface DestinoTareas {
+  tipo: 'ticket' | 'ot';
+  id: number;
+}
+
+const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
+
+// Horas válidas: vacío (sin horas) o múltiplo de 0,25 entre 0 y 999.
+const horasValidas = (texto: string) => {
+  if (texto.trim() === '') return true;
+  const n = Number(texto);
+  return Number.isFinite(n) && n >= 0 && n <= 999 && Number.isInteger(n * 4);
+};
+
+// Input de horas de una tarea de OT: guarda con `PATCH` al perder el foco si el valor cambió.
+function CampoHoras({
+  etiqueta,
+  valor,
+  disabled,
+  onGuardar,
+}: {
+  etiqueta: string;
+  valor: number | null;
+  disabled: boolean;
+  onGuardar: (horas: number | null) => void;
+}) {
+  const [texto, setTexto] = useState(valor === null ? '' : String(valor));
+  // Si el valor guardado cambia desde fuera (refetch), el campo lo sigue.
+  const [valorPrevio, setValorPrevio] = useState(valor);
+  if (valor !== valorPrevio) {
+    setValorPrevio(valor);
+    setTexto(valor === null ? '' : String(valor));
+  }
+  const valido = horasValidas(texto);
+  return (
+    <Input
+      type="number"
+      step={0.25}
+      min={0}
+      max={999}
+      inputMode="decimal"
+      aria-label={etiqueta}
+      aria-invalid={!valido}
+      disabled={disabled}
+      value={texto}
+      onChange={(e) => setTexto(e.target.value)}
+      onBlur={() => {
+        if (!valido) {
+          setTexto(valor === null ? '' : String(valor));
+          return;
+        }
+        const nuevo = texto.trim() === '' ? null : Number(texto);
+        if (nuevo !== valor) onGuardar(nuevo);
+      }}
+      className="h-9 w-16 px-2 text-right font-mono sm:w-[72px]"
+    />
+  );
+}
+
+// Tareas de un ticket o de una OT: progreso, marcar, quitar (con confirmación) y alta al pie. Con
+// `cerrado` no se puede agregar, quitar ni editar horas, pero sí marcar (spec fase 2 §6.2, fase 3 §6.1).
+// `conHoras` (OT) agrega las columnas "Est." y "Real". `ticketId` es la forma anterior de `destino`.
 export function ListaTareas({
+  destino: destinoProp,
   ticketId,
   tareas,
   cerrado,
+  conHoras = false,
 }: {
-  ticketId: number;
+  destino?: DestinoTareas;
+  ticketId?: number;
   tareas: TareaDatos[];
   cerrado: boolean;
+  conHoras?: boolean;
 }) {
+  const destino: DestinoTareas = destinoProp ?? { tipo: 'ticket', id: ticketId ?? 0 };
   const queryClient = useQueryClient();
   const puedeEditar = usePermiso('tickets.editar');
   const [titulo, setTitulo] = useState('');
   const [responsable, setResponsable] = useState<number | null>(null);
   const [fecha, setFecha] = useState('');
+  const [horasAlta, setHorasAlta] = useState('');
   const [porQuitar, setPorQuitar] = useState<TareaDatos | null>(null);
 
   const hechas = tareas.filter((t) => t.hecha).length;
   const porcentaje = tareas.length === 0 ? 0 : Math.round((hechas / tareas.length) * 100);
 
-  const alCambiar = () => invalidarTicket(queryClient, ticketId);
+  const estimadas = tareas.reduce((suma, t) => suma + (t.horas_estimadas ?? 0), 0);
+  const reales = tareas.reduce((suma, t) => suma + (t.horas_reales ?? 0), 0);
+
+  const alCambiar = () =>
+    destino.tipo === 'ot'
+      ? invalidarOt(queryClient, destino.id)
+      : invalidarTicket(queryClient, destino.id);
   const marcar = useMutation({
     mutationFn: (t: TareaDatos) => editarTarea(t.id, { hecha: !t.hecha }),
     onSuccess: alCambiar,
     onError: (err) => toast.error(mensajeError(err)),
   });
+  const guardarHoras = useMutation({
+    mutationFn: ({
+      tarea,
+      campo,
+      horas,
+    }: {
+      tarea: TareaDatos;
+      campo: 'horas_estimadas' | 'horas_reales';
+      horas: number | null;
+    }) => editarTarea(tarea.id, { [campo]: horas }),
+    onSuccess: alCambiar,
+    onError: (err) => {
+      toast.error(mensajeError(err));
+      void alCambiar();
+    },
+  });
   const agregar = useMutation({
-    mutationFn: () =>
-      crearTarea(ticketId, {
+    mutationFn: () => {
+      const base = {
         titulo: titulo.trim(),
         responsable_id: responsable,
         fecha: fecha === '' ? null : fecha,
-      }),
+      };
+      return destino.tipo === 'ot'
+        ? crearTareaOt(destino.id, {
+            ...base,
+            horas_estimadas: horasAlta.trim() === '' ? null : Number(horasAlta),
+          })
+        : crearTarea(destino.id, base);
+    },
     onSuccess: async () => {
       setTitulo('');
       setResponsable(null);
       setFecha('');
+      setHorasAlta('');
       await alCambiar();
     },
     onError: (err) => toast.error(mensajeError(err)),
@@ -89,7 +186,7 @@ export function ListaTareas({
 
   const enviarAlta = (e: FormEvent) => {
     e.preventDefault();
-    if (titulo.trim() !== '' && !agregar.isPending) agregar.mutate();
+    if (titulo.trim() !== '' && horasValidas(horasAlta) && !agregar.isPending) agregar.mutate();
   };
 
   return (
@@ -97,6 +194,9 @@ export function ListaTareas({
       <div className="flex items-center gap-3">
         <h3 className="font-titulo text-base font-semibold">
           Tareas · {hechas}/{tareas.length}
+          {conHoras
+            ? ` · ${formatoHoras.format(estimadas)} h estimadas · ${formatoHoras.format(reales)} h reales`
+            : ''}
         </h3>
         <Progress
           value={porcentaje}
@@ -106,11 +206,23 @@ export function ListaTareas({
       </div>
 
       {tareas.length === 0 ? <p className="text-sm text-tinta-2">Sin tareas</p> : null}
+      {conHoras && tareas.length > 0 ? (
+        <p
+          aria-hidden="true"
+          className="hidden justify-end gap-1.5 pr-11 text-xs font-semibold text-tinta-2 uppercase sm:flex"
+        >
+          <span className="w-[72px] text-right">Est.</span>
+          <span className="w-[72px] text-right">Real</span>
+        </p>
+      ) : null}
       <ul className="flex flex-col">
         {tareas.map((t) => (
           <li
             key={t.id}
-            className="flex min-h-11 items-center gap-3 border-b py-1.5 last:border-b-0"
+            className={cn(
+              'flex min-h-11 items-center gap-3 border-b py-1.5 last:border-b-0',
+              conHoras && 'flex-wrap sm:flex-nowrap',
+            )}
           >
             <Checkbox
               checked={t.hecha}
@@ -119,7 +231,13 @@ export function ListaTareas({
               onCheckedChange={() => marcar.mutate(t)}
               className="size-5"
             />
-            <span className={cn('flex-1 text-sm', t.hecha && 'text-tinta-3 line-through')}>
+            <span
+              className={cn(
+                'min-w-0 flex-1 text-sm',
+                conHoras && 'basis-32',
+                t.hecha && 'text-tinta-3 line-through',
+              )}
+            >
               {t.titulo}
             </span>
             {t.responsable ? (
@@ -137,6 +255,32 @@ export function ListaTareas({
                 className={cn('text-sm', t.vencida ? 'font-semibold text-urgente' : 'text-tinta-2')}
               >
                 {diaMesDeFecha(t.fecha)}
+              </span>
+            ) : null}
+            {conHoras ? (
+              <span className="flex items-center gap-1 sm:gap-1.5">
+                <span aria-hidden="true" className="text-xs text-tinta-2 sm:hidden">
+                  Est.
+                </span>
+                <CampoHoras
+                  etiqueta={`Horas estimadas de ${t.titulo}`}
+                  valor={t.horas_estimadas}
+                  disabled={!puedeEditar || cerrado}
+                  onGuardar={(horas) =>
+                    guardarHoras.mutate({ tarea: t, campo: 'horas_estimadas', horas })
+                  }
+                />
+                <span aria-hidden="true" className="text-xs text-tinta-2 sm:hidden">
+                  Real
+                </span>
+                <CampoHoras
+                  etiqueta={`Horas reales de ${t.titulo}`}
+                  valor={t.horas_reales}
+                  disabled={!puedeEditar || cerrado}
+                  onGuardar={(horas) =>
+                    guardarHoras.mutate({ tarea: t, campo: 'horas_reales', horas })
+                  }
+                />
               </span>
             ) : null}
             {puedeEditar && !cerrado ? (
@@ -179,10 +323,25 @@ export function ListaTareas({
             onChange={(e) => setFecha(e.target.value)}
             className="w-40"
           />
+          {conHoras ? (
+            <Input
+              type="number"
+              step={0.25}
+              min={0}
+              max={999}
+              inputMode="decimal"
+              aria-label="Horas est."
+              placeholder="Horas est."
+              aria-invalid={!horasValidas(horasAlta)}
+              value={horasAlta}
+              onChange={(e) => setHorasAlta(e.target.value)}
+              className="w-28 font-mono"
+            />
+          ) : null}
           <Button
             type="submit"
             variant="outline"
-            disabled={titulo.trim() === '' || agregar.isPending}
+            disabled={titulo.trim() === '' || !horasValidas(horasAlta) || agregar.isPending}
           >
             Agregar
           </Button>

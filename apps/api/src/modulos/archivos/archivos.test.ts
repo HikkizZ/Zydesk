@@ -6,6 +6,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   archivoDePrueba,
   crearArchivoPendiente,
+  crearOt,
   crearTicket,
   crearUsuario,
   directorioArchivosTest,
@@ -297,6 +298,33 @@ describe('GET /api/archivos/:id', () => {
     });
   });
 
+  it('F3: un archivo de entidad ot lo descarga el rol lectura (200); solo el attachment se audita, con entidad ot', async () => {
+    const a = await sesion();
+    const lector = await sesion('lectura');
+    const ot = await crearOt((await crearTicket()).id);
+    const crear = async (nombre: string, tipo_mime: string, contenido: Buffer) => {
+      const f = await crearArchivoPendiente(a.usuario.id, { nombre, tipo_mime, contenido });
+      await dataSource.manager.update(Archivo, { id: f.id }, { entidad: 'ot', entidad_id: ot.id });
+      return f;
+    };
+    const foto = await crear('foto.jpg', 'image/jpeg', archivoDePrueba('foto.jpg'));
+    const csv = await crear('datos.csv', 'text/csv', Buffer.from('a,b,1,2'));
+
+    const r1 = await lector.agente.get(`/api/archivos/${foto.id}`);
+    expect(r1.status).toBe(200);
+    expect(r1.headers['content-disposition']).toMatch(/^inline/);
+    const r2 = await lector.agente.get(`/api/archivos/${csv.id}`);
+    expect(r2.status).toBe(200);
+    expect(r2.headers['content-disposition']).toMatch(/^attachment/);
+
+    const filas: Array<{ detalle: Record<string, unknown> }> = await dataSource.query(
+      `SELECT detalle FROM auditoria WHERE accion = 'descarga_archivo' ORDER BY id`,
+    );
+    expect(filas.map((f) => f.detalle)).toEqual([
+      { archivo_id: csv.id, entidad: 'ot', entidad_id: ot.id },
+    ]);
+  });
+
   it('descargar un pendiente propio como attachment se audita con entidad null', async () => {
     const a = await sesion();
     const f = await crearArchivoPendiente(a.usuario.id);
@@ -457,6 +485,25 @@ describe('servicio: asociarArchivos y consultas', () => {
       subido_por: { id: u.id },
     });
     expect((await archivosDeMensajes(dataSource.manager, [])).size).toBe(0);
+  });
+
+  it('F3: asociarArchivos acepta entidad ot; archivosDe(ot) no aplica el filtro de correo y excluye mensajes', async () => {
+    const u = await crearUsuario();
+    const ticket = await crearTicket();
+    const ot = await crearOt(ticket.id);
+    const f1 = await crearArchivoPendiente(u.id, { nombre: 'uno.txt' });
+    const f2 = await crearArchivoPendiente(u.id, { nombre: 'dos.txt' });
+    await enTransaccion((tx) =>
+      asociarArchivos(tx, [f1.id, f2.id], { entidad: 'ot', entidad_id: ot.id }, u),
+    );
+    const [mensaje] = await dataSource.query(
+      `INSERT INTO mensaje (ot_id, tipo, autor_id, texto) VALUES ($1, 'seguimiento', $2, 'x') RETURNING id`,
+      [ot.id, u.id],
+    );
+    await dataSource.manager.update(Archivo, { id: f2.id }, { mensaje_id: mensaje.id });
+    const propios = await archivosDe(dataSource.manager, 'ot', ot.id);
+    expect(propios.map((a) => a.nombre_original)).toEqual(['uno.txt']);
+    expect(await archivosDe(dataSource.manager, 'ticket', ticket.id)).toEqual([]);
   });
 
   it('guardarBufferComoArchivo valida el contenido real y guarda con origen_correo_id', async () => {

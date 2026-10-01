@@ -185,3 +185,54 @@ it('los filtros viven en la URL y se envían a la API', async () => {
   await waitFor(() => expect(screen.getByTestId('ubicacion').textContent).toContain('q=vpn'));
   await waitFor(() => expect(llamadas.some((l) => l.ruta.includes('q=vpn'))).toBe(true));
 });
+
+it('la tarjeta muestra la OT vinculada con su tipo', async () => {
+  simularFetch(({ ruta }) =>
+    ruta.startsWith('/api/tickets/tablero')
+      ? respuesta(200, [
+          ticketDePrueba({
+            id: 7,
+            codigo: 'TK-1048',
+            estado: 'en_curso',
+            tipo: 'ot_facturable',
+            ot_vinculada: { id: 5, codigo: 'OT-0218', tipo: 'facturable' },
+          }),
+          ticketDePrueba({
+            id: 8,
+            codigo: 'TK-1037',
+            estado: 'en_curso',
+            tipo: 'ot_interna',
+            ot_vinculada: { id: 6, codigo: 'OT-0215', tipo: 'interna' },
+          }),
+        ])
+      : respuesta(200, USUARIOS_PRUEBA),
+  );
+  render(
+    <ConSesion yo={yoDePrueba()} ruta="/tickets">
+      <TooltipProvider>
+        <TableroPage />
+      </TooltipProvider>
+    </ConSesion>,
+  );
+  const a = within(await screen.findByRole('article', { name: /TK-1048/ }));
+  expect(a.getByText('OT-0218 · Facturable')).toBeTruthy();
+  expect(
+    within(screen.getByRole('article', { name: /TK-1037/ })).getByText('OT-0215 · Interna'),
+  ).toBeTruthy();
+});
+
+it('el filtro Tipo está habilitado, vive en la URL y se envía a la API', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar();
+  await screen.findByRole('article', { name: /TK-1048/ });
+  await usuario.click(screen.getByRole('button', { name: 'Tipo' }));
+  await usuario.click(await screen.findByRole('menuitemcheckbox', { name: 'OT interna' }));
+  await waitFor(() =>
+    expect(screen.getByTestId('ubicacion').textContent).toBe('/tickets?tipo=ot_interna'),
+  );
+  await waitFor(() =>
+    expect(llamadas.some((l) => l.ruta === '/api/tickets/tablero?tipo=ot_interna')).toBe(true),
+  );
+  await usuario.keyboard('{Escape}');
+  expect(await screen.findByRole('button', { name: 'Tipo: OT interna' })).toBeTruthy();
+});

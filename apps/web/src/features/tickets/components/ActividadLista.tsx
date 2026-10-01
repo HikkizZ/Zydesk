@@ -1,11 +1,16 @@
 import { iniciales } from '@zydesk/shared';
 import { FileText, History, Lock } from 'lucide-react';
 import { Fragment, type ReactNode, type Ref } from 'react';
+import { Link } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { formatearTamano } from '@/components/dominio/formato-fecha';
 import { Pill } from '@/components/dominio/Pill';
 import type { ActividadDatos, MensajeDatos, UsuarioBreveDatos } from '@/features/tickets/api';
-import { describirEvento, type EventoDatos } from '@/features/tickets/eventos';
+import {
+  describirEvento,
+  type DescripcionEvento,
+  type EventoDatos,
+} from '@/features/tickets/eventos';
 import { formatearFechaHora } from '@/lib/fechas';
 import { cn } from '@/lib/utils';
 
@@ -35,7 +40,14 @@ function TextoConMenciones({
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
-export function TarjetaMensaje({ mensaje }: { mensaje: MensajeDatos }) {
+export function TarjetaMensaje({
+  mensaje,
+  cierreDe = false,
+}: {
+  mensaje: MensajeDatos;
+  /** El mensaje es el seguimiento de cierre de la OT de la que se copió. */
+  cierreDe?: boolean;
+}) {
   const esNota = mensaje.tipo === 'nota_interna';
   return (
     <article
@@ -62,6 +74,17 @@ export function TarjetaMensaje({ mensaje }: { mensaje: MensajeDatos }) {
         ) : (
           <Pill tono="acento">Seguimiento</Pill>
         )}
+        {mensaje.copiado_de ? (
+          <span className="text-xs text-tinta-2">
+            {cierreDe ? 'Cierre de ' : esNota ? 'Nota · desde ' : 'Seguimiento · desde '}
+            <Link
+              to={`/ots/${mensaje.copiado_de.ot.id}`}
+              className="text-acento underline underline-offset-2"
+            >
+              {mensaje.copiado_de.ot.codigo}
+            </Link>
+          </span>
+        ) : null}
         <time dateTime={mensaje.creado_en} className="text-sm text-tinta-2">
           {formatearFechaHora(mensaje.creado_en)}
         </time>
@@ -107,8 +130,14 @@ export function TarjetaMensaje({ mensaje }: { mensaje: MensajeDatos }) {
   );
 }
 
-function LineaEvento({ evento }: { evento: EventoDatos }) {
-  const d = describirEvento(evento);
+function LineaEvento({
+  evento,
+  describir,
+}: {
+  evento: EventoDatos;
+  describir: (e: EventoDatos) => DescripcionEvento;
+}) {
+  const d = describir(evento);
   const delSistema = evento.accion === 'archivado' || !evento.autor;
   return (
     <div className="flex items-start gap-2 px-1 text-sm text-tinta-2">
@@ -146,13 +175,31 @@ function LineaEvento({ evento }: { evento: EventoDatos }) {
   );
 }
 
+// El mensaje copiado de una OT va precedido del evento `ot_cerrada` de esa misma OT.
+function esCierreDeOt(items: ActividadDatos['items'], i: number): boolean {
+  const item = items[i];
+  if (item?.tipo !== 'mensaje' || !item.mensaje.copiado_de) return false;
+  const otId = item.mensaje.copiado_de.ot.id;
+  return items
+    .slice(0, i)
+    .some(
+      (x) =>
+        x.tipo === 'evento' &&
+        x.evento.accion === 'ot_cerrada' &&
+        x.evento.datos?.['ot_id'] === otId,
+    );
+}
+
 // Lista cronológica (lo más nuevo abajo, junto al redactor): mensajes como tarjetas y eventos como líneas.
 export function ActividadLista({
   items,
   ultimoRef,
+  describir = describirEvento,
 }: {
   items: ActividadDatos['items'];
   ultimoRef?: Ref<HTMLDivElement>;
+  /** Frase de cada evento; por defecto la de tickets (la OT pasa la suya). */
+  describir?: (e: EventoDatos) => DescripcionEvento;
 }) {
   if (items.length === 0) return <p className="py-4 text-sm text-tinta-2">Sin actividad todavía</p>;
   return (
@@ -160,9 +207,9 @@ export function ActividadLista({
       {items.map((item, i) => (
         <li key={`${item.tipo}-${item.tipo === 'mensaje' ? item.mensaje.id : item.evento.id}`}>
           {item.tipo === 'mensaje' ? (
-            <TarjetaMensaje mensaje={item.mensaje} />
+            <TarjetaMensaje mensaje={item.mensaje} cierreDe={esCierreDeOt(items, i)} />
           ) : (
-            <LineaEvento evento={item.evento} />
+            <LineaEvento evento={item.evento} describir={describir} />
           )}
           {i === items.length - 1 ? <div ref={ultimoRef} aria-hidden="true" /> : null}
         </li>

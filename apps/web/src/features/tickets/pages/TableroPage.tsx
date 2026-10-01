@@ -1,5 +1,5 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
-import { PRIORIDADES, type Prioridad } from '@zydesk/shared';
+import { PRIORIDADES, TIPOS_TICKET, type Prioridad, type TipoTicket } from '@zydesk/shared';
 import { useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router';
 import { TituloPagina } from '@/app/TituloPagina';
@@ -16,11 +16,13 @@ const REFRESCO_MS = 60_000;
 function leerFiltros(params: URLSearchParams): ValoresFiltrosTablero {
   const responsable = Number(params.get('responsable_id'));
   const prioridades = (params.get('prioridad') ?? '').split(',');
+  const tipos = (params.get('tipo') ?? '').split(',');
   return {
     q: params.get('q') ?? '',
     responsable: Number.isInteger(responsable) && responsable > 0 ? responsable : null,
     prioridad: PRIORIDADES.filter((p): p is Prioridad => prioridades.includes(p)),
     soloMios: params.get('solo_mios') === 'true',
+    tipo: TIPOS_TICKET.filter((t): t is TipoTicket => tipos.includes(t)),
   };
 }
 
@@ -41,6 +43,7 @@ export function TableroPage() {
             poner('responsable_id', cambios.responsable ? String(cambios.responsable) : null);
           }
           if ('prioridad' in cambios) poner('prioridad', cambios.prioridad?.join(',') || null);
+          if ('tipo' in cambios) poner('tipo', cambios.tipo?.join(',') || null);
           if ('soloMios' in cambios) poner('solo_mios', cambios.soloMios ? 'true' : null);
           return nuevos;
         },
@@ -54,6 +57,7 @@ export function TableroPage() {
     ...(filtros.responsable ? { responsable_id: filtros.responsable } : {}),
     ...(filtros.prioridad.length > 0 ? { prioridad: filtros.prioridad.join(',') } : {}),
     ...(filtros.soloMios ? { solo_mios: true } : {}),
+    ...(filtros.tipo.length > 0 ? { tipo: filtros.tipo.join(',') } : {}),
   };
   const tickets = useQuery({
     queryKey: claves.tablero(consulta),

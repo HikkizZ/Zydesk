@@ -8,6 +8,10 @@ import {
 } from './cliente.js';
 import { DepartamentoEntrada, HorarioDiaEsquema } from './departamento.js';
 import { IngresoEntrada } from './auth.js';
+import { OtCrearEntrada, OtEditarEntrada, OtsQuery } from './ot.js';
+import { TareaEntrada } from './tarea.js';
+import { MensajeEntrada } from './mensaje.js';
+import { CierreOt } from '../estados/ot.js';
 
 describe('rut', () => {
   it.each([
@@ -127,5 +131,51 @@ describe('otros esquemas', () => {
         { concepto: 'hora_normal', valor: 2 },
       ]).success,
     ).toBe(false);
+  });
+});
+
+describe('esquemas de OT (Fase 3)', () => {
+  it('OtCrearEntrada aplica valores por defecto', () => {
+    const r = OtCrearEntrada.parse({ tipo: 'facturable' });
+    expect(r).toEqual({
+      tipo: 'facturable',
+      alcance: null,
+      responsable_tecnico_id: null,
+      descuenta_bolsa: false,
+    });
+    expect(OtCrearEntrada.safeParse({ tipo: 'otro' }).success).toBe(false);
+  });
+
+  it('OtEditarEntrada rechaza término anterior a inicio', () => {
+    const con = (inicio: string | null, termino: string | null) =>
+      OtEditarEntrada.safeParse({ inicio, termino }).success;
+    expect(con('2026-10-10', '2026-10-09')).toBe(false);
+    expect(con('2026-10-10', '2026-10-10')).toBe(true);
+    expect(con(null, '2026-10-09')).toBe(true);
+    expect(OtEditarEntrada.safeParse({}).success).toBe(true);
+  });
+
+  it('CierreOt exige siguiente si no resolvió', () => {
+    expect(CierreOt.safeParse({ resolvio_ticket: false, resumen: 'x' }).success).toBe(false);
+  });
+
+  it('TareaEntrada.horas_estimadas: por defecto null, múltiplo de 0.25', () => {
+    expect(TareaEntrada.parse({ titulo: 'a' }).horas_estimadas).toBeNull();
+    expect(TareaEntrada.safeParse({ titulo: 'a', horas_estimadas: 2.25 }).success).toBe(true);
+    expect(TareaEntrada.safeParse({ titulo: 'a', horas_estimadas: 2.3 }).success).toBe(false);
+    expect(TareaEntrada.safeParse({ titulo: 'a', horas_estimadas: -1 }).success).toBe(false);
+  });
+
+  it('MensajeEntrada.copiar_al_ticket es false por defecto', () => {
+    expect(MensajeEntrada.parse({ tipo: 'seguimiento', texto: 'hola' }).copiar_al_ticket).toBe(
+      false,
+    );
+  });
+
+  it('OtsQuery: valores por defecto y csv', () => {
+    const q = OtsQuery.parse({ etapa: 'borrador,aprobada', abiertas: 'true' });
+    expect(q.etapa).toEqual(['borrador', 'aprobada']);
+    expect(q.orden).toBe('-actualizado_en');
+    expect(OtsQuery.safeParse({ etapa: 'facturada' }).success).toBe(false);
   });
 });

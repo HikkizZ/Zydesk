@@ -4,13 +4,15 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Avatares } from '@/components/dominio/Avatares';
-import { EstadoVacio } from '@/components/dominio/EstadoVacio';
+import { Codigo } from '@/components/dominio/Codigo';
 import { FechaLimite } from '@/components/dominio/FechaLimite';
 import { diaMesHora } from '@/components/dominio/formato-fecha';
 import { PillEstado } from '@/components/dominio/PillEstado';
+import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
+import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
+import { PillTipoOt } from '@/components/dominio/PillTipoOt';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { useYo } from '@/features/auth/SesionProvider';
 import { Seleccion } from '@/features/configuracion/Seleccion';
 import {
@@ -21,6 +23,7 @@ import {
 } from '@/features/tickets/api';
 import { ErrorApi } from '@/lib/api';
 import { formatearFechaHora } from '@/lib/fechas';
+import { BotonConvertir } from './BotonConvertir';
 import { DialogoResponsables, DialogoSeguidores } from './DialogosPersonas';
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
@@ -61,10 +64,12 @@ export function PanelTicket({
   ticket,
   puedeEditar,
   onCambiarEstado,
+  onConvertir,
 }: {
   ticket: TicketDatos;
   puedeEditar: boolean;
   onCambiarEstado: () => void;
+  onConvertir: () => void;
 }) {
   const yo = useYo();
   const queryClient = useQueryClient();
@@ -240,24 +245,45 @@ export function PanelTicket({
         </dl>
       </section>
 
-      <section className="rounded-lg border border-borde bg-superficie p-4">
+      <section
+        aria-label="OT vinculadas"
+        className="rounded-lg border border-borde bg-superficie p-4"
+      >
         <h2 className="mb-3 font-titulo text-base font-semibold">OT vinculadas</h2>
-        <EstadoVacio
-          titulo="Disponible en la Fase 3"
-          descripcion="Aquí aparecerán las órdenes de trabajo de este ticket."
-          accion={
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <span tabIndex={0} className="inline-flex">
-                  <Button type="button" variant="outline" disabled>
-                    Crear OT
-                  </Button>
-                </span>
-              </TooltipTrigger>
-              <TooltipContent>Fase 3</TooltipContent>
-            </Tooltip>
-          }
-        />
+        {ticket.ots.length === 0 ? (
+          <p className="text-sm text-tinta-2">Sin OT</p>
+        ) : (
+          <ul className="flex flex-col gap-3">
+            {ticket.ots.map((o) => (
+              <li key={o.id} className="flex flex-col gap-1.5">
+                <div className="flex flex-wrap items-center gap-2">
+                  <Link
+                    to={`/ots/${o.id}`}
+                    className="inline-flex min-h-11 items-center text-acento underline-offset-2 hover:underline lg:min-h-0"
+                  >
+                    <Codigo>{o.codigo}</Codigo>
+                  </Link>
+                  <PillTipoOt tipo={o.tipo} />
+                  <PillEtapaOt etapa={o.etapa} />
+                  {o.tipo === 'facturable' ? (
+                    <PillFacturacion estado={o.estado_facturacion} />
+                  ) : null}
+                </div>
+                <p className="text-sm break-words">{o.titulo}</p>
+                {o.etapa === 'cerrada' && o.resolvio_ticket !== null ? (
+                  <p className="text-xs text-tinta-2">
+                    {o.resolvio_ticket ? 'Resolvió el ticket' : 'No resolvió el ticket'}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        )}
+        {puedeEditar ? (
+          <div className="mt-3">
+            <BotonConvertir ticket={ticket} onConvertir={onConvertir} textoPrimero="Crear OT" />
+          </div>
+        ) : null}
       </section>
 
       <DialogoResponsables

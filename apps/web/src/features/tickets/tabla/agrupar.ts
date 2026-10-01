@@ -3,12 +3,21 @@ import {
   ETIQUETA_ESTADO_TICKET,
   ETIQUETA_PRIORIDAD,
   PRIORIDADES,
+  TIPOS_TICKET,
   type EstadoTicket,
   type Prioridad,
 } from '@zydesk/shared';
 import type { TicketResumenDatos } from '@/features/tickets/api';
+import { ETIQUETA_TIPO_TICKET } from '../tipos';
 
-export const MODOS_AGRUPAR = ['prioridad', 'estado', 'responsable', 'cliente', 'ninguno'] as const;
+export const MODOS_AGRUPAR = [
+  'prioridad',
+  'estado',
+  'responsable',
+  'cliente',
+  'tipo',
+  'ninguno',
+] as const;
 export type ModoAgrupar = (typeof MODOS_AGRUPAR)[number];
 
 export const ETIQUETA_AGRUPAR: Record<ModoAgrupar, string> = {
@@ -16,6 +25,7 @@ export const ETIQUETA_AGRUPAR: Record<ModoAgrupar, string> = {
   estado: 'Estado',
   responsable: 'Responsable',
   cliente: 'Cliente',
+  tipo: 'Tipo',
   ninguno: 'Sin agrupar',
 };
 
@@ -62,6 +72,12 @@ export function agrupar(tickets: TicketResumenDatos[], modo: ModoAgrupar): Grupo
         titulo: ETIQUETA_ESTADO_TICKET[e],
         punto: PUNTO_ESTADO[e],
         tickets: tickets.filter((t) => t.estado === e),
+      })).filter((g) => g.tickets.length > 0);
+    case 'tipo':
+      return TIPOS_TICKET.map((t) => ({
+        clave: t,
+        titulo: ETIQUETA_TIPO_TICKET[t],
+        tickets: tickets.filter((x) => x.tipo === t),
       })).filter((g) => g.tickets.length > 0);
     case 'responsable':
     case 'cliente': {

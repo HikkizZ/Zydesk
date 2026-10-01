@@ -17,6 +17,44 @@ export const manejadorErrores: ErrorRequestHandler = (err, _req, res, _next) => 
     });
     return;
   }
+  // JSON malformado: error del cliente. El error trae el texto del body: no se registra.
+  if ((err as { type?: unknown } | null)?.type === 'entity.parse.failed') {
+    res.status(400).json({
+      error: {
+        codigo: 'VALIDACION',
+        mensaje: 'Datos inválidos',
+        detalles: { body: ['JSON malformado'] },
+      },
+    });
+    return;
+  }
+  // Otros errores del lector del cuerpo (body-parser/raw-body): 4xx del cliente, sin registrar el error.
+  const lector = err as { status?: unknown; type?: unknown } | null;
+  if (
+    typeof lector?.status === 'number' &&
+    lector.status >= 400 &&
+    lector.status < 500 &&
+    typeof lector.type === 'string'
+  ) {
+    logger.warn({ tipo: lector.type, status: lector.status }, 'cuerpo de petición rechazado');
+    if (lector.type === 'entity.too.large') {
+      res.status(413).json({
+        error: {
+          codigo: 'CUERPO_MUY_GRANDE',
+          mensaje: 'El cuerpo de la petición es demasiado grande',
+        },
+      });
+    } else if (lector.type === 'charset.unsupported' || lector.type === 'encoding.unsupported') {
+      res.status(415).json({
+        error: { codigo: 'TIPO_NO_SOPORTADO', mensaje: 'Codificación del cuerpo no soportada' },
+      });
+    } else {
+      res
+        .status(lector.status)
+        .json({ error: { codigo: 'VALIDACION', mensaje: 'Datos inválidos' } });
+    }
+    return;
+  }
   logger.error({ err }, 'error no controlado');
   res.status(500).json({ error: { codigo: 'INTERNO', mensaje: 'Error interno' } });
 };

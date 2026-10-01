@@ -3,7 +3,14 @@ import { z } from 'zod';
 import { TareaEditarEntrada, TareaEntrada, TareaSalida } from '@zydesk/shared';
 import { actorRequerido } from '../../core/auth/requiere.js';
 import { ruta } from '../../core/http/ruta.js';
-import { crearTarea, editarTarea, listarTareas, quitarTarea } from './tareas.service.js';
+import {
+  crearTarea,
+  crearTareaDeOt,
+  editarTarea,
+  listarTareas,
+  listarTareasDeOt,
+  quitarTarea,
+} from './tareas.service.js';
 
 const paramsId = z.object({ id: z.coerce.number().int().positive() });
 const ETIQUETA = 'Tareas';
@@ -36,9 +43,35 @@ export function crearRutasTareas(): Router {
   });
 
   ruta(router, {
+    metodo: 'get',
+    path: '/api/ots/:id/tareas',
+    resumen: 'Listar las tareas de una OT',
+    etiqueta: ETIQUETA,
+    permiso: 'sesion',
+    params: paramsId,
+    respuesta: z.array(TareaSalida),
+    handler: async ({ params }) => listarTareasDeOt(params.id),
+  });
+
+  ruta(router, {
+    metodo: 'post',
+    path: '/api/ots/:id/tareas',
+    resumen: 'Agregar una tarea a una OT (no cerrada), con horas estimadas',
+    etiqueta: ETIQUETA,
+    permiso: 'tickets.editar',
+    params: paramsId,
+    body: TareaEntrada,
+    respuesta: TareaSalida,
+    status: 201,
+    handler: async ({ params, body, actor }) =>
+      crearTareaDeOt(actorRequerido(actor), params.id, body),
+  });
+
+  ruta(router, {
     metodo: 'patch',
     path: '/api/tareas/:id',
-    resumen: 'Editar o marcar una tarea (marcar se permite con el ticket cerrado)',
+    resumen:
+      'Editar o marcar una tarea de ticket u OT (marcar se permite con el ticket o la OT cerrados)',
     etiqueta: ETIQUETA,
     permiso: 'tickets.editar',
     params: paramsId,
@@ -50,7 +83,7 @@ export function crearRutasTareas(): Router {
   ruta(router, {
     metodo: 'delete',
     path: '/api/tareas/:id',
-    resumen: 'Quitar una tarea de un ticket (no cerrado)',
+    resumen: 'Quitar una tarea de un ticket u OT (no cerrados)',
     etiqueta: ETIQUETA,
     permiso: 'tickets.editar',
     params: paramsId,

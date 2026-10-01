@@ -63,21 +63,60 @@ Desde el detalle, **Cambiar estado** abre un diálogo. **Es el único lugar dond
 | **Nuevo**     | Nada. Es el estado inicial.                                                            |
 | **En curso**  | Nada. La primera vez que un ticket pasa a En curso cuenta como primera respuesta.      |
 | **En espera** | De quién se espera: cliente, proveedor, repuesto o aprobación, y un detalle opcional.  |
-| **Resuelto**  | Nada. (Más adelante, no se podrá resolver con una OT abierta.)                         |
-| **Descartado** | Un motivo obligatorio (por ejemplo, "No corresponde: publicidad").                    |
-| **Duplicado** | El ticket original; no puede ser el mismo ticket ni otro que ya sea duplicado.         |
+| **Resuelto**  | Nada, pero el ticket no puede tener una OT abierta (ver más abajo).                    |
+| **Descartado** | Un motivo obligatorio (por ejemplo, "No corresponde: publicidad"); sin OT abierta.   |
+| **Duplicado** | El ticket original (no el mismo ni otro duplicado); sin OT abierta.                    |
 
-Desde un ticket abierto puedes ir a cualquier otro estado. Desde uno cerrado (Resuelto, Descartado o Duplicado) solo a **En curso**: el botón se llama **Reabrir**. Un ticket cerrado no se puede editar (asunto, responsables, tareas) hasta reabrirlo.
+**Un ticket con una OT abierta no se puede resolver, descartar ni marcar como duplicado**: la app muestra la lista de OT abiertas (con su etapa y un enlace) y hay que cerrarlas o cancelarlas antes. Desde un ticket abierto puedes ir a cualquier otro estado. Desde uno cerrado (Resuelto, Descartado o Duplicado) solo a **En curso**: el botón se llama **Reabrir**. Un ticket cerrado no se puede editar (asunto, responsables, tareas) hasta reabrirlo.
+
+## Convertir un ticket en OT
+
+Una **orden de trabajo (OT)** es el trabajo formal que sale de un ticket: con alcance, responsable técnico, tareas con horas, fotos y, si se cobra, aprobación del cliente y facturación. Un ticket puede tener varias OT.
+
+1. En el detalle del ticket pulsa **Convertir en OT** (si ya tiene una OT que no está cancelada, el botón dice **Crear otra OT**; también está en la tarjeta **OT vinculadas** del panel). En un ticket cerrado el botón está deshabilitado: reábrelo primero.
+2. Elige el **tipo**: **Facturable · externa** (se cobra al cliente) o **Interna · no facturable**.
+3. Revisa el **título** (viene del asunto), el **responsable técnico** (viene del responsable principal del ticket) y, si quieres, el **alcance**. Si el cliente tiene una bolsa de horas vigente y la OT es facturable, aparece la casilla **Descuenta de la bolsa**.
+4. Pulsa crear. La app te lleva a la OT, que nace en **Borrador**. El estado del ticket no cambia.
+
+## Qué pasa con las tareas
+
+Al convertir, las **tareas pendientes** del ticket **pasan a la OT** (dejan de verse en el ticket). Las tareas **ya hechas se quedan** en el ticket como registro. El aviso del diálogo dice cuántas tareas pasarán. Al cancelar una OT, sus tareas pendientes se quedan en ella.
+
+## La orden de trabajo
+
+Arriba ves el código (`OT-0218`), el título, el tipo, la etapa, el ticket de origen, el responsable y el término (en rojo si ya pasó). Debajo, el avance por **etapas** y las tarjetas de la OT. A la derecha (en el celular, debajo) están la cotización, la aprobación, la facturación, el ticket de origen, las horas, los datos y el historial resumido.
+
+**Etapas.** Una OT facturable pasa por Borrador, Cotizada, Aprobada, En ejecución y Cerrada (y, si se cobra, **Facturada**, que se muestra como último paso). Una interna pasa por Borrador, Aprobada, En ejecución y Cerrada. Desde los botones de la OT puedes:
+
+- **Marcar como cotizada** (facturable en Borrador): por ahora la cotización se hace fuera de la app; el cotizador llega en una fase posterior. Exige que el cliente sea externo.
+- **Volver a borrador** (facturable en Cotizada, por ejemplo si el cliente rechaza).
+- **Iniciar ejecución** (OT Aprobada). Si la OT no tenía fecha de inicio, queda con la de hoy.
+
+Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordinación o Administración: ver el [manual de coordinación](02-coordinacion.md). Si no tienes permiso, esos botones no aparecen y, en una interna en Borrador, verás "Pendiente de aprobación de …".
+
+**Tipo y datos.** El **tipo** y el **cliente** solo se cambian en **Borrador**. Cambiar el tipo limpia los campos del otro tipo (la app te pide confirmar). Una OT facturable tiene cliente, contacto, N° de orden de compra, condición de pago y la casilla de bolsa ("12,5 / 20 h usadas este mes"); una interna tiene área solicitante, centro de costo y quién aprueba (una persona de Coordinación o Administración). Pulsa **Guardar** para aplicar los cambios. Con la OT cerrada o cancelada todo queda en solo lectura.
+
+**Tareas con horas.** La tarjeta **Tareas** de la OT agrega las columnas **Est.** (horas estimadas) y **Real** (horas reales), en pasos de 0,25 h; se guardan al salir del campo. La cabecera suma ("Tareas · 2/4 · 10 h estimadas · 4 h reales"). Las horas que registras en el redactor se suman aparte como **horas registradas**. En una OT cerrada o cancelada solo se pueden marcar y desmarcar tareas, y el redactor no registra horas. En una OT aprobada o en ejecución, la OC del cliente, la condición de pago y "Descuenta de la bolsa" solo las cambia Coordinación o Administración.
+
+**Fotos y archivos.** La tarjeta **Fotos y archivos** junta los archivos de la OT, los de sus seguimientos, el respaldo de la aprobación del cliente y los del ticket de origen, con pestañas **Todo**, **Fotos**, **Documentos** y **Correos**. **Subir fotos** abre la cámara en el celular; **Subir archivo** abre el selector. Se aplican los mismos tipos y límites que en los tickets.
+
+**Seguimiento, notas y copiar al ticket.** La actividad de la OT funciona como la del ticket (Actividad, Seguimiento, Notas internas e Historial). En el redactor, la casilla **Copiar al ticket** envía el mismo mensaje también al ticket de origen ("El avance también queda en TK-1048"). Si no la marcaste, cada mensaje de la OT tiene el botón **Copiar al ticket**; una vez copiado muestra "Copiado al ticket" y no se puede copiar de nuevo. Se copian seguimientos y notas internas, cada uno con su tipo. La copia comparte los archivos del original y no repite las horas ni las menciones. En el ticket, el mensaje copiado indica "Seguimiento · desde OT-0218".
+
+**OT vinculadas.** En el detalle del ticket, la tarjeta **OT vinculadas** lista sus OT con tipo, etapa, facturación y, en las cerradas, si resolvieron o no el ticket. En el Tablero y la Tabla, cada ticket muestra su OT ("OT-0218 · Facturable"): la abierta más reciente o, si no hay, la cerrada más reciente; una OT cancelada no se muestra.
+
+## Lista de órdenes de trabajo
+
+**Órdenes de trabajo** (`/ots`) es una vista de solo lectura de todas las OT, con filtros **Todas**, **Abiertas**, **Por facturar**, **Facturadas** e **Internas** (cada uno con su contador), búsqueda por código, título, cliente o ticket, y paginación. Cada fila abre la OT. Los cambios se hacen desde la OT, no desde la lista. La ficha de cada cliente tiene además una tarjeta con sus OT.
 
 ## Tablero
 
 **Tickets** abre el **Tablero**, una vista de solo lectura con cuatro columnas: **Nuevo**, **En curso**, **En espera** y **Cerrados**. No se arrastra nada: cada tarjeta es un enlace al detalle del ticket, donde se cambia el estado. La tarjeta muestra código, prioridad, asunto, cliente, si tiene correo, de quién se espera (En espera), responsables, fecha límite y cantidad de mensajes. En **Cerrados** cada tarjeta indica el tipo de cierre: Resuelto, Descartado con su motivo, o Duplicado de otro ticket.
 
-Puedes buscar por texto, filtrar por responsable y prioridad, y activar **Solo míos** (tickets donde eres responsable o seguidor). Los filtros quedan en la dirección de la página, así que puedes compartirla. En pantallas angostas las columnas se desplazan hacia el lado.
+Puedes buscar por texto, filtrar por responsable, prioridad y **Tipo** (Ticket, OT facturable, OT interna), y activar **Solo míos** (tickets donde eres responsable o seguidor). Los filtros quedan en la dirección de la página, así que puedes compartirla. En pantallas angostas las columnas se desplazan hacia el lado.
 
 ## Tabla
 
-**Tabla** muestra los mismos tickets en filas. Arriba hay filtros rápidos con contador: **Todos**, **Míos**, **Sin asignar**, **Vencen hoy**, **Vencidos** y **Archivados**. Puedes buscar por código (`1048` o `TK-1048`) o por texto, **agrupar** por prioridad, estado, responsable, cliente o sin agrupar, y ordenar por **Vence**, **Prioridad** o **Actualizado**. También es de solo lectura: cada fila abre el ticket.
+**Tabla** muestra los mismos tickets en filas. Arriba hay filtros rápidos con contador: **Todos**, **Míos**, **Sin asignar**, **Vencen hoy**, **Vencidos**, **Con OT** y **Archivados**. Puedes buscar por código (`1048` o `TK-1048`) o por texto, **agrupar** por prioridad, estado, responsable, cliente, tipo o sin agrupar, y ordenar por **Vence**, **Prioridad** o **Actualizado**. También es de solo lectura: cada fila abre el ticket.
 
 ## Archivado a los 7 días
 

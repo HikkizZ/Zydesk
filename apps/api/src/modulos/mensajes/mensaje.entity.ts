@@ -7,9 +7,16 @@ export class Mensaje {
   @PrimaryGeneratedColumn('identity', { generatedIdentity: 'ALWAYS' })
   id!: number;
 
-  // Fase 3: NULL + ot_id + copiado_desde_id
-  @Column({ type: 'integer' })
-  ticket_id!: number;
+  // Exactamente uno de ticket_id y ot_id (CHECK mensaje_destino_chk)
+  @Column({ type: 'integer', nullable: true })
+  ticket_id!: number | null;
+
+  @Column({ type: 'integer', nullable: true })
+  ot_id!: number | null;
+
+  // Mensaje de OT del que se copió este mensaje del ticket (índice único: una copia por origen)
+  @Column({ type: 'integer', nullable: true })
+  copiado_desde_id!: number | null;
 
   @Column({ type: 'text' })
   tipo!: TipoMensaje;

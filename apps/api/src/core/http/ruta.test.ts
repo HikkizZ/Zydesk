@@ -1,8 +1,9 @@
 import express, { Router } from 'express';
 import request from 'supertest';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { z } from 'zod';
 import { crearApp } from '../../app.js';
+import { logger } from '../../config/logger.js';
 import { manejadorErrores } from '../errores/manejador.js';
 import { esquemaPaginacion, paginar } from './paginacion.js';
 import { generarDocumento, rutasRegistradas } from './openapi.js';
@@ -43,6 +44,65 @@ describe('ruta() y validar', () => {
     expect(res.status).toBe(400);
     expect(res.body.error.codigo).toBe('VALIDACION');
     expect(res.body.error.detalles.nombre).toHaveLength(1);
+  });
+
+  it('JSON malformado → 400 VALIDACION sin registrar el contenido del body', async () => {
+    const espias = (['error', 'warn', 'info', 'debug'] as const).map((n) =>
+      vi.spyOn(logger, n).mockImplementation((() => undefined) as never),
+    );
+    const res = await request(appDePrueba())
+      .post('/api/prueba/3')
+      .set('X-Requested-With', 'Zydesk')
+      .set('Content-Type', 'application/json')
+      .send('{"nombre":"secreto-del-body",');
+    const registrado = JSON.stringify(espias.flatMap((e) => e.mock.calls));
+    espias.forEach((e) => e.mockRestore());
+    expect(res.status).toBe(400);
+    expect(res.body.error).toMatchObject({ codigo: 'VALIDACION', mensaje: 'Datos inválidos' });
+    expect(res.body.error.detalles.body).toHaveLength(1);
+    expect(registrado).not.toContain('secreto-del-body');
+  });
+
+  describe('errores del lector del cuerpo (antes de autenticar)', () => {
+    const ID = '123e4567-e89b-12d3-a456-426614174000';
+    const appReal = () => crearApp({ comprobarBd: async () => true });
+    const espiarError = () =>
+      vi.spyOn(logger, 'error').mockImplementation((() => undefined) as never);
+
+    it('cuerpo > 1 MB → 413 CUERPO_MUY_GRANDE, sin sesión, con X-Request-Id y sin logger.error', async () => {
+      const espia = espiarError();
+      const res = await request(appReal())
+        .post('/api/auth/ingresar')
+        .set('X-Requested-With', 'Zydesk')
+        .set('X-Request-Id', ID)
+        .set('Content-Type', 'application/json')
+        .send(JSON.stringify({ relleno: 'x'.repeat(1_100_000) }));
+      const errores = espia.mock.calls.length;
+      espia.mockRestore();
+      expect(res.status).toBe(413);
+      expect(res.body.error).toMatchObject({
+        codigo: 'CUERPO_MUY_GRANDE',
+        mensaje: 'El cuerpo de la petición es demasiado grande',
+      });
+      expect(res.headers['x-request-id']).toBe(ID);
+      expect(errores).toBe(0);
+    });
+
+    it('charset no soportado → 415 TIPO_NO_SOPORTADO, sin sesión, con X-Request-Id y sin logger.error', async () => {
+      const espia = espiarError();
+      const res = await request(appReal())
+        .post('/api/auth/ingresar')
+        .set('X-Requested-With', 'Zydesk')
+        .set('X-Request-Id', ID)
+        .set('Content-Type', 'application/json; charset=latin2')
+        .send('{"a":1}');
+      const errores = espia.mock.calls.length;
+      espia.mockRestore();
+      expect(res.status).toBe(415);
+      expect(res.body.error.codigo).toBe('TIPO_NO_SOPORTADO');
+      expect(res.headers['x-request-id']).toBe(ID);
+      expect(errores).toBe(0);
+    });
   });
 
   it('params inválidos → 400', async () => {

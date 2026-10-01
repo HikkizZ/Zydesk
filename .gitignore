@@ -7,3 +7,6 @@ Thumbs.db
 coverage/
 .vite/
 datos/
+
+# Configuración local de Claude Code (no versionar)
+.claude/settings.local.json

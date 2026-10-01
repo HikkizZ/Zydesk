@@ -83,7 +83,10 @@ function Fila({ ticket }: { ticket: TicketResumenDatos }) {
         )}
       </TableCell>
       <TableCell>
-        <PillTipo tipo={ticket.tipo} />
+        <PillTipo
+          tipo={ticket.tipo}
+          {...(ticket.ot_vinculada ? { codigo: ticket.ot_vinculada.codigo } : {})}
+        />
       </TableCell>
       <TableCell>
         <FechaLimite

@@ -61,6 +61,8 @@ export interface ConsultaTickets {
   archivados?: boolean;
   vencen_hoy?: boolean;
   vencidos?: boolean;
+  con_ot?: boolean;
+  tipo?: string;
   orden?: '-actualizado_en' | '-creado_en' | 'fecha_limite' | 'prioridad';
 }
 

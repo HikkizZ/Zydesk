@@ -70,6 +70,8 @@ export function SubidaArchivos({
   acepta,
   camara = false,
   compacto = false,
+  etiquetaFotos,
+  etiquetaArchivo,
 }: {
   archivos: ArchivoDatos[];
   onChange: (archivos: ArchivoDatos[]) => void;
@@ -78,6 +80,9 @@ export function SubidaArchivos({
   camara?: boolean;
   /** Dos botones (Fotos con cámara y Archivo) en lugar de la zona de arrastre. */
   compacto?: boolean;
+  /** Textos de los botones compactos (por defecto "Fotos" y "Archivo"). */
+  etiquetaFotos?: string;
+  etiquetaArchivo?: string;
 }) {
   const entradaArchivos = useRef<HTMLInputElement>(null);
   const entradaCamara = useRef<HTMLInputElement>(null);
@@ -155,7 +160,7 @@ export function SubidaArchivos({
       onClick={() => entradaCamara.current?.click()}
     >
       <Camera aria-hidden="true" />
-      {compacto ? 'Fotos' : 'Tomar foto'}
+      {compacto ? (etiquetaFotos ?? 'Fotos') : 'Tomar foto'}
     </Button>
   );
 
@@ -195,7 +200,7 @@ export function SubidaArchivos({
             onClick={() => entradaArchivos.current?.click()}
           >
             <Paperclip aria-hidden="true" />
-            Archivo
+            {etiquetaArchivo ?? 'Archivo'}
           </Button>
         </div>
       ) : (

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "sentry-security-review": {
+      "source": "getsentry/skills",
+      "sourceType": "github",
+      "skillPath": "skills/security-review/SKILL.md",
+      "computedHash": "57e404df6c743ec59b82ed5c1454a4a5234f5012e644ff7ffaa8beccfb1aba43"
+    }
+  }
+}

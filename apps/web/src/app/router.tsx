@@ -11,6 +11,7 @@ import { CotizadorPage } from '@/features/cotizador/pages/CotizadorPage';
 import { HorasPage } from '@/features/horas/pages/HorasPage';
 import { DocumentoLegalPage } from '@/features/legal/DocumentoLegalPage';
 import { MiDiaPage } from '@/features/mi-dia/pages/MiDiaPage';
+import { OtDetallePage } from '@/features/ots/pages/OtDetallePage';
 import { OtsPage } from '@/features/ots/pages/OtsPage';
 import { PerfilPage } from '@/features/perfil/pages/PerfilPage';
 import { ReportesPage } from '@/features/reportes/pages/ReportesPage';
@@ -47,6 +48,7 @@ export const router = createBrowserRouter([
               { path: '/tickets/linea-de-tiempo', element: <LineaDeTiempoPage /> },
               { path: '/tickets/:id', element: <TicketDetallePage /> },
               { path: '/ots', element: <OtsPage /> },
+              { path: '/ots/:id', element: <OtDetallePage /> },
               { path: '/cotizaciones', element: <CotizadorPage /> },
               { path: '/horas', element: <HorasPage /> },
               { path: '/reportes', element: <ReportesPage /> },

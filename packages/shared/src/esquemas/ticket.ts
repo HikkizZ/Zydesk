@@ -2,22 +2,25 @@ import { z } from 'zod';
 import { PRIORIDADES } from '../enums/prioridad.js';
 import { ESPERA_DE, ESTADOS_TICKET, ORIGENES_TICKET } from '../enums/ticket.js';
 import { ArchivoSalida } from './archivo.js';
+import { TIPOS_TICKET } from '../enums/ot.js';
 import {
+  ClienteBreve,
+  Responsable,
   UsuarioBreve,
+  booleanoTexto,
   correo,
   csv,
   esquemaPaginacion,
   id,
+  idQuery,
   instante,
   referencia,
   texto,
 } from './comunes.js';
 import { CorreoAdjuntoSalida } from './correo.js';
 import { MensajeSalida } from './mensaje.js';
+import { OtBreve } from './ot.js';
 import { TareaSalida } from './tarea.js';
-
-export const Responsable = UsuarioBreve.extend({ principal: z.boolean() });
-export const ClienteBreve = z.object({ id, nombre: z.string(), es_interno: z.boolean() });
 
 export const TicketBase = z.object({
   asunto: texto(200),
@@ -109,10 +112,10 @@ export const TicketResumen = z.object({
   n_mensajes: z.number(), // B11
   motivo_cierre: z.string().nullable(),
   duplicado_de: z.object({ id, codigo: z.string() }).nullable(),
-  tipo: z.enum(['ticket', 'ot_facturable', 'ot_interna']), // siempre 'ticket' en Fase 2
+  tipo: z.enum(TIPOS_TICKET),
   ot_vinculada: z
     .object({ id, codigo: z.string(), tipo: z.enum(['facturable', 'interna']) })
-    .nullable(), // null en Fase 2
+    .nullable(),
   creado_en: instante,
   actualizado_en: instante,
   cerrado_en: instante.nullable(),
@@ -128,11 +131,8 @@ export const TicketSalida = TicketResumen.extend(TicketBase.shape).extend({
   archivos: z.array(ArchivoSalida), // del ticket, sin los de mensajes ni el correo
   tareas: z.array(TareaSalida),
   creado_por: referencia.nullable(),
-  ots: z.array(z.never()), // Fase 3
+  ots: z.array(OtBreve), // más nueva primero
 });
-
-const booleanoTexto = z.enum(['true', 'false']);
-const idQuery = z.coerce.number().int().positive();
 
 export const TicketsQuery = esquemaPaginacion.extend({
   q: texto(80).optional(),
@@ -146,6 +146,8 @@ export const TicketsQuery = esquemaPaginacion.extend({
   archivados: booleanoTexto.default('false'),
   vencen_hoy: booleanoTexto.optional(),
   vencidos: booleanoTexto.optional(),
+  con_ot: booleanoTexto.optional(),
+  tipo: csv(TIPOS_TICKET).optional(),
   orden: z
     .enum(['-actualizado_en', '-creado_en', 'fecha_limite', 'prioridad'])
     .default('-actualizado_en'),

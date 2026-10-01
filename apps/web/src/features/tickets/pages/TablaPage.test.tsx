@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router';
-import { afterEach, beforeAll, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, expect, it, onTestFinished, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { TicketResumenDatos } from '@/features/tickets/api';
 import { respuesta, simularFetch } from '@/test/fetch';
@@ -64,6 +64,7 @@ const CONTADORES: Record<string, number> = {
   sin_asignar: 1,
   vencen_hoy: 2,
   vencidos: 0,
+  con_ot: 2,
   archivados: 1,
 };
 
@@ -134,13 +135,48 @@ it('los chips cambian la URL y la consulta, y muestran su contador', async () =>
   expect(ubicacion()).toBe('/tickets/tabla');
 });
 
-it('"Con OT" y "Exportar" están visibles y deshabilitados', async () => {
+it('el chip "Con OT" está habilitado, con contador, y cambia la URL y la consulta', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar();
+  const chip = await screen.findByRole('button', { name: 'Con OT (2)' });
+  expect((chip as HTMLButtonElement).disabled).toBe(false);
+  await usuario.click(chip);
+  expect(ubicacion()).toBe('/tickets/tabla?con_ot=true');
+  await waitFor(() =>
+    expect(screen.getByRole('button', { name: 'Con OT (2)' }).getAttribute('aria-pressed')).toBe(
+      'true',
+    ),
+  );
+  expect(
+    llamadas.some((l) => l.ruta.includes('con_ot=true') && l.ruta.includes('por_pagina=100')),
+  ).toBe(true);
+});
+
+it('"Exportar" está visible y deshabilitado', async () => {
   montar();
   await screen.findByRole('button', { name: 'Míos (3)' });
-  expect((screen.getByRole('button', { name: 'Con OT' }) as HTMLButtonElement).disabled).toBe(true);
   expect((screen.getByRole('button', { name: 'Exportar' }) as HTMLButtonElement).disabled).toBe(
     true,
   );
+});
+
+it('la columna Tipo muestra la OT vinculada y se puede agrupar por tipo', async () => {
+  const usuario = userEvent.setup();
+  const original = TICKETS[1]!;
+  onTestFinished(() => {
+    TICKETS[1] = original;
+  });
+  TICKETS[1] = ticketDePrueba({
+    ...original,
+    tipo: 'ot_facturable',
+    ot_vinculada: { id: 5, codigo: 'OT-0218', tipo: 'facturable' },
+  });
+  montar();
+  expect(await screen.findByText('OT-0218 · Facturable')).toBeTruthy();
+  await usuario.click(screen.getByRole('combobox', { name: 'Agrupar por' }));
+  await usuario.click(await screen.findByRole('option', { name: 'Tipo' }));
+  expect(await screen.findByRole('button', { name: /^OT facturable 1 ticket$/ })).toBeTruthy();
+  expect(screen.getByRole('button', { name: /^Ticket 3 tickets$/ })).toBeTruthy();
 });
 
 it('agrupa por prioridad por defecto y por estado al cambiar el selector', async () => {

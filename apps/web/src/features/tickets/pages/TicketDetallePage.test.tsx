@@ -1,7 +1,7 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router';
-import { afterEach, beforeAll, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { ActividadDatos, TicketDatos } from '@/features/tickets/api';
 import { respuesta, simularFetch } from '@/test/fetch';
@@ -210,7 +210,208 @@ it('quien edita ve el redactor y los botones', async () => {
   expect(screen.getByRole('button', { name: 'Cambiar estado' })).toBeTruthy();
   expect(
     (screen.getByRole('button', { name: 'Convertir en OT' }) as HTMLButtonElement).disabled,
-  ).toBe(true);
+  ).toBe(false);
+});
+
+const OT_BREVE = {
+  id: 5,
+  numero: 218,
+  codigo: 'OT-0218',
+  titulo: 'Regularización de folios',
+  tipo: 'facturable' as const,
+  etapa: 'cotizada' as const,
+  estado_facturacion: 'pendiente' as const,
+  resolvio_ticket: null,
+  creado_en: '2026-09-29T14:02:00.000Z',
+  cerrada_en: null,
+};
+
+it('con OT vinculada: la cabecera muestra "OT-0218 · Facturable", la tarjeta la lista y el botón dice "Crear otra OT"', async () => {
+  montar(
+    ticketDePrueba({
+      tipo: 'ot_facturable',
+      ot_vinculada: { id: 5, codigo: 'OT-0218', tipo: 'facturable' },
+      ots: [OT_BREVE],
+    }),
+  );
+  expect(await screen.findByText('OT-0218 · Facturable')).toBeTruthy();
+  const tarjeta = screen.getByRole('region', { name: 'OT vinculadas' });
+  expect(within(tarjeta).getByRole('link', { name: 'OT-0218' }).getAttribute('href')).toBe(
+    '/ots/5',
+  );
+  expect(within(tarjeta).getByText('Cotizada')).toBeTruthy();
+  expect(screen.getAllByRole('button', { name: 'Crear otra OT' }).length).toBe(2);
+  expect(screen.queryByRole('button', { name: 'Convertir en OT' })).toBeNull();
+});
+
+it('sin OT la tarjeta dice "Sin OT" y ofrece "Crear OT"', async () => {
+  montar();
+  const tarjeta = await screen.findByRole('region', { name: 'OT vinculadas' });
+  expect(within(tarjeta).getByText('Sin OT')).toBeTruthy();
+  expect(within(tarjeta).getByRole('button', { name: 'Crear OT' })).toBeTruthy();
+});
+
+it('un ticket cerrado no se puede convertir en OT', async () => {
+  montar(ticketDePrueba({ estado: 'resuelto', cerrado_en: '2026-09-29T15:00:00.000Z' }));
+  const boton = await screen.findByRole('button', { name: 'Convertir en OT' });
+  expect((boton as HTMLButtonElement).disabled).toBe(true);
+});
+
+it('quien solo lee no ve "Convertir en OT" ni "Crear OT"', async () => {
+  montar(ticketDePrueba(), 'lectura');
+  await screen.findByRole('region', { name: 'OT vinculadas' });
+  expect(screen.queryByRole('button', { name: 'Convertir en OT' })).toBeNull();
+  expect(screen.queryByRole('button', { name: 'Crear OT' })).toBeNull();
+});
+
+describe('DialogoConvertirEnOt', () => {
+  const abrir = async (bolsa = false) => {
+    const usuario = userEvent.setup();
+    const llamadas = simularFetch(({ metodo, ruta: r }) => {
+      if (metodo === 'POST' && r === '/api/tickets/7/convertir-en-ot') {
+        return respuesta(201, { ...OT_BREVE, id: 9, codigo: 'OT-0220' });
+      }
+      if (metodo !== 'GET') return undefined;
+      if (r === '/api/tickets/7') {
+        return respuesta(
+          200,
+          ticketDePrueba({
+            tareas: [
+              { id: 1, hecha: false },
+              { id: 2, hecha: false },
+              { id: 3, hecha: true },
+            ] as TicketDatos['tareas'],
+          }),
+        );
+      }
+      if (r.startsWith('/api/tickets/7/actividad')) return respuesta(200, actividadDe('todo'));
+      if (r.startsWith('/api/usuarios')) return respuesta(200, USUARIOS_PRUEBA);
+      if (r === '/api/clientes/1') {
+        return respuesta(200, {
+          bolsa: { vigente: bolsa ? { id: 1, horas_mes: 20 } : null, historial: [] },
+        });
+      }
+      return undefined;
+    });
+    render(
+      <ConSesion yo={yoDePrueba({ rol: 'tecnico' })} ruta="/tickets/7">
+        <TooltipProvider>
+          <Routes>
+            <Route path="/tickets/:id" element={<TicketDetallePage />} />
+            <Route path="/ots/:id" element={<p>Detalle de OT</p>} />
+          </Routes>
+        </TooltipProvider>
+      </ConSesion>,
+    );
+    await usuario.click(await screen.findByRole('button', { name: 'Convertir en OT' }));
+    return { usuario, llamadas };
+  };
+
+  it('prellena título y responsable, avisa de las tareas y envía tipo, título y responsable', async () => {
+    const { usuario, llamadas } = await abrir();
+    const dialogo = await screen.findByRole('dialog', { name: 'Convertir en OT' });
+    const titulo = within(dialogo).getByLabelText('Título') as HTMLInputElement;
+    expect(titulo.value).toBe('Error al emitir facturas desde el ERP');
+    expect(within(dialogo).getByText('Las 2 tareas pendientes pasarán a la OT.')).toBeTruthy();
+    expect(within(dialogo).queryByLabelText('Descuenta de la bolsa')).toBeNull();
+
+    await usuario.click(within(dialogo).getByRole('radio', { name: /Interna/ }));
+    await usuario.clear(titulo);
+    await usuario.type(titulo, 'Regularización de folios');
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Crear OT' }));
+
+    await waitFor(() => expect(screen.getByText('Detalle de OT')).toBeTruthy());
+    const envio = llamadas.find((l) => l.metodo === 'POST');
+    expect(envio?.cuerpo).toMatchObject({
+      tipo: 'interna',
+      titulo: 'Regularización de folios',
+      responsable_tecnico_id: 3,
+      descuenta_bolsa: false,
+    });
+  });
+
+  it('ofrece "Descuenta de la bolsa" solo con bolsa vigente y facturable', async () => {
+    const { usuario, llamadas } = await abrir(true);
+    const dialogo = await screen.findByRole('dialog', { name: 'Convertir en OT' });
+    await usuario.click(
+      await within(dialogo).findByRole('checkbox', { name: 'Descuenta de la bolsa' }),
+    );
+    await usuario.click(within(dialogo).getByRole('radio', { name: /Interna/ }));
+    expect(within(dialogo).queryByRole('checkbox', { name: 'Descuenta de la bolsa' })).toBeNull();
+    await usuario.click(within(dialogo).getByRole('radio', { name: /Facturable/ }));
+    await usuario.click(within(dialogo).getByRole('button', { name: 'Crear OT' }));
+    await waitFor(() => expect(llamadas.some((l) => l.metodo === 'POST')).toBe(true));
+    expect(llamadas.find((l) => l.metodo === 'POST')?.cuerpo).toMatchObject({
+      tipo: 'facturable',
+      descuenta_bolsa: true,
+    });
+  });
+});
+
+it('un seguimiento copiado de una OT muestra su origen y, tras el cierre, "Cierre de OT-0218"', async () => {
+  const copiado = {
+    ...SEGUIMIENTO,
+    mensaje: {
+      ...SEGUIMIENTO.mensaje,
+      id: 30,
+      texto: 'Quedó resuelto',
+      copiado_de: { mensaje_id: 12, ot: { id: 5, codigo: 'OT-0218' } },
+    },
+  };
+  const cierre = {
+    tipo: 'evento' as const,
+    creado_en: '2026-09-28T20:09:00.000Z',
+    evento: {
+      ...EVENTO.evento,
+      id: 31,
+      accion: 'ot_cerrada',
+      campo: null,
+      valor_anterior: null,
+      valor_nuevo: 'OT-0218 cerrada · resolvió el ticket',
+      datos: { ot_id: 5, codigo: 'OT-0218', resolvio_ticket: true, resumen: 'Listo' },
+    },
+  };
+  const otro = {
+    ...copiado,
+    mensaje: {
+      ...copiado.mensaje,
+      id: 32,
+      texto: 'Otro avance',
+      copiado_de: { mensaje_id: 13, ot: { id: 6, codigo: 'OT-0219' } },
+    },
+  };
+  simularFetch(({ metodo, ruta: r }) => {
+    if (metodo !== 'GET') return undefined;
+    if (r === '/api/tickets/7') return respuesta(200, ticketDePrueba());
+    if (r.startsWith('/api/tickets/7/actividad')) {
+      return respuesta(200, {
+        items: [cierre, copiado, otro],
+        conteos: { todo: 3, seguimiento: 2, nota_interna: 0, historial: 1 },
+      });
+    }
+    if (r.startsWith('/api/usuarios')) return respuesta(200, USUARIOS_PRUEBA);
+    return undefined;
+  });
+  render(
+    <ConSesion yo={yoDePrueba()} ruta="/tickets/7">
+      <TooltipProvider>
+        <Routes>
+          <Route path="/tickets/:id" element={<TicketDetallePage />} />
+        </Routes>
+      </TooltipProvider>
+    </ConSesion>,
+  );
+  const articulos = await screen.findAllByRole('article', {
+    name: /Seguimiento de Sebastián Díaz/,
+  });
+  const cerrado = articulos.find((a) => a.textContent?.includes('Quedó resuelto'))!;
+  expect(within(cerrado).getByText(/Cierre de/)).toBeTruthy();
+  expect(within(cerrado).getByRole('link', { name: 'OT-0218' }).getAttribute('href')).toBe(
+    '/ots/5',
+  );
+  const noCierre = articulos.find((a) => a.textContent?.includes('Otro avance'))!;
+  expect(within(noCierre).getByText(/Seguimiento · desde/)).toBeTruthy();
+  expect(screen.getByText('OT-0218 · resolvió el ticket')).toBeTruthy();
 });
 
 it('un ticket cerrado muestra el aviso y el botón Reabrir', async () => {

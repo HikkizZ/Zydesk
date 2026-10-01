@@ -109,6 +109,19 @@ const INTERNA: ClienteSalidaDatos = {
   tarifas: [],
 };
 
+const OT_DE_PRUEBA = {
+  id: 5,
+  numero: 218,
+  codigo: 'OT-0218',
+  titulo: 'Regularización de folios de facturación electrónica',
+  tipo: 'facturable',
+  etapa: 'cotizada',
+  estado_facturacion: 'pendiente',
+  resolvio_ticket: null,
+  creado_en: '2026-09-29T14:02:00.000Z',
+  cerrada_en: null,
+};
+
 const fetchSimulado = vi.fn();
 
 beforeEach(() => {
@@ -138,6 +151,19 @@ beforeEach(() => {
       );
     }
     if (ruta.startsWith('/api/tickets?')) {
+      return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
+    }
+    if (ruta === '/api/ots?cliente_id=1&por_pagina=20') {
+      return Promise.resolve(
+        respuesta(200, {
+          datos: [OT_DE_PRUEBA],
+          total: 1,
+          pagina: 1,
+          por_pagina: 20,
+        }),
+      );
+    }
+    if (ruta.startsWith('/api/ots?')) {
       return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
     }
     if (ruta === '/api/clientes/99') {
@@ -240,7 +266,22 @@ it('administración ve la ficha completa con bolsa, tarifas y acciones de edici�
   expect(screen.getByRole('link', { name: 'Ver todos en la tabla' }).getAttribute('href')).toBe(
     '/tickets/tabla?cliente_id=1',
   );
-  expect(screen.getByText('Disponible en la Fase 3')).toBeTruthy();
+});
+
+it('la ficha lista las OT del cliente con su tipo y etapa, y enlaza a todas', async () => {
+  pantalla({ rol: 'tecnico' }, '/clientes/1');
+  const tarjeta = await screen.findByRole('heading', { name: 'Órdenes de trabajo' });
+  const seccion = tarjeta.closest('section') as HTMLElement;
+  expect(await within(seccion).findByRole('link', { name: 'OT-0218' })).toBeTruthy();
+  expect(
+    within(seccion).getByText('Regularización de folios de facturación electrónica'),
+  ).toBeTruthy();
+  expect(within(seccion).getByText('Facturable')).toBeTruthy();
+  expect(within(seccion).getByText('Cotizada')).toBeTruthy();
+  expect(within(seccion).getByText('Pendiente')).toBeTruthy();
+  expect(within(seccion).getByRole('link', { name: 'Ver todas' }).getAttribute('href')).toBe(
+    '/ots?cliente_id=1',
+  );
 });
 
 it('quien solo lee no ve el botón de nuevo ticket pero sí la lista de tickets', async () => {
@@ -351,7 +392,7 @@ it('agregar bolsa: un 409 por solape se muestra en el diálogo', async () => {
       );
     }
     if (ruta === '/api/clientes/1') return Promise.resolve(respuesta(200, FICHA));
-    if (ruta.startsWith('/api/tickets?')) {
+    if (ruta.startsWith('/api/tickets?') || ruta.startsWith('/api/ots?')) {
       return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
     }
     return Promise.resolve(respuesta(200, ACTIVOS));

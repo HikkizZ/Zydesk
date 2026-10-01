@@ -1,4 +1,10 @@
-import { ESTADOS_TICKET_CERRADOS, type EstadoTicket } from '@zydesk/shared';
+import {
+  ESTADOS_TICKET_CERRADOS,
+  type EstadoFacturacion,
+  type EstadoTicket,
+  type EtapaOt,
+  type TipoOt,
+} from '@zydesk/shared';
 import argon2 from 'argon2';
 import type { Express } from 'express';
 import { randomUUID } from 'node:crypto';
@@ -11,10 +17,13 @@ import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Archivo } from '../src/modulos/archivos/archivo.entity.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
 import { Cliente } from '../src/modulos/clientes/cliente.entity.js';
+import { Contacto } from '../src/modulos/clientes/contacto.entity.js';
+import { ContratoBolsa } from '../src/modulos/clientes/contrato-bolsa.entity.js';
 import { Departamento } from '../src/modulos/departamentos/departamento.entity.js';
 import { HorarioDia } from '../src/modulos/departamentos/horario-dia.entity.js';
 import { versionTerminosVigente } from '../src/modulos/legal/legal.service.js';
 import { Mensaje } from '../src/modulos/mensajes/mensaje.entity.js';
+import { Ot } from '../src/modulos/ots/ot.entity.js';
 import { Tarea } from '../src/modulos/tareas/tarea.entity.js';
 import { TicketResponsable } from '../src/modulos/tickets/ticket-responsable.entity.js';
 import { Ticket } from '../src/modulos/tickets/ticket.entity.js';
@@ -207,11 +216,13 @@ export async function crearTicket(
 }
 
 export async function crearMensaje(
-  ticket_id: number,
+  destino: number | { ot_id: number },
   datos: { tipo?: Mensaje['tipo']; autor_id: number | null; texto?: string; horas?: number | null },
 ): Promise<Mensaje> {
   return dataSource.manager.save(Mensaje, {
-    ticket_id,
+    ticket_id: typeof destino === 'number' ? destino : null,
+    ot_id: typeof destino === 'number' ? null : destino.ot_id,
+    copiado_desde_id: null,
     tipo: datos.tipo ?? 'seguimiento',
     autor_id: datos.autor_id,
     texto: datos.texto ?? `Mensaje de prueba ${siguiente()}`,
@@ -219,28 +230,150 @@ export async function crearMensaje(
   });
 }
 
+// `destino` numérico = ticket (como antes); `{ ot_id }` = tarea de OT. Las horas solo valen en tareas de OT.
 export async function crearTarea(
-  ticket_id: number,
+  destino: number | { ot_id: number },
   datos: {
     titulo?: string;
     responsable_id?: number | null;
     fecha?: string | null;
     hecha?: boolean;
+    horas_estimadas?: number | null;
+    horas_reales?: number | null;
   } = {},
 ): Promise<Tarea> {
-  const [fila]: { n: number }[] = await dataSource.query(
-    `SELECT COALESCE(max(orden), 0) + 1 AS n FROM tarea WHERE ticket_id = $1`,
-    [ticket_id],
-  );
+  const ticket_id = typeof destino === 'number' ? destino : null;
+  const ot_id = typeof destino === 'number' ? null : destino.ot_id;
+  const [fila]: { n: number }[] =
+    ot_id === null
+      ? await dataSource.query(
+          `SELECT COALESCE(max(orden), 0) + 1 AS n FROM tarea WHERE ticket_id = $1`,
+          [ticket_id],
+        )
+      : await dataSource.query(
+          `SELECT COALESCE(max(orden), 0) + 1 AS n FROM tarea WHERE ot_id = $1`,
+          [ot_id],
+        );
   const hecha = datos.hecha ?? false;
   return dataSource.manager.save(Tarea, {
     ticket_id,
+    ot_id,
     titulo: datos.titulo ?? `Tarea de prueba ${siguiente()}`,
     responsable_id: datos.responsable_id ?? null,
     fecha: datos.fecha ?? null,
     hecha,
     hecha_en: hecha ? new Date() : null,
+    horas_estimadas: datos.horas_estimadas ?? null,
+    horas_reales: datos.horas_reales ?? null,
     orden: fila!.n,
+  });
+}
+
+const NUMERO_OT_INICIAL = 9000;
+
+// Inserta directo (no pasa por el contador): `numero` desde 9000 y `codigo = OT-<numero>`. Rellena lo que
+// exigen los CHECK: cerrada → resumen, resolvió y cerrada_en; cancelada → motivo y cancelada_en;
+// `estado_facturacion` coherente con el tipo (interna `no_aplica`; facturable `pendiente`, `por_facturar`
+// si cerrada y `no_aplica` si cancelada); `facturada` rellena `n_factura` y `facturada_en`.
+export async function crearOt(
+  ticket_id: number,
+  datos: {
+    tipo?: TipoOt;
+    etapa?: EtapaOt;
+    titulo?: string;
+    responsable_tecnico_id?: number | null;
+    cliente_id?: number | null;
+    aprobador_id?: number | null;
+    estado_facturacion?: EstadoFacturacion;
+    contrato_id?: number | null;
+    resolvio_ticket?: boolean | null;
+    resumen_cierre?: string | null;
+    numero?: number;
+  } = {},
+): Promise<Ot> {
+  const tipo = datos.tipo ?? 'facturable';
+  const etapa = datos.etapa ?? 'borrador';
+  let numero = datos.numero;
+  if (numero === undefined) {
+    const [fila]: { n: number }[] = await dataSource.query(
+      `SELECT GREATEST(COALESCE(max(numero), 0), ${NUMERO_OT_INICIAL - 1}) + 1 AS n FROM ot`,
+    );
+    numero = fila!.n;
+  }
+  const estado_facturacion: EstadoFacturacion =
+    tipo === 'interna'
+      ? 'no_aplica'
+      : (datos.estado_facturacion ??
+        (etapa === 'cancelada' ? 'no_aplica' : etapa === 'cerrada' ? 'por_facturar' : 'pendiente'));
+  const cerrada = etapa === 'cerrada';
+  const cancelada = etapa === 'cancelada';
+  const facturada = estado_facturacion === 'facturada';
+  const ahora = new Date();
+  return dataSource.manager.save(Ot, {
+    numero,
+    codigo: `OT-${numero}`,
+    ticket_id,
+    tipo,
+    etapa,
+    titulo: datos.titulo ?? `OT de prueba ${numero}`,
+    alcance: null,
+    responsable_tecnico_id: datos.responsable_tecnico_id ?? null,
+    cliente_id: datos.cliente_id ?? null,
+    contacto_id: null,
+    inicio: null,
+    termino: null,
+    oc_cliente: null,
+    condicion_pago: null,
+    contrato_id: datos.contrato_id ?? null,
+    centro_costo: null,
+    area_solicitante: null,
+    aprobador_id: datos.aprobador_id ?? null,
+    aprobada_por: null,
+    aprobada_en: null,
+    estado_facturacion,
+    n_factura: facturada ? `F-${numero}` : null,
+    facturada_en: facturada ? ahora : null,
+    facturada_por: null,
+    resolvio_ticket: cerrada ? (datos.resolvio_ticket ?? true) : (datos.resolvio_ticket ?? null),
+    resumen_cierre: cerrada
+      ? (datos.resumen_cierre ?? 'Resumen de cierre de prueba')
+      : (datos.resumen_cierre ?? null),
+    cerrada_en: cerrada ? ahora : null,
+    cerrada_por: null,
+    motivo_cancelacion: cancelada ? 'Cancelada en prueba' : null,
+    cancelada_en: cancelada ? ahora : null,
+    creado_por: null,
+  });
+}
+
+export async function crearContacto(
+  cliente_id: number,
+  datos: { nombre?: string; aprueba_cotizaciones?: boolean } = {},
+): Promise<Contacto> {
+  const n = siguiente();
+  return dataSource.manager.save(Contacto, {
+    cliente_id,
+    nombre: datos.nombre ?? `Contacto ${n}`,
+    area: null,
+    correo: null,
+    telefono: null,
+    aprueba_cotizaciones: datos.aprueba_cotizaciones ?? false,
+    activo: true,
+  });
+}
+
+// Por defecto vigente desde 2020 y sin término (vigente hoy).
+export async function crearBolsa(
+  cliente_id: number,
+  datos: { vigente_desde?: string; horas_mes?: number } = {},
+): Promise<ContratoBolsa> {
+  return dataSource.manager.save(ContratoBolsa, {
+    cliente_id,
+    horas_mes: datos.horas_mes ?? 20,
+    vigente_desde: datos.vigente_desde ?? '2020-01-01',
+    vigente_hasta: null,
+    fecha_renovacion: null,
+    notas: null,
   });
 }
 
