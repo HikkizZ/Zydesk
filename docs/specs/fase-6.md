@@ -742,6 +742,33 @@ En el navegador (1440 px y 390 px): `/avisos` con `crojas` reproduce el diseño 
 19. **[Bloquea F6-T4]** Con la preferencia "en la app" apagada: ¿se crea la fila igual con `en_app = false` (decisión 4; Telegram sigue funcionando) o no se crea nada (y entonces "Telegram sí, app no" no existe)? **Recomendación: crear con `en_app = false`.**
 20. El despachador escribe los avisos **después** del commit (ADR 0008): un corte justo ahí pierde el aviso (los vencimientos se recuperan solos). ¿Aceptable en v1? No bloquea. **Recomendación: aceptable**; si alguna vez importa, el despachador puede pasar a escribir dentro de la transacción del negocio con una ADR.
 
+### Respuestas del usuario (2026-10-01)
+
+- **Preguntas que bloquean** (1, 2, 5, 9, 10, 12, 19): el usuario aceptó todas las recomendaciones.
+  - Dos PR.
+  - El usuario crea un bot de desarrollo y pone su token solo en su `.env` local.
+  - Los vencimientos se avisan al responsable principal.
+  - Exportar exige `ots.facturar` y los indicadores en pesos `reportes.ver`. La columna Neto de `/ots` no se toca y se revisa en la Fase 7.
+  - La sesión del bot dura 30 días sin uso o 90 días absolutos. Al desactivar a una persona, su vínculo se conserva pero no recibe nada.
+  - Con la preferencia "en la app" apagada, el aviso se crea con `en_app = false`.
+- **Preguntas que no bloquean** (3, 4, 6–8, 11, 13–18, 20): se resuelven con la recomendación de esta sección.
+
+### Estado de avance (2026-10-01)
+
+- Spec aprobada. **PR 6a** (rama `feat/fase-6a-visibilidad`):
+  1. 6A (F6-T1, T2).
+  2. 6B (F6-T3 a T6) y 6D (F6-T7, T8) en paralelo.
+  3. 6E y 6F (F6-T11 a T14) en paralelo.
+  4. F6-T16 (semillas de avisos).
+  5. Revisión de seguridad de 6a.
+  6. Documentación de 6a (CHANGELOG, manuales y estado de avance).
+- **PR 6b** (rama `feat/fase-6b-telegram`, desde `main` tras el merge de 6a):
+  1. 6C (F6-T9, T10).
+  2. 6G (F6-T15).
+  3. F6-T17 (prueba con el bot real).
+  4. F6-T18 (revisión de seguridad).
+  5. F6-T19 (ADR 0027 y cierre).
+
 ## 26. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0027 "Precisiones de la Fase 6" al cerrar)
 
 - **ADR 0002 / 0013**: la sesión de bot se crea en `POST /api/bot/vincular`, una por usuario, `origen = 'bot'`, `mantener = true` (30 d / 90 d), `user_agent = 'Telegram'`, sin IP; se revoca al desvincular, desde Sesiones activas y por cambio de contraseña/rol/desactivación. Pedir un código exige sesión por cookie. El bot envía `Authorization: Bearer` y no necesita `X-Requested-With` (ya en `csrf.ts`).
