@@ -1,7 +1,19 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { esEtapaFinal } from '@zydesk/shared';
 import { useState } from 'react';
+import { Link } from 'react-router';
 import { toast } from 'sonner';
+import { BotonConPista } from '@/components/dominio/BotonConPista';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import {
@@ -12,12 +24,13 @@ import {
   type OtDatos,
 } from '@/features/ots/api';
 import { avisarErrorOt } from '@/features/ots/errores';
+import { BotonCrearCotizacion } from './BotonCrearCotizacion';
 import { DialogoAprobacionCliente } from './DialogoAprobacionCliente';
 import { DialogoCancelarOt } from './DialogoCancelarOt';
 import { DialogoCerrarOt } from './DialogoCerrarOt';
 import { DialogoFacturar } from './DialogoFacturar';
 
-type Dialogo = 'aprobacion' | 'cerrar' | 'facturar' | 'cancelar' | null;
+type Dialogo = 'aprobacion' | 'cerrar' | 'facturar' | 'cancelar' | 'volver' | null;
 
 // Acciones del encabezado de la OT según etapa, tipo y permisos (spec fase 3 §10.4).
 export function AccionesOt({ ot }: { ot: OtDatos }) {
@@ -61,6 +74,18 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
   const botones: React.ReactNode[] = [];
 
   if (puedeEditar && !final) {
+    // Facturable en Borrador: el camino al cotizador (la OT pasa a Cotizada al marcar la cotización como enviada).
+    if (facturable && ot.etapa === 'borrador' && ot.puede_cotizar) {
+      if (!ot.cotizacion) {
+        botones.push(<BotonCrearCotizacion key="crear-cotizacion" ot={ot} />);
+      } else if (ot.cotizacion.estado === 'borrador') {
+        botones.push(
+          <Button key="revisar-cotizacion" asChild>
+            <Link to={`/cotizaciones/${ot.cotizacion.id}`}>Revisar y enviar cotización</Link>
+          </Button>,
+        );
+      }
+    }
     if (ot.etapa === 'aprobada') {
       botones.push(
         <Button
@@ -77,9 +102,15 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
   if (puedeAprobar && !final) {
     if (facturable && ot.etapa === 'cotizada') {
       botones.push(
-        <Button key="aprobacion" type="button" onClick={() => setDialogo('aprobacion')}>
+        <BotonConPista
+          key="aprobacion"
+          type="button"
+          disabled={ot.cotizacion?.estado !== 'enviada'}
+          pista="Primero marca la cotización como enviada"
+          onClick={() => setDialogo('aprobacion')}
+        >
           Registrar aprobación del cliente…
-        </Button>,
+        </BotonConPista>,
       );
     }
     if (!facturable && ot.etapa === 'borrador') {
@@ -111,7 +142,11 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
         type="button"
         variant="outline"
         disabled={ocupado}
-        onClick={() => cambiar.mutate({ etapa: 'borrador' })}
+        onClick={() =>
+          ot.cotizacion?.estado === 'enviada'
+            ? setDialogo('volver')
+            : cambiar.mutate({ etapa: 'borrador' })
+        }
       >
         Volver a borrador
       </Button>,
@@ -164,6 +199,31 @@ export function AccionesOt({ ot }: { ot: OtDatos }) {
         abierto={dialogo === 'cancelar'}
         onCerrar={() => setDialogo(null)}
       />
+      <AlertDialog open={dialogo === 'volver'} onOpenChange={(a) => !a && setDialogo(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Volver a borrador</AlertDialogTitle>
+            <AlertDialogDescription>
+              La cotización{' '}
+              {ot.cotizacion ? `${ot.cotizacion.codigo} v${ot.cotizacion.version}` : ''} quedará{' '}
+              <strong>rechazada</strong>; podrás duplicarla como v
+              {ot.cotizacion ? ot.cotizacion.version + 1 : 2}.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={cambiar.isPending}
+              onClick={(e) => {
+                e.preventDefault();
+                cambiar.mutate({ etapa: 'borrador' });
+              }}
+            >
+              Volver a borrador
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

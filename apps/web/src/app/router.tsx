@@ -7,6 +7,7 @@ import { RequiereSesion } from '@/features/auth/RequiereSesion';
 import { RaizSesion } from '@/features/auth/SesionProvider';
 import { ClientesPage } from '@/features/clientes/pages/ClientesPage';
 import { ConfiguracionPage } from '@/features/configuracion/pages/ConfiguracionPage';
+import { CotizacionesPage } from '@/features/cotizador/pages/CotizacionesPage';
 import { CotizadorPage } from '@/features/cotizador/pages/CotizadorPage';
 import { HorasPage } from '@/features/horas/pages/HorasPage';
 import { DocumentoLegalPage } from '@/features/legal/DocumentoLegalPage';
@@ -49,7 +50,8 @@ export const router = createBrowserRouter([
               { path: '/tickets/:id', element: <TicketDetallePage /> },
               { path: '/ots', element: <OtsPage /> },
               { path: '/ots/:id', element: <OtDetallePage /> },
-              { path: '/cotizaciones', element: <CotizadorPage /> },
+              { path: '/cotizaciones', element: <CotizacionesPage /> },
+              { path: '/cotizaciones/:id', element: <CotizadorPage /> },
               { path: '/horas', element: <HorasPage /> },
               { path: '/reportes', element: <ReportesPage /> },
               { path: '/clientes', element: <ClientesPage /> },
