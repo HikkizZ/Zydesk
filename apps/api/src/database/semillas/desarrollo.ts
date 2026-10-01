@@ -9,6 +9,7 @@ import {
   reemplazarTarifas,
 } from '../../modulos/clientes/clientes.service.js';
 import { versionTerminosVigente } from '../../modulos/legal/legal.service.js';
+import { sembrarPlantillas } from './desarrollo-cotizaciones.js';
 import { sembrarOts } from './desarrollo-ots.js';
 import { sembrarTickets } from './desarrollo-tickets.js';
 
@@ -243,6 +244,33 @@ async function sembrarClientes(): Promise<void> {
   }
 }
 
+// Tarifas del diseño (spec fase 4 §14): solo si la clave sigue con los valores de la semilla base.
+const TARIFAS_BASE = {
+  hora_normal: null,
+  hora_extendida: null,
+  hora_urgencia: null,
+  traslado_km: null,
+  costo_interno: null,
+  iva_pct: 19,
+  validez_dias_defecto: 30,
+  condiciones_defecto: null,
+};
+const TARIFAS_DESARROLLO = {
+  ...TARIFAS_BASE,
+  hora_normal: 38000,
+  hora_extendida: 45000,
+  costo_interno: 18000, // ficticio, para que OT-0215 muestre costo interno
+  condiciones_defecto:
+    'Precios en pesos chilenos. Validez según fecha indicada. Forma de pago: 30 días desde la factura. No incluye repuestos ni licencias salvo indicación expresa.',
+};
+
+async function sembrarTarifas(): Promise<void> {
+  await dataSource.query(
+    `UPDATE configuracion SET valor = $2::jsonb WHERE clave = 'tarifas' AND valor = $1::jsonb`,
+    [JSON.stringify(TARIFAS_BASE), JSON.stringify(TARIFAS_DESARROLLO)],
+  );
+}
+
 // Requiere `sembrarBase` previa (marca y contadores) y los documentos legales cargados.
 export async function sembrarDesarrollo(contrasena: string | undefined): Promise<void> {
   if (!contrasena || !politicaContrasena(contrasena, 'semilla@zydesk.local').ok) {
@@ -253,5 +281,7 @@ export async function sembrarDesarrollo(contrasena: string | undefined): Promise
   await sembrarCategorias(personas);
   await sembrarClientes();
   await sembrarTickets(personas);
+  await sembrarTarifas(); // antes de las OT: las cotizaciones toman de ahí IVA, validez y condiciones
+  await sembrarPlantillas();
   await sembrarOts(personas);
 }
