@@ -1,4 +1,4 @@
-import { rutValido } from '@zydesk/shared';
+import { diasDeSemana, lunesDe, rutValido, ZONA } from '@zydesk/shared';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import { crearApp } from '../../app.js';
@@ -9,6 +9,7 @@ import { siguienteNumero } from '../../core/numeracion/numeracion.js';
 import { ErrorSemilla, sembrarDesarrollo } from './desarrollo.js';
 
 const CLAVE = 'Semilla.Dev.2026';
+const hoy = (): string => new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date());
 
 async function contar(tabla: string, where = 'true'): Promise<number> {
   const [{ n }] = await dataSource.query(`SELECT count(*)::int AS n FROM ${tabla} WHERE ${where}`);
@@ -184,5 +185,55 @@ describe('sembrarDesarrollo', () => {
     const det = await agente.get(`/api/ots/${o215.id}`);
     expect(det.body.costo_interno.tarifa).toBe(18000);
     expect(det.body.costo_interno.monto).toBe(det.body.horas.registradas * 18000);
+  });
+
+  it('siembra la planilla de sdiaz con las cifras del diseño, sin fechas futuras y sin duplicar ni borrar', async () => {
+    await sembrarDesarrollo(CLAVE);
+    // una fila manual cargada a mano no debe perderse al volver a sembrar
+    const [sd] = await dataSource.query(
+      `SELECT id FROM usuario WHERE correo = 'sdiaz@zydesk.local'`,
+    );
+    await dataSource.query(
+      `INSERT INTO registro_horas (usuario_id, fecha, descripcion, horas) VALUES ($1, $2, 'Prueba a mano', 1)`,
+      [sd.id, lunesDe(hoy())],
+    );
+    const antes = await contar('registro_horas');
+    await sembrarDesarrollo(CLAVE);
+    expect(await contar('registro_horas')).toBe(antes);
+    expect(await contar('registro_horas', "descripcion = 'Prueba a mano'")).toBe(1);
+
+    const lunes = lunesDe(hoy());
+    const conMartes = hoy() >= diasDeSemana(lunes)[1]!; // si hoy es lunes el martes es futuro y no se siembra
+    const agente = request
+      .agent(crearApp({ comprobarBd: async () => true }))
+      .set('X-Requested-With', 'Zydesk');
+    await agente
+      .post('/api/auth/ingresar')
+      .send({ correo: 'sdiaz@zydesk.local', contrasena: CLAVE });
+    const res = await agente.get('/api/horas');
+    expect(res.status).toBe(200);
+    expect(res.body.editable).toBe(true);
+    // la celda manual de prueba (1 h, "Sin ticket") suma al lunes: se descuenta para comparar con el diseño
+    expect(res.body.totales.semana - 1).toBe(conMartes ? 12 : 7.5);
+    expect(res.body.totales.facturables).toBe(conMartes ? 8.5 : 5);
+    expect(res.body.totales.fuera_de_horario).toBe(conMartes ? 0.5 : 0);
+    const claves = res.body.filas.map((f: { clave: string }) => f.clave);
+    expect(claves.some((c: string) => c.includes(':tarea:'))).toBe(true);
+    expect(
+      res.body.filas.some(
+        (f: { tarea: unknown; total: number }) => f.tarea !== null && f.total > 0,
+      ),
+    ).toBe(true);
+    for (const d of res.body.dias as { futuro: boolean; total: number }[]) {
+      if (d.futuro) expect(d.total).toBe(0);
+    }
+
+    const [o215] = await dataSource.query(`SELECT id FROM ot WHERE codigo = 'OT-0215'`);
+    const ot = await agente.get(`/api/ots/${o215.id}`);
+    expect(ot.body.costo_interno.monto).toBe(36000);
+
+    const [c] = await dataSource.query(`SELECT id FROM cliente WHERE nombre = 'Viña Santa Clara'`);
+    const cli = await agente.get(`/api/clientes/${c.id}`);
+    expect(typeof cli.body.bolsa.vigente.horas_usadas_mes).toBe('number');
   });
 });
