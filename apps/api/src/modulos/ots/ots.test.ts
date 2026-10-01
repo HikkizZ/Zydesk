@@ -607,3 +607,53 @@ describe('numeración conectada (§4.8)', () => {
     expect(d.body.codigo).toBe('OT-0300');
   });
 });
+
+describe('PATCH /api/ots/:id — datos comerciales de una OT aprobada', () => {
+  async function otEn(etapa: 'borrador' | 'en_ejecucion') {
+    const t = await crearTicket();
+    const cliente = await crearCliente();
+    const ot = await crearOt(t.id, { etapa, cliente_id: cliente.id });
+    await dataSource.query(`UPDATE ot SET oc_cliente = 'OC-1' WHERE id = $1`, [ot.id]);
+    return ot;
+  }
+  const ocDe = async (id: number): Promise<string | null> =>
+    (await dataSource.query(`SELECT oc_cliente FROM ot WHERE id = $1`, [id]))[0].oc_cliente;
+
+  it('técnico cambia oc_cliente en en_ejecucion → 403 SIN_PERMISO con campos, sin escribir', async () => {
+    const { agente } = await como('tecnico');
+    const ot = await otEn('en_ejecucion');
+    const r = await agente
+      .patch(`/api/ots/${ot.id}`)
+      .send({ oc_cliente: 'OC-2', condicion_pago: '30 días', titulo: 'Otro' });
+    expect(r.status).toBe(403);
+    expect(r.body.error.codigo).toBe('SIN_PERMISO');
+    expect(r.body.error.detalles.campos).toEqual(['oc_cliente', 'condicion_pago']);
+    expect(await ocDe(ot.id)).toBe('OC-1');
+    expect(await eventos('ot', ot.id)).toHaveLength(0);
+  });
+
+  it('técnico cambia el alcance, o reenvía el mismo oc_cliente, en en_ejecucion → 200', async () => {
+    const { agente } = await como('tecnico');
+    const ot = await otEn('en_ejecucion');
+    expect(
+      (await agente.patch(`/api/ots/${ot.id}`).send({ alcance: 'Nuevo alcance' })).status,
+    ).toBe(200);
+    expect((await agente.patch(`/api/ots/${ot.id}`).send({ oc_cliente: 'OC-1' })).status).toBe(200);
+  });
+
+  it('coordinación cambia oc_cliente en en_ejecucion → 200 con evento', async () => {
+    const { agente } = await como('coordinacion');
+    const ot = await otEn('en_ejecucion');
+    const r = await agente.patch(`/api/ots/${ot.id}`).send({ oc_cliente: 'OC-2' });
+    expect(r.status).toBe(200);
+    expect(await ocDe(ot.id)).toBe('OC-2');
+    expect((await eventos('ot', ot.id)).some((e) => e.campo === 'oc_cliente')).toBe(true);
+  });
+
+  it('técnico cambia oc_cliente en borrador → 200', async () => {
+    const { agente } = await como('tecnico');
+    const ot = await otEn('borrador');
+    expect((await agente.patch(`/api/ots/${ot.id}`).send({ oc_cliente: 'OC-3' })).status).toBe(200);
+    expect(await ocDe(ot.id)).toBe('OC-3');
+  });
+});

@@ -72,12 +72,15 @@ export function Redactor({
   onEnviado,
   copiaAlTicket = false,
   codigoTicket,
+  sinHoras = false,
 }: {
   destino?: DestinoMensajes;
   ticketId?: number;
   onEnviado?: () => void;
   copiaAlTicket?: boolean;
   codigoTicket?: string;
+  // OT cerrada o cancelada: el mensaje se permite pero no las horas.
+  sinHoras?: boolean;
 }) {
   const destino: DestinoMensajes = destinoProp ?? { tipo: 'ticket', id: ticketId ?? 0 };
   const queryClient = useQueryClient();
@@ -100,7 +103,7 @@ export function Redactor({
     : [];
   const menuAbierto = mencion !== null && opciones.length > 0;
   const textos = TEXTOS[modo];
-  const horasOk = horasValidas(horas);
+  const horasOk = sinHoras || horasValidas(horas);
   const puedeEnviar = texto.trim() !== '' && horasOk;
 
   const enviarMensaje = useMutation({
@@ -139,7 +142,7 @@ export function Redactor({
       texto: texto.trim(),
       archivo_ids: archivos.map((a) => a.id),
       mencionados_ids,
-      horas: horas.trim() === '' ? null : Number(horas),
+      horas: sinHoras || horas.trim() === '' ? null : Number(horas),
       ...(copiaAlTicket && copiar ? { copiar_al_ticket: true } : {}),
     });
   }
@@ -295,27 +298,37 @@ export function Redactor({
       ) : null}
 
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor={`horas-${destino.tipo}-${destino.id}`}>Horas</Label>
-          <div className="flex items-center gap-1.5">
-            <Input
-              id={`horas-${destino.tipo}-${destino.id}`}
-              type="number"
-              step={0.25}
-              min={0.25}
-              max={24}
-              inputMode="decimal"
-              value={horas}
-              aria-invalid={!horasOk}
-              onChange={(e) => setHoras(e.target.value)}
-              className="w-[90px] bg-white"
-            />
-            <span className="text-sm text-tinta-2">h</span>
-          </div>
-        </div>
-        <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
-          {horasOk ? 'Se registra en tu planilla de hoy' : 'Usa múltiplos de 0,25 entre 0,25 y 24'}
-        </p>
+        {sinHoras ? (
+          <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
+            La OT está cerrada: no se registran horas
+          </p>
+        ) : (
+          <>
+            <div className="flex flex-col gap-1">
+              <Label htmlFor={`horas-${destino.tipo}-${destino.id}`}>Horas</Label>
+              <div className="flex items-center gap-1.5">
+                <Input
+                  id={`horas-${destino.tipo}-${destino.id}`}
+                  type="number"
+                  step={0.25}
+                  min={0.25}
+                  max={24}
+                  inputMode="decimal"
+                  value={horas}
+                  aria-invalid={!horasOk}
+                  onChange={(e) => setHoras(e.target.value)}
+                  className="w-[90px] bg-white"
+                />
+                <span className="text-sm text-tinta-2">h</span>
+              </div>
+            </div>
+            <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
+              {horasOk
+                ? 'Se registra en tu planilla de hoy'
+                : 'Usa múltiplos de 0,25 entre 0,25 y 24'}
+            </p>
+          </>
+        )}
         <Button type="button" disabled={!puedeEnviar || enviarMensaje.isPending} onClick={enviar}>
           {enviarMensaje.isPending ? 'Enviando…' : textos.boton}
         </Button>

@@ -46,6 +46,10 @@ Qué queda después:
 - Con la nueva OT, un aviso con enlace te lo indica ("OT-0220 creada").
 - Los avisos a responsables y seguidores se activan en una fase posterior: por ahora el diálogo lo dice al pie.
 
+## Datos comerciales y horas tras la aprobación
+
+Una vez aprobada la OT, solo Coordinación y Administración pueden cambiar la **OC del cliente**, la **condición de pago** y **Descuenta de la bolsa**; el resto de los datos los siguen editando los técnicos. En una OT cerrada o cancelada se pueden escribir mensajes, pero ya no se registran horas.
+
 ## Cancelar una OT
 
 Mientras una OT no esté cerrada ni cancelada, **Cancelar OT…** pide un **motivo obligatorio**. La OT queda **Cancelada** (se muestra tachada), no se factura aunque fuera facturable, sus tareas pendientes se quedan en ella y el ticket registra "canceló OT-0218" con el motivo. El estado del ticket no cambia. Una OT cancelada ya no cuenta como abierta: deja de impedir que se cierre el ticket.

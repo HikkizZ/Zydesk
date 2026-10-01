@@ -245,6 +245,7 @@ export function OtDetallePage() {
                 destino={{ tipo: 'ot', id: ot.id }}
                 copiaAlTicket
                 codigoTicket={ot.ticket.codigo}
+                sinHoras={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
               />
             </div>
           ) : null}

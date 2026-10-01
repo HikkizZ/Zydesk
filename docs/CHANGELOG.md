@@ -14,6 +14,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 ### Corregido
 
 - Un cuerpo JSON mal formado en cualquier `POST` respondía `500 INTERNO`; ahora responde `400 VALIDACION` sin registrar el contenido del cuerpo en los logs.
+- Seguridad (cierre de la Fase 3): un cuerpo de más de 1 MB responde `413 CUERPO_MUY_GRANDE` y un `charset` o `encoding` no soportado responde `415 TIPO_NO_SOPORTADO` (antes `500` y `logger.error`, antes de autenticar).
+- Seguridad: una OT cerrada o cancelada rechaza mensajes con horas (`409 OT_CERRADA`, `detalles.horas`); sin horas siguen permitidos. El redactor de la OT oculta el campo de horas.
+- Seguridad: en una OT facturable `aprobada` o `en_ejecucion`, cambiar `oc_cliente`, `condicion_pago` o `descuenta_bolsa` exige `ots.aprobar` (`403 SIN_PERMISO` con `detalles.campos`); reenviar el mismo valor no cuenta. La ficha los muestra de solo lectura a quien no puede aprobar.
 
 ### Pendientes para la guía de despliegue (Fase 9)
 

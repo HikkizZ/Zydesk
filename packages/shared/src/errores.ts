@@ -25,5 +25,7 @@ export const CODIGOS_ERROR = {
   ARCHIVO_MUY_GRANDE: 413,
   DEMASIADOS_ARCHIVOS: 400,
   CORREO_ILEGIBLE: 400,
+  CUERPO_MUY_GRANDE: 413,
+  TIPO_NO_SOPORTADO: 415,
 } as const;
 export type CodigoError = keyof typeof CODIGOS_ERROR;

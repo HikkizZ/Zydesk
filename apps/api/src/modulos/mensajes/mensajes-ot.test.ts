@@ -292,3 +292,32 @@ describe('GET /api/ots/:id/actividad', () => {
 async function ticketFila(id: number) {
   return (await dataSource.query(`SELECT * FROM ticket WHERE id = $1`, [id]))[0];
 }
+
+describe('horas en una OT final', () => {
+  it('OT cerrada o cancelada con horas → 409 OT_CERRADA y nada escrito (también con copiar_al_ticket)', async () => {
+    const { agente } = await como('tecnico');
+    for (const etapa of ['cerrada', 'cancelada'] as const) {
+      const { ot } = await otNueva(etapa);
+      for (const extra of [{ horas: 2 }, { horas: 2, copiar_al_ticket: true }]) {
+        const r = await agente.post(`/api/ots/${ot.id}/mensajes`).send(cuerpo(extra));
+        expect(r.status).toBe(409);
+        expect(r.body.error.codigo).toBe('OT_CERRADA');
+        expect(r.body.error.detalles.horas).toEqual(['No se registran horas en una OT cerrada']);
+      }
+    }
+    expect(await cuenta(`SELECT count(*)::int AS n FROM mensaje`, [])).toBe(0);
+    expect(await cuenta(`SELECT count(*)::int AS n FROM registro_horas`, [])).toBe(0);
+  });
+
+  it('OT cerrada sin horas → 201; OT en ejecución con horas → 201', async () => {
+    const { agente } = await como('tecnico');
+    const cerrada = await otNueva('cerrada');
+    expect((await agente.post(`/api/ots/${cerrada.ot.id}/mensajes`).send(cuerpo())).status).toBe(
+      201,
+    );
+    const viva = await otNueva('en_ejecucion');
+    expect(
+      (await agente.post(`/api/ots/${viva.ot.id}/mensajes`).send(cuerpo({ horas: 1.5 }))).status,
+    ).toBe(201);
+  });
+});

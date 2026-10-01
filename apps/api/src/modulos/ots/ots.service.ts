@@ -256,6 +256,36 @@ export async function editarOt(
       throw new ErrorApp('OT_TIPO_BLOQUEADO', 'El cliente solo se cambia en Borrador');
     }
 
+    // Datos comerciales de una OT aprobada: solo con `ots.aprobar`
+    if (
+      (ot.etapa === 'aprobada' || ot.etapa === 'en_ejecucion') &&
+      !tienePermiso(actor.rol, 'ots.aprobar')
+    ) {
+      const [actual]: {
+        oc_cliente: string | null;
+        condicion_pago: string | null;
+        contrato_id: number | null;
+      }[] = await tx.query(`SELECT oc_cliente, condicion_pago, contrato_id FROM ot WHERE id = $1`, [
+        id,
+      ]);
+      const campos: string[] = [];
+      if (e.oc_cliente !== undefined && e.oc_cliente !== actual!.oc_cliente)
+        campos.push('oc_cliente');
+      if (e.condicion_pago !== undefined && e.condicion_pago !== actual!.condicion_pago) {
+        campos.push('condicion_pago');
+      }
+      if (e.descuenta_bolsa !== undefined && e.descuenta_bolsa !== (actual!.contrato_id !== null)) {
+        campos.push('descuenta_bolsa');
+      }
+      if (campos.length > 0) {
+        throw new ErrorApp(
+          'SIN_PERMISO',
+          'Solo Coordinación o Administración cambian los datos comerciales de una OT aprobada',
+          { campos },
+        );
+      }
+    }
+
     // Campos del otro tipo → 400 por campo
     const errores: Record<string, string[]> = {};
     const ajenos = tipoNuevo === 'interna' ? SOLO_FACTURABLE : SOLO_INTERNA;

@@ -209,7 +209,13 @@ export async function crearMensajeDeOt(
       if (!previa) throw new ErrorApp('NO_ENCONTRADO', 'OT no encontrada');
       await bloquearTicket(tx, previa.ticket_id);
     }
-    await bloquearOt(tx, ot_id);
+    const ot = await bloquearOt(tx, ot_id);
+    // Los mensajes siguen permitidos en una OT final, pero no las horas (descuentan la bolsa).
+    if (ot.final && e.horas !== null) {
+      throw new ErrorApp('OT_CERRADA', 'La OT está cerrada o cancelada', {
+        horas: ['No se registran horas en una OT cerrada'],
+      });
+    }
     const mensaje = await insertarMensaje(tx, actor, { ot_id }, e);
     await registrarActividadEnOt(tx, ot_id);
     if (e.copiar_al_ticket) await copiarAlTicket(tx, actor, mensaje);

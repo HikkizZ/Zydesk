@@ -276,3 +276,32 @@ it('OT inexistente muestra "OT no encontrada"', async () => {
   );
   expect(await screen.findByText('OT no encontrada')).toBeTruthy();
 });
+
+it('sin ots.aprobar, los datos comerciales de una OT en ejecución quedan de solo lectura', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion', oc_cliente: 'OC-1' }), 'tecnico');
+  const oc = (await screen.findByLabelText('N° de OC del cliente')) as HTMLInputElement;
+  expect(oc.disabled).toBe(true);
+  expect((screen.getByLabelText('Condición de pago') as HTMLInputElement).disabled).toBe(true);
+  expect(
+    screen.getByText('Solo Coordinación o Administración puede cambiarlos tras la aprobación'),
+  ).toBeTruthy();
+  expect((screen.getByLabelText('Título') as HTMLInputElement).disabled).toBe(false);
+});
+
+it('con ots.aprobar los datos comerciales siguen editables tras la aprobación', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion' }), 'coordinacion');
+  const oc = (await screen.findByLabelText('N° de OC del cliente')) as HTMLInputElement;
+  expect(oc.disabled).toBe(false);
+  expect(screen.queryByText(/puede cambiarlos tras la aprobación/)).toBeNull();
+});
+
+it('en una OT cerrada el redactor no pide horas y lo explica', async () => {
+  montar(otDePrueba({ etapa: 'cerrada' }), 'coordinacion');
+  expect(await screen.findByText('La OT está cerrada: no se registran horas')).toBeTruthy();
+  expect(screen.queryByRole('spinbutton')).toBeNull();
+});
+
+it('en una OT en ejecución el redactor sí pide horas', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion' }), 'coordinacion');
+  expect((await screen.findAllByRole('spinbutton')).length).toBeGreaterThan(0);
+});

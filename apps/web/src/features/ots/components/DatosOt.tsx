@@ -31,6 +31,7 @@ import {
   nuloSiVacio,
 } from '@/features/tickets/components/formulario';
 import { SelectorCliente } from '@/features/tickets/components/SelectorCliente';
+import { usePermiso } from '@/features/auth/SesionProvider';
 import { ErrorApi } from '@/lib/api';
 
 interface Valores {
@@ -106,6 +107,10 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
   const queryClient = useQueryClient();
   const usuarios = useUsuariosActivos();
   const facturable = ot.tipo === 'facturable';
+  // Tras la aprobación, los datos comerciales solo los cambia quien puede aprobar.
+  const puedeAprobar = usePermiso('ots.aprobar');
+  const comercialBloqueado =
+    !puedeAprobar && (ot.etapa === 'aprobada' || ot.etapa === 'en_ejecucion');
   const cliente = useQuery({
     queryKey: ['cliente', ot.cliente_id],
     queryFn: () => obtenerCliente(ot.cliente_id as number),
@@ -250,7 +255,7 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
                 <Input
                   {...p}
                   maxLength={60}
-                  disabled={soloLectura}
+                  disabled={soloLectura || comercialBloqueado}
                   className="font-mono"
                   {...register('oc_cliente')}
                 />
@@ -261,18 +266,23 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
                 <Input
                   {...p}
                   maxLength={80}
-                  disabled={soloLectura}
+                  disabled={soloLectura || comercialBloqueado}
                   {...register('condicion_pago')}
                 />
               )}
             </Campo>
           </div>
+          {comercialBloqueado && !soloLectura ? (
+            <p className="text-sm text-tinta-2">
+              Solo Coordinación o Administración puede cambiarlos tras la aprobación
+            </p>
+          ) : null}
           {bolsaVigente ? (
             <div className="flex items-start gap-2">
               <Checkbox
                 id="descuenta-bolsa"
                 checked={valores.descuenta_bolsa}
-                disabled={soloLectura || valores.cliente_id !== ot.cliente_id}
+                disabled={soloLectura || comercialBloqueado || valores.cliente_id !== ot.cliente_id}
                 onCheckedChange={(v) =>
                   setValue('descuenta_bolsa', v === true, { shouldDirty: true })
                 }
