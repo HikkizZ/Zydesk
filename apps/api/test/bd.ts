@@ -75,9 +75,14 @@ async function calcularOrden(o: DataSource): Promise<string[]> {
         AND c.connamespace = 'public'::regnamespace`,
   );
   const limpiar = (n: string): string => n.replace(/^"|"$/g, '');
-  return ordenarHijosAPadres(
+  const orden = ordenarHijosAPadres(
     tablas.map((t) => t.tablename),
     fks.map((f) => ({ hija: limpiar(f.hija), padre: limpiar(f.padre) })),
+  );
+  // `registro_horas` va primero: al borrar sus padres (ticket, OT, tarea, mensaje) el `ON DELETE SET NULL`
+  // dejaría filas iguales o sin destino y violaría `registro_horas_celda_manual_uq` / `_sin_ticket_chk`.
+  return ['registro_horas', ...orden.filter((t) => t !== 'registro_horas')].filter((t) =>
+    orden.includes(t),
   );
 }
 

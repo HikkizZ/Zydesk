@@ -230,7 +230,8 @@ describe('fábricas de la Fase 3', () => {
       );
     await insertar(ticket.id, null);
     await insertar(null, ot.id);
-    await insertar(null, null);
+    // desde la Fase 5 ambos nulos exige descripción (registro_horas_sin_ticket_chk)
+    expect(await codigoError(insertar(null, null))).toBe(CHECK);
     expect(await codigoError(insertar(ticket.id, ot.id))).toBe(CHECK);
   });
 
