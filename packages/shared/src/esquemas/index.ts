@@ -17,3 +17,4 @@ export * from './mensaje.js';
 export * from './ot.js';
 export * from './ticket.js';
 export * from './cotizacion.js';
+export * from './horas.js';

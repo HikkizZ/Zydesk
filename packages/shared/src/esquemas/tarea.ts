@@ -30,6 +30,7 @@ export const TareaSalida = z.object({
   hecha: z.boolean(),
   horas_estimadas: z.number().nullable(),
   horas_reales: z.number().nullable(),
+  horas_registradas: z.number(), // Σ registro_horas con tarea_id = tarea.id (0 en tareas de ticket)
   hecha_en: instante.nullable(),
   orden: z.number(),
   vencida: z.boolean(), // fecha < hoy (Santiago) y no hecha

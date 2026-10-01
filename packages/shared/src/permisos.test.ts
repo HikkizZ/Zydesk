@@ -13,6 +13,7 @@ const ESPERADO: Record<string, [boolean, boolean, boolean, boolean]> = {
   'Marcar OT como facturada': [true, true, false, false],
   'Ver reportes y montos': [true, true, false, true],
   'Cambiar configuración': [true, false, false, false],
+  'Ver horas de todo el equipo': [true, true, false, false],
 };
 
 describe('permisos', () => {
@@ -22,8 +23,14 @@ describe('permisos', () => {
     for (const p of PERMISOS) expect(tienePermiso('admin', p)).toBe(true);
   });
 
-  it('MATRIZ_VISIBLE tiene 9 filas y reproduce la tabla de la spec §2', () => {
-    expect(MATRIZ_VISIBLE).toHaveLength(9);
+  it('horas.ver_todas: admin y coordinación sí; técnico y lectura no', () => {
+    expect(tienePermiso('coordinacion', 'horas.ver_todas')).toBe(true);
+    expect(tienePermiso('tecnico', 'horas.ver_todas')).toBe(false);
+    expect(tienePermiso('lectura', 'horas.ver_todas')).toBe(false);
+  });
+
+  it('MATRIZ_VISIBLE tiene 10 filas y reproduce la tabla de la spec §2', () => {
+    expect(MATRIZ_VISIBLE).toHaveLength(10);
     for (const fila of MATRIZ_VISIBLE) {
       const esperado = ESPERADO[fila.etiqueta];
       expect(esperado, fila.etiqueta).toBeDefined();

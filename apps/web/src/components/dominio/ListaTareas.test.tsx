@@ -20,6 +20,7 @@ const tarea = (
   ot_id: null,
   horas_estimadas: null,
   horas_reales: null,
+  horas_registradas: 0,
   titulo,
   responsable: null,
   fecha: null,

@@ -1169,7 +1169,8 @@
                           "ots.cerrar",
                           "ots.facturar",
                           "reportes.ver",
-                          "config.editar"
+                          "config.editar",
+                          "horas.ver_todas"
                         ]
                       }
                     },
@@ -4038,7 +4039,10 @@
                                   "type": "boolean"
                                 },
                                 "horas_usadas_mes": {
-                                  "type": "null"
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
                                 }
                               },
                               "required": [
@@ -4125,7 +4129,10 @@
                                 "type": "boolean"
                               },
                               "horas_usadas_mes": {
-                                "type": "null"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               }
                             },
                             "required": [
@@ -4577,7 +4584,10 @@
                                   "type": "boolean"
                                 },
                                 "horas_usadas_mes": {
-                                  "type": "null"
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
                                 }
                               },
                               "required": [
@@ -4664,7 +4674,10 @@
                                 "type": "boolean"
                               },
                               "horas_usadas_mes": {
-                                "type": "null"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               }
                             },
                             "required": [
@@ -5183,7 +5196,10 @@
                                   "type": "boolean"
                                 },
                                 "horas_usadas_mes": {
-                                  "type": "null"
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
                                 }
                               },
                               "required": [
@@ -5270,7 +5286,10 @@
                                 "type": "boolean"
                               },
                               "horas_usadas_mes": {
-                                "type": "null"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               }
                             },
                             "required": [
@@ -5672,7 +5691,10 @@
                       "type": "boolean"
                     },
                     "horas_usadas_mes": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -6015,7 +6037,10 @@
                       "type": "boolean"
                     },
                     "horas_usadas_mes": {
-                      "type": "null"
+                      "type": [
+                        "number",
+                        "null"
+                      ]
                     }
                   },
                   "required": [
@@ -7304,7 +7329,10 @@
                                   "type": "boolean"
                                 },
                                 "horas_usadas_mes": {
-                                  "type": "null"
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
                                 }
                               },
                               "required": [
@@ -7391,7 +7419,10 @@
                                 "type": "boolean"
                               },
                               "horas_usadas_mes": {
-                                "type": "null"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               }
                             },
                             "required": [
@@ -7876,7 +7907,10 @@
                                   "type": "boolean"
                                 },
                                 "horas_usadas_mes": {
-                                  "type": "null"
+                                  "type": [
+                                    "number",
+                                    "null"
+                                  ]
                                 }
                               },
                               "required": [
@@ -7963,7 +7997,10 @@
                                 "type": "boolean"
                               },
                               "horas_usadas_mes": {
-                                "type": "null"
+                                "type": [
+                                  "number",
+                                  "null"
+                                ]
                               }
                             },
                             "required": [
@@ -21430,6 +21467,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -21469,6 +21509,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -22995,6 +23036,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -23034,6 +23078,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -25080,6 +25125,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -25119,6 +25167,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -26537,6 +26586,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -26576,6 +26628,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -28301,6 +28354,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -28340,6 +28396,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -29762,6 +29819,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -29801,6 +29861,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -31326,6 +31387,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -31365,6 +31429,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -33524,6 +33589,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -33563,6 +33631,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -35262,6 +35331,9 @@
                           "null"
                         ]
                       },
+                      "horas_registradas": {
+                        "type": "number"
+                      },
                       "hecha_en": {
                         "anyOf": [
                           {
@@ -35301,6 +35373,7 @@
                       "hecha",
                       "horas_estimadas",
                       "horas_reales",
+                      "horas_registradas",
                       "hecha_en",
                       "orden",
                       "vencida",
@@ -35624,6 +35697,9 @@
                         "null"
                       ]
                     },
+                    "horas_registradas": {
+                      "type": "number"
+                    },
                     "hecha_en": {
                       "anyOf": [
                         {
@@ -35663,6 +35739,7 @@
                     "hecha",
                     "horas_estimadas",
                     "horas_reales",
+                    "horas_registradas",
                     "hecha_en",
                     "orden",
                     "vencida",
@@ -36480,6 +36557,9 @@
                         "null"
                       ]
                     },
+                    "horas_registradas": {
+                      "type": "number"
+                    },
                     "hecha_en": {
                       "anyOf": [
                         {
@@ -36519,6 +36599,7 @@
                     "hecha",
                     "horas_estimadas",
                     "horas_reales",
+                    "horas_registradas",
                     "hecha_en",
                     "orden",
                     "vencida",
@@ -38382,6 +38463,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -38421,6 +38505,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -39588,6 +39673,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -39627,6 +39715,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -40922,6 +41011,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -40961,6 +41053,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -42870,6 +42963,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -42909,6 +43005,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -44073,6 +44170,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -44112,6 +44212,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -46591,6 +46692,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -46630,6 +46734,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -47853,6 +47958,9 @@
                               "null"
                             ]
                           },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
                           "hecha_en": {
                             "anyOf": [
                               {
@@ -47892,6 +48000,7 @@
                           "hecha",
                           "horas_estimadas",
                           "horas_reales",
+                          "horas_registradas",
                           "hecha_en",
                           "orden",
                           "vencida",
@@ -48348,6 +48457,9 @@
                           "null"
                         ]
                       },
+                      "horas_registradas": {
+                        "type": "number"
+                      },
                       "hecha_en": {
                         "anyOf": [
                           {
@@ -48387,6 +48499,7 @@
                       "hecha",
                       "horas_estimadas",
                       "horas_reales",
+                      "horas_registradas",
                       "hecha_en",
                       "orden",
                       "vencida",
@@ -48710,6 +48823,9 @@
                         "null"
                       ]
                     },
+                    "horas_registradas": {
+                      "type": "number"
+                    },
                     "hecha_en": {
                       "anyOf": [
                         {
@@ -48749,6 +48865,7 @@
                     "hecha",
                     "horas_estimadas",
                     "horas_reales",
+                    "horas_registradas",
                     "hecha_en",
                     "orden",
                     "vencida",
@@ -51556,7 +51673,8 @@
                           "ots.cerrar",
                           "ots.facturar",
                           "reportes.ver",
-                          "config.editar"
+                          "config.editar",
+                          "horas.ver_todas"
                         ]
                       }
                     },
@@ -51762,7 +51880,8 @@
                           "ots.cerrar",
                           "ots.facturar",
                           "reportes.ver",
-                          "config.editar"
+                          "config.editar",
+                          "horas.ver_todas"
                         ]
                       }
                     },

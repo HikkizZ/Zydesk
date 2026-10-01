@@ -53,6 +53,7 @@ function aSalida(t: FilaTarea): TareaSalidaDatos {
     ot_id: t.ot_id,
     horas_estimadas: t.horas_estimadas,
     horas_reales: t.horas_reales,
+    horas_registradas: 0, // F5-T5
     titulo: t.titulo,
     responsable:
       t.responsable_id === null

@@ -199,6 +199,7 @@ function tareaSalida(t: FilaTarea): TareaDatos {
     id: t.id,
     ticket_id: null,
     ot_id: t.ot_id,
+    horas_registradas: 0, // F5-T5
     titulo: t.titulo,
     responsable:
       t.responsable_id === null

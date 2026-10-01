@@ -259,6 +259,7 @@ function tareaSalida(t: FilaTarea): TareaSalidaDatos {
     ot_id: null,
     horas_estimadas: null,
     horas_reales: null,
+    horas_registradas: 0, // tareas de ticket sin horas (spec §4.4)
     titulo: t.titulo,
     responsable:
       t.responsable_id === null
