@@ -39,6 +39,7 @@ Para cambiar el rol o el departamento de alguien, usa los selectores de su fila.
 | Registrar seguimiento y notas        |       ✓        |      ✓       |    ✓    |      –       |
 | Asignar responsables                 |       ✓        |      ✓       |    ✓    |      –       |
 | Convertir ticket en OT               |       ✓        |      ✓       |    ✓    |      –       |
+| Cotizar (crear, editar, enviar)      |       ✓        |      ✓       |    ✓    |      –       |
 | Aprobar cotizaciones y OT internas   |       ✓        |      ✓       |    –    |      –       |
 | Cerrar OT                            |       ✓        |      ✓       |    –    |      –       |
 | Marcar OT como facturada             |       ✓        |      ✓       |    –    |      –       |
@@ -94,7 +95,7 @@ En el menú **Clientes**. Los clientes y las **áreas internas** (por ejemplo, M
 - **Desactivar** un cliente lo oculta de la lista (se ve con **Mostrar inactivos**); los clientes nunca se borran, porque los tickets futuros los usarán.
 - **Contactos**: personas del cliente con su área, correo, teléfono y si **aprueban cotizaciones**. Pueden agregarlos Administración, Coordinación y Técnicos.
 - **Bolsa de horas** (opcional): un contrato mensual de horas de soporte. Se agrega con **Agregar bolsa** (Administración o Coordinación): horas al mes, fecha desde la que rige y, si corresponde, hasta cuándo y fecha de renovación. Solo puede haber **una vigente a la vez**: si las fechas se solapan con otra, la app avisa. Para renovar, cierra el contrato anterior poniéndole fecha de término y agrega el nuevo. El cálculo de horas usadas llegará junto con las órdenes de trabajo.
-- **Tarifas por cliente**: en **Editar tarifas** se fijan valores propios para hora normal, horario extendido, fin de semana/urgencia y traslado por km. Si dejas marcada **Usar tarifa global**, el cliente usará la tarifa general. Los montos se entienden **más IVA**. La aplicación no trae tarifas cargadas: las define cada organización.
+- **Tarifas por cliente**: en **Editar tarifas** se fijan valores propios para hora normal, horario extendido, fin de semana/urgencia y traslado por km. Si dejas marcada **Usar tarifa global**, el cliente usará la tarifa general de **Configuración → Tarifas** (sección 14). Los montos se entienden **más IVA**. La aplicación no trae tarifas cargadas: las define cada organización.
 
 ## 8. Categorías y plazos
 
@@ -127,7 +128,7 @@ La tarjeta **Historial de cambios de numeración** lista quién cambió qué y c
 
 ## 10. Ingresos y registro de seguridad
 
-En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, y cambios de configuración. Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
+En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, cambios de configuración (también tarifas y plantillas) y descargas de documentos y cotizaciones. Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
 
 Puedes filtrar por acción, persona, correo y fechas. **Estos registros se conservan 1 año** y luego se borran automáticamente. No se pueden editar ni borrar desde la app.
 
@@ -161,7 +162,7 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Quién puede qué** (matriz de la sección 2):
 
-- **Convertir un ticket en OT, editarla, cambiar sus etapas simples** (marcar como cotizada, volver a borrador, iniciar ejecución), **gestionar sus tareas, mensajes y archivos**: quien puede editar tickets (Administración, Coordinación y Técnico).
+- **Convertir un ticket en OT, editarla, cambiar sus etapas simples** (volver a borrador, iniciar ejecución), **cotizarla** (crear, editar, importar horas, aplicar plantilla, marcar como enviada, duplicar) y **gestionar sus tareas, mensajes y archivos**: quien puede editar tickets (Administración, Coordinación y Técnico). La OT pasa a Cotizada solo al marcar una cotización como enviada; no hay marca manual.
 - **Aprobar** (OT interna y aprobación del cliente de una facturable): permiso de aprobar (Administración y Coordinación). La persona elegida como "quién aprueba" debe tener ese permiso; con todo, cualquiera que lo tenga puede aprobar.
 - **Cerrar** y **cancelar**: permiso de cerrar OT (Administración y Coordinación). Cancelar se considera una forma de cierre.
 - **Marcar como facturada**: permiso de facturar (Administración y Coordinación).
@@ -175,10 +176,35 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Archivos de OT.** Las fotos y documentos de las OT se guardan en la misma carpeta `ARCHIVOS_DIR` y con las mismas reglas que los de los tickets (sección 12): mismos tipos, límites, huérfanos de 24 horas y respaldo. Cualquier persona con sesión puede verlos y descargarlos; las descargas de documentos y correos quedan en el registro de seguridad. Al copiar un mensaje de la OT al ticket no se duplican los archivos.
 
-**Lo que todavía no existe.** Cotizador y montos, planilla de horas, avisos y la pantalla completa de OT con indicadores y exportación llegan en fases posteriores. La lista `/ots` es una vista de solo lectura.
+**Lo que todavía no existe.** Planilla de horas, avisos y la pantalla completa de OT con indicadores en pesos y exportación llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
 
 Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manual de coordinación](usuario/02-coordinacion.md).
 
-## 14. Referencia de la API
+## 14. Tarifas, IVA y validez
+
+En **Configuración → Tarifas**. Dos tarjetas y un solo botón **Guardar**:
+
+- **Tarifas** globales: hora normal, horario extendido, fin de semana/urgencia, traslado por km y **costo interno (OT internas)**, en pesos enteros más IVA. Un campo vacío es una tarifa **sin definir**: se muestra como `[TARIFA]`. Las tarifas por cliente (sección 7) tienen prioridad sobre estas.
+- **Cotizaciones**: **IVA %** (por defecto 19), **validez por defecto** (15 o 30 días) y **condiciones comerciales por defecto**, que cada cotización nueva copia al crearse.
+
+Qué afecta:
+
+- **Importar horas** en el Cotizador usa la tarifa de hora normal del cliente o, si no tiene, la global. Si ninguna está definida, la importación se detiene y pide configurarla aquí. Lo mismo para las líneas de plantilla sin precio (hora normal para `h`, traslado para `km`).
+- **Cambiar el IVA solo afecta a cotizaciones nuevas**: cada cotización guarda el porcentaje con que nació y lo conserva al duplicarse.
+- **Costo interno**: las OT internas muestran horas registradas × esta tarifa. Sin ella, la tarjeta pide configurarla.
+
+Cada guardado queda en el registro de seguridad (sección 10) con los campos que cambiaron, sin los montos.
+
+## 15. Plantillas de cotización
+
+En **Configuración → Plantillas**. Una plantilla tiene nombre (único), descripción, condiciones comerciales opcionales y hasta 50 líneas (tipo, descripción, cantidad, unidad, precio unitario opcional y descuento %). **Nueva plantilla** las crea; **Editar** las cambia (las cotizaciones que ya la aplicaron no se tocan).
+
+- **Precio vacío = tarifa vigente al aplicar**: así una subida de tarifas no obliga a editar las plantillas. Las líneas de materiales y gastos sin precio quedan en 0 para completarlas en la cotización.
+- Las plantillas no se borran: **Desactivar…** (con confirmación) las saca de la lista del Cotizador; **Ver inactivas** las muestra y **Reactivar** las devuelve.
+- Al aplicar una plantilla a una cotización sin condiciones comerciales, se copian las de la plantilla.
+
+La app trae tres plantillas de ejemplo solo en las semillas de desarrollo.
+
+## 16. Referencia de la API
 
 Para integraciones y el bot futuro: con sesión de Administración, abre `/api/docs` (por ejemplo `http://localhost:3010/api/docs`) para ver todas las rutas. La guía de uso está en `docs/api/README.md`.

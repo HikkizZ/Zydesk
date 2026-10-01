@@ -42,6 +42,7 @@ export interface CambiosEntidad {
   despues: Record<string, unknown>;
   campos: string[];
   etiquetas?: Record<string, (v: unknown) => string>;
+  datos?: unknown; // se copia a cada evento `cambio`
 }
 
 function iguales(a: unknown, b: unknown): boolean {
@@ -72,6 +73,7 @@ export async function registrarCambios(tx: EntityManager, c: CambiosEntidad): Pr
       campo,
       valor_anterior: texto(antes),
       valor_nuevo: texto(despues),
+      datos: c.datos,
     });
     insertados++;
   }

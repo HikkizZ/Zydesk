@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { id, instante, texto } from './comunes.js';
+import { TIPOS_LINEA, UNIDADES } from '../enums/cotizacion.js';
+import { booleanoTexto, id, instante, texto } from './comunes.js';
 
 export const MarcaEntrada = z.object({ nombre_app: texto(40) });
 
@@ -49,3 +50,55 @@ export type LogoEntradaDatos = z.infer<typeof LogoEntrada>;
 export type NumeracionEntradaDatos = z.infer<typeof NumeracionEntrada>;
 export type NumeracionSalidaDatos = z.infer<typeof NumeracionSalida>;
 export type EventoSalidaDatos = z.infer<typeof EventoSalida>;
+
+// Tarifas globales, IVA y validez por defecto (ADR 0007, B10); null = "[TARIFA]" sin definir.
+const montoClp = z.number().int().min(0).max(999_999_999);
+const validezDefecto = z.union([z.literal(15), z.literal(30)]);
+
+export const TarifasEntrada = z.object({
+  hora_normal: montoClp.nullable(),
+  hora_extendida: montoClp.nullable(),
+  hora_urgencia: montoClp.nullable(),
+  traslado_km: montoClp.nullable(),
+  costo_interno: montoClp.nullable(),
+  iva_pct: z.number().min(0).max(100).multipleOf(0.01),
+  validez_dias_defecto: validezDefecto,
+  condiciones_defecto: texto(5000).nullable(),
+});
+export const TarifasSalida = TarifasEntrada;
+
+export const PlantillaLineaEntrada = z.object({
+  tipo: z.enum(TIPOS_LINEA),
+  descripcion: texto(300),
+  cantidad: z.number().positive().max(999_999).multipleOf(0.01).default(1),
+  unidad: z.enum(UNIDADES),
+  precio_unitario: z.number().min(0).max(999_999_999).multipleOf(0.01).nullable().default(null), // null = de la tarifa
+  descuento_pct: z.number().min(0).max(100).multipleOf(0.01).default(0),
+});
+
+export const PlantillaCotizacionEntrada = z.object({
+  nombre: texto(80),
+  descripcion: texto(300).nullable(),
+  condiciones: texto(5000).nullable(),
+  lineas: z.array(PlantillaLineaEntrada).max(50),
+});
+
+export const PlantillaCotizacionSalida = PlantillaCotizacionEntrada.extend({
+  id,
+  activo: z.boolean(),
+  lineas: z.array(PlantillaLineaEntrada.extend({ id, orden: z.number().int() })),
+  creado_en: instante,
+  actualizado_en: instante,
+});
+
+export const PlantillaActivoEntrada = z.object({ activo: z.boolean() });
+// Sin `activo` → solo activas (como /api/usuarios); 'false' → inactivas
+export const PlantillasQuery = z.object({ activo: booleanoTexto.optional() });
+
+export type TarifasEntradaDatos = z.infer<typeof TarifasEntrada>;
+export type TarifasSalidaDatos = z.infer<typeof TarifasSalida>;
+export type PlantillaLineaEntradaDatos = z.infer<typeof PlantillaLineaEntrada>;
+export type PlantillaCotizacionEntradaDatos = z.infer<typeof PlantillaCotizacionEntrada>;
+export type PlantillaCotizacionSalidaDatos = z.infer<typeof PlantillaCotizacionSalida>;
+export type PlantillaActivoEntradaDatos = z.infer<typeof PlantillaActivoEntrada>;
+export type PlantillasQueryDatos = z.infer<typeof PlantillasQuery>;

@@ -3,7 +3,7 @@ import { dataSource } from '../../config/db.js';
 import { sembrarBase } from './base.js';
 
 describe('sembrarBase', () => {
-  it('es idempotente: dos ejecuciones dejan 33 feriados, 2 contadores y la marca', async () => {
+  it('es idempotente: dos ejecuciones dejan 33 feriados, 2 contadores, la marca y las tarifas', async () => {
     await sembrarBase(dataSource.manager);
     await sembrarBase(dataSource.manager);
     const [f] = await dataSource.query(
@@ -28,6 +28,19 @@ describe('sembrarBase', () => {
     expect(config).toEqual([
       { clave: 'logo', valor: null },
       { clave: 'nombre_app', valor: 'Zydesk' },
+      {
+        clave: 'tarifas',
+        valor: {
+          hora_normal: null,
+          hora_extendida: null,
+          hora_urgencia: null,
+          traslado_km: null,
+          costo_interno: null,
+          iva_pct: 19,
+          validez_dias_defecto: 30,
+          condiciones_defecto: null,
+        },
+      },
     ]);
   });
 

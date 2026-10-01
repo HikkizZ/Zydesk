@@ -2,6 +2,7 @@ import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
 import { diaMesDeFecha } from '@/components/dominio/formato-fecha';
+import { Monto } from '@/components/dominio/Monto';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { PillTipoOt } from '@/components/dominio/PillTipoOt';
@@ -45,7 +46,14 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
         <PillEtapaOt etapa={ot.etapa} />
       </TableCell>
       <TableCell className="font-mono text-sm whitespace-nowrap">
-        {formatoHoras.format(ot.horas.estimadas)} / {formatoHoras.format(ot.horas.registradas)} h
+        {ot.tipo === 'facturable' && ot.neto !== null ? (
+          <Monto valor={ot.neto} />
+        ) : (
+          <>
+            {formatoHoras.format(ot.horas.estimadas)} / {formatoHoras.format(ot.horas.registradas)}{' '}
+            h
+          </>
+        )}
       </TableCell>
       <TableCell className={cn('whitespace-nowrap', ot.vencida && 'font-semibold text-urgente')}>
         {ot.termino ? diaMesDeFecha(ot.termino) : <span className="text-tinta-3">—</span>}
@@ -78,7 +86,7 @@ export function TablaOts({ ots }: { ots: OtResumenDatos[] }) {
             <TableHead>Trabajo</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Etapa</TableHead>
-            <TableHead>Horas (est. / reg.)</TableHead>
+            <TableHead>Neto / horas</TableHead>
             <TableHead>Término</TableHead>
             <TableHead>Facturación</TableHead>
             <TableHead>Responsable</TableHead>

@@ -16,6 +16,7 @@ import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import { fuenteNumeros } from '../../core/numeracion/fuente.js';
 import { siguienteNumero } from '../../core/numeracion/numeracion.js';
+import { netoVigenteClp } from '../cotizaciones/cotizaciones.consulta.js';
 import { copiarAlTicket, insertarMensaje } from '../mensajes/mensajes.service.js';
 import { moverTareasAbiertas } from '../tareas/tareas.service.js';
 import {
@@ -83,7 +84,7 @@ export async function cerrarOt(
     }
     const efectos = efectosCierreOt(
       {
-        ot: { codigo: bloqueada.codigo, tipo: bloqueada.tipo, neto: null },
+        ot: { codigo: bloqueada.codigo, tipo: bloqueada.tipo, neto: await netoVigenteClp(tx, id) },
         ticket: { codigo: ticket.codigo, estado: ticket.estado, responsables, seguidores },
         responsable_siguiente:
           responsable_id === null

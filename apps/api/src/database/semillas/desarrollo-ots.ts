@@ -5,6 +5,7 @@ import {
   eliminarDeDisco,
   guardarBufferComoArchivo,
 } from '../../modulos/archivos/archivos.service.js';
+import { sembrarCotizacion } from './desarrollo-cotizaciones.js';
 import { fechaRelativa, instante, type Tx } from './desarrollo-tickets.js';
 
 // Semillas de OT de desarrollo (spec fase 3 §13): OT-0214 a OT-0219. Idempotentes por `codigo`; insertan
@@ -96,7 +97,7 @@ const PNG_1X1 = Buffer.from(
 );
 const FOTOS_218 = ['captura_error.png', 'log_erp_folios.png', 'emision_ok_qa.png'];
 
-async function evento(
+export async function evento(
   tx: Tx,
   entidad: 'ticket' | 'ot',
   entidad_id: number,
@@ -262,9 +263,22 @@ async function sembrarOt(
       );
     }
 
+    // Cotización v1 (spec fase 4 §14): sus eventos van antes de los `cambio etapa`, que llevan su id
+    const cotizacion_id = await sembrarCotizacion(
+      tx,
+      { id, codigo, contacto_id: contacto[0]?.id ?? null, aprobada_en },
+      personas,
+      evento,
+    );
+
     // Etapas
     if (o.tipo === 'facturable' && o.etapa !== 'borrador') {
-      await etapa(creador, ETAPA.borrador, ETAPA.cotizada);
+      await etapa(
+        creador,
+        ETAPA.borrador,
+        ETAPA.cotizada,
+        cotizacion_id === null ? null : { cotizacion_id },
+      );
     }
     if (o.tipo === 'interna' && o.aprobada_por) {
       await evento(tx, 'ot', id, p(o.aprobada_por), siguiente(), 'cambio', {
@@ -303,7 +317,13 @@ async function sembrarOt(
         campo: 'etapa',
         anterior: ETAPA.cotizada,
         nuevo: 'Aprobada por cliente',
-        datos: { contacto: contacto[0]!.nombre, fecha, forma: a.forma, archivo_id: archivo.id },
+        datos: {
+          contacto: contacto[0]!.nombre,
+          fecha,
+          forma: a.forma,
+          archivo_id: archivo.id,
+          ...(cotizacion_id === null ? {} : { cotizacion_id }),
+        },
       });
     }
     if (o.etapa === 'en_ejecucion' || o.etapa === 'cerrada') {

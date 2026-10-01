@@ -1,11 +1,13 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { Rol } from '@zydesk/shared';
-import { Route, Routes } from 'react-router';
+import { Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { ArchivoDatos, TicketDatos } from '@/features/tickets/api';
+import type { CotizacionSalidaDatos } from '@/features/cotizador/api';
 import type { OtDatos } from '@/features/ots/api';
+import { cotizacionDePrueba } from '@/test/cotizaciones';
 import { respuesta, simularFetch } from '@/test/fetch';
 import { otDePrueba } from '@/test/ots';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
@@ -53,10 +55,19 @@ const CLIENTE = {
   tarifas: [],
 };
 
+function Ubicacion() {
+  return <output aria-label="Ruta">{useLocation().pathname}</output>;
+}
+
 function montar(
   ot: OtDatos,
   rol: Rol = 'coordinacion',
-  opciones: { ticket?: TicketDatos; bolsaVigente?: boolean } = {},
+  opciones: {
+    ticket?: TicketDatos;
+    bolsaVigente?: boolean;
+    cotizacion?: CotizacionSalidaDatos;
+    manejador?: Parameters<typeof simularFetch>[0];
+  } = {},
 ) {
   const cliente = opciones.bolsaVigente
     ? {
@@ -77,27 +88,35 @@ function montar(
         },
       }
     : CLIENTE;
-  const llamadas = simularFetch(({ ruta, metodo }) => {
-    if (metodo !== 'GET') return undefined;
-    if (ruta === `/api/ots/${ot.id}`) return respuesta(200, ot);
-    if (ruta.startsWith(`/api/ots/${ot.id}/actividad`)) {
-      return respuesta(200, {
-        items: [],
-        conteos: { todo: 0, seguimiento: 0, nota_interna: 0, historial: 0 },
-      });
-    }
-    if (ruta === '/api/tickets/7') return respuesta(200, opciones.ticket ?? ticketDePrueba());
-    if (ruta.startsWith('/api/clientes/')) return respuesta(200, cliente);
-    if (ruta.startsWith('/api/clientes')) return respuesta(200, []);
-    if (ruta.startsWith('/api/usuarios')) return respuesta(200, USUARIOS_PRUEBA);
-    return undefined;
-  });
+  const llamadas = simularFetch(
+    (l) => opciones.manejador?.(l),
+    ({ ruta, metodo }) => {
+      if (metodo !== 'GET') return undefined;
+      if (opciones.cotizacion && ruta === `/api/cotizaciones/${opciones.cotizacion.id}`) {
+        return respuesta(200, opciones.cotizacion);
+      }
+      if (ruta === `/api/ots/${ot.id}`) return respuesta(200, ot);
+      if (ruta.startsWith(`/api/ots/${ot.id}/actividad`)) {
+        return respuesta(200, {
+          items: [],
+          conteos: { todo: 0, seguimiento: 0, nota_interna: 0, historial: 0 },
+        });
+      }
+      if (ruta === '/api/tickets/7') return respuesta(200, opciones.ticket ?? ticketDePrueba());
+      if (ruta.startsWith('/api/clientes/')) return respuesta(200, cliente);
+      if (ruta.startsWith('/api/clientes')) return respuesta(200, []);
+      if (ruta.startsWith('/api/usuarios')) return respuesta(200, USUARIOS_PRUEBA);
+      return undefined;
+    },
+  );
   render(
     <TooltipProvider>
       <ConSesion yo={yoDePrueba({ rol })} ruta={`/ots/${ot.id}`}>
         <Routes>
           <Route path="/ots/:id" element={<OtDetallePage />} />
+          <Route path="/cotizaciones/:id" element={<p>Pantalla del cotizador</p>} />
         </Routes>
+        <Ubicacion />
       </ConSesion>
     </TooltipProvider>,
   );
@@ -106,14 +125,14 @@ function montar(
 
 const boton = (nombre: string | RegExp) => screen.queryByRole('button', { name: nombre });
 
-it('muestra el encabezado, las etapas con Cotizada actual y la cotización deshabilitada', async () => {
+it('muestra el encabezado, las etapas con Cotizada actual y la cotización sin crear', async () => {
   montar(otDePrueba());
   expect(
     await screen.findByRole('heading', { level: 1, name: /Regularización de folios/ }),
   ).toBeTruthy();
   const actual = screen.getAllByRole('listitem').find((li) => li.hasAttribute('aria-current'));
   expect(actual?.textContent).toContain('Cotizada');
-  expect(screen.getByText('Cotizador disponible en la Fase 4')).toBeTruthy();
+  expect(screen.getByText('Sin cotización')).toBeTruthy();
   expect((boton('Crear cotización') as HTMLButtonElement).disabled).toBe(true);
   expect(screen.getAllByRole('link', { name: 'TK-1048' }).length).toBeGreaterThan(0);
 });
@@ -304,4 +323,227 @@ it('en una OT cerrada el redactor no pide horas y lo explica', async () => {
 it('en una OT en ejecución el redactor sí pide horas', async () => {
   montar(otDePrueba({ etapa: 'en_ejecucion' }), 'coordinacion');
   expect((await screen.findAllByRole('spinbutton')).length).toBeGreaterThan(0);
+});
+
+// Cotización e integración con el cotizador (spec fase 4 §12) --------------------------------
+
+const BREVE = (cambios: Partial<NonNullable<OtDatos['cotizacion']>> = {}) => {
+  const c = cotizacionDePrueba();
+  return {
+    id: c.id,
+    ot_id: c.ot_id,
+    codigo: c.codigo,
+    version: c.version,
+    estado: c.estado,
+    moneda: c.moneda,
+    neto: c.neto,
+    total: c.total,
+    neto_clp: c.neto_clp,
+    enviada_en: c.enviada_en,
+    actualizado_en: c.actualizado_en,
+    n_versiones: 1,
+    ...cambios,
+  };
+};
+
+const FACTURABLE_BORRADOR = () =>
+  otDePrueba({ etapa: 'borrador', tipo_cambiable: true, puede_cotizar: true });
+
+it('facturable en Borrador sin cotización: "Crear cotización" crea y abre el cotizador', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(FACTURABLE_BORRADOR(), 'tecnico', {
+    manejador: ({ metodo, ruta }) =>
+      metodo === 'POST' && ruta === '/api/ots/21/cotizaciones'
+        ? respuesta(201, cotizacionDePrueba({ id: 9, estado: 'borrador', editable: true }))
+        : undefined,
+  });
+  await screen.findByRole('heading', { level: 1 });
+  // Una en el encabezado (primaria) y otra en el panel.
+  const botones = screen.getAllByRole('button', { name: 'Crear cotización' });
+  expect(botones).toHaveLength(2);
+  expect(botones.every((b) => !(b as HTMLButtonElement).disabled)).toBe(true);
+  await usuario.click(botones[0] as HTMLElement);
+  await waitFor(() => expect(screen.getByLabelText('Ruta').textContent).toBe('/cotizaciones/9'));
+  expect(llamadas.some((l) => l.metodo === 'POST' && l.ruta === '/api/ots/21/cotizaciones')).toBe(
+    true,
+  );
+});
+
+it('con un borrador de cotización el encabezado ofrece "Revisar y enviar cotización"', async () => {
+  montar(
+    otDePrueba({
+      etapa: 'borrador',
+      puede_cotizar: true,
+      cotizacion: BREVE({ estado: 'borrador' }),
+    }),
+    'tecnico',
+  );
+  await screen.findByRole('heading', { level: 1 });
+  const enlace = screen.getByRole('link', { name: 'Revisar y enviar cotización' });
+  expect(enlace.getAttribute('href')).toBe('/cotizaciones/4');
+  expect(boton('Crear cotización')).toBeNull();
+});
+
+it('sin motivo para cotizar el botón queda deshabilitado y explica por qué', async () => {
+  const usuario = userEvent.setup();
+  montar(otDePrueba({ etapa: 'aprobada', puede_cotizar: false }), 'tecnico');
+  await screen.findByRole('heading', { level: 1 });
+  const crear = boton('Crear cotización') as HTMLButtonElement;
+  expect(crear.disabled).toBe(true);
+  await usuario.hover(crear.parentElement as HTMLElement);
+  expect((await screen.findAllByText('Solo en Borrador o Cotizada')).length).toBeGreaterThan(0);
+});
+
+it('un cliente interno explica que la OT necesita un cliente externo', async () => {
+  const usuario = userEvent.setup();
+  montar(
+    otDePrueba({
+      etapa: 'borrador',
+      puede_cotizar: false,
+      cliente: { id: 2, nombre: 'Interno', es_interno: true },
+    }),
+    'tecnico',
+  );
+  await screen.findByRole('heading', { level: 1 });
+  const crear = boton('Crear cotización') as HTMLButtonElement;
+  await usuario.hover(crear.parentElement as HTMLElement);
+  expect((await screen.findAllByText('La OT necesita un cliente externo')).length).toBeGreaterThan(
+    0,
+  );
+});
+
+it('el panel muestra la cotización: código, estado, neto, total, vencimiento y versiones', async () => {
+  montar(otDePrueba({ cotizacion: BREVE({ n_versiones: 2 }), neto: 475000 }), 'coordinacion', {
+    cotizacion: cotizacionDePrueba(),
+  });
+  const panel = await screen.findByRole('region', { name: 'Cotización' });
+  expect(within(panel).getByText('COT-0218 v1')).toBeTruthy();
+  expect(within(panel).getByText('Enviada')).toBeTruthy();
+  expect(within(panel).getByText('$475.000')).toBeTruthy();
+  expect(within(panel).getByText('$565.250')).toBeTruthy();
+  expect(await within(panel).findByText('30 oct')).toBeTruthy();
+  expect(within(panel).getByText('2 versiones')).toBeTruthy();
+  expect(within(panel).getByRole('link', { name: 'Abrir cotizador' }).getAttribute('href')).toBe(
+    '/cotizaciones/4',
+  );
+});
+
+it('con una sola versión el panel dice "1 versión"', async () => {
+  montar(otDePrueba({ cotizacion: BREVE() }), 'coordinacion', { cotizacion: cotizacionDePrueba() });
+  const panel = await screen.findByRole('region', { name: 'Cotización' });
+  expect(within(panel).getByText('1 versión')).toBeTruthy();
+});
+
+it('"Registrar aprobación del cliente…" se habilita solo con la cotización enviada', async () => {
+  const usuario = userEvent.setup();
+  montar(otDePrueba({ cotizacion: BREVE({ estado: 'borrador' }) }), 'coordinacion');
+  await screen.findByRole('heading', { level: 1 });
+  const registrar = boton('Registrar aprobación del cliente…') as HTMLButtonElement;
+  expect(registrar.disabled).toBe(true);
+  await usuario.hover(registrar.parentElement as HTMLElement);
+  expect(
+    (await screen.findAllByText('Primero marca la cotización como enviada')).length,
+  ).toBeGreaterThan(0);
+});
+
+it('con la cotización enviada, "Registrar aprobación…" está habilitado y el diálogo la nombra', async () => {
+  const usuario = userEvent.setup();
+  montar(otDePrueba({ cotizacion: BREVE() }), 'coordinacion', {
+    cotizacion: cotizacionDePrueba({
+      contacto: { id: 5, nombre: 'Paula Herrera', correo: null, area: null },
+    }),
+  });
+  await screen.findByRole('heading', { level: 1 });
+  const registrar = boton('Registrar aprobación del cliente…') as HTMLButtonElement;
+  expect(registrar.disabled).toBe(false);
+  await usuario.click(registrar);
+  const dialogo = await screen.findByRole('dialog');
+  expect(within(dialogo).getByText(/Aprueba/).textContent).toBe(
+    'Aprueba COT-0218 v1 · Total $565.250',
+  );
+  // El contacto de la cotización queda preseleccionado.
+  await waitFor(() =>
+    expect(
+      within(dialogo).getByRole('combobox', { name: 'Contacto que aprueba' }).textContent,
+    ).toContain('Paula Herrera'),
+  );
+});
+
+it('"Volver a borrador" con la cotización enviada avisa que quedará rechazada', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(otDePrueba({ cotizacion: BREVE() }), 'coordinacion', {
+    manejador: ({ metodo, ruta }) =>
+      metodo === 'POST' && ruta === '/api/ots/21/cambiar-etapa'
+        ? respuesta(200, otDePrueba({ etapa: 'borrador' }))
+        : undefined,
+  });
+  await screen.findByRole('heading', { level: 1 });
+  await usuario.click(boton('Volver a borrador') as HTMLElement);
+  const dialogo = await screen.findByRole('alertdialog');
+  expect(dialogo.textContent).toContain('La cotización COT-0218 v1 quedará rechazada');
+  expect(dialogo.textContent).toContain('podrás duplicarla como v2');
+  expect(llamadas.some((l) => l.ruta === '/api/ots/21/cambiar-etapa')).toBe(false);
+  await usuario.click(within(dialogo).getByRole('button', { name: 'Volver a borrador' }));
+  await waitFor(() =>
+    expect(llamadas.some((l) => l.ruta === '/api/ots/21/cambiar-etapa')).toBe(true),
+  );
+  expect(llamadas.find((l) => l.ruta === '/api/ots/21/cambiar-etapa')?.cuerpo).toEqual({
+    etapa: 'borrador',
+  });
+});
+
+it('"Volver a borrador" sin cotización enviada no pide confirmación', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(otDePrueba({ cotizacion: null }), 'coordinacion', {
+    manejador: ({ metodo, ruta }) =>
+      metodo === 'POST' && ruta === '/api/ots/21/cambiar-etapa'
+        ? respuesta(200, otDePrueba({ etapa: 'borrador' }))
+        : undefined,
+  });
+  await screen.findByRole('heading', { level: 1 });
+  await usuario.click(boton('Volver a borrador') as HTMLElement);
+  await waitFor(() =>
+    expect(llamadas.some((l) => l.ruta === '/api/ots/21/cambiar-etapa')).toBe(true),
+  );
+  expect(screen.queryByRole('alertdialog')).toBeNull();
+});
+
+it('ya no existe "Marcar como cotizada"', async () => {
+  montar(otDePrueba({ etapa: 'borrador', puede_cotizar: true }), 'coordinacion');
+  await screen.findByRole('heading', { level: 1 });
+  expect(boton(/Marcar como cotizada/)).toBeNull();
+});
+
+const INTERNA = (cambios: Partial<OtDatos> = {}) =>
+  otDePrueba({
+    tipo: 'interna',
+    estado_facturacion: 'no_aplica',
+    etapa: 'en_ejecucion',
+    horas: { estimadas: 10, reales: 4, registradas: 12 },
+    ...cambios,
+  });
+
+it('interna con tarifa: "12 h registradas × $18.000 = $216.000" y las horas reales', async () => {
+  montar(INTERNA({ costo_interno: { horas: 12, tarifa: 18000, monto: 216000 } }), 'tecnico');
+  const panel = await screen.findByRole('region', { name: 'Costo interno' });
+  expect(panel.textContent).toContain('12 h registradas × $18.000 = $216.000');
+  expect(within(panel).getByText('Horas reales')).toBeTruthy();
+  expect(screen.queryByRole('region', { name: 'Cotización' })).toBeNull();
+});
+
+it('interna sin tarifa: pide configurarla (enlace solo para admin)', async () => {
+  montar(INTERNA({ costo_interno: null }), 'admin');
+  const panel = await screen.findByRole('region', { name: 'Costo interno' });
+  expect(
+    within(panel).getByRole('link', { name: 'Configuración → Tarifas' }).getAttribute('href'),
+  ).toBe('/configuracion/tarifas');
+});
+
+it('interna sin tarifa para un técnico: el texto sin enlace', async () => {
+  montar(INTERNA({ costo_interno: null }), 'tecnico');
+  const panel = await screen.findByRole('region', { name: 'Costo interno' });
+  expect(
+    within(panel).getByText('Configura la tarifa de costo interno en Configuración → Tarifas'),
+  ).toBeTruthy();
+  expect(within(panel).queryByRole('link')).toBeNull();
 });

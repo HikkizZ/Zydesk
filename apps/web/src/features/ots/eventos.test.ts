@@ -128,3 +128,132 @@ it('eventos de tareas se describen como en un ticket', () => {
       .texto,
   ).toBe('agregó la tarea «Capacitación breve»');
 });
+
+// Cotizaciones (spec fase 4 §12) ------------------------------------------------------------
+
+it('cotización creada: chip con código y versión; desde otra versión', () => {
+  expect(
+    describirEventoOt(
+      evento({
+        accion: 'cotizacion_creada',
+        valor_nuevo: 'COT-0218 v1',
+        datos: { cotizacion_id: 4, codigo: 'COT-0218', version: 1 },
+      }),
+    ),
+  ).toEqual({ texto: 'creó la cotización', cambio: 'COT-0218 v1' });
+  expect(
+    describirEventoOt(
+      evento({
+        accion: 'cotizacion_creada',
+        valor_nuevo: 'COT-0218 v2',
+        datos: { cotizacion_id: 5, codigo: 'COT-0218', version: 2, desde_version: 1 },
+      }),
+    ),
+  ).toEqual({ texto: 'creó la cotización a partir de la v1', cambio: 'COT-0218 v2' });
+});
+
+it('cotización enviada, aprobada y rechazada llevan el chip de la API', () => {
+  expect(
+    describirEventoOt(
+      evento({ accion: 'cotizacion_enviada', valor_nuevo: 'COT-0218 v1 · $565.250' }),
+    ),
+  ).toEqual({ texto: 'marcó como enviada', cambio: 'COT-0218 v1 · $565.250' });
+  expect(
+    describirEventoOt(
+      evento({ accion: 'cotizacion_aprobada', valor_nuevo: 'COT-0218 v1 · $565.250' }),
+    ),
+  ).toEqual({ texto: 'el cliente aprobó', cambio: 'COT-0218 v1 · $565.250' });
+  expect(
+    describirEventoOt(evento({ accion: 'cotizacion_rechazada', valor_nuevo: 'COT-0218 v1' })),
+  ).toEqual({ texto: 'el cliente rechazó', cambio: 'COT-0218 v1' });
+});
+
+it('sin valor_nuevo el chip se arma con los datos', () => {
+  expect(
+    describirEventoOt(
+      evento({ accion: 'cotizacion_enviada', datos: { codigo: 'COT-0218', version: 3 } }),
+    ).cambio,
+  ).toBe('COT-0218 v3');
+});
+
+it('líneas agregadas desde las tareas o la plantilla, con singular y plural', () => {
+  expect(
+    describirEventoOt(
+      evento({ accion: 'cotizacion_lineas_agregadas', datos: { n: 4, origen: 'tareas' } }),
+    ).texto,
+  ).toBe('agregó 4 líneas desde las tareas');
+  expect(
+    describirEventoOt(
+      evento({
+        accion: 'cotizacion_lineas_agregadas',
+        datos: { n: 1, origen: 'plantilla', plantilla_id: 2 },
+      }),
+    ).texto,
+  ).toBe('agregó 1 línea desde la plantilla');
+});
+
+it('descarga y eliminación del borrador', () => {
+  expect(
+    describirEventoOt(
+      evento({
+        accion: 'cotizacion_descargada',
+        datos: { cotizacion_id: 4, codigo: 'COT-0218', version: 1, formato: 'xlsx' },
+      }),
+    ).texto,
+  ).toBe('descargó COT-0218 v1 en .xlsx');
+  expect(
+    describirEventoOt(
+      evento({
+        accion: 'cotizacion_eliminada',
+        valor_anterior: 'COT-0218 v2',
+        datos: { cotizacion_id: 5, codigo: 'COT-0218', version: 2 },
+      }),
+    ).texto,
+  ).toBe('eliminó el borrador COT-0218 v2');
+});
+
+it('edición de la cotización: cambió el campo de la cotización con el chip de montos', () => {
+  expect(
+    describirEventoOt(
+      evento({
+        campo: 'neto',
+        valor_anterior: '$400.000',
+        valor_nuevo: '$475.000',
+        datos: { cotizacion_id: 4, version: 2 },
+      }),
+    ),
+  ).toEqual({
+    texto: 'cambió el neto de la cotización',
+    cambio: '$400.000 → $475.000',
+    detalle: 'Versión 2',
+  });
+  expect(
+    describirEventoOt(
+      evento({
+        campo: 'lineas',
+        valor_anterior: '4 líneas',
+        valor_nuevo: '5 líneas',
+        datos: { cotizacion_id: 4, version: 1 },
+      }),
+    ).texto,
+  ).toBe('cambió las líneas de la cotización');
+});
+
+it('el cambio de etapa con cotizacion_id se sigue describiendo como cambio de etapa', () => {
+  expect(
+    describirEventoOt(
+      evento({
+        campo: 'etapa',
+        valor_anterior: 'Borrador',
+        valor_nuevo: 'Cotizada',
+        datos: { cotizacion_id: 4, codigo: 'COT-0218', version: 1 },
+      }),
+    ),
+  ).toEqual({ texto: 'cambió la etapa', cambio: 'Borrador → Cotizada' });
+});
+
+it('un cambio de contacto de la OT (sin cotizacion_id) no se confunde con el de la cotización', () => {
+  expect(
+    describirEventoOt(evento({ campo: 'contacto', valor_anterior: 'A', valor_nuevo: 'B' })).texto,
+  ).toBe('cambió el contacto');
+});

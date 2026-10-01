@@ -22,6 +22,18 @@ Una OT facturable en **Cotizada** espera la aprobación del cliente. Cuando el c
 
 Una OT solo se aprueba una vez. Si el cliente rechaza la cotización, usa **Volver a borrador**.
 
+### Aprobación con cotización
+
+Desde la Fase 4 la OT llega a Cotizada solo cuando alguien marca una cotización como enviada (ver [Cotizar una OT](01-tecnico.md#cotizar-una-ot)); la marca manual "Marcar como cotizada" ya no existe.
+
+- **Qué exige**: la cotización vigente de la OT debe estar **Enviada**. Si no hay cotización, o la vigente es un borrador (por ejemplo una v2 en preparación), el botón está deshabilitado con el aviso "Primero marca la cotización como enviada": hay que enviarla o eliminar el borrador. El diálogo muestra qué se aprueba ("Aprueba COT-0218 v1 · Total $565.250") y preselecciona el contacto de la cotización.
+- **Qué se congela**: al registrar la aprobación, la cotización queda **Aprobada**: no se edita, no se duplica y no se crea otra para esa OT. Es el monto que verán la lista de OT (columna Neto), el cierre ("$1.240.000 neto") y la facturación. La única salida es cancelar la OT; la cotización aprobada queda como historial.
+- **Qué pasa al volver a borrador**: si el cliente rechaza, **Volver a borrador** marca la cotización enviada como **Rechazada** (la app te lo advierte) y la OT vuelve a Borrador. El equipo la duplica como v2, la corrige y la envía de nuevo. Si la vigente era un borrador, no se toca.
+
+## Descargas e historial
+
+Cualquier persona con sesión puede descargar la cotización en `.xlsx` o PDF desde el Cotizador, también en Solo lectura. Cada descarga queda en el **Historial** de la OT ("descargó COT-0218 v1 en .xlsx") y en el registro de seguridad de Administración; los documentos no se guardan como archivos de la OT, se regeneran iguales cada vez. El historial de la OT registra además quién creó, envió, duplicó o eliminó cada versión, cada cambio de datos o líneas (con el neto y el total antes y después), y la aprobación o el rechazo del cliente.
+
 ## Cerrar una OT
 
 Una OT en **En ejecución** muestra **Cerrar OT…**. El diálogo pregunta:
@@ -67,4 +79,4 @@ Un ticket con una OT abierta no se puede resolver, descartar ni marcar como dupl
 
 ## Lo que todavía no está
 
-La cotización no se calcula en la app (se marca a mano que la OT está cotizada), no hay montos ni descargas, y los avisos por correo o en la app llegan en fases posteriores.
+La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y los avisos en la app y la pantalla de OT con indicadores en pesos llegan en fases posteriores.

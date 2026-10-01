@@ -1,9 +1,16 @@
 import {
   ESTADOS_TICKET_CERRADOS,
+  calcularCotizacion,
+  type EstadoCotizacion,
   type EstadoFacturacion,
   type EstadoTicket,
   type EtapaOt,
+  type Moneda,
+  type TarifasSalidaDatos,
+  type TipoLinea,
   type TipoOt,
+  type Unidad,
+  type ValidezDias,
 } from '@zydesk/shared';
 import argon2 from 'argon2';
 import type { Express } from 'express';
@@ -13,11 +20,17 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
+import { nombreCookie } from '../src/core/auth/cookie.js';
+import { crearSesion } from '../src/core/auth/sesiones.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Archivo } from '../src/modulos/archivos/archivo.entity.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
 import { Cliente } from '../src/modulos/clientes/cliente.entity.js';
 import { Contacto } from '../src/modulos/clientes/contacto.entity.js';
+import { PlantillaCotizacion } from '../src/modulos/configuracion/plantilla-cotizacion.entity.js';
+import { PlantillaLinea } from '../src/modulos/configuracion/plantilla-linea.entity.js';
+import { Cotizacion } from '../src/modulos/cotizaciones/cotizacion.entity.js';
+import { LineaCotizacion } from '../src/modulos/cotizaciones/linea-cotizacion.entity.js';
 import { ContratoBolsa } from '../src/modulos/clientes/contrato-bolsa.entity.js';
 import { Departamento } from '../src/modulos/departamentos/departamento.entity.js';
 import { HorarioDia } from '../src/modulos/departamentos/horario-dia.entity.js';
@@ -34,19 +47,22 @@ export const CONTRASENA_PRUEBA = 'Contrasena.Prueba.1';
 let secuencia = 0;
 const siguiente = (): number => ++secuencia;
 
-// Mismos parámetros que core/auth/contrasena.ts (§5.6); el hash de la contraseña por defecto se calcula una vez.
+// Mismos parámetros que core/auth/contrasena.ts (§5.6). Otras contraseñas se hashean al vuelo.
 const OPCIONES_HASH = {
   type: argon2.argon2id,
   memoryCost: 65536,
   timeCost: 3,
   parallelism: 1,
 } as const;
-let hashPorDefecto: Promise<string> | undefined;
+
+// argon2id de CONTRASENA_PRUEBA con los parámetros de producción, generado una vez (evita ~300 ms por archivo).
+// Si cambia la contraseña o la constante, falla el test de fabricas.test.ts que la verifica.
+export const HASH_CONTRASENA_PRUEBA =
+  '$argon2id$v=19$m=65536,p=1,t=3$gGfAP7vtYzeAzjID0Bwxfw$d67kReflrb9iLL7bYXopRHtdRR4cTOpH29OPSNf6gWY';
 
 async function hashear(contrasena: string): Promise<string> {
-  if (contrasena !== CONTRASENA_PRUEBA) return argon2.hash(contrasena, OPCIONES_HASH);
-  hashPorDefecto ??= argon2.hash(contrasena, OPCIONES_HASH);
-  return hashPorDefecto;
+  if (contrasena === CONTRASENA_PRUEBA) return HASH_CONTRASENA_PRUEBA;
+  return argon2.hash(contrasena, OPCIONES_HASH);
 }
 
 export async function crearUsuario(
@@ -377,6 +393,146 @@ export async function crearBolsa(
   });
 }
 
+type LineaPrueba = {
+  cantidad: number;
+  precio_unitario: number;
+  descuento_pct?: number;
+  tipo?: TipoLinea;
+  descripcion?: string;
+  unidad?: Unidad;
+};
+
+// Inserta la cotización y sus líneas calculando los totales con `calcularCotizacion` (la misma función
+// que usa la API). Por defecto: siguiente versión de la OT, borrador, CLP, IVA 19 %, 30 días, sin líneas.
+export async function crearCotizacion(
+  ot_id: number,
+  datos: {
+    version?: number;
+    estado?: EstadoCotizacion;
+    moneda?: Moneda;
+    valor_uf?: number | null;
+    aplica_iva?: boolean;
+    iva_pct?: number;
+    contacto_id?: number | null;
+    fecha_emision?: string;
+    validez_dias?: ValidezDias;
+    lineas?: LineaPrueba[];
+    condiciones?: string | null;
+    nota_interna?: string | null;
+  } = {},
+): Promise<Cotizacion> {
+  const ot = await dataSource.manager.findOneByOrFail(Ot, { id: ot_id });
+  let version = datos.version;
+  if (version === undefined) {
+    const [fila]: { n: number }[] = await dataSource.query(
+      `SELECT COALESCE(max(version), 0) + 1 AS n FROM cotizacion WHERE ot_id = $1`,
+      [ot_id],
+    );
+    version = fila!.n;
+  }
+  const estado = datos.estado ?? 'borrador';
+  const moneda = datos.moneda ?? 'CLP';
+  const aplica_iva = datos.aplica_iva ?? true;
+  const iva_pct = datos.iva_pct ?? 19;
+  const lineas = (datos.lineas ?? []).map((l) => ({ ...l, descuento_pct: l.descuento_pct ?? 0 }));
+  const calculo = calcularCotizacion(lineas, { moneda, aplica_iva, iva_pct });
+  const ahora = new Date();
+  const cotizacion = await dataSource.manager.save(Cotizacion, {
+    ot_id,
+    version,
+    codigo: `COT-${ot.codigo.replace(/^\D+/, '')}`,
+    estado,
+    contacto_id: datos.contacto_id ?? null,
+    fecha_emision: datos.fecha_emision ?? ahora.toISOString().slice(0, 10),
+    validez_dias: datos.validez_dias ?? 30,
+    moneda,
+    valor_uf: datos.valor_uf === undefined ? (moneda === 'UF' ? 38000 : null) : datos.valor_uf,
+    aplica_iva,
+    iva_pct,
+    condiciones: datos.condiciones ?? null,
+    nota_interna: datos.nota_interna ?? null,
+    subtotal: calculo.subtotal,
+    descuentos: calculo.descuentos,
+    neto: calculo.neto,
+    iva: calculo.iva,
+    total: calculo.total,
+    enviada_en: estado === 'borrador' ? null : ahora,
+    enviada_por: null,
+    aprobada_en: estado === 'aprobada' ? ahora : null,
+    rechazada_en: estado === 'rechazada' ? ahora : null,
+    creado_por: null,
+  });
+  for (const [i, l] of lineas.entries()) {
+    await dataSource.manager.save(LineaCotizacion, {
+      cotizacion_id: cotizacion.id,
+      orden: i + 1,
+      tipo: l.tipo ?? 'mano_de_obra',
+      descripcion: l.descripcion ?? `Línea ${i + 1}`,
+      cantidad: l.cantidad,
+      unidad: l.unidad ?? 'h',
+      precio_unitario: l.precio_unitario,
+      descuento_pct: l.descuento_pct,
+      total: calculo.lineas[i]!,
+    });
+  }
+  return cotizacion;
+}
+
+export async function crearPlantilla(
+  datos: {
+    nombre?: string;
+    lineas?: {
+      tipo?: TipoLinea;
+      descripcion?: string;
+      cantidad?: number;
+      unidad?: Unidad;
+      precio_unitario?: number | null;
+      descuento_pct?: number;
+    }[];
+  } = {},
+): Promise<PlantillaCotizacion> {
+  const n = siguiente();
+  const plantilla = await dataSource.manager.save(PlantillaCotizacion, {
+    nombre: datos.nombre ?? `Plantilla ${n}`,
+    descripcion: null,
+    condiciones: null,
+    activo: true,
+  });
+  for (const [i, l] of (datos.lineas ?? []).entries()) {
+    await dataSource.manager.save(PlantillaLinea, {
+      plantilla_id: plantilla.id,
+      orden: i + 1,
+      tipo: l.tipo ?? 'mano_de_obra',
+      descripcion: l.descripcion ?? `Línea ${i + 1}`,
+      cantidad: l.cantidad ?? 1,
+      unidad: l.unidad ?? 'h',
+      precio_unitario: l.precio_unitario ?? null,
+      descuento_pct: l.descuento_pct ?? 0,
+    });
+  }
+  return plantilla;
+}
+
+// Escribe la clave `tarifas` de `configuracion` fusionando con la semilla de la fábrica.
+export async function fijarTarifas(parcial: Partial<TarifasSalidaDatos> = {}): Promise<void> {
+  const tarifas: TarifasSalidaDatos = {
+    hora_normal: 38000,
+    hora_extendida: 45000,
+    hora_urgencia: null,
+    traslado_km: null,
+    costo_interno: null,
+    iva_pct: 19,
+    validez_dias_defecto: 30,
+    condiciones_defecto: null,
+    ...parcial,
+  };
+  await dataSource.query(
+    `INSERT INTO configuracion (clave, valor) VALUES ('tarifas', $1::jsonb)
+     ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor`,
+    [JSON.stringify(tarifas)],
+  );
+}
+
 // Directorio de archivos de los tests: el mismo que usa el Storage de la app (TEST_ARCHIVOS_DIR o uno temporal por proceso).
 export function directorioArchivosTest(): string {
   return directorioArchivos;
@@ -430,13 +586,29 @@ export function archivoDePrueba(nombre: string): Buffer {
   return fs.readFileSync(fileURLToPath(new URL(`./fixtures/${nombre}`, import.meta.url)));
 }
 
-// Ingresa por la API y devuelve la cookie, la cabecera CSRF y un agente de Supertest que ya las envía.
+// Devuelve la cookie, la cabecera CSRF y un agente de Supertest que ya las envía. Sin `contrasena` crea
+// la sesión directo en BD (sin argon2; no deja `ingreso_ok` ni actualiza `ultimo_ingreso`); con
+// `contrasena` ingresa por la API real.
 export async function ingresarComo(
   app: Express,
-  usuario: Pick<Usuario, 'correo'>,
-  contrasena: string = CONTRASENA_PRUEBA,
+  usuario: Pick<Usuario, 'correo'> & Partial<Pick<Usuario, 'id'>>,
+  contrasena?: string,
   mantener = false,
 ): Promise<{ cookie: string; csrf: string; agente: ReturnType<typeof request.agent> }> {
+  if (contrasena === undefined) {
+    const usuario_id =
+      usuario.id ??
+      (await dataSource.manager.findOneByOrFail(Usuario, { correo: usuario.correo })).id;
+    const { token } = await crearSesion(dataSource.manager, {
+      usuario_id,
+      mantener,
+      ip: '127.0.0.1',
+      user_agent: 'vitest',
+    });
+    const cookie = `${nombreCookie('test')}=${token}`;
+    const agente = request.agent(app).set('X-Requested-With', 'Zydesk').set('Cookie', cookie);
+    return { cookie, csrf: 'Zydesk', agente };
+  }
   const agente = request.agent(app).set('X-Requested-With', 'Zydesk');
   const res = await agente
     .post('/api/auth/ingresar')

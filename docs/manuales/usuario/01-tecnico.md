@@ -88,8 +88,8 @@ Arriba ves el código (`OT-0218`), el título, el tipo, la etapa, el ticket de o
 
 **Etapas.** Una OT facturable pasa por Borrador, Cotizada, Aprobada, En ejecución y Cerrada (y, si se cobra, **Facturada**, que se muestra como último paso). Una interna pasa por Borrador, Aprobada, En ejecución y Cerrada. Desde los botones de la OT puedes:
 
-- **Marcar como cotizada** (facturable en Borrador): por ahora la cotización se hace fuera de la app; el cotizador llega en una fase posterior. Exige que el cliente sea externo.
-- **Volver a borrador** (facturable en Cotizada, por ejemplo si el cliente rechaza).
+- **Crear cotización** o **Revisar y enviar cotización** (facturable en Borrador con cliente externo): la OT pasa a **Cotizada** sola cuando marcas la cotización como enviada (ver [Cotizar una OT](#cotizar-una-ot)). Ya no hay "Marcar como cotizada".
+- **Volver a borrador** (facturable en Cotizada, por ejemplo si el cliente rechaza). Si la cotización vigente estaba enviada, queda **Rechazada** y podrás duplicarla como nueva versión.
 - **Iniciar ejecución** (OT Aprobada). Si la OT no tenía fecha de inicio, queda con la de hoy.
 
 Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordinación o Administración: ver el [manual de coordinación](02-coordinacion.md). Si no tienes permiso, esos botones no aparecen y, en una interna en Borrador, verás "Pendiente de aprobación de …".
@@ -102,11 +102,62 @@ Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordina
 
 **Seguimiento, notas y copiar al ticket.** La actividad de la OT funciona como la del ticket (Actividad, Seguimiento, Notas internas e Historial). En el redactor, la casilla **Copiar al ticket** envía el mismo mensaje también al ticket de origen ("El avance también queda en TK-1048"). Si no la marcaste, cada mensaje de la OT tiene el botón **Copiar al ticket**; una vez copiado muestra "Copiado al ticket" y no se puede copiar de nuevo. Se copian seguimientos y notas internas, cada uno con su tipo. La copia comparte los archivos del original y no repite las horas ni las menciones. En el ticket, el mensaje copiado indica "Seguimiento · desde OT-0218".
 
+**Cotización y costo interno.** En una OT facturable, la tarjeta **Cotización** del panel muestra la cotización vigente (código, estado, neto, total, versiones y **Abrir cotizador**) o **Sin cotización** con el botón **Crear cotización**. En una OT interna, la tarjeta **Costo interno** muestra las horas registradas multiplicadas por la tarifa de costo interno ("12 h registradas × $18.000 = $216.000"); si Administración no la configuró, lo indica.
+
 **OT vinculadas.** En el detalle del ticket, la tarjeta **OT vinculadas** lista sus OT con tipo, etapa, facturación y, en las cerradas, si resolvieron o no el ticket. En el Tablero y la Tabla, cada ticket muestra su OT ("OT-0218 · Facturable"): la abierta más reciente o, si no hay, la cerrada más reciente; una OT cancelada no se muestra.
 
 ## Lista de órdenes de trabajo
 
-**Órdenes de trabajo** (`/ots`) es una vista de solo lectura de todas las OT, con filtros **Todas**, **Abiertas**, **Por facturar**, **Facturadas** e **Internas** (cada uno con su contador), búsqueda por código, título, cliente o ticket, y paginación. Cada fila abre la OT. Los cambios se hacen desde la OT, no desde la lista. La ficha de cada cliente tiene además una tarjeta con sus OT.
+**Órdenes de trabajo** (`/ots`) es una vista de solo lectura de todas las OT, con filtros **Todas**, **Abiertas**, **Por facturar**, **Facturadas** e **Internas** (cada uno con su contador), búsqueda por código, título, cliente o ticket, y paginación. Cada fila abre la OT. La columna **Neto / horas** muestra el neto en pesos de la cotización vigente en las facturables y las horas en las internas. Los cambios se hacen desde la OT, no desde la lista. La ficha de cada cliente tiene además una tarjeta con sus OT.
+
+## Cotizar una OT
+
+Una OT **facturable** con cliente externo se cotiza dentro de la app, en **Borrador** o **Cotizada**. Pueden cotizar quienes editan tickets (Administración, Coordinación y Técnicos); **Solo lectura** ve y descarga, pero no edita.
+
+### Crear la cotización
+
+En la OT pulsa **Crear cotización** (en el encabezado o en la tarjeta **Cotización**). Nace la versión 1 en **Borrador**, con el código de la OT (`OT-0218` → `COT-0218 v1`), el contacto de la OT, la fecha de hoy, la validez, el IVA y las condiciones comerciales por defecto que fijó Administración, en pesos y sin líneas. Se abre el **Cotizador**. Si ya hay un borrador, el botón dice **Revisar y enviar cotización**.
+
+### El Cotizador
+
+- **Datos**: contacto del cliente (los que aprueban cotizaciones llevan la marca "aprueba"), fecha de emisión, validez (**15 o 30 días**; se muestra "Vence el …"), moneda **CLP** o **UF** (con UF debes escribir el **valor de la UF** del día; la app no lo consulta), la casilla **Aplica IVA** (con el porcentaje vigente al crear la cotización), **Condiciones comerciales** (van en la planilla y el PDF) y **Nota interna** (solo el equipo la ve; nunca va en los documentos).
+- **Líneas**: tipo (Mano de obra, Material, Servicio, Traslado), descripción, cantidad, unidad (h, un, km, gl), precio unitario, descuento % y total. **Agregar línea** crea una de mano de obra a la tarifa de hora normal. Hasta 100 líneas.
+- **Totales**: subtotal, descuentos, **neto**, IVA (o "Exento") y **total**, al vuelo mientras editas. En pesos se redondea a enteros y en UF a dos decimales, línea por línea. Al **Guardar**, la API vuelve a calcular y lo que ves es lo que queda. En pantallas angostas los totales quedan fijos al pie y cada línea es una tarjeta.
+- **Versiones**: a la derecha, todas las versiones de la OT con su estado y total; cada una se abre.
+
+Con cambios sin guardar, **Importar horas**, **Aplicar plantilla** y **Marcar como enviada** piden guardar primero.
+
+### Importar horas de las tareas
+
+**Importar horas de las tareas…** agrega una línea de mano de obra por cada tarea de la OT con horas, con el título de la tarea como descripción. Eliges el origen: **estimadas** (por defecto) o **reales**. El precio es la tarifa de **hora normal** del cliente o, si no tiene, la global; el diálogo te dice cuál usará. Si ninguna está definida, la app pide configurarla (Administración, en **Configuración → Tarifas**). Las horas en horario extendido las ajustas a mano en la línea. No se puede importar en una cotización en UF (las tarifas están en pesos).
+
+### Aplicar una plantilla
+
+**Aplicar plantilla…** agrega las líneas de una plantilla de Administración. Las líneas sin precio toman la tarifa vigente (hora normal para `h`, traslado para `km`; materiales y gastos quedan en 0 para completarlos a mano). Si la cotización no tenía condiciones comerciales y la plantilla sí, se copian.
+
+### Descargar el documento
+
+**Descargar .xlsx** y **Descargar PDF** generan el documento al momento (`COT-0218_v1.xlsx`; con `-BORRADOR` si aún no se envió). La planilla trae fórmulas, de modo que el cliente puede revisarla; ambos llevan las condiciones comerciales y **nunca la nota interna**. Cada descarga queda en el historial de la OT y en el registro de seguridad; el documento no se guarda como archivo de la OT porque se regenera igual cada vez.
+
+### Marcar como enviada
+
+La app **no envía correos**: descarga el documento, envíalo al cliente y luego pulsa **Marcar como enviada…**. Exige al menos una línea y un contacto. Al confirmar:
+
+- la cotización queda **Enviada** y ya no se edita;
+- si la OT estaba en Borrador, pasa a **Cotizada**;
+- si había una versión anterior enviada, queda **Reemplazada**.
+
+Desde ahí, Coordinación registra la aprobación del cliente ([manual de coordinación](02-coordinacion.md)).
+
+### Corregir: duplicar como v2
+
+Una cotización enviada o rechazada no se edita: pulsa **Duplicar como v2** (o v3…). Se crea un borrador con los mismos datos y líneas, con la fecha de hoy y el mismo IVA de la original; la anterior conserva su estado hasta que envíes la nueva. Solo se duplica mientras la OT esté en Borrador o Cotizada: una cotización **aprobada** por el cliente queda congelada y no se duplica ni se cambia.
+
+**Eliminar borrador…** borra el borrador vigente (las versiones enviadas nunca se borran). Si era la única cotización, la OT vuelve a mostrar **Crear cotización**.
+
+### Lista de cotizaciones
+
+**Cotizador** en el menú abre `/cotizaciones`, una vista de solo lectura con los filtros **Todas**, **Borradores**, **Enviadas** y **Aprobadas**, búsqueda por código, OT o cliente, y las columnas cotización, OT, cliente, emisión, vencimiento, estado, neto y total. Muestra solo la versión vigente de cada OT; las anteriores se abren desde el panel de versiones del Cotizador.
 
 ## Tablero
 

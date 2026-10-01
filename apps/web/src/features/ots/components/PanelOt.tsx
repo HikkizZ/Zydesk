@@ -1,7 +1,11 @@
 import { ETIQUETA_FORMA_APROBACION } from '@zydesk/shared';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router';
+import { useQuery } from '@tanstack/react-query';
 import { Avatares } from '@/components/dominio/Avatares';
+import { Codigo } from '@/components/dominio/Codigo';
+import { Monto } from '@/components/dominio/Monto';
+import { PillEstadoCotizacion } from '@/components/dominio/PillEstadoCotizacion';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { diaMes, diaMesDeFecha, diaMesHora } from '@/components/dominio/formato-fecha';
 import { Pill } from '@/components/dominio/Pill';
@@ -9,7 +13,13 @@ import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { usePermiso } from '@/features/auth/SesionProvider';
+import {
+  clavesCotizacion,
+  cotizacion as obtenerCotizacion,
+  STALE_COTIZACIONES,
+} from '@/features/cotizador/api';
+import { BotonCrearCotizacion } from './BotonCrearCotizacion';
 import type { OtDatos } from '@/features/ots/api';
 import { describirEventoOt } from '@/features/ots/eventos';
 import type { EventoDatos } from '@/features/tickets/eventos';
@@ -35,18 +45,91 @@ function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode })
   );
 }
 
-function BotonDeshabilitado({ texto, pista }: { texto: string; pista: string }) {
+function TarjetaCotizacion({ ot }: { ot: OtDatos }) {
+  const c = ot.cotizacion;
+  // `vence_el` no viene en el resumen de la OT: se lee de la cotización cuando está enviada.
+  const detalle = useQuery({
+    queryKey: clavesCotizacion.una(c?.id ?? 0),
+    queryFn: () => obtenerCotizacion(c?.id as number),
+    enabled: c?.estado === 'enviada',
+    staleTime: STALE_COTIZACIONES,
+  });
+  if (!c) {
+    return (
+      <Tarjeta titulo="Cotización">
+        <EstadoVacio titulo="Sin cotización" accion={<BotonCrearCotizacion ot={ot} />} />
+      </Tarjeta>
+    );
+  }
   return (
-    <Tooltip>
-      <TooltipTrigger asChild>
-        <span tabIndex={0} className="inline-flex">
-          <Button type="button" variant="outline" disabled>
-            {texto}
-          </Button>
-        </span>
-      </TooltipTrigger>
-      <TooltipContent>{pista}</TooltipContent>
-    </Tooltip>
+    <Tarjeta titulo="Cotización">
+      <div className="flex flex-col gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2">
+          <Codigo>
+            {c.codigo} v{c.version}
+          </Codigo>
+          <PillEstadoCotizacion estado={c.estado} />
+        </div>
+        <dl>
+          <Dato etiqueta="Neto">
+            <Monto valor={c.neto} moneda={c.moneda} />
+          </Dato>
+          <Dato etiqueta="Total">
+            <Monto valor={c.total} moneda={c.moneda} className="font-semibold" />
+          </Dato>
+          {c.estado === 'enviada' && detalle.data ? (
+            <Dato etiqueta="Vence el">{diaMesDeFecha(detalle.data.vence_el)}</Dato>
+          ) : null}
+          <Dato etiqueta="Versiones">
+            {c.n_versiones} {c.n_versiones === 1 ? 'versión' : 'versiones'}
+          </Dato>
+        </dl>
+        <Button asChild variant="outline">
+          <Link to={`/cotizaciones/${c.id}`}>Abrir cotizador</Link>
+        </Button>
+      </div>
+    </Tarjeta>
+  );
+}
+
+function TarjetaCostoInterno({ ot }: { ot: OtDatos }) {
+  const puedeConfigurar = usePermiso('config.editar');
+  const costo = ot.costo_interno;
+  return (
+    <Tarjeta titulo="Costo interno">
+      {costo ? (
+        <p className="mb-2 text-sm">
+          <span className="font-mono">{horas(costo.horas)}</span> registradas ×{' '}
+          <Monto valor={costo.tarifa} /> = <Monto valor={costo.monto} className="font-semibold" />
+        </p>
+      ) : (
+        <p className="mb-2 text-sm text-tinta-2">
+          {puedeConfigurar ? (
+            <>
+              Configura la tarifa de costo interno en{' '}
+              <Link
+                to="/configuracion/tarifas"
+                className="text-acento underline underline-offset-2"
+              >
+                Configuración → Tarifas
+              </Link>
+            </>
+          ) : (
+            'Configura la tarifa de costo interno en Configuración → Tarifas'
+          )}
+        </p>
+      )}
+      <dl>
+        <Dato etiqueta="Horas reales">
+          <span className="font-mono">{horas(ot.horas.reales)}</span>
+        </Dato>
+        {costo ? null : (
+          <Dato etiqueta="Horas registradas">
+            <span className="font-mono">{horas(ot.horas.registradas)}</span>
+          </Dato>
+        )}
+      </dl>
+    </Tarjeta>
   );
 }
 
@@ -111,29 +194,7 @@ export function PanelOt({
   const ultimos = eventos.slice(-5).reverse();
   return (
     <aside aria-label="Datos de la OT" className="flex flex-col gap-4">
-      {ot.tipo === 'facturable' ? (
-        <Tarjeta titulo="Cotización">
-          <EstadoVacio
-            titulo="Cotizador disponible en la Fase 4"
-            descripcion="La cotización se hace por ahora fuera de la app."
-            accion={<BotonDeshabilitado texto="Crear cotización" pista="Fase 4" />}
-          />
-        </Tarjeta>
-      ) : (
-        <Tarjeta titulo="Costo interno">
-          <p className="mb-2 text-sm text-tinta-2">
-            Se calcula con la tarifa de costo interno (Fase 4)
-          </p>
-          <dl>
-            <Dato etiqueta="Horas reales">
-              <span className="font-mono">{horas(ot.horas.reales)}</span>
-            </Dato>
-            <Dato etiqueta="Horas registradas">
-              <span className="font-mono">{horas(ot.horas.registradas)}</span>
-            </Dato>
-          </dl>
-        </Tarjeta>
-      )}
+      {ot.tipo === 'facturable' ? <TarjetaCotizacion ot={ot} /> : <TarjetaCostoInterno ot={ot} />}
 
       <Tarjeta titulo="Aprobación">
         <Aprobacion ot={ot} />

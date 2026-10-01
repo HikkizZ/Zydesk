@@ -14,7 +14,11 @@ import type {
   MarcaSalidaDatos,
   NumeracionEntradaDatos,
   NumeracionSalidaDatos,
+  PlantillaCotizacionEntradaDatos,
+  PlantillaCotizacionSalidaDatos,
   RestablecerSalidaDatos,
+  TarifasEntradaDatos,
+  TarifasSalidaDatos,
   UsuarioCrearEntradaDatos,
   UsuarioEditarEntradaDatos,
   UsuarioSalidaDatos,
@@ -122,3 +126,28 @@ export const guardarNumeracion = (entrada: NumeracionEntradaDatos) =>
 
 export const historialNumeracion = () =>
   obtener<EventoSalidaDatos[]>('/api/config/numeracion/historial');
+
+// Tarifas y plantillas de cotización ------------------------------------------------------------
+export const tarifas = () => obtener<TarifasSalidaDatos>('/api/config/tarifas');
+
+export const guardarTarifas = (entrada: TarifasEntradaDatos) =>
+  enviar<TarifasSalidaDatos>('PUT', '/api/config/tarifas', entrada);
+
+// Sin `activo` la API devuelve solo las activas.
+export const plantillas = (activo?: 'false') =>
+  obtener<PlantillaCotizacionSalidaDatos[]>(
+    conQuery('/api/config/plantillas-cotizacion', { activo }),
+  );
+
+export const crearPlantilla = (entrada: PlantillaCotizacionEntradaDatos) =>
+  enviar<PlantillaCotizacionSalidaDatos>('POST', '/api/config/plantillas-cotizacion', entrada);
+
+export const guardarPlantilla = (id: number, entrada: PlantillaCotizacionEntradaDatos) =>
+  enviar<PlantillaCotizacionSalidaDatos>('PUT', `/api/config/plantillas-cotizacion/${id}`, entrada);
+
+export const cambiarActivoPlantilla = (id: number, activo: boolean) =>
+  enviar<PlantillaCotizacionSalidaDatos>(
+    'PATCH',
+    `/api/config/plantillas-cotizacion/${id}/activo`,
+    { activo },
+  );

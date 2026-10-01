@@ -75,6 +75,35 @@ export async function enviarMultipart<T>(ruta: string, formData: FormData): Prom
   return procesar<T>(ruta, res);
 }
 
+function nombreDeDescarga(cabecera: string | null): string | null {
+  if (!cabecera) return null;
+  const codificado = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(cabecera)?.[1];
+  if (codificado) {
+    try {
+      return decodeURIComponent(codificado.trim());
+    } catch {
+      // se prueba con `filename`
+    }
+  }
+  return /filename\s*=\s*"([^"]+)"/i.exec(cabecera)?.[1] ?? null;
+}
+
+// Descarga un binario `attachment` (spec fase 4 §11.1): el nombre sale del `Content-Disposition`.
+// Los errores JSON pasan por `procesar`, como en cualquier otra petición.
+export async function descargar(ruta: string): Promise<void> {
+  const res = await fetch(ruta, { credentials: 'same-origin' });
+  if (!res.ok) return procesar<void>(ruta, res);
+  const nombre = nombreDeDescarga(res.headers.get('Content-Disposition')) ?? 'descarga';
+  const url = URL.createObjectURL(await res.blob());
+  const enlace = document.createElement('a');
+  enlace.href = url;
+  enlace.download = nombre;
+  document.body.append(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+}
+
 // Arma `?a=1&b=2` omitiendo valores vacíos; para los filtros de las listas.
 export function conQuery(
   ruta: string,

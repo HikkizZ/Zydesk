@@ -1,2 +1,1 @@
-// cálculo de cotizaciones
-export {};
+export * from './calcular.js';

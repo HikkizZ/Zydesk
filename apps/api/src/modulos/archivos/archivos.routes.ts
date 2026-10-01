@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { ArchivoSalida, ArchivosPendientesQuery } from '@zydesk/shared';
 import { actorRequerido } from '../../core/auth/requiere.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
+import { contentDisposition } from '../../core/http/descarga.js';
 import { ruta } from '../../core/http/ruta.js';
 import {
   MAX_ARCHIVOS_POR_PETICION,
@@ -52,16 +53,6 @@ const recibirArchivos: RequestHandler = (req, res, next) => {
 
 const borrarTemporales = (files: Express.Multer.File[]) =>
   Promise.all(files.map((f) => fs.promises.unlink(f.path).catch(() => undefined)));
-
-// Nombre seguro para `filename=` (ASCII) y codificado para `filename*=` (RFC 5987).
-function contentDisposition(disposicion: 'inline' | 'attachment', nombre: string): string {
-  const ascii = nombre.replace(/[^\x20-\x7e]|["\\/;]/g, '_');
-  const codificado = encodeURIComponent(nombre).replace(
-    /[!'()*]/g,
-    (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`,
-  );
-  return `${disposicion}; filename="${ascii}"; filename*=UTF-8''${codificado}`;
-}
 
 export function crearRutasArchivos(): Router {
   const router = Router();

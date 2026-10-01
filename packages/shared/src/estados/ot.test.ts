@@ -131,11 +131,11 @@ describe('pasoVisual', () => {
 });
 
 describe('esquemas de etapa, cierre, cancelación y facturación', () => {
-  it('CambioEtapaOt acepta solo borrador, cotizada y en_ejecucion', () => {
-    for (const etapa of ['borrador', 'cotizada', 'en_ejecucion']) {
+  it('CambioEtapaOt acepta solo borrador y en_ejecucion', () => {
+    for (const etapa of ['borrador', 'en_ejecucion']) {
       expect(CambioEtapaOt.safeParse({ etapa }).success).toBe(true);
     }
-    for (const etapa of ['aprobada', 'cerrada', 'cancelada']) {
+    for (const etapa of ['cotizada', 'aprobada', 'cerrada', 'cancelada']) {
       expect(CambioEtapaOt.safeParse({ etapa }).success).toBe(false);
     }
   });

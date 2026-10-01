@@ -7,6 +7,12 @@ import {
   MarcaSalida,
   NumeracionEntrada,
   NumeracionSalida,
+  PlantillaActivoEntrada,
+  PlantillaCotizacionEntrada,
+  PlantillaCotizacionSalida,
+  PlantillasQuery,
+  TarifasEntrada,
+  TarifasSalida,
 } from '@zydesk/shared';
 import { actorRequerido } from '../../core/auth/requiere.js';
 import { ruta } from '../../core/http/ruta.js';
@@ -14,12 +20,22 @@ import {
   guardarLogo,
   guardarMarca,
   guardarNumeracion,
+  guardarTarifas,
   historialNumeracion,
   leerLogo,
+  leerTarifas,
   obtenerMarca,
   obtenerNumeracion,
   quitarLogo,
 } from './configuracion.service.js';
+import {
+  cambiarActivoPlantilla,
+  crearPlantilla,
+  editarPlantilla,
+  listarPlantillas,
+} from './plantillas.service.js';
+
+const paramsId = z.object({ id: z.coerce.number().int().positive() });
 
 export function crearRutasConfiguracion(): Router {
   const router = Router();
@@ -116,6 +132,76 @@ export function crearRutasConfiguracion(): Router {
     permiso: 'config.editar',
     respuesta: z.array(EventoSalida),
     handler: async () => historialNumeracion(),
+  });
+
+  ruta(router, {
+    metodo: 'get',
+    path: '/api/config/tarifas',
+    resumen: 'Tarifas globales, IVA y validez por defecto de las cotizaciones',
+    etiqueta: 'Configuración',
+    permiso: 'sesion',
+    respuesta: TarifasSalida,
+    handler: async () => leerTarifas(),
+  });
+
+  ruta(router, {
+    metodo: 'put',
+    path: '/api/config/tarifas',
+    resumen: 'Guardar tarifas, IVA y validez por defecto (no altera cotizaciones existentes)',
+    etiqueta: 'Configuración',
+    permiso: 'config.editar',
+    body: TarifasEntrada,
+    respuesta: TarifasSalida,
+    handler: async ({ actor, body }) => guardarTarifas(actorRequerido(actor), body),
+  });
+
+  ruta(router, {
+    metodo: 'get',
+    path: '/api/config/plantillas-cotizacion',
+    resumen: 'Listar plantillas de cotización (sin `activo`, solo las activas)',
+    etiqueta: 'Configuración',
+    permiso: 'sesion',
+    query: PlantillasQuery,
+    respuesta: z.array(PlantillaCotizacionSalida),
+    handler: async ({ query }) => listarPlantillas(query),
+  });
+
+  ruta(router, {
+    metodo: 'post',
+    path: '/api/config/plantillas-cotizacion',
+    resumen: 'Crear una plantilla de cotización',
+    etiqueta: 'Configuración',
+    permiso: 'config.editar',
+    body: PlantillaCotizacionEntrada,
+    respuesta: PlantillaCotizacionSalida,
+    status: 201,
+    handler: async ({ actor, body }) => crearPlantilla(actorRequerido(actor), body),
+  });
+
+  ruta(router, {
+    metodo: 'put',
+    path: '/api/config/plantillas-cotizacion/:id',
+    resumen: 'Reemplazar una plantilla de cotización y sus líneas',
+    etiqueta: 'Configuración',
+    permiso: 'config.editar',
+    params: paramsId,
+    body: PlantillaCotizacionEntrada,
+    respuesta: PlantillaCotizacionSalida,
+    handler: async ({ actor, params, body }) =>
+      editarPlantilla(actorRequerido(actor), params.id, body),
+  });
+
+  ruta(router, {
+    metodo: 'patch',
+    path: '/api/config/plantillas-cotizacion/:id/activo',
+    resumen: 'Activar o desactivar una plantilla de cotización',
+    etiqueta: 'Configuración',
+    permiso: 'config.editar',
+    params: paramsId,
+    body: PlantillaActivoEntrada,
+    respuesta: PlantillaCotizacionSalida,
+    handler: async ({ actor, params, body }) =>
+      cambiarActivoPlantilla(actorRequerido(actor), params.id, body),
   });
 
   return router;

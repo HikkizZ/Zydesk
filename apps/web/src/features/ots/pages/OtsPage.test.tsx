@@ -115,3 +115,43 @@ it('sin resultados explica que las OT se crean desde un ticket', async () => {
   expect(await screen.findByText('Sin órdenes de trabajo')).toBeTruthy();
   expect(screen.getByText('Se crean desde un ticket.')).toBeTruthy();
 });
+
+it('la columna "Neto / horas" muestra el neto de una facturable y las horas de una interna', async () => {
+  const facturable = otResumenDePrueba({ id: 18, codigo: 'OT-0218', neto: 475000 });
+  const interna = otResumenDePrueba({
+    id: 19,
+    codigo: 'OT-0219',
+    tipo: 'interna',
+    estado_facturacion: 'no_aplica',
+    horas: { estimadas: 6, reales: 4, registradas: 6 },
+  });
+  const sinCotizar = otResumenDePrueba({ id: 20, codigo: 'OT-0220', neto: null });
+  simularFetch(({ ruta, metodo }) => {
+    if (metodo !== 'GET') return undefined;
+    if (ruta.startsWith('/api/clientes')) return respuesta(200, []);
+    if (ruta.startsWith('/api/ots')) {
+      return respuesta(200, {
+        datos: [facturable, interna, sinCotizar],
+        total: 3,
+        pagina: 1,
+        por_pagina: 50,
+      });
+    }
+    return undefined;
+  });
+  render(
+    <TooltipProvider>
+      <ConSesion yo={yoDePrueba()} ruta="/ots">
+        <OtsPage />
+      </ConSesion>
+    </TooltipProvider>,
+  );
+  const fila = async (codigo: string) =>
+    (await screen.findByRole('link', { name: codigo })).closest('tr') as HTMLElement;
+  expect((await fila('OT-0218')).textContent).toContain('$475.000');
+  expect(screen.getByRole('columnheader', { name: 'Neto / horas' })).toBeTruthy();
+  expect((await fila('OT-0219')).textContent).toContain('6 / 6 h');
+  expect((await fila('OT-0219')).textContent).not.toContain('$');
+  // Facturable aún sin cotización: se muestran las horas como antes.
+  expect((await fila('OT-0220')).textContent).toContain('10 / 3 h');
+});

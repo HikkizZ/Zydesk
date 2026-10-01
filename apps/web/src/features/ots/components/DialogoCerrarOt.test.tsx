@@ -165,3 +165,15 @@ it('409 OT_ABIERTA reemplaza el contenido por la lista de OT con enlaces', async
   expect(enlace.getAttribute('href')).toBe('/ots/40');
   expect(screen.getByText(/En ejecución/)).toBeTruthy();
 });
+
+it('una facturable con neto muestra "($475.000 neto)" en "Qué va a pasar"', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion', neto: 475000 }));
+  await screen.findByText('Cerrar OT-0218');
+  expect(within(seccion()).getByText(/\(\$475\.000 neto\)/)).toBeTruthy();
+});
+
+it('sin neto (sin cotización) no menciona montos', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion', neto: null }));
+  await screen.findByText('Cerrar OT-0218');
+  expect(within(seccion()).queryByText(/neto\)/)).toBeNull();
+});

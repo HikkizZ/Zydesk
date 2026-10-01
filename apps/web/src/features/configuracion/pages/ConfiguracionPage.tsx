@@ -8,21 +8,19 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { CategoriasTab } from '../CategoriasTab';
 import { DepartamentosTab } from '../DepartamentosTab';
 import { EquipoTab } from '../EquipoTab';
 import { IngresosTab } from '../IngresosTab';
 import { NumeracionTab } from '../NumeracionTab';
+import { PlantillasTab } from '../PlantillasTab';
+import { TarifasTab } from '../TarifasTab';
 
 const PESTANAS = [
   { clave: 'equipo', etiqueta: 'Equipo y permisos' },
   { clave: 'departamentos', etiqueta: 'Departamentos y horarios' },
   { clave: 'categorias', etiqueta: 'Categorías y plazos' },
   { clave: 'numeracion', etiqueta: 'Numeración y marca' },
-] as const;
-
-const DESHABILITADAS = [
   { clave: 'tarifas', etiqueta: 'Tarifas' },
   { clave: 'plantillas', etiqueta: 'Plantillas' },
 ] as const;
@@ -37,7 +35,7 @@ export function ConfiguracionPage() {
   const { pestana } = useParams();
   const navigate = useNavigate();
 
-  // `tarifas` y `plantillas` (Fase 4) y cualquier otra ruta desconocida vuelven a Equipo.
+  // Cualquier ruta desconocida vuelve a Equipo.
   if (!esPestana(pestana)) return <Navigate to="/configuracion/equipo" replace />;
   const ir = (clave: string) => void navigate(`/configuracion/${clave}`);
 
@@ -60,18 +58,6 @@ export function ConfiguracionPage() {
                     {p.etiqueta}
                   </TabsTrigger>
                 ))}
-                {DESHABILITADAS.map((p) => (
-                  <Tooltip key={p.clave}>
-                    <TooltipTrigger asChild>
-                      <span tabIndex={0}>
-                        <TabsTrigger value={p.clave} disabled>
-                          {p.etiqueta}
-                        </TabsTrigger>
-                      </span>
-                    </TooltipTrigger>
-                    <TooltipContent>Fase 4</TooltipContent>
-                  </Tooltip>
-                ))}
               </TabsList>
             </Tabs>
           </div>
@@ -86,11 +72,6 @@ export function ConfiguracionPage() {
                     {p.etiqueta}
                   </SelectItem>
                 ))}
-                {DESHABILITADAS.map((p) => (
-                  <SelectItem key={p.clave} value={p.clave} disabled>
-                    {p.etiqueta} (Fase 4)
-                  </SelectItem>
-                ))}
               </SelectContent>
             </Select>
           </div>
@@ -101,6 +82,8 @@ export function ConfiguracionPage() {
       {pestana === 'departamentos' ? <DepartamentosTab /> : null}
       {pestana === 'categorias' ? <CategoriasTab /> : null}
       {pestana === 'numeracion' ? <NumeracionTab /> : null}
+      {pestana === 'tarifas' ? <TarifasTab /> : null}
+      {pestana === 'plantillas' ? <PlantillasTab /> : null}
       {pestana === 'ingresos' ? <IngresosTab /> : null}
     </div>
   );

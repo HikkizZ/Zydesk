@@ -1,5 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ETIQUETA_FORMA_APROBACION, FORMAS_APROBACION, type FormaAprobacion } from '@zydesk/shared';
+import {
+  ETIQUETA_FORMA_APROBACION,
+  FORMAS_APROBACION,
+  formatearMonto,
+  type FormaAprobacion,
+} from '@zydesk/shared';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { Campo } from '@/components/dominio/Campo';
@@ -18,6 +23,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { cliente as obtenerCliente } from '@/features/clientes/api';
+import {
+  clavesCotizacion,
+  cotizacion as obtenerCotizacion,
+  STALE_COTIZACIONES,
+} from '@/features/cotizador/api';
 import { Seleccion } from '@/features/configuracion/Seleccion';
 import { invalidarOt, registrarAprobacion, type OtDatos } from '@/features/ots/api';
 import { esDesactualizada, mensajeDeOt } from '@/features/ots/errores';
@@ -32,7 +42,16 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
     staleTime: 60_000,
   });
   const contactos = (cliente.data?.contactos ?? []).filter((c) => c.activo);
-  const [contactoId, setContactoId] = useState(ot.contacto?.id ? String(ot.contacto.id) : '');
+  // El contacto se preselecciona con el de la cotización (el resumen de la OT no lo trae: se lee de ella).
+  const cotizacion = useQuery({
+    queryKey: clavesCotizacion.una(ot.cotizacion?.id ?? 0),
+    queryFn: () => obtenerCotizacion(ot.cotizacion?.id as number),
+    enabled: ot.cotizacion !== null,
+    staleTime: STALE_COTIZACIONES,
+  });
+  const [elegido, setContactoId] = useState<string | null>(null);
+  const preseleccion = cotizacion.data?.contacto?.id ?? ot.contacto?.id;
+  const contactoId = elegido ?? (preseleccion ? String(preseleccion) : '');
   const [fecha, setFecha] = useState(hoyIso());
   const [forma, setForma] = useState<FormaAprobacion>('orden_de_compra');
   const [respaldo, setRespaldo] = useState<ArchivoDatos[]>([]);
@@ -82,6 +101,15 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
           Adjunta el respaldo (orden de compra, correo o cotización firmada). Es obligatorio.
         </DialogDescription>
       </DialogHeader>
+      {ot.cotizacion ? (
+        <p className="rounded-md bg-superficie-suave px-3 py-2 text-sm">
+          Aprueba{' '}
+          <strong className="font-mono">
+            {ot.cotizacion.codigo} v{ot.cotizacion.version}
+          </strong>{' '}
+          · Total {formatearMonto(ot.cotizacion.total, ot.cotizacion.moneda)}
+        </p>
+      ) : null}
       <form
         noValidate
         className="flex flex-col gap-4"

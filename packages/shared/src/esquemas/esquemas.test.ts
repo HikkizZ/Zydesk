@@ -11,7 +11,9 @@ import { IngresoEntrada } from './auth.js';
 import { OtCrearEntrada, OtEditarEntrada, OtsQuery } from './ot.js';
 import { TareaEntrada } from './tarea.js';
 import { MensajeEntrada } from './mensaje.js';
-import { CierreOt } from '../estados/ot.js';
+import { CambioEtapaOt, CierreOt } from '../estados/ot.js';
+import { CotizacionEntrada } from './cotizacion.js';
+import { PlantillaLineaEntrada, TarifasEntrada } from './configuracion.js';
 
 describe('rut', () => {
   it.each([
@@ -177,5 +179,95 @@ describe('esquemas de OT (Fase 3)', () => {
     expect(q.etapa).toEqual(['borrador', 'aprobada']);
     expect(q.orden).toBe('-actualizado_en');
     expect(OtsQuery.safeParse({ etapa: 'facturada' }).success).toBe(false);
+  });
+});
+
+describe('CotizacionEntrada', () => {
+  const linea = {
+    tipo: 'mano_de_obra',
+    descripcion: 'Horas de soporte',
+    cantidad: 3,
+    unidad: 'h',
+    precio_unitario: 38000,
+    descuento_pct: 0,
+  };
+  const base = {
+    contacto_id: null,
+    fecha_emision: '2026-09-29',
+    validez_dias: 30,
+    moneda: 'CLP',
+    valor_uf: null,
+    aplica_iva: true,
+    condiciones: null,
+    nota_interna: null,
+    lineas: [linea],
+  };
+
+  it('acepta una cotización válida', () => {
+    expect(CotizacionEntrada.safeParse(base).success).toBe(true);
+  });
+
+  it('rechaza UF sin valor_uf', () => {
+    expect(CotizacionEntrada.safeParse({ ...base, moneda: 'UF' }).success).toBe(false);
+    expect(CotizacionEntrada.safeParse({ ...base, moneda: 'UF', valor_uf: 38000.5 }).success).toBe(
+      true,
+    );
+  });
+
+  it('rechaza cantidad 0, descuento 101, descripción vacía y 101 líneas', () => {
+    const con = (cambio: object) => ({ ...base, lineas: [{ ...linea, ...cambio }] });
+    expect(CotizacionEntrada.safeParse(con({ cantidad: 0 })).success).toBe(false);
+    expect(CotizacionEntrada.safeParse(con({ descuento_pct: 101 })).success).toBe(false);
+    expect(CotizacionEntrada.safeParse(con({ descripcion: '  ' })).success).toBe(false);
+    expect(CotizacionEntrada.safeParse({ ...base, lineas: Array(101).fill(linea) }).success).toBe(
+      false,
+    );
+  });
+
+  it('descarta total, neto e iva_pct enviados por el cliente', () => {
+    const r = CotizacionEntrada.parse({ ...base, total: 1, neto: 1, iva_pct: 5 });
+    expect(r).not.toHaveProperty('total');
+    expect(r).not.toHaveProperty('neto');
+    expect(r).not.toHaveProperty('iva_pct');
+  });
+});
+
+describe('TarifasEntrada', () => {
+  const base = {
+    hora_normal: 38000,
+    hora_extendida: null,
+    hora_urgencia: null,
+    traslado_km: null,
+    costo_interno: null,
+    iva_pct: 19,
+    validez_dias_defecto: 30,
+    condiciones_defecto: null,
+  };
+  it('acepta montos enteros o null', () => {
+    expect(TarifasEntrada.safeParse(base).success).toBe(true);
+  });
+  it('rechaza decimales y negativos', () => {
+    expect(TarifasEntrada.safeParse({ ...base, hora_normal: 100.5 }).success).toBe(false);
+    expect(TarifasEntrada.safeParse({ ...base, traslado_km: -1 }).success).toBe(false);
+  });
+});
+
+describe('PlantillaLineaEntrada', () => {
+  it('acepta precio_unitario null', () => {
+    const r = PlantillaLineaEntrada.parse({
+      tipo: 'servicio',
+      descripcion: 'Visita',
+      unidad: 'gl',
+      precio_unitario: null,
+    });
+    expect(r.precio_unitario).toBeNull();
+    expect(r.cantidad).toBe(1);
+  });
+});
+
+describe('CambioEtapaOt', () => {
+  it('rechaza cotizada: la marca manual desapareció', () => {
+    expect(CambioEtapaOt.safeParse({ etapa: 'cotizada' }).success).toBe(false);
+    expect(CambioEtapaOt.safeParse({ etapa: 'borrador' }).success).toBe(true);
   });
 });

@@ -104,7 +104,7 @@ describe('sembrarDesarrollo', () => {
     expect(await contar('archivo', `entidad = 'ot' AND entidad_id = ${o.id}`)).toBe(3);
     expect(await contar('mensaje', `ot_id = ${o.id}`)).toBe(1);
     expect(await contar('registro_horas', `ot_id = ${o.id} AND horas = 3`)).toBe(1);
-    expect(await contar('evento', `entidad = 'ot' AND entidad_id = '${o.id}'`)).toBe(6);
+    expect(await contar('evento', `entidad = 'ot' AND entidad_id = '${o.id}'`)).toBe(8);
     const [o216] = await dataSource.query(
       `SELECT o.id, o.etapa, o.estado_facturacion, o.resolvio_ticket FROM ot o WHERE codigo = 'OT-0216'`,
     );
@@ -132,5 +132,57 @@ describe('sembrarDesarrollo', () => {
     expect(res.body.ots.map((x: { codigo: string }) => x.codigo)).toEqual(['OT-0218']);
     const lista = await agente.get('/api/tickets?q=1048');
     expect(lista.body.datos[0].ot_vinculada.codigo).toBe('OT-0218');
+  });
+
+  it('siembra 4 cotizaciones idempotentes, 3 plantillas y las tarifas del diseño', async () => {
+    await sembrarDesarrollo(CLAVE);
+    await sembrarDesarrollo(CLAVE);
+    expect(await contar('cotizacion')).toBe(4);
+    expect(await contar('plantilla_cotizacion', 'activo')).toBe(3);
+    expect(await contar('plantilla_linea')).toBe(10);
+    const [c] = await dataSource.query(
+      `SELECT c.id, c.estado, c.neto::float8 AS neto, c.total::float8 AS total, c.enviada_por
+         FROM cotizacion c WHERE codigo = 'COT-0218' AND version = 1`,
+    );
+    expect(c).toMatchObject({ estado: 'enviada', neto: 475000, total: 565250 });
+    expect(c.enviada_por).not.toBeNull();
+    expect(await contar('linea_cotizacion', `cotizacion_id = ${c.id}`)).toBe(5);
+    expect(await contar('cotizacion', "estado = 'aprobada' AND aprobada_en IS NOT NULL")).toBe(2);
+    const [o218] = await dataSource.query(`SELECT id FROM ot WHERE codigo = 'OT-0218'`);
+    for (const accion of ['cotizacion_creada', 'cotizacion_enviada']) {
+      expect(
+        await contar(
+          'evento',
+          `entidad = 'ot' AND entidad_id = '${o218.id}' AND accion = '${accion}' AND datos->>'cotizacion_id' = '${c.id}'`,
+        ),
+      ).toBe(1);
+    }
+    expect(
+      await contar(
+        'evento',
+        `entidad = 'ot' AND entidad_id = '${o218.id}' AND campo = 'etapa' AND datos->>'cotizacion_id' = '${c.id}'`,
+      ),
+    ).toBe(1);
+    expect(await contar('evento', "accion = 'cotizacion_aprobada'")).toBe(2);
+
+    const agente = request
+      .agent(crearApp({ comprobarBd: async () => true }))
+      .set('X-Requested-With', 'Zydesk');
+    await agente
+      .post('/api/auth/ingresar')
+      .send({ correo: 'hikki@zydesk.local', contrasena: CLAVE });
+    const lista = await agente.get('/api/ots');
+    expect(lista.status).toBe(200);
+    const neto = (codigo: string) =>
+      lista.body.datos.find((x: { codigo: string }) => x.codigo === codigo).neto;
+    expect(neto('OT-0218')).toBe(475000);
+    expect(neto('OT-0217')).toBe(1240000);
+    expect(neto('OT-0214')).toBe(2150000);
+    expect(neto('OT-0216')).toBe(680000);
+
+    const [o215] = await dataSource.query(`SELECT id FROM ot WHERE codigo = 'OT-0215'`);
+    const det = await agente.get(`/api/ots/${o215.id}`);
+    expect(det.body.costo_interno.tarifa).toBe(18000);
+    expect(det.body.costo_interno.monto).toBe(det.body.horas.registradas * 18000);
   });
 });

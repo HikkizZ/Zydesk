@@ -9,5 +9,11 @@ export interface EventosDominio {
   'ot.por_facturar': { ot_id: number };
   'ot.por_aprobar': { ot_id: number; aprobador_id: number };
   'ot.cancelada': { ot_id: number; ticket_id: number; destinatarios_ids: number[] };
+  'cotizacion.respondida': {
+    ot_id: number;
+    cotizacion_id: number;
+    resultado: 'aprobada' | 'rechazada';
+    destinatarios_ids: number[]; // responsables ∪ seguidores del ticket
+  };
 }
 export type NombreEventoDominio = keyof EventosDominio;

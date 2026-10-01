@@ -15,6 +15,7 @@ import { crearRutasAuditoria } from './modulos/auditoria/auditoria.routes.js';
 import { crearRutasAuth } from './modulos/auth/auth.routes.js';
 import { crearRutasClientes } from './modulos/clientes/clientes.routes.js';
 import { crearRutasConfiguracion } from './modulos/configuracion/configuracion.routes.js';
+import { crearRutasCotizaciones } from './modulos/cotizaciones/cotizaciones.routes.js';
 import { crearRutasCorreos } from './modulos/correos/correos.routes.js';
 import { crearRutasCategorias } from './modulos/categorias/categorias.routes.js';
 import { crearRutasDepartamentos } from './modulos/departamentos/departamentos.routes.js';
@@ -64,6 +65,7 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasPlazos());
   app.use(crearRutasTickets());
   app.use(crearRutasOts());
+  app.use(crearRutasCotizaciones());
   app.use(crearRutasMensajes());
   app.use(crearRutasTareas());
   app.use(crearRutasArchivos());

@@ -16,3 +16,4 @@ export * from './tarea.js';
 export * from './mensaje.js';
 export * from './ot.js';
 export * from './ticket.js';
+export * from './cotizacion.js';

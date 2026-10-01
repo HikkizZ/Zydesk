@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { QueryFailedError } from 'typeorm';
 import { logger } from '../../config/logger.js';
 import { ErrorApp } from './error-app.js';
 
@@ -55,6 +56,21 @@ export const manejadorErrores: ErrorRequestHandler = (err, _req, res, _next) => 
     }
     return;
   }
-  logger.error({ err }, 'error no controlado');
+  // QueryFailedError trae `query` y `parameters` (contenido y montos): no se registran.
+  if (err instanceof QueryFailedError) {
+    logger.error(
+      {
+        err: {
+          type: err.name,
+          message: err.message,
+          code: (err.driverError as { code?: unknown } | undefined)?.code,
+          stack: err.stack,
+        },
+      },
+      'error no controlado',
+    );
+  } else {
+    logger.error({ err }, 'error no controlado');
+  }
   res.status(500).json({ error: { codigo: 'INTERNO', mensaje: 'Error interno' } });
 };
