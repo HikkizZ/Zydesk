@@ -623,7 +623,11 @@ En el navegador (1440 px y 390 px): `/cotizaciones/<COT-0218 v1>` reproduce el d
   - `CotizacionBreve` no trae `vence_el` ni `contacto`: el panel de la OT los lee con `GET /api/cotizaciones/:id`.
   - En UF, "Agregar línea" deja el precio en 0.
   - `/cotizaciones` muestra solo las vigentes; las versiones anteriores se abren desde el panel de versiones.
-- **Siguiente**: bloque 4G (F4-T14 semillas), verificación en el navegador, F4-T15 revisión de seguridad y F4-T16 documentación y cierre.
+- **F4-T14 (bloque 4G) hecho**: semillas de cotizaciones, plantillas y tarifas de desarrollo (`bbfcf84`). Las OT internas de la semilla no tienen horas registradas, así que su costo interno es $0.
+- **Verificación en el navegador hecha** a 1440 y 390 px: flujo duplicar → editar → guardar → descargas → enviar con la v1 reemplazada; volver a borrador deja la cotización rechazada; importar horas con tarifa del cliente a 40.000; permisos de técnico (cotiza, no configura ni aprueba) y de lectura (ve y descarga, no edita).
+- **F4-T15 hecho** (`44d6c3b`): 3 hallazgos corregidos con test (F4-SEC-01 tope de totales y manejador sin `query`/`parameters`; F4-SEC-02 contacto revalidado al enviar y escritura en `ot` vía `asignarContactoSiVacio`; F4-SEC-03 barra invertida en `contentDisposition`) y 1 descartado (F4-SEC-04: descarga `GET` sin CSRF que deja `evento`/`auditoria`, mismo patrón aceptado para `/api/archivos`). Suite final de la API: 602 tests + 2 omitidos en ~2 min.
+- **F4-T16 hecho**: ADR 0025, `README.md` de decisiones, CHANGELOG, manuales (técnico, coordinación, administración), guía de la API, `CLAUDE.md` y `openapi.json` regenerado.
+- **Siguiente**: PR a `main` con CI verde, previa confirmación del usuario.
 
 ## 20. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0025 "Precisiones de la Fase 4" al cerrar)
 

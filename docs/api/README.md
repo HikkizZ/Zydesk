@@ -67,7 +67,7 @@ Una OT nace de un ticket (`POST /api/tickets/:id/convertir-en-ot`) y se opera ba
 # Convertir un ticket en OT (201 con la OT en borrador; las tareas pendientes del ticket pasan a ella)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"tipo":"facturable"}' http://localhost:3010/api/tickets/1/convertir-en-ot
 
-# Etapas sin permiso especial: borrador, cotizada y en_ejecucion
+# Etapas sin permiso especial: borrador y en_ejecucion (cotizada se alcanza al enviar una cotización)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json"   -d '{"etapa":"en_ejecucion"}' http://localhost:3010/api/ots/1/cambiar-etapa
 
 # Cerrar resolviendo el ticket (409 OT_ABIERTA si el ticket tiene otras OT abiertas)
@@ -88,6 +88,38 @@ Otras rutas: `GET /api/ots` (filtros `q`, `ticket_id`, `cliente_id`, `tipo`, `et
 Errores propios: `OT_CERRADA` (409, la OT está cerrada o cancelada), `OT_TIPO_BLOQUEADO` (409, el tipo y el cliente solo cambian en Borrador), `MENSAJE_YA_COPIADO` (409) y `TRANSICION_INVALIDA` (409, con `detalles.entidad = 'ot'`).
 
 Un cuerpo JSON mal formado responde `400 VALIDACION` (`detalles.body`).
+
+## Cotizaciones
+
+Una cotización nace de una OT facturable con cliente externo (`POST /api/ots/:id/cotizaciones`) y se opera bajo `/api/cotizaciones`. Su código deriva de la OT (`OT-0218` → `COT-0218`) y se versiona (`version` 1, 2…); la **vigente** es la de mayor versión y es la única que se edita, envía, duplica o elimina. Permisos: `tickets.editar` para toda mutación; cualquier sesión lee, lista y descarga. La API **recalcula los totales** con la función de `shared` y descarta `total`, `neto`, `iva_pct` y `totales` del cuerpo.
+
+```bash
+# Crear la v1 en borrador (201; 409 COTIZACION_NO_EDITABLE si ya hay un borrador o una enviada vigente)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/ots/1/cotizaciones
+
+# Guardar encabezado y todas las líneas (PUT completo; en UF, valor_uf es obligatorio)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -X PUT \
+  -d '{"contacto_id":1,"fecha_emision":"2026-10-01","validez_dias":30,"moneda":"CLP","valor_uf":null,"aplica_iva":true,"condiciones":"Forma de pago: 30 días.","nota_interna":null,"lineas":[{"tipo":"mano_de_obra","descripcion":"Diagnóstico","cantidad":3,"unidad":"h","precio_unitario":38000,"descuento_pct":0}]}' \
+  http://localhost:3010/api/cotizaciones/1
+
+# Importar horas de las tareas (origen: estimadas | reales) o aplicar una plantilla
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -d '{"origen":"estimadas"}' http://localhost:3010/api/cotizaciones/1/importar-horas
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -d '{"plantilla_id":1}' http://localhost:3010/api/cotizaciones/1/aplicar-plantilla
+
+# Marcar como enviada (exige líneas y contacto; la OT pasa a cotizada; la versión enviada anterior queda reemplazada)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/cotizaciones/1/enviar
+
+# Duplicar como nueva versión (201; 409 COTIZACION_APROBADA si ya fue aprobada)
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/cotizaciones/1/duplicar
+
+# Descargar (la cookie basta; attachment "COT-0218_v1.xlsx" o ".pdf", con -BORRADOR si no se envió)
+curl -b cookies.txt -OJ http://localhost:3010/api/cotizaciones/1/descargar.xlsx
+curl -b cookies.txt -OJ http://localhost:3010/api/cotizaciones/1/descargar.pdf
+```
+
+Otras rutas: `GET /api/cotizaciones` (filtros `q`, `estado`, `cliente_id`, `ot_id`, `solo_vigentes`, `orden`), `GET|DELETE /api/cotizaciones/:id` (eliminar solo el borrador vigente), `GET|PUT /api/config/tarifas` (`PUT` con `config.editar`) y `GET|POST /api/config/plantillas-cotizacion`, `PUT /api/config/plantillas-cotizacion/:id`, `PATCH /api/config/plantillas-cotizacion/:id/activo` (mutaciones con `config.editar`). `PUT /api/ots/:id/aprobacion` exige una cotización vigente `enviada` y la deja `aprobada`; `POST /api/ots/:id/cambiar-etapa { "etapa": "borrador" }` desde Cotizada la deja `rechazada`.
+
+Errores propios: `COTIZACION_NO_EDITABLE` (409, no es borrador o no es la vigente), `COTIZACION_APROBADA` (409, lo aprobado está congelado), `COTIZACION_REQUERIDA` (409, la OT necesita una cotización enviada; `detalles.cotizacion`) y `TARIFA_FALTANTE` (409, `detalles.concepto`). Cada descarga deja un `evento` en la OT y una fila `exportacion` en `auditoria`.
 
 ## Regenerar `openapi.json`
 
