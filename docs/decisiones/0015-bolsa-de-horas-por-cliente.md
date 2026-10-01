@@ -1,6 +1,6 @@
 # ADR 0015 — Bolsa de horas opcional por cliente
 
-**Estado**: aceptada · 2026-09-29 · cierra la pregunta abierta B6 · precisada por ADR 0023 (Fase 3)
+**Estado**: aceptada · 2026-09-29 · cierra la pregunta abierta B6 · precisada por ADR 0023 (Fase 3) y por ADR 0024 (seguridad de la Fase 3)
 
 ## Contexto
 

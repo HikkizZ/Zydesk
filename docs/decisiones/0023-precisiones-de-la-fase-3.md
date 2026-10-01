@@ -1,6 +1,6 @@
 # ADR 0023 — Precisiones surgidas al especificar e implementar la Fase 3
 
-**Estado**: aceptada · 2026-10-01 · precisa a ADR 0003, 0004, 0008, 0009, 0010, 0011, 0015, 0021 y 0022 (no cambia sus decisiones de fondo)
+**Estado**: aceptada · 2026-10-01 · precisa a ADR 0003, 0004, 0008, 0009, 0010, 0011, 0015, 0021 y 0022 (no cambia sus decisiones de fondo) · precisada por ADR 0024 (seguridad de la Fase 3)
 
 ## Contexto
 
