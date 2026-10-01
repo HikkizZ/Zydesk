@@ -76,6 +76,7 @@ export function otDePrueba(cambios: Partial<OtDatos> = {}): OtDatos {
     },
     cotizacion: null,
     costo_interno: null,
+    puede_cotizar: false,
     tipo_cambiable: true,
     creado_por: { id: 2, nombre: 'Camila Rojas' },
     ...cambios,

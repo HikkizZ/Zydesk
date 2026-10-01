@@ -89,7 +89,7 @@ function aResumen(f: FilaResumen): OtResumenDatos {
     cliente: f.cliente,
     responsable_tecnico: aBreve(f.responsable_tecnico),
     aprobador: aBreve(f.aprobador),
-    neto: null, // Fase 4
+    neto: null, // F4-T5
     horas: f.horas,
     inicio: f.inicio,
     termino: f.termino,
@@ -384,8 +384,9 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
       seguidores: seguidores.map((s) => aBreve(s)!),
       otras_ots_abiertas: otras,
     },
-    cotizacion: null, // Fase 4
-    costo_interno: null, // Fase 4/5
+    cotizacion: null, // F4-T5
+    costo_interno: null, // F4-T5
+    puede_cotizar: false, // F4-T5
     tipo_cambiable: resumen.etapa === 'borrador',
     creado_por: e.creado_por,
   };

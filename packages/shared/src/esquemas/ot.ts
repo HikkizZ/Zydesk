@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { ESTADOS_FACTURACION, ETAPAS_OT, FORMAS_APROBACION, TIPOS_OT } from '../enums/ot.js';
 import { ESTADOS_TICKET } from '../enums/ticket.js';
 import { ArchivoSalida } from './archivo.js';
+import { CotizacionBreve } from './cotizacion.js';
 import {
   ClienteBreve,
   Responsable,
@@ -100,7 +101,7 @@ export const OtResumen = OtBreve.extend({
   cliente: ClienteBreve.nullable(),
   responsable_tecnico: UsuarioBreve.nullable(),
   aprobador: UsuarioBreve.nullable(),
-  neto: z.null(), // Fase 4
+  neto: z.number().nullable(), // neto en CLP de la cotización vigente (enClp); null si no hay o falta valor_uf
   horas: HorasOt,
   inicio: fechaIso.nullable(),
   termino: fechaIso.nullable(),
@@ -142,8 +143,9 @@ export const OtSalida = OtResumen.extend({
     seguidores: z.array(UsuarioBreve),
     otras_ots_abiertas: z.array(z.object({ id, codigo: z.string(), etapa: z.enum(ETAPAS_OT) })),
   }),
-  cotizacion: z.null(), // Fase 4
-  costo_interno: z.null(), // Fase 4/5
+  cotizacion: CotizacionBreve.extend({ n_versiones: z.number().int() }).nullable(), // la vigente
+  costo_interno: z.object({ horas: z.number(), tarifa: z.number(), monto: z.number() }).nullable(), // OT interna con tarifa configurada
+  puede_cotizar: z.boolean(), // facturable && etapa borrador|cotizada && cliente externo
   tipo_cambiable: z.boolean(), // etapa === 'borrador'
   creado_por: referencia.nullable(),
 });
