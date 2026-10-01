@@ -405,7 +405,16 @@ En el navegador (1440 px y 390 px): `/horas` con `sdiaz` reproduce el diseño "R
 
 ### Estado de avance (2026-10-01)
 
-- Spec aprobada. **Siguiente**:
+- **F5-T1 y T2 (bloque 5A) hechos**:
+  - `reiniciarBd` borra `registro_horas` primero, por sus FK con `SET NULL` y los `CHECK` nuevos.
+  - El test de la Fase 3 que insertaba una fila sin destino ahora espera el `CHECK`.
+- **F5-T3 a T6 (bloque 5B) hechos** (API: 655 tests + 2 omitidos). Desviaciones:
+  - `dia_semana` usa 0 = domingo, como `horario_dia`; la web ordena por el índice de la columna.
+  - Los tests de mutaciones e integraciones están en `horas.mutaciones.test.ts` y `horas.integraciones.test.ts`.
+  - PATCH con `descripcion: null` en "Sin ticket" → 400; con `tarea_id` en una fila de ticket o "Sin ticket" → 400.
+  - Ver una planilla ajena sin permiso → 403, antes del 404 de un usuario inexistente.
+  - En `clientes.test.ts`, el contrato vigente devuelve `horas_usadas_mes: 0`, ya no `null`.
+- Spec aprobada. **Siguiente** (pendiente desde 5C):
   1. 5A (F5-T1, T2).
   2. 5B (F5-T3 a T6).
   3. 5C y 5D en paralelo (F5-T7 a T9).
