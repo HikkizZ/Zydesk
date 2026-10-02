@@ -43,6 +43,39 @@ Pulsa **Cerrar sesión** al final de tu Perfil (en el celular también está en 
 
 La aplicación no envía correos, así que no hay un enlace de recuperación. **Pide a Administración que la restablezca**: te dará una contraseña temporal y al ingresar elegirás una nueva.
 
+## Mi día
+
+**Mi día** es la pantalla con la que abre la app (también en el menú y en la barra inferior). Reúne lo tuyo para hoy:
+
+- **Vencen hoy** y **Vencidos**: tickets abiertos donde eres responsable (principal o colaborador; seguir un ticket no basta) cuya fecha límite es hoy o ya pasó. Los vencidos no repiten los de hoy.
+- **Por aprobar**: solo para quien puede aprobar OT internas; se explica en el [manual de coordinación](02-coordinacion.md#por-aprobar-en-mi-día).
+- **Te mencionaron**: tus menciones sin leer (hasta 10); **Ver todos** abre Avisos con el filtro Menciones.
+- **Tus tareas**: tareas abiertas a tu nombre en tickets y OT que no están cerrados, ordenadas por fecha (en rojo si la fecha pasó). La casilla las marca como hechas al momento; con rol Solo lectura la casilla está deshabilitada.
+- **Detenidos hace días**: tickets tuyos abiertos (también En espera) sin ningún cambio en más de 3 días y que no estén ya en Vencen hoy o Vencidos.
+
+Los cuadros de arriba muestran los totales y llevan a cada lista. La pantalla se actualiza sola cada minuto. Si no tienes nada pendiente dice "Nada pendiente por hoy".
+
+## Avisos
+
+**Avisos** (menú o barra inferior; el número rojo indica cuántos no has leído, `99+` desde 100) junta lo que te pasa a ti:
+
+| Aviso                                     | Cuándo llega                                                                                              |
+| ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Me asignan un ticket o una tarea          | Te agregan como responsable de un ticket, como seguidor, te asignan una tarea o te piden aprobar una OT interna |
+| Me mencionan con @                        | Alguien te menciona en un seguimiento o una nota interna (de un ticket o una OT)                           |
+| Un ticket mío vence en 24 horas           | Eres responsable principal y faltan menos de 24 horas para la fecha límite                                 |
+| Un ticket mío venció                      | Eres responsable principal y la fecha límite pasó                                                          |
+| Cambia el estado de un ticket que sigo    | Cambia el estado de un ticket donde eres responsable o seguidor; también cuando se cierra o cancela su OT   |
+| Nuevo seguimiento en un ticket que sigo   | Alguien registra un seguimiento (no una nota interna) en un ticket donde eres responsable o seguidor       |
+| Cotización aprobada o rechazada           | El cliente responde la cotización de una OT de un ticket donde eres responsable o seguidor                 |
+| OT cerrada y lista para facturar          | Solo para quien puede marcar OT como facturada                                                             |
+
+Nunca recibes un aviso por algo que hiciste tú (si te asignas un ticket o cambias el estado de uno tuyo, no hay aviso). El aviso dice quién, qué y en qué ticket u OT, pero **nunca** incluye el texto de un mensaje o nota, un motivo ni un monto.
+
+- Los chips **Todos · Menciones · Asignaciones · Vencimientos** y el interruptor **Solo sin leer** filtran la lista; **Cargar más** trae los siguientes.
+- Al pulsar un aviso se marca leído y te lleva al ticket, la OT o el mensaje. **Marcar todo como leído** limpia el contador. Entrar a la pantalla no marca nada por sí solo.
+- **Preferencias** (a la derecha; en el celular, pestaña **Preferencias**): un interruptor **En la app** por cada tipo de aviso. Apagarlo hace que ese aviso no aparezca ni cuente. La columna **Telegram** se guarda, pero todavía no envía nada: la vinculación con Telegram llega en la siguiente entrega.
+
 ## En el celular
 
 En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol) y **Cerrar sesión**.

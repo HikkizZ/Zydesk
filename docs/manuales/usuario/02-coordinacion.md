@@ -56,7 +56,7 @@ Qué queda después:
 - La OT queda **Cerrada**. Si es facturable pasa a **Por facturar** (**aunque no haya resuelto el ticket**); si es interna, no se factura. Si no tenía fecha de término, se fija la de hoy.
 - El resumen queda como seguimiento de la OT y **también en el ticket** ("Cierre de OT-0218" en su actividad), junto con el registro "OT-0218 cerrada · resolvió el ticket" (o "no resolvió el ticket") en el historial.
 - Con la nueva OT, un aviso con enlace te lo indica ("OT-0220 creada").
-- Los avisos a responsables y seguidores se activan en una fase posterior: por ahora el diálogo lo dice al pie.
+- Los responsables y seguidores del ticket reciben el aviso "OT-0218 se cerró · resolvió el ticket TK-1048" (o "· el ticket TK-1048 sigue abierto"); si la OT es facturable, quienes pueden facturar reciben además "OT-0218 se cerró y quedó lista para facturar". No se envían avisos separados por el cambio de estado ni de responsable del ticket.
 
 ## Datos comerciales y horas tras la aprobación
 
@@ -80,6 +80,20 @@ Mientras una OT no esté cerrada ni cancelada, **Cancelar OT…** pide un **moti
 
 Una OT facturable cerrada aparece como **Por facturar** (en la lista, el filtro **Por facturar** las reúne). Cuando emites la factura, abre la OT, pulsa **Marcar facturada…** e ingresa el **N° de factura**. Pasa a **Facturada**, con número, fecha y quién la marcó; el stepper muestra "Facturada" como último paso. Solo se puede marcar una OT que esté por facturar, y solo una vez.
 
+## Por aprobar en Mi día
+
+En **Mi día**, el cuadro y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan.
+
+## Avisos de facturación
+
+Quien puede marcar OT como facturada (Coordinación y Administración) recibe el aviso **"OT cerrada y lista para facturar"** cada vez que se cierra una OT facturable ("OT-0216 se cerró y quedó lista para facturar · Clínica Los Robles"; sin el monto). También llega **"Cotización aprobada o rechazada"** a los responsables y seguidores del ticket cuando se registra la respuesta del cliente. Ambos se pueden apagar en las preferencias de **Avisos**.
+
+## Exportar para facturación (.xlsx)
+
+En **Órdenes de trabajo**, el botón **Exportar para facturación (.xlsx)** descarga una planilla con las OT que cumplen los filtros vigentes (chip, búsqueda, cliente y etapa), sin paginar: `ots-facturacion-AAAA-MM-DD.xlsx`. Columnas: OT, Título, Cliente, Ticket, Tipo, Etapa, Estado de facturación, N° factura, Cotización vigente (`COT-0218 v1`), Neto CLP, Horas registradas, Responsable, Inicio, Término y Cerrada el; al pie, los totales de neto y horas con fórmula. Los textos van siempre como texto (un título que empiece con `=` no se convierte en fórmula).
+
+Uso típico a fin de mes: chip **Por facturar** y exportar. Exige permiso de facturar (Coordinación y Administración); para los demás roles el botón queda deshabilitado. Cada exportación queda en el registro de seguridad de Administración (solo con los nombres de los filtros usados, sin montos). Si los filtros abarcan más de 5.000 OT, la app pide acotarlos. **Marcar facturada** sigue haciéndose desde cada OT.
+
 ## Resolver un ticket que tiene una OT abierta
 
 Un ticket con una OT abierta no se puede resolver, descartar ni marcar como duplicado directamente: la app muestra la lista de OT abiertas con su etapa. Tienes dos caminos:
@@ -89,4 +103,4 @@ Un ticket con una OT abierta no se puede resolver, descartar ni marcar como dupl
 
 ## Lo que todavía no está
 
-La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y los avisos en la app, la pantalla de OT con indicadores en pesos, la exportación de horas y los reportes de horas llegan en fases posteriores. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes.
+La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y la exportación de horas y los reportes de horas llegan en fases posteriores. Los avisos por Telegram y el bot llegan en la siguiente entrega de la Fase 6. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes.
