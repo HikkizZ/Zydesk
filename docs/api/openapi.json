@@ -22117,6 +22117,12 @@
                           "vencida": {
                             "type": "boolean"
                           },
+                          "esperando_cliente": {
+                            "type": "boolean"
+                          },
+                          "por_aprobar": {
+                            "type": "boolean"
+                          },
                           "n_mensajes": {
                             "type": "number"
                           },
@@ -22146,6 +22152,8 @@
                           "inicio",
                           "termino",
                           "vencida",
+                          "esperando_cliente",
+                          "por_aprobar",
                           "n_mensajes",
                           "actualizado_en"
                         ],
@@ -22540,6 +22548,12 @@
                       ]
                     },
                     "vencida": {
+                      "type": "boolean"
+                    },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
                       "type": "boolean"
                     },
                     "n_mensajes": {
@@ -23525,6 +23539,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -24111,6 +24127,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -25094,6 +25116,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -26200,6 +26224,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -27183,6 +27213,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -27661,6 +27693,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -28644,6 +28682,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -29429,6 +29469,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -30412,6 +30458,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -30894,6 +30942,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -31877,6 +31931,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -32462,6 +32518,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -33445,6 +33507,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -34664,6 +34728,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -35647,6 +35717,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -45245,6 +45317,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -46228,6 +46306,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",

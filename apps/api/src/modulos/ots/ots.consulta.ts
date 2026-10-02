@@ -104,6 +104,8 @@ function aResumen(f: FilaResumen): OtResumenDatos {
     inicio: f.inicio,
     termino: f.termino,
     vencida: f.vencida,
+    esperando_cliente: false, // F6-T8
+    por_aprobar: false, // F6-T8
     n_mensajes: f.n_mensajes,
     actualizado_en: f.actualizado_en.toISOString(),
   };

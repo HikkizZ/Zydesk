@@ -106,6 +106,8 @@ export const OtResumen = OtBreve.extend({
   inicio: fechaIso.nullable(),
   termino: fechaIso.nullable(),
   vencida: z.boolean(), // termino < hoy (Santiago) y no final
+  esperando_cliente: z.boolean(), // facturable && etapa cotizada && cotización vigente enviada (A2: 'Esperando aprobación')
+  por_aprobar: z.boolean(), // interna && etapa borrador && aprobador_id !== null (A2: 'Borrador · por aprobar')
   n_mensajes: z.number(),
   actualizado_en: instante,
 });
@@ -161,4 +163,11 @@ export const OtsQuery = esquemaPaginacion.extend({
   responsable_id: idQuery.optional(),
   aprobador_id: idQuery.optional(),
   orden: z.enum(['-actualizado_en', '-creado_en', 'termino']).default('-actualizado_en'),
+});
+
+export const IndicadoresOtsSalida = z.object({
+  por_facturar: z.object({ n: z.number(), neto: z.number().nullable() }), // estado_facturacion = por_facturar; Σ neto CLP de la cotización vigente
+  esperando_cliente: z.object({ n: z.number(), neto: z.number().nullable() }), // esperando_cliente = true
+  en_ejecucion: z.number(), // etapa en_ejecucion (ambos tipos)
+  horas_internas_mes: z.number(), // Σ registro_horas.horas de OT internas con fecha en el mes actual (Santiago)
 });
