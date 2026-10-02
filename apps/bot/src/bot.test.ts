@@ -310,7 +310,7 @@ describe('/ticket', () => {
 
 describe('responder un aviso', () => {
   // Texto plano de un aviso con el formato de Telegram (Telegram entrega `text` sin etiquetas)
-  const aviso = 'Zydesk\n\nTK-1048 · Camila te mencionó en TK-1048\n\nAbrir TK-1048';
+  const aviso = 'Zydesk\n\nCamila te mencionó en TK-1048\n\nAbrir TK-1048';
 
   it('registra el seguimiento con el texto exacto', async () => {
     const t = armar({
