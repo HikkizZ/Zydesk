@@ -25,6 +25,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
+import { env } from '../src/config/env.js';
 import { nombreCookie } from '../src/core/auth/cookie.js';
 import { crearSesion, hashToken } from '../src/core/auth/sesiones.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
@@ -784,7 +785,6 @@ export async function ingresarComoBot(
 }
 
 // Para `/api/bot/*`: autenticado con `X-Bot-Key`.
-// F6-T9: leer `env.BOT_API_KEY` cuando `config/env.ts` lo defina.
 export function comoBot(app: Express): ReturnType<typeof request.agent> {
-  return request.agent(app).set('X-Bot-Key', process.env.BOT_API_KEY ?? 'clave-bot-de-prueba');
+  return request.agent(app).set('X-Bot-Key', env.BOT_API_KEY ?? '');
 }

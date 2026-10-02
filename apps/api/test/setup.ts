@@ -1,7 +1,8 @@
-import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
 import { esperarDespachos } from '../src/avisos/despachador.js';
 import { dataSource } from '../src/config/db.js';
 import { abrirOwner, cerrarOwner, reiniciarBd } from './bd.js';
+import { restaurarEnv } from './entorno.js';
 
 // globalSetup corre en el proceso principal; cada archivo de test abre su propio DataSource de la app
 // y su propio DataSource owner (el que borra `evento` y `auditoria` entre tests).
@@ -22,3 +23,5 @@ beforeEach(async () => {
   await esperarDespachos();
   if (dataSource.isInitialized) await reiniciarBd();
 });
+
+afterEach(() => restaurarEnv());

@@ -15,6 +15,10 @@ import { clavesAvisos, generarCodigo, telegram } from '../api';
 const SONDEO_MS = 3000;
 const CIERRE_MS = 2500;
 
+// OBS-3: el enlace lo arma la API; igual solo se muestra si apunta a t.me por https
+const esEnlaceTelegram = (enlace: string | null): enlace is string =>
+  enlace !== null && enlace.startsWith('https://t.me/');
+
 function formatearRestante(ms: number): string {
   const total = Math.max(0, Math.ceil(ms / 1000));
   const min = Math.floor(total / 60);
@@ -113,7 +117,7 @@ function ContenidoVincular({
           <ol className="list-decimal space-y-1 pl-5 text-sm">
             <li>
               Abre el bot
-              {datos.enlace ? (
+              {esEnlaceTelegram(datos.enlace) ? (
                 <>
                   {' · '}
                   <a
