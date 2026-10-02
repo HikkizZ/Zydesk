@@ -160,6 +160,17 @@ describe('GET /api/ots/exportar.xlsx (spec fase 6 §12)', () => {
     expect(Number((await dataSource.query(`SELECT count(*)::int AS n FROM archivo`))[0].n)).toBe(0);
   });
 
+  it('ignora en filtros de la auditoría los nombres heredados del prototipo', async () => {
+    const { agente } = await como('coordinacion');
+    const r = await binario(agente, '/api/ots/exportar.xlsx?constructor=1&toString=1');
+    expect(r.status).toBe(200);
+    const filas = await dataSource.query(
+      `SELECT detalle FROM auditoria WHERE accion = 'exportacion'`,
+    );
+    expect(filas).toHaveLength(1);
+    expect(filas[0].detalle.filtros).toEqual([]);
+  });
+
   it('más de 5 000 filas → 400 VALIDACION', async () => {
     const { agente } = await como('coordinacion');
     const t = await crearTicket();

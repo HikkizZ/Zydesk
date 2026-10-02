@@ -1,5 +1,5 @@
 import { Writable } from 'node:stream';
-import type { Rol } from '@zydesk/shared';
+import { PERMISOS_POR_ROL, type Rol } from '@zydesk/shared';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -10,6 +10,7 @@ import {
   ingresarComo,
 } from '../../../test/fabricas.js';
 import { esperarDespachos } from '../../avisos/despachador.js';
+import { ROLES_CON_PERMISO_DE_FACTURAR } from '../../avisos/destinatarios.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 import { logger as loggerGlobal, crearLogger } from '../../config/logger.js';
@@ -210,6 +211,14 @@ describe('prueba 13: destinatarios', () => {
     expect(await avisosDe(admin.id)).toHaveLength(1);
     expect(await avisosDe(coord.id)).toHaveLength(1);
     for (const u of otros) expect(await avisosDe(u.id)).toEqual([]);
+  });
+
+  it('los roles que reciben por_facturar salen de la matriz de permisos', () => {
+    const derivados = (Object.keys(PERMISOS_POR_ROL) as Rol[]).filter((r) =>
+      PERMISOS_POR_ROL[r].includes('ots.facturar'),
+    );
+    expect([...ROLES_CON_PERMISO_DE_FACTURAR].sort()).toEqual(derivados.sort());
+    expect(ROLES_CON_PERMISO_DE_FACTURAR.length).toBeGreaterThan(0);
   });
 
   it('vence_pronto llega solo al responsable principal', async () => {

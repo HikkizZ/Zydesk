@@ -1,3 +1,4 @@
+import { PERMISOS_POR_ROL, tienePermiso, type Rol } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import type { EventoPendiente } from '../core/eventos/dominio.js';
 
@@ -23,9 +24,14 @@ async function principalDelTicket(m: EntityManager, ticket_id: number): Promise<
 }
 
 // Quien factura: usuarios con el permiso `ots.facturar` (Administración y Coordinación).
+export const ROLES_CON_PERMISO_DE_FACTURAR: readonly Rol[] = (
+  Object.keys(PERMISOS_POR_ROL) as Rol[]
+).filter((rol) => tienePermiso(rol, 'ots.facturar'));
+
 async function conPermisoDeFacturar(m: EntityManager): Promise<number[]> {
   const filas: { id: number }[] = await m.query(
-    `SELECT id FROM usuario WHERE rol IN ('admin', 'coordinacion') AND activo`,
+    `SELECT id FROM usuario WHERE rol = ANY($1::text[]) AND activo`,
+    [ROLES_CON_PERMISO_DE_FACTURAR],
   );
   return filas.map((f) => f.id);
 }

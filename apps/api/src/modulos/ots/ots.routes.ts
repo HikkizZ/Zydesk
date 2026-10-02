@@ -99,7 +99,7 @@ export function crearRutasOts(): Router {
     respuesta: z.unknown(),
     handler: async ({ query, actor, req, res }) => {
       const filtros = Object.keys(req.query)
-        .filter((k) => k in OtsExportarQuery.shape)
+        .filter((k) => Object.hasOwn(OtsExportarQuery.shape, k))
         .sort();
       const { buffer, nombre, tipo_mime } = await exportarOts(
         actorRequerido(actor),
