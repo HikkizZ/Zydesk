@@ -31,12 +31,10 @@ export async function responderAviso(
       return;
     }
     // El código solo identifica el destino; la API autoriza con el Bearer de la persona.
-    const q = { q: String(destino.numero), por_pagina: 5 };
-    const lista =
+    const hallado =
       destino.entidad === 'ticket'
-        ? await deps.api.listarTickets(sesion.token, { ...q, archivados: true })
-        : await deps.api.listarOts(sesion.token, q);
-    const hallado = lista.datos.find((e) => e.numero === destino.numero);
+        ? await deps.api.buscarTicket(sesion.token, destino.numero)
+        : await deps.api.buscarOt(sesion.token, destino.numero);
     if (!hallado) {
       await responder(ctx, `No encuentro ${escaparHtml(destino.codigo)}.`);
       return;

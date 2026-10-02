@@ -6,15 +6,17 @@ import { conSesion, responder, type Deps } from '../nucleo.js';
 
 const POR_PAGINA = 10;
 
-export function lineaTicket(t: TicketResumenDatos): string {
+/** Dos líneas: «• <b>TK-1048</b> · Alta · En curso · vence 2 oct» y, con sangría, el asunto. */
+export function itemTicket(t: TicketResumenDatos): string {
   const partes = [
-    t.codigo,
     ETIQUETA_PRIORIDAD[t.prioridad],
     ETIQUETA_ESTADO_TICKET[t.estado],
     ...(t.fecha_limite ? [`vence ${fechaCorta(t.fecha_limite)}`] : []),
-    recortar(t.asunto, 60),
   ];
-  return partes.map(escaparHtml).join(' · ');
+  return [
+    `• <b>${escaparHtml(t.codigo)}</b> · ${partes.map(escaparHtml).join(' · ')}`,
+    `   ${escaparHtml(recortar(t.asunto, 60))}`,
+  ].join('\n');
 }
 
 export function registrarMis(bot: Bot, deps: Deps): void {
@@ -30,14 +32,14 @@ export function registrarMis(bot: Bot, deps: Deps): void {
         await responder(ctx, 'No tienes tickets abiertos.');
         return;
       }
-      const lineas = r.datos.slice(0, POR_PAGINA).map(lineaTicket);
-      const mas = r.total - lineas.length;
+      const items = r.datos.slice(0, POR_PAGINA).map(itemTicket);
+      const mas = r.total - items.length;
       if (mas > 0) {
-        lineas.push(
+        items.push(
           `y ${mas} más · ${enlace(deps.webUrl, '/tickets/tabla?solo_mios=true', 'ver todos')}`,
         );
       }
-      await responder(ctx, ['<b>Tus tickets</b>', ...lineas].join('\n'));
+      await responder(ctx, ['<b>Tus tickets</b>', ...items].join('\n\n'));
     }),
   );
 }

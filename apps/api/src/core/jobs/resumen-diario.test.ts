@@ -48,8 +48,8 @@ describe('ejecutarResumenDiario', () => {
     expect(r).toEqual({ enviados: 1, omitidos: 0, fallidos: 0, feriado: false });
     const [m] = enviados();
     expect(m!.chat_id).toBe(chat_id);
-    expect(m!.text).toContain('<b>Zydesk · Resumen del ');
-    expect(m!.text).toContain(`Vencen hoy (1): ${t.codigo} Servidor de archivos caído`);
+    expect(m!.text).toMatch(/^<b>Zydesk · Mi día<\/b> — \S+ \d+ de \S+\n\n/);
+    expect(m!.text).toContain(`<b>Vencen hoy (1)</b>\n• ${t.codigo} · Servidor de archivos caído`);
     expect(m!.text).toContain('<a href="https://desk.example.test/mi-dia">Abrir Mi día</a>');
     expect(m!.text).not.toContain('MENSAJE-PRIVADO-XYZ');
   });
@@ -107,7 +107,7 @@ describe('ejecutarResumenDiario', () => {
     await crearVinculoTelegram(u.id);
     await crearAviso(u.id);
     await ejecutarResumenDiario();
-    expect(enviados()[0]!.text).toContain('Menciones sin leer: 1');
+    expect(enviados()[0]!.text).toContain('<b>Menciones sin leer:</b> 1');
   });
 });
 
@@ -137,11 +137,11 @@ describe('construirResumen', () => {
       vencen_hoy: tickets,
       conteos: { ...base.conteos, vencen_hoy: 7 },
     } as never)!;
-    expect(texto).toContain('Vencen hoy (7): ');
-    expect(texto).toContain('y 2 más');
+    expect(texto).toContain('<b>Vencen hoy (7)</b>\n• TK-0 · ');
+    expect(texto).toContain('\ny 2 más\n');
     expect(texto).toContain('&lt;b&gt;x&lt;/b&gt;');
     expect(texto).not.toContain('<b>x</b>');
-    expect(texto.split('\n')[0]).toBe('<b>Zydesk · Resumen del jueves 1 de octubre</b>');
+    expect(texto.split('\n')[0]).toBe('<b>Zydesk · Mi día</b> — jueves 1 de octubre');
   });
 });
 

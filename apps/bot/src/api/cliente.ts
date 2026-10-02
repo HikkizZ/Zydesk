@@ -105,6 +105,25 @@ export class ClienteZydesk {
     return this.con('GET', '/api/ots', token, { query });
   }
 
+  /**
+   * Resuelve `TK-<numero>`: en la API `archivados=true` es SOLO archivados, así que primero busca
+   * entre los activos y, si no hay coincidencia exacta de `numero`, entre los archivados.
+   */
+  async buscarTicket(token: string, numero: number): Promise<TicketResumenDatos | null> {
+    for (const archivados of [false, true]) {
+      const r = await this.listarTickets(token, { q: String(numero), archivados, por_pagina: 5 });
+      const hallado = r.datos.find((t) => t.numero === numero);
+      if (hallado) return hallado;
+    }
+    return null;
+  }
+
+  /** Resuelve `OT-<numero>` (el listado de OT no distingue archivadas). */
+  async buscarOt(token: string, numero: number): Promise<OtBusqueda | null> {
+    const r = await this.listarOts(token, { q: String(numero), por_pagina: 5 });
+    return r.datos.find((o) => o.numero === numero) ?? null;
+  }
+
   ticket(token: string, id: number): Promise<TicketDatos> {
     return this.con('GET', `/api/tickets/${id}`, token);
   }

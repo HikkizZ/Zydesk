@@ -1,9 +1,15 @@
-import { PERMISOS_POR_ROL, PREFERENCIAS_POR_DEFECTO, ZONA, type Rol } from '@zydesk/shared';
+import {
+  formatearMiDia,
+  PERMISOS_POR_ROL,
+  PREFERENCIAS_POR_DEFECTO,
+  ZONA,
+  type Rol,
+} from '@zydesk/shared';
 import type PgBoss from 'pg-boss';
 import { dataSource } from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
-import { enviarMensaje, ErrorTelegram, escaparHtml } from '../../integraciones/telegram/cliente.js';
+import { enviarMensaje, ErrorTelegram } from '../../integraciones/telegram/cliente.js';
 import { hoyEnSantiago } from '../../modulos/horas/horas.tipos.js';
 import { cargarMiDia } from '../../modulos/mi-dia/mi-dia.service.js';
 import type { MiDiaSalidaDatos } from '../../modulos/mi-dia/mi-dia.tipos.js';
@@ -11,62 +17,9 @@ import type { UsuarioSesion } from '../auth/tipos.js';
 
 export const JOB_RESUMEN_DIARIO = 'avisos.resumen_diario';
 
-const ITEMS_POR_SECCION = 5;
-const LARGO_ASUNTO = 60;
-
-const recortar = (t: string): string =>
-  t.length > LARGO_ASUNTO ? `${t.slice(0, LARGO_ASUNTO - 1)}…` : t;
-
-function seccion(titulo: string, total: number, items: string[]): string | null {
-  if (total === 0) return null;
-  const visibles = items.slice(0, ITEMS_POR_SECCION).map((i) => escaparHtml(i));
-  const resto = total - visibles.length;
-  return `${titulo} (${total}): ${visibles.join(', ')}${resto > 0 ? ` y ${resto} más` : ''}`;
-}
-
-// "jueves 1 de octubre" en Santiago (la fecha ya viene como AAAA-MM-DD de Santiago).
-function fechaLarga(fecha: string): string {
-  const partes = new Intl.DateTimeFormat('es-CL', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    timeZone: 'UTC',
-  }).formatToParts(new Date(`${fecha}T12:00:00Z`));
-  const de = (t: string) => partes.find((p) => p.type === t)?.value ?? '';
-  return `${de('weekday')} ${de('day')} de ${de('month')}`;
-}
-
-// Mensaje de §8.2 o null si no hay nada que mostrar. Solo códigos, asuntos y títulos: nunca texto de mensajes.
+// Mensaje de §8.2 (formato compartido con /hoy del bot) o null si no hay nada que mostrar.
 export function construirResumen(d: MiDiaSalidaDatos): string | null {
-  const secciones = [
-    seccion(
-      'Vencen hoy',
-      d.conteos.vencen_hoy,
-      d.vencen_hoy.map((t) => `${t.codigo} ${recortar(t.asunto)}`),
-    ),
-    seccion(
-      'Vencidos',
-      d.conteos.vencidos,
-      d.vencidos.map((t) => `${t.codigo} ${recortar(t.asunto)}`),
-    ),
-    seccion(
-      'Por aprobar',
-      d.conteos.por_aprobar,
-      d.por_aprobar.map((o) => `${o.codigo} ${recortar(o.titulo)}`),
-    ),
-    d.conteos.menciones > 0 ? `Menciones sin leer: ${d.conteos.menciones}` : null,
-    seccion(
-      'Tareas pendientes',
-      d.conteos.tareas,
-      d.tareas.map((t) => `${recortar(t.titulo)} (${t.destino.codigo})`),
-    ),
-  ].filter((s): s is string => s !== null);
-  if (secciones.length === 0) return null;
-  return [
-    `<b>Zydesk · Resumen del ${escaparHtml(fechaLarga(d.fecha))}</b>`,
-    ...secciones,
-    `<a href="${escaparHtml(`${env.WEB_URL}/mi-dia`)}">Abrir Mi día</a>`,
-  ].join('\n');
+  return formatearMiDia(d, { url: `${env.WEB_URL}/mi-dia` });
 }
 
 interface Destinatario {

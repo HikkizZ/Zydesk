@@ -10,8 +10,10 @@ export function construirMensaje(aviso: AvisoParaEnviar): {
 } {
   const url = `${env.WEB_URL}${aviso.enlace}`;
   const codigo = typeof aviso.datos['codigo'] === 'string' ? aviso.datos['codigo'] : null;
+  // El código va primero para que «responder un aviso» (que toma el primer TK-/OT- del mensaje) acierte el destino.
+  const cuerpo = (codigo ? `<b>${escaparHtml(codigo)}</b> · ` : '') + escaparHtml(aviso.texto);
   const texto_html =
-    `<b>Zydesk</b>\n${escaparHtml(aviso.texto)}\n` +
+    `<b>Zydesk</b>\n\n${cuerpo}\n\n` +
     `<a href="${escaparHtml(url)}">${codigo ? `Abrir ${escaparHtml(codigo)}` : 'Abrir en Zydesk'}</a>`;
   if (aviso.tipo !== 'ot_por_aprobar') return { texto_html };
   const botones: { text: string; callback_data?: string; url?: string }[] = [

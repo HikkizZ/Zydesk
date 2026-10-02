@@ -352,16 +352,21 @@ Ticket con `fecha_limite = now() + 2 h` y principal `u` → tras `ejecutarVencim
 ### 8.2 Resumen diario — formato (Telegram, HTML)
 
 ```
-<b>Zydesk · Resumen del jueves 1 de octubre</b>
-Vencen hoy (2): TK-1048 Error al emitir facturas…, TK-1051 Servidor de archivos…
-Vencidos (1): TK-1040 Caída intermitente de VPN…
-Por aprobar (1): OT-0219 Reemplazo de UPS…
-Menciones sin leer: 3
-Tareas para hoy (2): Cargar CAF y probar emisión en QA (OT-0218), …
+<b>Zydesk · Mi día</b> — viernes 2 de octubre
+
+<b>Vencen hoy (1)</b>
+• TK-1048 · Error al emitir facturas desde el ERP
+
+<b>Menciones sin leer:</b> 1
+
+<b>Tareas para hoy (2)</b>
+• Cargar CAF y probar emisión en QA · TK-1048
+• Paso a producción y acompañamiento · OT-0218
+
 <a href="https://desk…/mi-dia">Abrir Mi día</a>
 ```
 
-Cada sección lista hasta 5 ítems (código + asunto recortado a 60) y «y N más»; secciones vacías se omiten; sin ninguna sección no se envía. Fecha con `formatearFechaLarga` de `shared/formato` en Santiago. Test (`core/jobs/resumen-diario.test.ts`): con `fetch` doblado, usuario con vínculo y un ticket que vence hoy recibe un mensaje que contiene el código y **no** contiene el texto de sus mensajes; usuario sin vínculo o con `resumen_diario` apagado no recibe; usuario sin nada pendiente no recibe; en un feriado general no se envía a nadie; `singletonKey` igual a la fecha.
+Formato único (corrección posterior a la prueba con bot real): lo produce `formatearMiDia` de `packages/shared/src/telegram/` y lo usan el resumen diario de la API y `/hoy` del bot. Títulos en negrita, una línea en blanco entre secciones, ítems con «• ». Cada sección lista hasta 5 ítems (código · asunto recortado a 60; en tareas el código va al final) y «y N más»; secciones vacías se omiten; sin ninguna sección no se envía. Fecha con `formatearFechaLarga` de `shared/formato` en Santiago. Test (`core/jobs/resumen-diario.test.ts`): con `fetch` doblado, usuario con vínculo y un ticket que vence hoy recibe un mensaje que contiene el código y **no** contiene el texto de sus mensajes; usuario sin vínculo o con `resumen_diario` apagado no recibe; usuario sin nada pendiente no recibe; en un feriado general no se envía a nadie; `singletonKey` igual a la fecha.
 
 ## 9. Telegram en la API: vinculación y sesiones de bot (bloque 6C, `modulos/telegram/`)
 
@@ -581,7 +586,7 @@ Solo chats **privados** (`ctx.chat.type === 'private'`); en grupos no responde (
 | `/desvincular`                              | `AlertDialog` no existe en Telegram: pregunta con botones «Sí, desvincular» / «Cancelar» (`callback_data: 'desvincular:si'`); al confirmar `DELETE /api/yo/telegram`, borra el token local, «Cuenta desvinculada».                                                                                                                                                                         | `DELETE /api/yo/telegram`                                                                                |
 | `/hoy`                                      | `GET /api/mi-dia` → el mismo formato del resumen diario (§8.2) + «Nada pendiente» si todo está vacío                                                                                                                                                                                                                                                                                      | `GET /api/mi-dia`                                                                                        |
 | `/mis`                                      | `GET /api/tickets?solo_mios=true&archivados=false&orden=fecha_limite&por_pagina=10` → lista «TK-1048 · Alta · En curso · vence 30 sep · Error al emitir…» (hasta 10, «y N más» con enlace a `/tickets/tabla?solo_mios=true`)                                                                                                                                                             | `GET /api/tickets`                                                                                       |
-| `/ticket 1048` · `/ticket TK-1048`          | `GET /api/tickets?q=1048&archivados=true&por_pagina=1` (ADR 0021.12: solo dígitos = código exacto) → `GET /api/tickets/:id` → ficha: código, asunto, estado (+ espera de), prioridad, cliente, responsables, vence, OT vinculadas, «últimos 3 seguimientos» (autor · fecha · primeras 120 letras del texto de **seguimientos**, nunca notas internas) y enlace a la web. Sin resultado → «No encuentro TK-1048». | `GET /api/tickets`, `GET /api/tickets/:id`, `GET /api/tickets/:id/mensajes?tipo=seguimiento`             |
+| `/ticket 1048` · `/ticket TK-1048`          | `GET /api/tickets?q=1048&archivados=false` y, si no hay coincidencia exacta de `numero`, `GET /api/tickets?q=1048&archivados=true` (en la API `archivados=true` es solo archivados; ADR 0021.12: solo dígitos = código exacto) → `GET /api/tickets/:id` → ficha: código, asunto, estado (+ espera de), prioridad, cliente, responsables, vence, OT vinculadas, «últimos 3 seguimientos» (autor · fecha · primeras 120 letras del texto de **seguimientos**, nunca notas internas) y enlace a la web. Sin resultado → «No encuentro TK-1048». | `GET /api/tickets`, `GET /api/tickets/:id`, `GET /api/tickets/:id/mensajes?tipo=seguimiento`             |
 | `/ayuda`                                    | Lista de comandos y las dos acciones (responder un aviso, reenviar un mensaje)                                                                                                                                                                                                                                                                                                            | —                                                                                                        |
 | **Responder** a un mensaje del bot          | Si el mensaje citado (`ctx.message.reply_to_message`, debe ser del bot) contiene `TK-\d+` u `OT-\d+` (primer código del texto): registra un **seguimiento** con el texto de la respuesta (`tipo: 'seguimiento'`, sin `copiar_al_ticket`, sin horas, sin archivos) → «Seguimiento registrado en TK-1048»; sin código → «Responde a un aviso de un ticket u OT para registrar un seguimiento». Texto > 20 000 → se recorta a 20 000 con aviso. | `GET /api/tickets?q=` o `GET /api/ots?q=` (código → id) + `POST /api/tickets/:id/mensajes` o `POST /api/ots/:id/mensajes` |
 | **Botón «Aprobar OT»** (`aprobar:ot:<id>`)  | `POST /api/ots/:id/aprobar { iniciar: false }` → edita el mensaje original (`editMessageText`: «✓ OT-0219 aprobada por ti el 1 oct 10:15», sin botones) y `answerCallbackQuery`. 403 → «No tienes permiso para aprobar»; 409 `TRANSICION_INVALIDA` → «La OT ya no está en borrador». Solo OT internas (§25.14): el botón solo lo pone la API en `ot_por_aprobar`.                            | `POST /api/ots/:id/aprobar`                                                                              |
@@ -592,7 +597,7 @@ Solo chats **privados** (`ctx.chat.type === 'private'`); en grupos no responde (
 
 | Respuesta de la API                        | El bot                                                                                                                                        |
 | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| 401 (`NO_AUTENTICADO`)                     | Borra el token del chat: «Tu sesión del bot caducó o fue cerrada. Sigues recibiendo avisos; para usar comandos genera un código nuevo en Avisos → Telegram y envía /vincular CÓDIGO». |
+| 401 (`NO_AUTENTICADO`)                     | Borra el token del chat: «Tu sesión del bot terminó (se cerró, caducó o desvinculaste la cuenta). Para usar los comandos, genera un código en Zydesk → Avisos → Telegram y envía /vincular CÓDIGO». |
 | 403 `CONTRASENA_PENDIENTE` / `TERMINOS_PENDIENTES` | «Entra a la web para cambiar tu contraseña / aceptar los términos; después vuelve».                                                   |
 | 403 `SIN_PERMISO`                          | «No tienes permiso para esta acción».                                                                                                         |
 | 404                                        | «No encuentro eso».                                                                                                                           |

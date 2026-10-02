@@ -25,6 +25,7 @@ export function formatearFicha(
     (t.espera_de ? ` (esperando ${ETIQUETA_ESPERA_DE[t.espera_de]})` : '');
   const lineas = [
     `<b>${escaparHtml(t.codigo)}</b> · ${escaparHtml(t.asunto)}`,
+    '',
     `Estado: ${escaparHtml(estado)}`,
     `Prioridad: ${ETIQUETA_PRIORIDAD[t.prioridad]}`,
     `Cliente: ${t.cliente ? escaparHtml(t.cliente.nombre) : '—'}`,
@@ -50,7 +51,7 @@ export function formatearFicha(
       );
     }
   }
-  lineas.push(enlace(webUrl, `/tickets/${t.id}`, 'Abrir en la web'));
+  lineas.push('', enlace(webUrl, `/tickets/${t.id}`, 'Abrir en la web'));
   return lineas.join('\n');
 }
 
@@ -63,13 +64,8 @@ export function registrarTicket(bot: Bot, deps: Deps): void {
         return;
       }
       const noEncontrado = () => responder(ctx, `No encuentro TK-${numero}`);
-      const r = await deps.api.listarTickets(sesion.token, {
-        q: String(numero),
-        archivados: true,
-        por_pagina: 1,
-      });
-      const hallado = r.datos[0];
-      if (!hallado || hallado.numero !== numero) {
+      const hallado = await deps.api.buscarTicket(sesion.token, numero);
+      if (!hallado) {
         await noEncontrado();
         return;
       }

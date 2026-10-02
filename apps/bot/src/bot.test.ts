@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { errorApi } from '../test/api-fake.js';
+import { errorApi, listadoTicketsFalso } from '../test/api-fake.js';
 import { armar, CHAT, CLAVE_BOT, TOKEN_BOT, TOKEN_PERSONA } from '../test/armar.js';
 import {
   callback,
@@ -188,13 +188,13 @@ describe('/hoy', () => {
     expect(t.peticiones[0]?.cabeceras['authorization']).toBe(`Bearer ${TOKEN_PERSONA}`);
     expect(t.peticiones[0]?.cabeceras['x-bot-key']).toBeUndefined();
     const salida = textos(t.llamadas)[0] ?? '';
-    expect(salida).toContain('Resumen del jueves 1 de octubre');
-    expect(salida).toContain('Vencen hoy (7): TK-1048 Error al emitir facturas');
-    expect(salida).toContain('y 5 más');
+    expect(salida.split('\n')[0]).toBe('<b>Zydesk · Mi día</b> — jueves 1 de octubre');
+    expect(salida).toContain('<b>Vencen hoy (7)</b>\n• TK-1048 · Error al emitir facturas');
+    expect(salida).toContain('\ny 5 más\n');
     expect(salida).toContain('&lt;b&gt;de&lt;/b&gt;');
-    expect(salida).toContain('Por aprobar (1): OT-0219 Reemplazo de UPS');
-    expect(salida).toContain('Menciones sin leer: 3');
-    expect(salida).toContain('Tareas para hoy (1): Cargar CAF (OT-0218)');
+    expect(salida).toContain('<b>Por aprobar (1)</b>\n• OT-0219 · Reemplazo de UPS');
+    expect(salida).toContain('<b>Menciones sin leer:</b> 3');
+    expect(salida).toContain('<b>Tareas para hoy (1)</b>\n• Cargar CAF · OT-0218');
     expect(salida).toContain('<a href="https://desk.test/mi-dia">Abrir Mi día</a>');
     expect(t.llamadas[0]?.payload['parse_mode']).toBe('HTML');
   });
@@ -202,7 +202,9 @@ describe('/hoy', () => {
   it('sin nada pendiente lo dice', async () => {
     const t = armar({ 'GET /api/mi-dia': { status: 200, body: miDiaVacio } });
     await t.bot.handleUpdate(mensajePrivado(CHAT, '/hoy'));
-    expect(textos(t.llamadas)[0]).toContain('Nada pendiente');
+    expect(textos(t.llamadas)[0]).toBe(
+      '<b>Zydesk · Mi día</b> — jueves 1 de octubre\n\nNada pendiente.',
+    );
   });
 });
 
@@ -220,8 +222,9 @@ describe('/mis', () => {
       por_pagina: '10',
     });
     const salida = textos(t.llamadas)[0] ?? '';
+    expect(salida.startsWith('<b>Tus tickets</b>\n\n')).toBe(true);
     expect(salida).toContain(
-      'TK-1000 · Alta · En curso · vence 30 sep · &lt;img src=x onerror=alert(1)&gt;',
+      '• <b>TK-1000</b> · Alta · En curso · vence 30 sep\n   &lt;img src=x onerror=alert(1)&gt;\n\n• <b>TK-1001</b>',
     );
     expect(salida).not.toContain('<img');
     expect(salida.match(/TK-10\d\d/g)).toHaveLength(10);
@@ -237,8 +240,8 @@ describe('/mis', () => {
 });
 
 describe('/ticket', () => {
-  const tabla = (extra: Record<string, unknown> = {}) => ({
-    'GET /api/tickets': pagina([ticket(1048)]),
+  const tabla = (extra: Record<string, unknown> = {}, archivado_en: string | null = null) => ({
+    'GET /api/tickets': listadoTicketsFalso([ticket(1048, { archivado_en })]),
     'GET /api/tickets/1148': {
       status: 200,
       body: { ...ticket(1048), ots: [{ codigo: 'OT-0218', etapa: 'en_ejecucion' }], ...extra },
@@ -265,17 +268,14 @@ describe('/ticket', () => {
   it('muestra la ficha sin texto de notas internas', async () => {
     const t = armar(tabla());
     await t.bot.handleUpdate(mensajePrivado(CHAT, '/ticket TK-1048'));
-    expect(t.peticiones[0]?.query).toMatchObject({
-      q: '1048',
-      archivados: 'true',
-      por_pagina: '1',
-    });
+    expect(t.peticiones[0]?.query).toMatchObject({ q: '1048', archivados: 'false' });
     expect(t.peticiones[2]?.query).toMatchObject({ tipo: 'seguimiento' });
     const salida = textos(t.llamadas)[0] ?? '';
-    expect(salida).toContain('TK-1048');
-    expect(salida).toContain('Cliente &lt;S.A.&gt;');
-    expect(salida).toContain('OT-0218 (En ejecución)');
-    expect(salida).toContain('Camila · 29 sep · Probando CAF');
+    expect(salida.split('\n')[0]).toBe('<b>TK-1048</b> · Error al emitir facturas');
+    expect(salida).toContain('\nCliente: Cliente &lt;S.A.&gt;\n');
+    expect(salida).toContain('\nOT: OT-0218 (En ejecución)\n');
+    expect(salida).toContain('\n\n<b>Últimos seguimientos</b>\n• Camila · 29 sep · Probando CAF');
+    expect(salida).toContain('\n\n<a href="https://desk.test/tickets/1148">Abrir en la web</a>');
     expect(salida).not.toContain('SECRETO-XYZ');
     expect(salida).toContain('https://desk.test/tickets/1148');
   });
@@ -286,8 +286,16 @@ describe('/ticket', () => {
     expect(textos(t.llamadas)[0]).toContain('TK-1048');
   });
 
+  it('un ticket archivado se encuentra en el segundo intento', async () => {
+    const t = armar(tabla({}, '2026-09-01T00:00:00Z'));
+    await t.bot.handleUpdate(mensajePrivado(CHAT, '/ticket 1048'));
+    expect(t.peticiones[0]?.query).toMatchObject({ q: '1048', archivados: 'false' });
+    expect(t.peticiones[1]?.query).toMatchObject({ q: '1048', archivados: 'true' });
+    expect(textos(t.llamadas)[0]).toContain('TK-1048');
+  });
+
   it('sin resultado → «No encuentro TK-1048»', async () => {
-    const t = armar({ 'GET /api/tickets': pagina([]) });
+    const t = armar({ 'GET /api/tickets': listadoTicketsFalso([]) });
     await t.bot.handleUpdate(mensajePrivado(CHAT, '/ticket 1048'));
     expect(textos(t.llamadas)[0]).toBe('No encuentro TK-1048');
   });
@@ -301,11 +309,12 @@ describe('/ticket', () => {
 });
 
 describe('responder un aviso', () => {
-  const aviso = 'Camila te mencionó en TK-1048\nAbrir TK-1048';
+  // Texto plano de un aviso con el formato de Telegram (Telegram entrega `text` sin etiquetas)
+  const aviso = 'Zydesk\n\nTK-1048 · Camila te mencionó en TK-1048\n\nAbrir TK-1048';
 
   it('registra el seguimiento con el texto exacto', async () => {
     const t = armar({
-      'GET /api/tickets': pagina([ticket(1048)]),
+      'GET /api/tickets': listadoTicketsFalso([ticket(1048)]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
     await t.bot.handleUpdate(respuestaA(CHAT, 'Listo, <ya lo vi> & lo reviso', aviso));
@@ -314,6 +323,24 @@ describe('responder un aviso', () => {
     expect(post?.cuerpo).toEqual({ tipo: 'seguimiento', texto: 'Listo, <ya lo vi> & lo reviso' });
     expect(post?.cabeceras['authorization']).toBe(`Bearer ${TOKEN_PERSONA}`);
     expect(textos(t.llamadas)[0]).toContain('Seguimiento registrado en TK-1048');
+  });
+
+  it('responder a un aviso de un ticket archivado también registra el seguimiento', async () => {
+    const t = armar({
+      'GET /api/tickets': listadoTicketsFalso([
+        ticket(1048, { archivado_en: '2026-09-01T00:00:00Z' }),
+      ]),
+      'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
+    });
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso));
+    expect(t.peticiones.some((p) => p.metodo === 'POST')).toBe(true);
+  });
+
+  it('un ticket inexistente → «No encuentro TK-1048»', async () => {
+    const t = armar({ 'GET /api/tickets': listadoTicketsFalso([]) });
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso));
+    expect(t.peticiones.some((p) => p.metodo === 'POST')).toBe(false);
+    expect(textos(t.llamadas)[0]).toContain('No encuentro TK-1048');
   });
 
   it('con OT-#### usa las rutas de OT', async () => {
@@ -331,7 +358,7 @@ describe('responder un aviso', () => {
 
   it('recorta a 20 000 caracteres y avisa', async () => {
     const t = armar({
-      'GET /api/tickets': pagina([ticket(1048)]),
+      'GET /api/tickets': listadoTicketsFalso([ticket(1048)]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
     await t.bot.handleUpdate(respuestaA(CHAT, 'a'.repeat(20_500), aviso));
@@ -465,7 +492,8 @@ describe('errores de la API', () => {
     await t.bot.handleUpdate(mensajePrivado(CHAT, '/hoy'));
     expect(t.almacen.obtener(CHAT)).toBeUndefined();
     expect(textos(t.llamadas)[0]).toContain('/vincular CÓDIGO');
-    expect(textos(t.llamadas)[0]).toContain('caducó');
+    expect(textos(t.llamadas)[0]).toContain('desvinculaste la cuenta');
+    expect(textos(t.llamadas)[0]).not.toContain('Sigues recibiendo avisos');
   });
 
   it.each([
@@ -538,7 +566,7 @@ describe('logs', () => {
   it('no contienen tokens, chat_id ni el texto de los mensajes', async () => {
     const t = armar({
       'GET /api/mi-dia': errorApi(500, 'INTERNO'),
-      'GET /api/tickets': pagina([ticket(1048)]),
+      'GET /api/tickets': listadoTicketsFalso([ticket(1048)]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
     await t.bot.handleUpdate(mensajePrivado(CHAT, '/hoy'));

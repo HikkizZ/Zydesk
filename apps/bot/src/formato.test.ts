@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { escaparHtml, fechaCorta, fechaHoraCorta, fechaLargaDeIso, recortar } from './formato.js';
+import { escaparHtml, fechaCorta, fechaHoraCorta, recortar } from './formato.js';
 
 describe('formato', () => {
   it('escaparHtml neutraliza etiquetas y ampersands', () => {
@@ -16,9 +16,5 @@ describe('formato', () => {
     expect(fechaHoraCorta('2026-10-01T13:15:00Z')).toBe('1 oct 10:15');
     // la 01:00 UTC aún es el día anterior en Santiago
     expect(fechaCorta('2026-10-01T01:00:00Z')).toBe('30 sep');
-  });
-
-  it('fechaLargaDeIso', () => {
-    expect(fechaLargaDeIso('2026-10-01')).toBe('jueves 1 de octubre');
   });
 });

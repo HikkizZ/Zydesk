@@ -27,7 +27,7 @@ export const TEXTO_SIN_VINCULO =
 export const TEXTO_NO_RESPONDE = 'Zydesk no responde ahora; inténtalo en un momento.';
 
 export const TEXTO_SESION_CADUCADA =
-  'Tu sesión del bot caducó o fue cerrada. Sigues recibiendo avisos; para usar comandos genera un código nuevo en Avisos → Telegram y envía /vincular CÓDIGO.';
+  'Tu sesión del bot terminó (se cerró, caducó o desvinculaste la cuenta). Para usar los comandos, genera un código en Zydesk → Avisos → Telegram y envía /vincular CÓDIGO.';
 
 export function responder(ctx: Context, html: string, extra: Record<string, unknown> = {}) {
   return ctx.reply(html, { ...OPCIONES_HTML, ...extra });

@@ -23,7 +23,6 @@ const MESES = [
   'noviembre',
   'diciembre',
 ];
-const DIAS = ['domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'];
 
 // Partes numéricas en Santiago (en-US para no depender del locale del sistema).
 function partes(fecha: Date): { m: number; d: number; h: number; min: number } {
@@ -53,13 +52,6 @@ export function fechaHoraCorta(fecha: Date | string): string {
   const p = partes(new Date(fecha));
   const hora = `${String(p.h).padStart(2, '0')}:${String(p.min).padStart(2, '0')}`;
   return `${p.d} ${mesCorto(p.m)} ${hora}`;
-}
-
-/** «jueves 1 de octubre» a partir de AAAA-MM-DD */
-export function fechaLargaDeIso(fechaIso: string): string {
-  const [y = 0, m = 1, d = 1] = fechaIso.split('-').map(Number);
-  const dia = DIAS[new Date(Date.UTC(y, m - 1, d)).getUTCDay()] ?? '';
-  return `${dia} ${d} de ${MESES[m - 1] ?? ''}`;
 }
 
 export function enlace(base: string, ruta: string, texto: string): string {

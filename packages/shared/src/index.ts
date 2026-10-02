@@ -8,3 +8,4 @@ export * from './esquemas/index.js';
 export * from './cotizacion/index.js';
 export * from './eventos.js';
 export * from './avisos/index.js';
+export * from './telegram/index.js';

@@ -52,9 +52,28 @@ describe('CanalTelegram', () => {
       disable_web_page_preview: true,
     });
     expect(cuerpo['text']).toBe(
-      '<b>Zydesk</b>\nCamila te mencionó en TK-1048\n<a href="http://localhost:5173/tickets/12">Abrir TK-1048</a>',
+      '<b>Zydesk</b>\n\n<b>TK-1048</b> · Camila te mencionó en TK-1048\n\n<a href="http://localhost:5173/tickets/12">Abrir TK-1048</a>',
     );
     expect(cuerpo['reply_markup']).toBeUndefined();
+  });
+
+  it('sin código en los datos no antepone código y el enlace es genérico', () => {
+    const { texto_html } = construirMensaje(aviso({ datos: {}, texto: 'Hola' }));
+    expect(texto_html).toBe(
+      '<b>Zydesk</b>\n\nHola\n\n<a href="http://localhost:5173/tickets/12">Abrir en Zydesk</a>',
+    );
+  });
+
+  it('el primer código del mensaje es el del aviso, así «responder un aviso» resuelve bien el destino', () => {
+    const { texto_html } = construirMensaje(
+      aviso({
+        tipo: 'ot_cerrada',
+        texto: 'OT-0219 se cerró · resolvió el ticket TK-1048',
+        datos: { codigo: 'OT-0219' },
+      }),
+    );
+    const plano = texto_html.replace(/<[^>]+>/g, '');
+    expect(/\b(TK|OT)-\d+/i.exec(plano)?.[0]).toBe('OT-0219');
   });
 
   it('escapa el texto dinámico: el <img> de un asunto llega como &lt;img&gt; (prueba 18)', async () => {
