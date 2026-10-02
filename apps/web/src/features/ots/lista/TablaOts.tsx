@@ -19,6 +19,13 @@ import { cn } from '@/lib/utils';
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
+// Etiquetas derivadas (A2): el color sigue siendo el de la etapa real.
+function etiquetaDerivada(ot: OtResumenDatos) {
+  if (ot.esperando_cliente) return { etiqueta: 'Esperando aprobación' };
+  if (ot.por_aprobar) return { etiqueta: 'Borrador · por aprobar' };
+  return {};
+}
+
 function Fila({ ot }: { ot: OtResumenDatos }) {
   return (
     <TableRow>
@@ -43,7 +50,7 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
         <PillTipoOt tipo={ot.tipo} />
       </TableCell>
       <TableCell>
-        <PillEtapaOt etapa={ot.etapa} />
+        <PillEtapaOt etapa={ot.etapa} {...etiquetaDerivada(ot)} />
       </TableCell>
       <TableCell className="font-mono text-sm whitespace-nowrap">
         {ot.tipo === 'facturable' && ot.neto !== null ? (

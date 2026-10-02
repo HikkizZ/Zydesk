@@ -7,6 +7,7 @@ import type {
   CancelarOtDatos,
   CierreOtDatos,
   FacturarOtDatos,
+  IndicadoresOtsSalida,
   OtCrearEntrada,
   OtEditarEntrada,
   OtResumen,
@@ -31,6 +32,7 @@ export type AprobacionClienteEntradaDatos = z.input<typeof AprobacionClienteEntr
 export type ArchivosOtEntradaDatos = z.input<typeof ArchivosOtEntrada>;
 export type OtResumenDatos = z.infer<typeof OtResumen>;
 export type OtDatos = z.infer<typeof OtSalida>;
+export type IndicadoresOtsDatos = z.infer<typeof IndicadoresOtsSalida>;
 export type { CambioEtapaOtDatos, CancelarOtDatos, CierreOtDatos, FacturarOtDatos };
 
 export interface PaginaOts {
@@ -62,6 +64,7 @@ export const clavesOt = {
   ot: (id: number) => ['ot', id] as const,
   actividad: (id: number, tipo: TipoActividad) => ['ot', id, 'actividad', tipo] as const,
   tareas: (id: number) => ['ot', id, 'tareas'] as const,
+  indicadores: ['ots', 'indicadores'] as const,
 };
 
 export const STALE_OTS = 30_000;
@@ -71,6 +74,12 @@ export const ots = (consulta: ConsultaOts) =>
   obtener<PaginaOts>(conQuery('/api/ots', { ...consulta }));
 
 export const ot = (id: number) => obtener<OtDatos>(`/api/ots/${id}`);
+
+export const indicadoresOts = () => obtener<IndicadoresOtsDatos>('/api/ots/indicadores');
+
+// Exportación para facturación (.xlsx): mismos filtros que la lista, sin paginar.
+export const urlExportarOts = (consulta: Omit<ConsultaOts, 'pagina' | 'por_pagina'>) =>
+  conQuery('/api/ots/exportar.xlsx', { ...consulta });
 
 // Escritura -------------------------------------------------------------------------------
 export const convertirEnOt = (ticketId: number, entrada: OtCrearEntradaDatos) =>

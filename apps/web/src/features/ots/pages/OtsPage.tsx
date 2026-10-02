@@ -1,17 +1,22 @@
 import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
+import { ETAPAS_OT, ETIQUETA_ETAPA_OT } from '@zydesk/shared';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
+import { toast } from 'sonner';
 import { TituloPagina } from '@/app/TituloPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { clavesOt, ots, STALE_OTS, type ConsultaOts } from '@/features/ots/api';
+import { usePermiso } from '@/features/auth/SesionProvider';
+import { clavesOt, ots, STALE_OTS, urlExportarOts, type ConsultaOts } from '@/features/ots/api';
 import { useClientesActivos } from '@/features/tickets/components/SelectorCliente';
+import { descargar, ErrorApi } from '@/lib/api';
 import { BuscadorOts } from '../lista/BuscadorOts';
 import { ChipsOts } from '../lista/ChipsOts';
+import { IndicadoresOts } from '../lista/IndicadoresOts';
 import {
   CHIPS_OT,
   chipActivoOt,
@@ -24,14 +29,16 @@ import { TablaOts } from '../lista/TablaOts';
 const POR_PAGINA = 50;
 const REFRESCO_MS = 60_000;
 
-// Lista mínima de OT (spec fase 3 §12): vista de solo lectura, ADR 0022. Los indicadores en pesos y la
-// exportación llegan con la pantalla 10 completa (Fase 6).
+// Pantalla 10: indicadores, lista de OT de solo lectura (ADR 0022) y exportación para facturación.
 export function OtsPage() {
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const clienteParam = Number(params.get('cliente_id'));
   const clienteId = Number.isInteger(clienteParam) && clienteParam > 0 ? clienteParam : null;
+  const etapaParam = params.get('etapa');
+  const etapa = ETAPAS_OT.find((e) => e === etapaParam) ?? null;
   const chip = chipActivoOt(params);
+  const puedeExportar = usePermiso('ots.facturar');
   const paginaParam = Number(params.get('pagina'));
   const pagina = Number.isInteger(paginaParam) && paginaParam > 0 ? paginaParam : 1;
 
@@ -54,7 +61,7 @@ export function OtsPage() {
 
   const elegirChip = (clave: ClaveChipOt) => {
     const cambios: Record<string, string | null> = Object.fromEntries(
-      PARAMS_CHIP_OT.map((p) => [p, null]),
+      [...PARAMS_CHIP_OT, 'etapa'].map((p) => [p, null]),
     );
     const c = CHIPS_OT.find((x) => x.clave === clave);
     if (c?.param) cambios[c.param] = c.valor;
@@ -64,6 +71,16 @@ export function OtsPage() {
   const base: ConsultaOts = {
     ...(q ? { q } : {}),
     ...(clienteId ? { cliente_id: clienteId } : {}),
+    ...(etapa ? { etapa } : {}),
+  };
+
+  const exportar = async () => {
+    toast.info('Exportando…');
+    try {
+      await descargar(urlExportarOts({ ...base, ...consultaDeChipOt(chip) }));
+    } catch (err) {
+      toast.error(err instanceof ErrorApi ? err.message : 'No se pudo exportar. Intenta de nuevo.');
+    }
   };
 
   // Contador de cada chip: una petición con `por_pagina=1` y se lee `total`.
@@ -113,22 +130,41 @@ export function OtsPage() {
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <TituloPagina titulo="Órdenes de trabajo" />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span tabIndex={0} className="inline-flex">
-              <Button variant="outline" disabled>
-                Exportar
-              </Button>
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>Disponible en la Fase 6</TooltipContent>
-        </Tooltip>
+        {puedeExportar ? (
+          <Button variant="outline" onClick={() => void exportar()}>
+            Exportar para facturación (.xlsx)
+          </Button>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <span tabIndex={0} className="inline-flex">
+                <Button variant="outline" disabled>
+                  Exportar para facturación (.xlsx)
+                </Button>
+              </span>
+            </TooltipTrigger>
+            <TooltipContent>Requiere permiso para marcar OT como facturada</TooltipContent>
+          </Tooltip>
+        )}
       </div>
+
+      <IndicadoresOts />
 
       <ChipsOts activo={chip} contadores={conteo} onElegir={elegirChip} />
 
       <div role="search" aria-label="Búsqueda" className="flex flex-wrap items-center gap-3">
         <BuscadorOts valor={q} onCambio={(valor) => cambiar({ q: valor || null })} />
+        {etapa ? (
+          <Button
+            variant="outline"
+            size="sm"
+            aria-label={`Quitar filtro de etapa: ${ETIQUETA_ETAPA_OT[etapa]}`}
+            onClick={() => cambiar({ etapa: null })}
+          >
+            Etapa: {ETIQUETA_ETAPA_OT[etapa]}
+            <X aria-hidden="true" />
+          </Button>
+        ) : null}
         {nombreCliente ? (
           <Button
             variant="outline"
