@@ -113,6 +113,7 @@ export async function cerrarOt(
     );
 
     // 5. Seguimiento en la OT y su copia en el ticket (la actividad del ticket lo muestra como "Cierre de OT-…")
+    // Sin `pendientes` a propósito (fase 6 §6.5): `ot.cerrada` ya avisa a los mismos destinatarios.
     const mensaje = await insertarMensaje(
       tx,
       actor,
@@ -169,7 +170,7 @@ export async function cerrarOt(
       },
     });
 
-    // 7. El ticket
+    // 7. El ticket (sin `pendientes` en `cambiarEstadoEnTx` ni `guardarResponsablesEnTx`: fase 6 §6.5)
     const final: EstadoTicket = efectos.ticket_estado_final;
     if (p.resolvio_ticket) {
       await cambiarEstadoEnTx(tx, actor, ticket.id, { estado: final as 'resuelto' }, { ticket });

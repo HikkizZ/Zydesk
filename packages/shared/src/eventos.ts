@@ -58,3 +58,24 @@ export interface EventosDominio {
   'ticket.vencio': { ticket_id: number; fecha_limite: string };
 }
 export type NombreEventoDominio = keyof EventosDominio;
+
+// Registro tipado: agregar un evento a `EventosDominio` obliga a agregarlo aquí (el oyente de log y el
+// despachador de avisos recorren esta lista).
+const REGISTRO_EVENTOS_DOMINIO: Record<NombreEventoDominio, true> = {
+  'ot.cerrada': true,
+  'ot.por_facturar': true,
+  'ot.por_aprobar': true,
+  'ot.cancelada': true,
+  'cotizacion.respondida': true,
+  'ticket.asignado': true,
+  'ticket.seguidor_agregado': true,
+  'tarea.asignada': true,
+  mencion: true,
+  'ticket.estado_cambiado': true,
+  'ticket.seguimiento_nuevo': true,
+  'ticket.vence_pronto': true,
+  'ticket.vencio': true,
+};
+export const NOMBRES_EVENTOS_DOMINIO = Object.keys(
+  REGISTRO_EVENTOS_DOMINIO,
+) as NombreEventoDominio[];

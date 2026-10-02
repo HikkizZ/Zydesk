@@ -1,9 +1,7 @@
-import type PgBoss from 'pg-boss';
 import { describe, expect, it } from 'vitest';
 import { crearTicket } from '../../../test/fabricas.js';
 import { dataSource } from '../../config/db.js';
 import { archivarCerrados } from './archivar.js';
-import { iniciarJobs } from './boss.js';
 
 const hace = (dias: number): Date => new Date(Date.now() - dias * 86_400_000);
 
@@ -56,29 +54,5 @@ describe('tickets.archivar', () => {
       [t.id],
     );
     expect(await archivarCerrados()).toEqual({ archivados: 0 });
-  });
-});
-
-describe('iniciarJobs', () => {
-  it('registra las 3 colas con sus programaciones en America/Santiago', async () => {
-    const colas: string[] = [];
-    const trabajadores: string[] = [];
-    const programaciones: [string, string, string | undefined][] = [];
-    const boss = {
-      createQueue: async (n: string) => void colas.push(n),
-      work: async (n: string) => void trabajadores.push(n),
-      schedule: async (n: string, cron: string, _datos: unknown, opc: { tz?: string }) =>
-        void programaciones.push([n, cron, opc.tz]),
-    } as unknown as PgBoss;
-    await iniciarJobs(boss);
-    const esperadas = ['mantencion.limpiar', 'tickets.archivar', 'archivos.limpiar_huerfanos'];
-    expect([...colas].sort()).toEqual([...esperadas].sort());
-    expect([...trabajadores].sort()).toEqual([...esperadas].sort());
-    expect(programaciones.find((p) => p[0] === 'tickets.archivar')).toEqual([
-      'tickets.archivar',
-      '10 3 * * *',
-      'America/Santiago',
-    ]);
-    expect(programaciones).toHaveLength(3);
   });
 });

@@ -4,12 +4,14 @@ import helmet from 'helmet';
 import type pino from 'pino';
 import { env } from './config/env.js';
 import { logger as loggerGlobal } from './config/logger.js';
+import { conectarDespachador } from './avisos/despachador.js';
 import { csrf } from './core/auth/csrf.js';
 import './core/auth/seguridad.js';
 import { manejadorErrores, noEncontrado } from './core/errores/manejador.js';
 import { crearRutasDocs } from './core/http/docs.routes.js';
 import { crearLogHttp } from './core/http/log-http.js';
 import { reqId } from './core/http/req-id.js';
+import { crearRutasAvisos } from './modulos/avisos/avisos.routes.js';
 import { crearRutasArchivos } from './modulos/archivos/archivos.routes.js';
 import { crearRutasAuditoria } from './modulos/auditoria/auditoria.routes.js';
 import { crearRutasAuth } from './modulos/auth/auth.routes.js';
@@ -23,6 +25,7 @@ import { crearRutasPlazos } from './modulos/plazos/plazos.routes.js';
 import { crearRutasLegal } from './modulos/legal/legal.routes.js';
 import { crearRutaSalud } from './modulos/salud/salud.routes.js';
 import { crearRutasHoras } from './modulos/horas/horas.routes.js';
+import { crearRutasMiDia } from './modulos/mi-dia/mi-dia.routes.js';
 import { crearRutasMensajes } from './modulos/mensajes/mensajes.routes.js';
 import { crearRutasOts } from './modulos/ots/ots.routes.js';
 import { crearRutasTareas } from './modulos/tareas/tareas.routes.js';
@@ -37,6 +40,8 @@ export interface DependenciasApp {
 }
 
 export function crearApp(deps: DependenciasApp): Express {
+  // Los avisos se despachan en cada proceso que crea la app (tests incluidos); idempotente
+  conectarDespachador();
   const app = express();
   app.disable('x-powered-by');
   app.set('trust proxy', env.PROXY_SALTOS);
@@ -70,6 +75,8 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasMensajes());
   app.use(crearRutasTareas());
   app.use(crearRutasHoras());
+  app.use(crearRutasAvisos());
+  app.use(crearRutasMiDia());
   app.use(crearRutasArchivos());
   app.use(crearRutasCorreos());
   app.use(crearRutasDocs());

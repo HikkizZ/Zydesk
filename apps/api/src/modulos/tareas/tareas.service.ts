@@ -8,6 +8,7 @@ import type { z } from 'zod';
 import type { EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
+import { publicarPendientes, type EventoPendiente } from '../../core/eventos/dominio.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
@@ -141,7 +142,8 @@ export async function crearTarea(
   e: TareaEntradaDatos,
 ): Promise<TareaSalidaDatos> {
   if (e.horas_estimadas !== null) throw soloOt('horas_estimadas');
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const t = await bloquearTicket(tx, ticket_id);
     if (t.cerrado_en !== null) throw ticketCerrado();
     const responsable = await nombreResponsable(tx, e.responsable_id);
@@ -161,8 +163,16 @@ export async function crearTarea(
       datos: { tarea_id: id, titulo: e.titulo, responsable },
     });
     await registrarActividadEnTicket(tx, ticket_id);
+    if (e.responsable_id !== null && e.responsable_id !== actor.id) {
+      pendientes.push([
+        'tarea.asignada',
+        { tarea_id: id, ticket_id, ot_id: null, usuario_id: e.responsable_id, actor_id: actor.id },
+      ]);
+    }
     return cargarTarea(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 export async function crearTareaDeOt(
@@ -170,7 +180,8 @@ export async function crearTareaDeOt(
   ot_id: number,
   e: TareaEntradaDatos,
 ): Promise<TareaSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const ot = await bloquearOt(tx, ot_id);
     if (ot.final) throw otCerrada();
     const responsable = await nombreResponsable(tx, e.responsable_id);
@@ -190,8 +201,16 @@ export async function crearTareaDeOt(
       datos: { tarea_id: id, titulo: e.titulo, responsable, horas_estimadas: e.horas_estimadas },
     });
     await registrarActividadEnOt(tx, ot_id);
+    if (e.responsable_id !== null && e.responsable_id !== actor.id) {
+      pendientes.push([
+        'tarea.asignada',
+        { tarea_id: id, ticket_id: null, ot_id, usuario_id: e.responsable_id, actor_id: actor.id },
+      ]);
+    }
     return cargarTarea(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Editar / marcar ----
@@ -233,7 +252,8 @@ export async function editarTarea(
   id: number,
   e: TareaEditarEntradaDatos,
 ): Promise<TareaSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const { tarea, cerrado } = await bloquearTareaYDestino(tx, id);
     const esOt = tarea.ot_id !== null;
     if (!esOt) {
@@ -310,8 +330,27 @@ export async function editarTarea(
       });
     }
     await registrarActividad(tx, tarea);
+    if (
+      e.responsable_id !== undefined &&
+      e.responsable_id !== null &&
+      e.responsable_id !== tarea.responsable_id &&
+      e.responsable_id !== actor.id
+    ) {
+      pendientes.push([
+        'tarea.asignada',
+        {
+          tarea_id: id,
+          ticket_id: tarea.ticket_id,
+          ot_id: tarea.ot_id,
+          usuario_id: e.responsable_id,
+          actor_id: actor.id,
+        },
+      ]);
+    }
     return cargarTarea(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Quitar ----

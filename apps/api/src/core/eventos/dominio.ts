@@ -1,10 +1,14 @@
-import type { EventosDominio, NombreEventoDominio } from '@zydesk/shared';
+import {
+  NOMBRES_EVENTOS_DOMINIO,
+  type EventosDominio,
+  type NombreEventoDominio,
+} from '@zydesk/shared';
 import { EventEmitter } from 'node:events';
 import { logger } from '../../config/logger.js';
 
 // Emisor tipado de eventos de dominio (ADR 0008). Se publica siempre DESPUÉS del commit (ADR 0003):
 // los servicios devuelven de `enTransaccion` una lista de `EventoPendiente` y la pasan a
-// `publicarPendientes` al salir. El despachador de avisos se conecta aquí en la Fase 6.
+// `publicarPendientes` al salir. El despachador de avisos (`avisos/despachador.ts`) se suscribe a los mismos eventos.
 class EmisorDominio extends EventEmitter {
   override on<N extends NombreEventoDominio>(
     nombre: N,
@@ -35,15 +39,8 @@ export function publicarPendientes(pendientes: readonly EventoPendiente[]): void
   for (const [nombre, datos] of pendientes) publicar(nombre, datos);
 }
 
-// Único oyente de la Fase 3: solo ids, nunca contenido (ADR 0017).
-const NOMBRES: NombreEventoDominio[] = [
-  'ot.cerrada',
-  'ot.por_facturar',
-  'ot.por_aprobar',
-  'ot.cancelada',
-  'cotizacion.respondida',
-];
-for (const nombre of NOMBRES) {
+// Oyente de log de todos los eventos: solo ids, nunca contenido (ADR 0017).
+for (const nombre of NOMBRES_EVENTOS_DOMINIO) {
   eventosDominio.on(nombre, (datos) => {
     logger.debug({ evento: nombre, ...datos }, 'evento de dominio');
   });

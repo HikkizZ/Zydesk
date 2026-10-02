@@ -4,6 +4,7 @@ import { crearApp } from './app.js';
 import { comprobarBd, dataSource } from './config/db.js';
 import { env } from './config/env.js';
 import { logger } from './config/logger.js';
+import { conectarDespachador } from './avisos/despachador.js';
 import { crearBoss, iniciarJobs } from './core/jobs/boss.js';
 import { sembrarBase } from './database/semillas/base.js';
 import { cargarLegal } from './modulos/legal/legal.service.js';
@@ -41,6 +42,7 @@ if (env.EJECUTAR_JOBS) {
   await iniciarJobs(boss);
 }
 
+conectarDespachador({ boss });
 const app = crearApp({ comprobarBd });
 const server = app.listen(env.API_PUERTO);
 logger.info({ puerto: env.API_PUERTO }, 'api iniciada');

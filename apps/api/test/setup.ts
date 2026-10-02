@@ -1,4 +1,5 @@
 import { afterAll, beforeAll, beforeEach } from 'vitest';
+import { esperarDespachos } from '../src/avisos/despachador.js';
 import { dataSource } from '../src/config/db.js';
 import { abrirOwner, cerrarOwner, reiniciarBd } from './bd.js';
 
@@ -10,11 +11,14 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
+  await esperarDespachos();
   await cerrarOwner();
   if (dataSource.isInitialized) await dataSource.destroy();
 });
 
 // Los tests sin BD (env, logger) no se ven afectados: solo se reinicia con el DataSource inicializado.
+// Antes se esperan los avisos que el despachador aún escribe del test anterior (si no, llegarían a la BD nueva).
 beforeEach(async () => {
+  await esperarDespachos();
   if (dataSource.isInitialized) await reiniciarBd();
 });

@@ -14,6 +14,7 @@ import {
 import { IsNull, type EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
+import { publicarPendientes, type EventoPendiente } from '../../core/eventos/dominio.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarCambios, registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
@@ -162,8 +163,11 @@ export async function crearTicket(
   // Claves escritas en disco durante la creación (texto pegado, adjuntos extraídos): si la transacción
   // se revierte, hay que borrarlas.
   const claves: string[] = [];
+  const pendientes: EventoPendiente[] = [];
   try {
-    return await enTransaccion((tx) => crearTicketEnTx(tx, actor, e, claves));
+    const salida = await enTransaccion((tx) => crearTicketEnTx(tx, actor, e, claves, pendientes));
+    publicarPendientes(pendientes);
+    return salida;
   } catch (err) {
     await eliminarDeDisco(claves);
     throw err;
@@ -175,6 +179,7 @@ async function crearTicketEnTx(
   actor: UsuarioSesion,
   e: TicketCrearEntradaDatos,
   claves: string[],
+  pendientes?: EventoPendiente[],
 ): Promise<TicketSalidaDatos> {
   // 1. Referencias
   const errores: Record<string, string[]> = {};
@@ -363,7 +368,24 @@ async function crearTicketEnTx(
     datos: { desde_correo: correo !== null, adjuntos_extraidos, codigo },
   });
 
-  // 7.
+  // 7. Eventos de dominio (§1.3): el actor no se avisa a sí mismo
+  const asignados = unicos([
+    ...(principal !== null ? [principal] : []),
+    ...e.responsables_ids,
+  ]).filter((i) => i !== actor.id);
+  if (asignados.length > 0) {
+    pendientes?.push([
+      'ticket.asignado',
+      { ticket_id: id, usuario_ids: asignados, actor_id: actor.id },
+    ]);
+  }
+  const seguidores = unicos(e.seguidores_ids).filter((i) => i !== actor.id);
+  if (seguidores.length > 0) {
+    pendientes?.push([
+      'ticket.seguidor_agregado',
+      { ticket_id: id, usuario_ids: seguidores, actor_id: actor.id },
+    ]);
+  }
   return cargarTicket(tx, id);
 }
 
@@ -502,12 +524,15 @@ export async function editarTicket(
 
 // ---- Cambiar estado (spec §5.4, ADR 0004) ----
 
-export function cambiarEstado(
+export async function cambiarEstado(
   actor: UsuarioSesion,
   id: number,
   p: CambioEstadoTicketDatos,
 ): Promise<TicketSalidaDatos> {
-  return enTransaccion((tx) => cambiarEstadoEnTx(tx, actor, id, p));
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion((tx) => cambiarEstadoEnTx(tx, actor, id, p, { pendientes }));
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // Cuerpo de `cambiarEstado`; `ots` lo orquesta (cierre de OT) con el ticket ya bloqueado.
@@ -516,7 +541,7 @@ export async function cambiarEstadoEnTx(
   actor: UsuarioSesion,
   id: number,
   p: CambioEstadoTicketDatos,
-  opciones: { ticket?: FilaBloqueada } = {},
+  opciones: { ticket?: FilaBloqueada; pendientes?: EventoPendiente[] } = {},
 ): Promise<TicketSalidaDatos> {
   const t = opciones.ticket ?? (await bloquearTicket(tx, id));
   if (!puedeTransicionar(t.estado, p.estado)) {
@@ -595,6 +620,12 @@ export async function cambiarEstadoEnTx(
     valor_nuevo: ETIQUETA_ESTADO_TICKET[p.estado],
     datos,
   });
+  if (t.estado !== p.estado) {
+    opciones.pendientes?.push([
+      'ticket.estado_cambiado',
+      { ticket_id: id, estado_anterior: t.estado, estado: p.estado, actor_id: actor.id },
+    ]);
+  }
   return cargarTicket(tx, id);
 }
 
@@ -624,12 +655,17 @@ async function leerEquipo(
 }
 
 // Reemplaza el conjunto. B7: no recalcula fechas.
-export function guardarResponsables(
+export async function guardarResponsables(
   actor: UsuarioSesion,
   id: number,
   e: ResponsablesEntradaDatos,
 ): Promise<TicketSalidaDatos> {
-  return enTransaccion((tx) => guardarResponsablesEnTx(tx, actor, id, e));
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion((tx) =>
+    guardarResponsablesEnTx(tx, actor, id, e, { pendientes }),
+  );
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // Cuerpo de `guardarResponsables`; `ots` lo orquesta (cierre de OT) con el ticket ya bloqueado.
@@ -638,7 +674,7 @@ export async function guardarResponsablesEnTx(
   actor: UsuarioSesion,
   id: number,
   e: ResponsablesEntradaDatos,
-  opciones: { ticket?: FilaBloqueada } = {},
+  opciones: { ticket?: FilaBloqueada; pendientes?: EventoPendiente[] } = {},
 ): Promise<TicketSalidaDatos> {
   const t = opciones.ticket ?? (await bloquearTicket(tx, id));
   if (t.cerrado_en !== null) throw ticketCerrado();
@@ -690,6 +726,17 @@ export async function guardarResponsablesEnTx(
     },
     campos: ['responsable_principal', 'responsables'],
   });
+  // Solo quienes no eran responsables antes (ni como principal ni como otros) y no son el actor
+  const eran = new Set([...(antes.principal !== null ? [antes.principal] : []), ...antes.otros]);
+  const nuevos = [...(e.principal_id !== null ? [e.principal_id] : []), ...otros].filter(
+    (i) => !eran.has(i) && i !== actor.id,
+  );
+  if (nuevos.length > 0) {
+    opciones.pendientes?.push([
+      'ticket.asignado',
+      { ticket_id: id, usuario_ids: nuevos, actor_id: actor.id },
+    ]);
+  }
   return cargarTicket(tx, id);
 }
 
@@ -699,7 +746,8 @@ export async function guardarSeguidores(
   id: number,
   e: SeguidoresEntradaDatos,
 ): Promise<TicketSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     await bloquearTicket(tx, id);
     const ids = unicos(e.usuario_ids);
     if ((await usuariosNoValidos(tx, ids)).length > 0) {
@@ -728,8 +776,17 @@ export async function guardarSeguidores(
       despues: { seguidores: nombresOrdenados(ids, nombres) },
       campos: ['seguidores'],
     });
+    const nuevos = ids.filter((i) => !antesIds.includes(i) && i !== actor.id);
+    if (nuevos.length > 0) {
+      pendientes.push([
+        'ticket.seguidor_agregado',
+        { ticket_id: id, usuario_ids: nuevos, actor_id: actor.id },
+      ]);
+    }
     return cargarTicket(tx, id);
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Para los módulos de actividad (mensajes y tareas escriben el ticket solo por aquí) ----
