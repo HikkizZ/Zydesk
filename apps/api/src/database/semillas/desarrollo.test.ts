@@ -236,4 +236,79 @@ describe('sembrarDesarrollo', () => {
     const cli = await agente.get(`/api/clientes/${c.id}`);
     expect(typeof cli.body.bolsa.vigente.horas_usadas_mes).toBe('number');
   });
+
+  it('siembra los avisos del diseño para crojas y sdiaz, sin duplicar, y deja datos para Mi día y la pantalla 10', async () => {
+    await sembrarDesarrollo(CLAVE);
+    await sembrarDesarrollo(CLAVE);
+    const usuario = async (u: string): Promise<number> =>
+      (await dataSource.query(`SELECT id FROM usuario WHERE correo = $1`, [`${u}@zydesk.local`]))[0]
+        .id;
+    const cr = await usuario('crojas');
+    const sd = await usuario('sdiaz');
+    // 7: el aviso «Constructora Andes aún no responde…» del diseño no se siembra (spec fase 6 §20)
+    expect(await contar('aviso', `usuario_id = ${cr}`)).toBe(7);
+    expect(await contar('aviso', `usuario_id = ${cr} AND leido_en IS NULL`)).toBe(3);
+    expect(await contar('aviso', `usuario_id = ${sd}`)).toBe(3);
+    expect(await contar('aviso')).toBe(10);
+    expect(await contar('aviso_envio')).toBe(0);
+    expect(await contar('vinculo_telegram')).toBe(0);
+    expect(await contar('codigo_vinculo')).toBe(0);
+    const prefs = await dataSource.query(
+      `SELECT usuario_id, evento, canal, activo FROM preferencia_aviso`,
+    );
+    expect(prefs).toEqual([
+      { usuario_id: cr, evento: 'seguimiento', canal: 'telegram', activo: false },
+    ]);
+
+    const textos: { texto: string; enlace: string }[] = await dataSource.query(
+      `SELECT texto, enlace FROM aviso WHERE usuario_id = $1 ORDER BY creado_en DESC`,
+      [cr],
+    );
+    expect(textos[0]!.texto).toBe('Sebastián Díaz te mencionó en una nota interna de TK-1048');
+    expect(textos[0]!.enlace).toMatch(/^\/tickets\/\d+#mensaje-\d+$/);
+    expect(textos.map((t) => t.texto)).toEqual(
+      expect.arrayContaining([
+        'Valentina Soto te pidió aprobar la OT-0219 (interna)',
+        'Sebastián Díaz registró un seguimiento en TK-1048',
+        'OT-0216 se cerró y quedó lista para facturar · Clínica Los Robles',
+        'Tomás Reyes cambió TK-1028 a En espera · repuesto',
+        'Te agregaron como seguidor de TK-1048 «Error al emitir facturas desde el ERP»',
+      ]),
+    );
+    expect(
+      textos.some((t) => t.texto.startsWith('TK-1051 «') && t.texto.includes(' vence hoy a las ')),
+    ).toBe(true);
+    expect(await contar('aviso', 'creado_en > now()')).toBe(0);
+
+    const ingresar = async (u: string) => {
+      const agente = request
+        .agent(crearApp({ comprobarBd: async () => true }))
+        .set('X-Requested-With', 'Zydesk');
+      const r = await agente
+        .post('/api/auth/ingresar')
+        .send({ correo: `${u}@zydesk.local`, contrasena: CLAVE });
+      expect(r.status).toBe(200);
+      return agente;
+    };
+    const camila = await ingresar('crojas');
+    expect((await camila.get('/api/avisos/no-leidos')).body.no_leidos).toBe(3);
+
+    const sebastian = await ingresar('sdiaz');
+    expect((await sebastian.get('/api/avisos/no-leidos')).body.no_leidos).toBe(1);
+    const miDia = (await sebastian.get('/api/mi-dia')).body;
+    expect(miDia.vencen_hoy.map((t: { codigo: string }) => t.codigo)).toContain('TK-1048');
+    expect(miDia.menciones).toHaveLength(1);
+    expect(miDia.menciones[0].texto).toBe(
+      'Camila Rojas te mencionó en una nota interna de TK-1048',
+    );
+
+    const fernanda = await ingresar('fcastro');
+    const porAprobar = (await fernanda.get('/api/mi-dia')).body.por_aprobar;
+    expect(JSON.stringify(porAprobar)).toContain('OT-0219');
+
+    const hikki = await ingresar('hikki');
+    const ind = (await hikki.get('/api/ots/indicadores')).body;
+    expect(ind.por_facturar.n).toBe(1);
+    expect(ind.esperando_cliente.n).toBeGreaterThanOrEqual(1);
+  });
 });
