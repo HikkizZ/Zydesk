@@ -783,6 +783,9 @@ Todo el PR 6a está implementado, verificado y commiteado en `feat/fase-6a-visib
 - **Revisión de seguridad de 6a**: `/security-review` (Opus) y `sentry-security-review` (Fable) sin hallazgos reales. Observaciones aplicadas con test en `d9f06f5`: **OBS-1** los filtros de `auditoria.exportacion` se comprueban con `Object.hasOwn` (antes `in` aceptaba `constructor`, `toString`); **OBS-2** los destinatarios de `por_facturar` se derivan de la matriz de permisos (`ots.facturar`). **OBS-3** (`href` del enlace «Abrir en Telegram» de `DialogoVincular`) se revisa en 6b con la vinculación real.
 - **Documentación de 6a**: CHANGELOG, manuales (primeros pasos, técnico, coordinación, administración), guía de la API y `CLAUDE.md` actualizados; `openapi.json` regenerado. ADR 0027 queda para el cierre de 6b (§25.1). Se quitó del diálogo de cierre de OT el texto «Los avisos se activan en la Fase 6».
 - **Siguiente**: PR 6a a `main` con confirmación del usuario y CI verde; luego rama `feat/fase-6b-telegram` desde `main`.
+- **Integrado** (2026-10-02): PR #5 a `main` (`84e2ab9`). ADR 0027 (parte 6a) entró antes del merge y registra "Mi día" como pantalla inicial confirmada por el usuario. **CI**: el job `verificar` del PR tardó **5 min 9 s** según el usuario (por encima del objetivo de ≤ 4 min del paso "Tests" de §23; retomar F4-T2 si sigue creciendo).
+- **Agregado a 6b por el usuario**: el enlace **"Ayuda"** dentro de la app que abre el manual del rol (ADR 0012), pendiente desde la Fase 1.
+- **F6-T20 agregada (2026-10-02)**: §27 fija cómo se implementa "Ayuda" (manuales importados con `?raw`, ruta `/ayuda/:manual`, enlace en menú lateral y panel «Más»). Independiente de 6C/6G; puede ir en paralelo.
 
 ### Cómo continuar (para retomar en otro equipo)
 
@@ -825,3 +828,103 @@ Todo el PR 6a está implementado, verificado y commiteado en `feat/fase-6a-visib
 - **ADR 0023.14 / 0025.15**: los oyentes de `eventosDominio` pasan de un log a log + despachador; `ot.cerrada` cubre los avisos del ticket en el cierre (sin `ticket.estado_cambiado` ni `ticket.asignado` desde el cierre).
 - **ADR 0023.8 / 0025**: pantalla 10 completa: indicadores (`neto` solo con `reportes.ver`), etiquetas derivadas `esperando_cliente` y `por_aprobar` (A2), exportación `.xlsx` con `ots.facturar`; «Marcar facturada» sigue en el detalle (ADR 0022).
 - **Spec funcional §4.10 / §6 / PLAN §4**: `PreferenciaAviso` pasa a (usuario, evento, canal, activo); `Aviso` gana los campos de §3.1; el canal correo queda previsto sin implementar; el resumen diario es por Telegram; el bot cubre `/hoy`, `/mis`, `/ticket`, responder aviso, aprobar OT interna y crear ticket desde texto reenviado, siempre con la sesión de la persona.
+
+## 27. Ayuda dentro de la app (agregado al PR 6b)
+
+Cierra la promesa de ADR 0012 («enlace "Ayuda" en el menú que abre el manual del rol renderizado desde los mismos `.md`; sin buscador ni sistema aparte») y de ADR 0019 (todo lo del menú llega al celular por el panel «Más»). Bloque **6I**, solo `apps/web`; **independiente de 6C y 6G** (no toca `apps/api`, `apps/bot` ni `packages/shared`) y puede ir en paralelo con ellos. Las capturas (`docs/manuales/img/`) quedan para la Fase 8 (decisión del usuario); nada de este bloque depende de ellas.
+
+### 27.1 Cómo llegan los manuales a la web
+
+**Decisión: importarlos como texto en el build con `?raw` de Vite, directamente desde `docs/manuales/`.** Una sola fuente (los `.md` del repo, los mismos que se leen en GitHub), sin copia a `public/`, sin script de sincronización y sin ruta nueva en la API. Funciona igual en `vite` (dev), `vite build` y `vitest` (usa el mismo pipeline de Vite; `vite/client` ya tipa `*?raw` como `string`), y el contenedor de producción no necesita `docs/` en tiempo de ejecución: el texto queda dentro del bundle estático que sirve nginx. Se descartan: copiar a `public/` (dos copias o un paso de build más) y servirlos por la API (una ruta y una lectura de disco para algo que es estático).
+
+- `apps/web/src/features/ayuda/manuales.ts` registra los manuales con imports **explícitos** (no `import.meta.glob`: cuatro archivos no justifican la indirección):
+
+  ```ts
+  import primerosPasos from '../../../../../docs/manuales/usuario/00-primeros-pasos.md?raw';
+  // … 01-tecnico, 02-coordinacion, administracion
+  export interface Manual { clave: ClaveManual; titulo: string; archivo: string; texto: string; roles: readonly Rol[] }
+  ```
+
+  Claves y orden fijos: `primeros-pasos` (todos los roles), `tecnico` (`tecnico`, `coordinacion`, `admin`), `coordinacion` (`coordinacion`, `admin`), `administracion` (`admin`). `archivo` es el nombre base del `.md` (`00-primeros-pasos.md`, …) y sirve para resolver enlaces (§27.4). `titulo` es el texto del `# ` de cada archivo (se extrae del texto; no se duplica a mano). `manualesDe(rol)` devuelve la lista filtrada en ese orden; `manualPorClave(clave)` el manual o `undefined`.
+- Cuando F6-T19 cree `docs/manuales/usuario/04-bot-telegram.md`, se agrega una línea al registro con clave `bot-telegram` y todos los roles. Hasta entonces no existe y no se registra.
+- Vite sirve en dev archivos fuera de `apps/web` porque el *workspace root* por defecto de `server.fs.allow` es la raíz del monorepo (donde está `package-lock.json`). Si al abrir `/ayuda` en dev aparece `403 … outside of Vite serving allow list`, agregar en `vite.config.ts` `server.fs.allow: [raiz]` (`raiz` ya está definida ahí); no se hace de antemano.
+- Consecuencia para la Fase 9: el `Dockerfile` de `web` debe copiar `docs/manuales/` a la etapa de build (el contexto ya es la raíz del monorepo). Registrar en el CHANGELOG como pendiente de la Fase 9.
+
+### 27.2 Qué abre cada rol y cómo se organiza
+
+| Rol            | Manuales (pestañas, en este orden)                                                                    |
+| -------------- | ----------------------------------------------------------------------------------------------------- |
+| Solo lectura   | Primeros pasos                                                                                        |
+| Técnico        | Primeros pasos · Manual de tickets para el equipo                                                     |
+| Coordinación   | Primeros pasos · Manual de tickets para el equipo · Manual de coordinación                            |
+| Administración | Primeros pasos · Manual de tickets para el equipo · Manual de coordinación · Manual de administración |
+
+No se escribe un manual de Solo lectura: «Primeros pasos» cubre lo que ese rol usa (ingreso, perfil, Mi día, Avisos, celular) y el manual de coordinación ya dice qué ve y qué no.
+
+**Una página, `/ayuda/:manual`, con pestañas por manual e índice del manual abierto.**
+
+- `/ayuda` redirige (`Navigate replace`) a `/ayuda/primeros-pasos`. Ambas rutas van dentro de `Layout` (exigen sesión) en `app/router.tsx`.
+- `AyudaPage` (`features/ayuda/pages/AyudaPage.tsx`): `TituloPagina` «Ayuda»; debajo, un `nav aria-label="Manuales"` con un `NavLink` por manual de `manualesDe(rol)` (estilo de pestañas con los tokens actuales; `aria-current="page"` lo pone `NavLink`). Con un solo manual (Solo lectura) la fila de pestañas **no se pinta**.
+- Si `:manual` no existe en el registro → `PaginaNoEncontrada`. Si existe pero no está en la lista del rol (p. ej. un Técnico sigue desde «Primeros pasos» el enlace al manual de coordinación), **se muestra igual**: los manuales no son confidenciales (están en el repo público) y romper esos enlaces sería peor; las pestañas siguen mostrando solo las del rol. Lo que ADR 0012 fija es que «Ayuda» *abre* el manual del rol, y eso lo cumplen la redirección y la lista de pestañas.
+- **Índice «En esta página»**: lista de enlaces `#ancla` a los `## ` del manual abierto, construida a partir del texto crudo (líneas que empiezan por `## `, fuera de bloques de código con triple acento grave) con la misma función `slug` de §27.4. En `lg` y más: dos columnas, el índice a la derecha, `sticky` y con scroll propio (`aside aria-label="Índice del manual"`). Bajo `lg`: un `<details>` cerrado por defecto con `<summary>` «En esta página», encima del contenido.
+- El contenido va en `<article>` con el mismo marco que `DocumentoLegalPage` (`rounded-lg border border-borde bg-superficie p-6`, `max-w-3xl` en la columna de texto). El `# ` del manual se renderiza como `h2` (así ya lo hace `Markdown.tsx`), con lo que el único `h1` de la página es «Ayuda».
+- Al cambiar de manual sin `#`, la vista vuelve arriba (`window.scrollTo(0, 0)`).
+
+### 27.3 Render del Markdown
+
+- `features/legal/Markdown.tsx` **exporta** `COMPONENTES` (hoy es una constante privada; un cambio de una línea) y no cambia nada más: términos y privacidad siguen igual.
+- `features/ayuda/MarkdownManual.tsx` usa `ReactMarkdown` con `remarkPlugins={[remarkGfm]}` y `components={{ ...COMPONENTES, h1, h2, h3, h4, a, table, thead, th, td }}`:
+  - **`h1`–`h4`** reciben `id={slug(textoDe(children))}` (ids únicos: segunda aparición `-1`, tercera `-2`, como GitHub; el contador se reinicia por render con un `Map` local) y `tabIndex={-1}` con `scroll-mt-4`, para poder enfocarlos al llegar por ancla. `textoDe(children)` concatena los nodos de texto (ignora `<code>`, `<strong>`, etc. pero conserva su texto).
+  - **`a`**: resolución de §27.4.
+  - **Tablas** (GFM: `00-primeros-pasos.md` «Avisos» y `administracion.md` «Qué puede hacer cada rol»): clases equivalentes a `components/ui/table.tsx` (`th`/`td` con borde y `text-left`), envueltas en `div.overflow-x-auto` para que no rompan el ancho a 390 px.
+  - El resto (párrafos, listas, citas) hereda de `COMPONENTES`.
+- **Sin HTML crudo**: no se agrega `rehype-raw`; `react-markdown` ya omite el HTML embebido en el `.md` (lo descarta, no lo inyecta). Un test lo fija (§27.6).
+- **Dependencia nueva: `remark-gfm`** (justificada: los manuales ya usan tablas y `react-markdown` sin GFM las pinta como párrafos; es del mismo ecosistema `unified`/`remark` que `react-markdown` ya trae, sin binarios ni config). Nada más: ni `rehype-slug` (lo resuelve `slug`), ni `rehype-raw`, ni `@tailwindcss/typography`.
+- **Imágenes**: `img` queda con el render por defecto; hoy ningún manual tiene `![…]`. Cómo llegan las capturas (`docs/manuales/img/`) al bundle se decide en la Fase 8 junto con las capturas (probablemente `import.meta.glob` con `?url` o copia a `public/manuales/img/`); no se anticipa.
+
+### 27.4 Enlaces y anclajes
+
+`slug(texto)`: `normalize('NFC')`, minúsculas, quitar todo lo que no sea letra o número Unicode (`\p{L}`, `\p{N}`), espacio o guion, espacios → `-`, colapsar guiones repetidos y recortar guiones de los extremos. Es el mismo algoritmo que GitHub para los encabezados de los manuales, así los anclajes escritos a mano siguen valiendo: `Registrar horas` → `registrar-horas`, `Por aprobar en Mi día` → `por-aprobar-en-mi-día`, `Exportar para facturación (.xlsx)` → `exportar-para-facturación-xlsx`, `1. Primer ingreso y primer usuario` → `1-primer-ingreso-y-primer-usuario`. Vive en `features/ayuda/slug.ts` con su test.
+
+`resolverEnlace(href)` (`features/ayuda/enlaces.ts`) clasifica el `href` del Markdown y el componente `a` lo pinta así:
+
+| `href` en el `.md`                                                              | Resultado                                                                                                                                     |
+| ------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `#ancla`                                                                        | `<a href="#ancla">` normal (misma página; el `useEffect` de abajo hace el scroll y el foco)                                                   |
+| `01-tecnico.md`, `usuario/01-tecnico.md`, `./01-tecnico.md`, con o sin `#ancla` | `<Link to="/ayuda/tecnico#ancla">`: se toma el **nombre base** del archivo y se busca en el registro por `archivo`                            |
+| `.md` que no está en el registro (p. ej. `../api/README.md`)                    | texto plano (`<span>`), sin enlace roto                                                                                                       |
+| `http://`, `https://`, `mailto:`                                                | `<a target="_blank" rel="noopener noreferrer">` con un texto visible o `aria-label` que indique «(abre en una pestaña nueva)»                 |
+| Cualquier otro (`/api/docs`, rutas internas absolutas)                          | `<Link to={href}>`                                                                                                                            |
+
+Anclajes al llegar: `AyudaPage` tiene un `useEffect` sobre `[manual, location.hash]` que, si hay `hash`, busca `document.getElementById(decodeURIComponent(hash.slice(1)))`, hace `scrollIntoView()` y `focus()` (por el `tabIndex={-1}`); si no existe el `id`, no hace nada. Esto cubre los tres casos: entrar por URL con `#`, pulsar un `#ancla` del índice o del texto, y seguir un enlace entre manuales con `#`.
+
+### 27.5 Dónde va el enlace
+
+- **Menú lateral** (`MenuLateral.tsx`): un `NavLink` «Ayuda» con ícono `CircleHelp` de lucide, con la clase `claseItem`, colocado **justo encima del enlace al perfil** (el `mt-auto` pasa al bloque que agrupa Ayuda + Perfil para que ambos queden al pie). Sin `end`, de modo que `/ayuda/tecnico` también lo marca activo.
+- **Panel «Más»** (`PanelMenuMovil.tsx`): un `NavLink` «Ayuda» con el mismo ícono y `claseItem` (`min-h-11`), **después de los tres grupos y antes del botón «Cerrar sesión»**; cierra el panel con `onClick={alElegir}` como el resto.
+- **No** se agrega a `MENU` (`menu.ts`): no pertenece a ningún grupo y `principales` lo pintaría bajo «Avisos»; se declara explícito en los dos componentes, como ya ocurre con Perfil.
+- **No** va en el `Pie`: el pie también se pinta en `/ingresar` sin sesión y `/ayuda` exige sesión (va dentro de `Layout`). Términos y privacidad siguen siendo los únicos enlaces del pie.
+- Sin permiso nuevo ni `RequierePermiso`: todo rol con sesión entra.
+
+### 27.6 Tests (vitest + Testing Library, `ConSesion` + `MemoryRouter` con `initialEntries`)
+
+- `slug.test.ts`: los cuatro ejemplos de §27.4; `Menciones` → `menciones`; texto con `code` → sin acentos graves; duplicados `-1`, `-2`.
+- `enlaces.test.ts`: cada fila de la tabla de §27.4 con al menos un caso; `usuario/00-primeros-pasos.md#avisos` → `/ayuda/primeros-pasos#avisos`.
+- `manuales.test.ts`: `manualesDe('lectura')` = `['primeros-pasos']`; `tecnico` = 2; `coordinacion` = 3; `admin` = 4 en el orden fijo; `titulo` de cada uno coincide con la primera línea `# ` de su `texto`; **todo enlace `.md` escrito en los cuatro manuales apunta a un `archivo` del registro y todo `#ancla` escrito (propio o de otro manual) existe como `slug` de algún encabezado del manual destino** (esto convierte los enlaces rotos entre manuales en un fallo de test, hoy y cuando se editen los manuales en F6-T19).
+- `AyudaPage.test.tsx`: (a) `/ayuda` redirige a `/ayuda/primeros-pasos` y el `h1` es «Ayuda»; (b) `lectura` no ve la fila de pestañas; `admin` ve 4 pestañas con `aria-current="page"` en la actual; (c) `/ayuda/no-existe` muestra `PaginaNoEncontrada`; (d) `tecnico` en `/ayuda/coordinacion` ve el manual y solo 2 pestañas; (e) la tabla de «Avisos» de primeros pasos se renderiza como `table` con `columnheader` «Aviso» y «Cuándo llega»; (f) un `.md` de prueba con `<script>alert(1)</script>` y `<img onerror>` (se pasa a `MarkdownManual` directamente) no produce ningún `script` ni `img` en el DOM; (g) el enlace «Registrar horas» de `01-tecnico.md` es un `link` con `href="/ayuda/tecnico#registrar-horas"` y el encabezado tiene `id="registrar-horas"`; (h) con `initialEntries={['/ayuda/tecnico#registrar-horas']}` el encabezado recibe el foco (`document.activeElement`); `scrollIntoView` se stubbea en jsdom.
+- `MenuLateral.test.tsx` y `BarraInferior.test.tsx`: cada rol (incluido `lectura`) ve el enlace «Ayuda» con `href="/ayuda"`; en el panel «Más» pulsarlo cierra el panel. Los tests existentes siguen verdes sin tocar aserciones.
+- Sin tests de API (no hay API en este bloque).
+
+### 27.7 Responsive y accesibilidad (ADR 0011 / 0019)
+
+- 390 px: pestañas con scroll horizontal (`overflow-x-auto`, sin salto de línea), índice en `<details>`, tablas con scroll horizontal propio, objetivos ≥ 44 px en el panel «Más». 1440 px: dos columnas con índice `sticky`.
+- Un solo `h1` por página («Ayuda»); el `# ` del manual es `h2` y el resto baja un nivel (ya lo hace `Markdown.tsx`); el índice y las pestañas son `nav`/`aside` con `aria-label`; al llegar por ancla el encabezado enfocado conserva el anillo de foco del tema (no se le pone `outline-none`).
+- Contraste y estados como el resto de la app (tokens existentes; sin colores nuevos). Verificación manual en el navegador con `crojas` (coordinación), `sdiaz` (técnico) y un admin a 1440 y 390 px: pestañas correctas por rol, el camino «Primeros pasos → manual de coordinación → Por aprobar en Mi día» aterriza en el encabezado, tabla legible en celular.
+
+### 27.8 Tarea
+
+| Tarea                             | Bloque | Crea/edita                                                                                                                                                                                                                                                                                                                                                                                                                 | Criterio de aceptación                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------- | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **F6-T20 Ayuda dentro de la app** | 6I     | `features/ayuda/{manuales,slug,enlaces}.ts` y sus tests, `features/ayuda/MarkdownManual.tsx`, `features/ayuda/pages/AyudaPage.tsx` + test, `app/router.tsx` (dos rutas), `app/layout/{MenuLateral,PanelMenuMovil}.tsx` y sus tests, `features/legal/Markdown.tsx` (solo `export` de `COMPONENTES`), `apps/web/package.json` + `package-lock.json` (`remark-gfm`), `docs/CHANGELOG.md` (Añadido + pendiente Fase 9 del Dockerfile de `web`) | §27.1–§27.7 completos; tests de §27.6 verdes; `npm run typecheck`, `lint`, `format:check` y `npm run build -w @zydesk/web` verdes (el build incluye el texto de los cuatro manuales: `grep -l "Primeros pasos" apps/web/dist/assets/*.js` no vacío); verificación manual de §27.7; commit convencional en español. Archivos exclusivos de `apps/web`: no comparte ninguno con 6C (`apps/api`) ni 6G (`apps/bot`); puede ejecutarse en paralelo con ellos y antes de F6-T18, que lo revisa junto al resto del diff. |
+
+**Qué registrar en ADR 0027 al cerrar** (se suma a §26): ADR 0012 precisada: los manuales llegan al cliente **compilados en el bundle** con `?raw` (no «servidos como estáticos por `web`» en tiempo de ejecución), una página `/ayuda/:manual` con pestañas por rol e índice, `remark-gfm` como única dependencia nueva, sin HTML crudo, sin manual propio de Solo lectura, capturas en la Fase 8. ADR 0019 precisada: el panel «Más» gana la entrada «Ayuda» antes de «Cerrar sesión».
