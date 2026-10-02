@@ -789,6 +789,7 @@ Todo el PR 6a está implementado, verificado y commiteado en `feat/fase-6a-visib
 - **Documentación de 6a**: CHANGELOG, manuales (primeros pasos, técnico, coordinación, administración), guía de la API y `CLAUDE.md` actualizados; `openapi.json` regenerado. ADR 0027 queda para el cierre de 6b (§25.1). Se quitó del diálogo de cierre de OT el texto «Los avisos se activan en la Fase 6».
 - **Siguiente**: PR 6a a `main` con confirmación del usuario y CI verde; luego rama `feat/fase-6b-telegram` desde `main`.
 - **Integrado** (2026-10-02): PR #5 a `main` (`84e2ab9`). ADR 0027 (parte 6a) entró antes del merge y registra "Mi día" como pantalla inicial confirmada por el usuario. **CI**: el job `verificar` del PR tardó **5 min 9 s** según el usuario (por encima del objetivo de ≤ 4 min del paso "Tests" de §23; retomar F4-T2 si sigue creciendo).
+- **Agregado a 6b por el usuario (2026-10-02)**: **QR de vinculación** en `DialogoVincular` (librería `qrcode`, MIT), generado en el navegador desde el `enlace` `https://t.me/<bot>?start=<código>` de la API; solo en escritorio (≥ 768 px), con aviso "No compartas este código ni el QR".
 - **Agregado a 6b por el usuario**: el enlace **"Ayuda"** dentro de la app que abre el manual del rol (ADR 0012), pendiente desde la Fase 1.
 - **F6-T20 agregada (2026-10-02)**: §27 fija cómo se implementa "Ayuda" (manuales importados con `?raw`, ruta `/ayuda/:manual`, enlace en menú lateral y panel «Más»). Independiente de 6C/6G; puede ir en paralelo.
 
