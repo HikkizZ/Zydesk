@@ -775,7 +775,7 @@ Todo el PR 6a está implementado, verificado y commiteado en `feat/fase-6a-visib
 
 - **6A**: `test/fabricas.ts` quedó truncado por una interrupción del agente y se completó a mano antes de seguir. Migración 13, 5 entidades y `fabricas-fase6.test.ts` según §3.
 - **6B**: `NOMBRES_EVENTOS_DOMINIO` se agregó a `shared/eventos.ts` como registro tipado (§6.6). `TELEGRAM_BOT_TOKEN` se lee de `process.env` dentro del despachador hasta que 6C lo incorpore a `config/env.ts`. El test de colas de `iniciarJobs` se movió a `boss.test.ts` (4 colas en 6a: `mantencion.limpiar`, `tickets.archivar`, `archivos.limpiar_huerfanos`, `tickets.vencimientos`; `aviso.enviar` y `avisos.resumen_diario` llegan en 6C). El texto de `ot_por_aprobar` nombra a `ot.creado_por` como solicitante (el evento no trae otro actor); la semilla fija el texto del diseño («Valentina Soto…») a mano.
-- **6D**: Mi día lista tickets donde la persona es **responsable** (principal u otro), no con `solo_mios` (que incluye seguidores; §14.15). `detenidos` excluye los que vencen hoy o vencidos. Línea de tiempo con tope de 500 ítems y exportación con tope de 5 000 filas: superarlos responde `400 VALIDACION` (`detalles.hasta` / `detalles.filtros`). La auditoría de exportación guarda solo los **nombres** de los filtros (sin valores). `crearRutasMiDia` se montó en `app.ts` y sus tests usan `crearApp`; el `app-prueba.ts` provisional quedó sin versionar y debe borrarse.
+- **6D**: Mi día lista tickets donde la persona es **responsable** (principal u otro), no con `solo_mios` (que incluye seguidores; §14.15). `detenidos` excluye los que vencen hoy o vencidos. Línea de tiempo con tope de 500 ítems y exportación con tope de 5 000 filas: superarlos responde `400 VALIDACION` (`detalles.hasta` / `detalles.filtros`). La auditoría de exportación guarda solo los **nombres** de los filtros (sin valores). `crearRutasMiDia` se montó en `app.ts` y sus tests usan `crearApp`; el `app-prueba.ts` provisional se borró.
 - **6E**: `TarjetaTelegram` se oculta mientras la API no ofrece `/api/yo/telegram` (6C); el resto de §15 (lista, filtros, preferencias sin columna correo, badge, etiqueta «Bot de Telegram» en Sesiones) está hecho.
 - **6F**: `PillEtapaOt` recibe la etiqueta derivada por la prop `etiqueta`; `OtsPage` acepta el filtro `etapa` desde la URL (destino de la tarjeta «Esperando al cliente»); la columna «Neto / horas» no cambió (ya cubría el caso interna).
 - **Semillas**: 7 avisos para `crojas` (3 sin leer) y 3 para `sdiaz`; §20 decía 8 pero describe 7 (el octavo del diseño es el aviso de cotización sin respuesta, fuera de alcance). `desarrollo.test.ts` afirma 7.
@@ -783,6 +783,34 @@ Todo el PR 6a está implementado, verificado y commiteado en `feat/fase-6a-visib
 - **Revisión de seguridad de 6a**: `/security-review` (Opus) y `sentry-security-review` (Fable) sin hallazgos reales. Observaciones aplicadas con test en `d9f06f5`: **OBS-1** los filtros de `auditoria.exportacion` se comprueban con `Object.hasOwn` (antes `in` aceptaba `constructor`, `toString`); **OBS-2** los destinatarios de `por_facturar` se derivan de la matriz de permisos (`ots.facturar`). **OBS-3** (`href` del enlace «Abrir en Telegram» de `DialogoVincular`) se revisa en 6b con la vinculación real.
 - **Documentación de 6a**: CHANGELOG, manuales (primeros pasos, técnico, coordinación, administración), guía de la API y `CLAUDE.md` actualizados; `openapi.json` regenerado. ADR 0027 queda para el cierre de 6b (§25.1). Se quitó del diálogo de cierre de OT el texto «Los avisos se activan en la Fase 6».
 - **Siguiente**: PR 6a a `main` con confirmación del usuario y CI verde; luego rama `feat/fase-6b-telegram` desde `main`.
+
+### Cómo continuar (para retomar en otro equipo)
+
+**Estado al 2026-10-02**: el PR 6a está completo y subido en `origin/feat/fase-6a-visibilidad`, pendiente de que el usuario abra el PR, lo revise y haga merge. Los textos del PR y del merge (#5) se entregaron en el chat.
+
+**Preparar el equipo**:
+
+1. `git fetch origin`.
+2. Si el PR 6a ya está mergeado: `git checkout main && git pull --ff-only`. Si no: `git checkout feat/fase-6a-visibilidad`.
+3. Docker Desktop abierto y `docker compose -f docker-compose.dev.yml up -d`.
+4. `npm install`, `npm run db:migrar` (13 migraciones) y `npm run db:reiniciar`.
+5. Crear `.claude/settings.local.json` con `{ "attribution": { "commit": "", "pr": "" }, "includeCoAuthoredBy": false }`. No se versiona: commits y PR van sin coautoría.
+6. Verificar con `npm test`. Valores esperados: shared 299, API 796 (+2 omitidos), web 335.
+
+**PR 6b** (rama `feat/fase-6b-telegram`, creada desde `main` después del merge del 6a), en este orden:
+
+1. **6C (F6-T9, F6-T10)**: vinculación y sesiones de bot, `POST /api/bot/vincular` con `X-Bot-Key`, `/api/yo/telegram*`, `CanalTelegram`, cola `aviso.enviar` (extiende `core/jobs/enviar-aviso.ts`), job `avisos.resumen_diario` y `mantencion.limpiar` ampliado (avisos leídos de más de 90 días y códigos vencidos). También:
+   - `config/env.ts` gana `TELEGRAM_BOT_TOKEN`, `BOT_API_KEY` y `WEB_URL`.
+   - El despachador lee hoy `process.env['TELEGRAM_BOT_TOKEN']`: pasarlo a `env`.
+   - `comoBot` en `test/fabricas.ts` lleva la marca `// F6-T9`: pasarlo a `env.BOT_API_KEY`.
+   - `boss.test.ts` sube a 6 colas.
+   - Base de test: `npm run db:test:crear -- 6c`.
+2. **6G (F6-T15)**: bot `apps/bot` con grammY, probado con dobles (§19.6). Puede ir en paralelo con 6C contra los esquemas de `shared`.
+3. **F6-T17**: prueba con un bot real. El usuario crea un bot de desarrollo en @BotFather y pone su token **solo** en su `.env` local (nunca en el repo ni en el chat).
+4. **F6-T18**: revisión de seguridad (Fable con `sentry-security-review` y `/security-review`). Revisar también OBS-3: el `href` de «Abrir en Telegram» en `DialogoVincular.tsx` debe venir de `https://t.me/<bot>` armado en el servidor, y `WEB_URL` debe validarse como `http(s)://`.
+5. **F6-T19**: ADR 0027 (registra §26 y las desviaciones de 6a y 6b), CHANGELOG, manuales (Telegram y bot), `README.md`, `.env.example`, `openapi.json` y `CLAUDE.md`. Después, PR a `main` con la confirmación del usuario.
+
+**Forma de trabajo** (sin cambios): Opus planifica y verifica (typecheck, lint, format:check, build y `npm test` antes de cada commit). Fable escribe specs, ADR y revisiones; su resumen se entrega en el chat con decisiones, recomendaciones y preguntas que bloquean. Sonnet programa por bloques, cada uno con su base de test. Los commits son convencionales en español, sin `Co-Authored-By`. `push` y PR solo con confirmación del usuario.
 
 ## 26. Cambios de ADR propuestos (no se editan las ADR; registrar en ADR 0027 "Precisiones de la Fase 6" al cerrar)
 
