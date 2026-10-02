@@ -3,6 +3,9 @@ import { Auditoria } from '../core/historial/auditoria.entity.js';
 import { Evento } from '../core/historial/evento.entity.js';
 import { Contador } from '../core/numeracion/contador.entity.js';
 import { Archivo } from '../modulos/archivos/archivo.entity.js';
+import { Aviso } from '../modulos/avisos/aviso.entity.js';
+import { AvisoEnvio } from '../modulos/avisos/aviso-envio.entity.js';
+import { PreferenciaAviso } from '../modulos/avisos/preferencia-aviso.entity.js';
 import { Sesion } from '../modulos/auth/sesion.entity.js';
 import { Categoria } from '../modulos/categorias/categoria.entity.js';
 import { Cliente } from '../modulos/clientes/cliente.entity.js';
@@ -26,6 +29,8 @@ import { CorreoAdjunto } from '../modulos/tickets/correo-adjunto.entity.js';
 import { TicketResponsable } from '../modulos/tickets/ticket-responsable.entity.js';
 import { TicketSeguidor } from '../modulos/tickets/ticket-seguidor.entity.js';
 import { Ticket } from '../modulos/tickets/ticket.entity.js';
+import { CodigoVinculo } from '../modulos/telegram/codigo-vinculo.entity.js';
+import { VinculoTelegram } from '../modulos/telegram/vinculo-telegram.entity.js';
 import { Usuario } from '../modulos/usuarios/usuario.entity.js';
 
 // Registro explícito: un glob de archivos `.entity` no funciona bajo vitest (import nativo de .ts con
@@ -60,4 +65,9 @@ export const entidades = [
   LineaCotizacion,
   PlantillaCotizacion,
   PlantillaLinea,
+  PreferenciaAviso,
+  Aviso,
+  AvisoEnvio,
+  CodigoVinculo,
+  VinculoTelegram,
 ];
