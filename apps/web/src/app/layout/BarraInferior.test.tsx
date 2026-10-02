@@ -20,7 +20,10 @@ function Ruta() {
   return <div data-testid="ruta">{useLocation().pathname}</div>;
 }
 
-function montar(rol: 'admin' | 'tecnico' = 'tecnico', ruta = '/mi-dia') {
+function montar(
+  rol: 'admin' | 'coordinacion' | 'tecnico' | 'lectura' = 'tecnico',
+  ruta = '/mi-dia',
+) {
   return render(
     <ConSesion yo={yoDePrueba({ rol })} ruta={ruta}>
       <BarraInferior />
@@ -147,4 +150,18 @@ it('cualquier ruta bajo /tickets marca Tickets y no Más; /tickets/nuevo marca N
   expect(screen.getByRole('link', { name: 'Nuevo' }).getAttribute('aria-current')).toBe('page');
   expect(screen.getByRole('link', { name: 'Tickets' }).getAttribute('aria-current')).toBeNull();
   expect(botonMas().className).not.toContain('bg-white/10');
+});
+
+it('el panel Más muestra Ayuda hacia /ayuda para todos los roles y pulsarlo lo cierra', async () => {
+  for (const rol of ['admin', 'coordinacion', 'tecnico', 'lectura'] as const) {
+    const { unmount } = montar(rol);
+    await userEvent.click(botonMas());
+    const panel = await screen.findByRole('dialog', { name: 'Menú' });
+    const ayuda = within(panel).getByRole('link', { name: 'Ayuda' });
+    expect(ayuda.getAttribute('href')).toBe('/ayuda');
+    await userEvent.click(ayuda);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(screen.getByTestId('ruta').textContent).toBe('/ayuda');
+    unmount();
+  }
 });

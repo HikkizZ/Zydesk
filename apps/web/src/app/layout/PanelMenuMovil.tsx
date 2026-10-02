@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { ETIQUETA_ROL } from '@zydesk/shared';
+import { CircleHelp } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,10 @@ export function PanelMenuMovil({ alElegir }: { alElegir: () => void }) {
             )}
           </div>
         ))}
+        <NavLink to="/ayuda" className={(s) => cn(claseItem(s), 'mt-3')} onClick={alElegir}>
+          <CircleHelp size={18} strokeWidth={1.5} aria-hidden="true" />
+          Ayuda
+        </NavLink>
         <Button variant="secondary" className="mt-4 w-full" onClick={() => void cerrarSesion()}>
           Cerrar sesión
         </Button>

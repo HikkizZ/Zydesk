@@ -1,7 +1,7 @@
 import ReactMarkdown, { type Components } from 'react-markdown';
 
 // Estilos mínimos para los documentos legales (sin plugin de tipografía). El enlace externo abre en pestaña nueva.
-const COMPONENTES: Components = {
+export const COMPONENTES: Components = {
   h1: (p) => <h2 className="mb-3 mt-6 font-titulo text-2xl font-bold" {...p} />,
   h2: (p) => <h3 className="mb-2 mt-6 font-titulo text-xl font-semibold" {...p} />,
   h3: (p) => <h4 className="mb-2 mt-4 font-titulo text-lg font-semibold" {...p} />,

@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate } from 'react-router';
+import { AyudaPage } from '@/features/ayuda/pages/AyudaPage';
 import { AvisosPage } from '@/features/avisos/pages/AvisosPage';
 import { CambiarContrasenaPage } from '@/features/auth/pages/CambiarContrasenaPage';
 import { IngresoPage } from '@/features/auth/pages/IngresoPage';
@@ -66,6 +67,8 @@ export const router = createBrowserRouter([
                   { path: '/configuracion/:pestana', element: <ConfiguracionPage /> },
                 ],
               },
+              { path: '/ayuda', element: <Navigate to="/ayuda/primeros-pasos" replace /> },
+              { path: '/ayuda/:manual', element: <AyudaPage /> },
               { path: '/perfil', element: <PerfilPage /> },
               { path: '*', element: <PaginaNoEncontrada /> },
             ],

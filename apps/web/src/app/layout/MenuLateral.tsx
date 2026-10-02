@@ -1,4 +1,5 @@
 import { ETIQUETA_ROL } from '@zydesk/shared';
+import { CircleHelp } from 'lucide-react';
 import { NavLink } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { useYo } from '@/features/auth/SesionProvider';
@@ -62,13 +63,19 @@ export function MenuLateral() {
           ))}
         </div>
       ))}
-      <NavLink to="/perfil" className={(s) => cn(claseItem(s), 'mt-auto py-2')}>
-        <Avatar iniciales={yo.iniciales} color={yo.color_avatar} />
-        <span className="flex min-w-0 flex-col leading-tight">
-          <span className="truncate">{yo.nombre}</span>
-          <span className="truncate text-xs text-fondo/60">{ETIQUETA_ROL[yo.rol]}</span>
-        </span>
-      </NavLink>
+      <div className="mt-auto flex flex-col gap-1">
+        <NavLink to="/ayuda" className={claseItem}>
+          <CircleHelp size={18} strokeWidth={1.5} aria-hidden="true" />
+          Ayuda
+        </NavLink>
+        <NavLink to="/perfil" className={(s) => cn(claseItem(s), 'py-2')}>
+          <Avatar iniciales={yo.iniciales} color={yo.color_avatar} />
+          <span className="flex min-w-0 flex-col leading-tight">
+            <span className="truncate">{yo.nombre}</span>
+            <span className="truncate text-xs text-fondo/60">{ETIQUETA_ROL[yo.rol]}</span>
+          </span>
+        </NavLink>
+      </div>
     </nav>
   );
 }
