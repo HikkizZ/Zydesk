@@ -45,7 +45,8 @@ export function crearLogger(opciones: {
     formatters: { level: (etiqueta) => ({ level: etiqueta }) },
     messageKey: 'msg',
     errorKey: 'err',
-    mixin: () => contexto.getStore() ?? {},
+    // Copia: la mezcla por defecto de pino muta lo que devuelve el mixin y dejaría los campos de cada log en el contexto.
+    mixin: () => ({ ...contexto.getStore() }),
     redact: { paths, censor: '[Redactado]' },
   };
   if (opciones.bonito) {
