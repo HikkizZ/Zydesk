@@ -5,7 +5,8 @@
   "workspaces": [
     "packages/shared",
     "apps/api",
-    "apps/web"
+    "apps/web",
+    "apps/bot"
   ],
   "engines": {
     "node": ">=22 <23",
@@ -13,14 +14,14 @@
   },
   "scripts": {
     "postinstall": "npm run build -w @zydesk/shared",
-    "dev": "npm run build -w @zydesk/shared && concurrently -n shared,api,web -c blue,green,magenta \"npm run dev -w @zydesk/shared\" \"npm run dev -w @zydesk/api\" \"npm run dev -w @zydesk/web\"",
+    "dev": "npm run build -w @zydesk/shared && concurrently -n shared,api,web,bot -c blue,green,magenta,yellow \"npm run dev -w @zydesk/shared\" \"npm run dev -w @zydesk/api\" \"npm run dev -w @zydesk/web\" \"npm run dev -w @zydesk/bot\"",
     "build": "npm run build --workspaces",
     "test": "npm run test --workspaces",
     "typecheck": "npm run build -w @zydesk/shared && npm run typecheck --workspaces",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist",
+    "clean": "rimraf packages/shared/dist apps/api/dist apps/web/dist apps/bot/dist",
     "db:migrar": "npm run db:migrar -w @zydesk/api",
     "db:revertir": "npm run db:revertir -w @zydesk/api",
     "db:admin": "npm run db:admin -w @zydesk/api --",
