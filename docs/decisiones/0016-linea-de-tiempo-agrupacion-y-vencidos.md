@@ -1,6 +1,6 @@
 # ADR 0016 — Línea de tiempo: agrupación, vencidos y ancho mínimo de barra
 
-**Estado**: aceptada · 2026-09-29 · complementa a ADR 0011 (frontend) y la respuesta A8
+**Estado**: aceptada · 2026-09-29 · complementa a ADR 0011 (frontend) y la respuesta A8 · precisada por ADR 0027 (Fase 6)
 
 ## Contexto
 

@@ -1,6 +1,6 @@
 # ADR 0003 — Historial (tabla Evento) y transacciones
 
-**Estado**: aceptada · 2026-09-29 · precisada por ADR 0021 (Fase 2) y por ADR 0023 (Fase 3)
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0021 (Fase 2), por ADR 0023 (Fase 3) y por ADR 0027 (Fase 6)
 
 ## Contexto
 

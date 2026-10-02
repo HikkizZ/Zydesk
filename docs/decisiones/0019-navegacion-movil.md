@@ -1,6 +1,6 @@
 # ADR 0019 — Navegación móvil: acceso "Más" con panel de menú
 
-**Estado**: aceptada · 2026-09-30 · precisa a ADR 0011 (responsive); no cambia sus decisiones de fondo
+**Estado**: aceptada · 2026-09-30 · precisa a ADR 0011 (responsive); no cambia sus decisiones de fondo · precisada por ADR 0027 (Fase 6)
 
 ## Contexto
 
