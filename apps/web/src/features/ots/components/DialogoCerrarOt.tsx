@@ -385,7 +385,6 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
               </div>
             ))}
           </dl>
-          <p className="mt-2 text-xs text-tinta-3">Los avisos se activan en la Fase 6.</p>
         </section>
 
         {error ? (
