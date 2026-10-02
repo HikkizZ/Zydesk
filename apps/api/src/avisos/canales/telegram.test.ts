@@ -52,9 +52,22 @@ describe('CanalTelegram', () => {
       disable_web_page_preview: true,
     });
     expect(cuerpo['text']).toBe(
-      '<b>Zydesk</b>\n\n<b>TK-1048</b> · Camila te mencionó en TK-1048\n\n<a href="http://localhost:5173/tickets/12">Abrir TK-1048</a>',
+      '<b>Zydesk</b>\n\nCamila te mencionó en <b>TK-1048</b>\n\n<a href="http://localhost:5173/tickets/12">Abrir TK-1048</a>',
     );
     expect(cuerpo['reply_markup']).toBeUndefined();
+  });
+
+  it('no repite el código: solo pone en negrita su primera aparición dentro del texto', () => {
+    const { texto_html } = construirMensaje(
+      aviso({ texto: 'Camila te mencionó en TK-1048 (TK-1048 otra vez)' }),
+    );
+    expect(texto_html).toContain('Camila te mencionó en <b>TK-1048</b> (TK-1048 otra vez)');
+    expect(texto_html.match(/TK-1048/g)).toHaveLength(3); // 2 en el texto + «Abrir TK-1048»
+  });
+
+  it('si el texto no contiene el código, lo antepone en negrita', () => {
+    const { texto_html } = construirMensaje(aviso({ texto: 'Te asignaron una tarea' }));
+    expect(texto_html).toContain('<b>Zydesk</b>\n\n<b>TK-1048</b> · Te asignaron una tarea\n\n');
   });
 
   it('sin código en los datos no antepone código y el enlace es genérico', () => {
