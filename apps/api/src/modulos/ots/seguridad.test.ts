@@ -423,3 +423,35 @@ describe('prueba 18: X-Request-Id', () => {
     for (const e of evs) expect(e.req_id).toBe(ok.headers['x-request-id']);
   });
 });
+
+// ---- Prueba 17 (fase 6): exportación y montos ----
+
+describe('prueba 17: exportar para facturación e indicadores', () => {
+  it('exportar.xlsx: 403 para tecnico y lectura, 200 para coordinacion y admin', async () => {
+    for (const [rol, status] of [
+      ['tecnico', 403],
+      ['lectura', 403],
+      ['coordinacion', 200],
+      ['admin', 200],
+    ] as const) {
+      const { agente } = await como(rol);
+      expect((await agente.get('/api/ots/exportar.xlsx')).status, rol).toBe(status);
+    }
+  });
+
+  it('indicadores: neto null para tecnico, con monto para quien tiene reportes.ver', async () => {
+    const t = await crearTicket();
+    const ot = await crearOt(t.id, { etapa: 'cerrada' });
+    await crearCotizacion(ot.id, {
+      estado: 'aprobada',
+      lineas: [{ cantidad: 1, precio_unitario: 475_000 }],
+    });
+    const tecnico = await (await como('tecnico')).agente.get('/api/ots/indicadores');
+    expect(tecnico.status).toBe(200);
+    expect(tecnico.body.por_facturar).toEqual({ n: 1, neto: null });
+    for (const rol of ['lectura', 'coordinacion', 'admin'] as const) {
+      const r = await (await como(rol)).agente.get('/api/ots/indicadores');
+      expect(r.body.por_facturar, rol).toEqual({ n: 1, neto: 475_000 });
+    }
+  });
+});

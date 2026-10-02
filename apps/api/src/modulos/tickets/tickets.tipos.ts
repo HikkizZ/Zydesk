@@ -1,6 +1,8 @@
 import type {
   ArchivoSalida,
   ClienteBreve,
+  LineaTiempoQuery,
+  LineaTiempoSalida,
   ResponsablesEntrada,
   SeguidoresEntrada,
   TableroQuery,
@@ -25,3 +27,5 @@ export type TicketCrearEntradaDatos = z.infer<typeof TicketCrearEntrada>;
 export type TicketEditarEntradaDatos = z.infer<typeof TicketEditarEntrada>;
 export type ResponsablesEntradaDatos = z.infer<typeof ResponsablesEntrada>;
 export type SeguidoresEntradaDatos = z.infer<typeof SeguidoresEntrada>;
+export type LineaTiempoQueryDatos = z.infer<typeof LineaTiempoQuery>;
+export type LineaTiempoSalidaDatos = z.infer<typeof LineaTiempoSalida>;

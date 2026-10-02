@@ -10,11 +10,12 @@ const TONO_ETAPA: Record<EtapaOt, TonoPill> = {
   cancelada: 'neutro',
 };
 
-export function PillEtapaOt({ etapa }: { etapa: EtapaOt }) {
-  const etiqueta = ETIQUETA_ETAPA_OT[etapa];
+// `etiqueta` permite una etiqueta derivada ("Esperando aprobación"); el color sigue el de la etapa real.
+export function PillEtapaOt({ etapa, etiqueta }: { etapa: EtapaOt; etiqueta?: string }) {
+  const texto = etiqueta ?? ETIQUETA_ETAPA_OT[etapa];
   return (
     <Pill tono={TONO_ETAPA[etapa]}>
-      {etapa === 'cancelada' ? <span className="line-through">{etiqueta}</span> : etiqueta}
+      {etapa === 'cancelada' ? <span className="line-through">{texto}</span> : texto}
     </Pill>
   );
 }

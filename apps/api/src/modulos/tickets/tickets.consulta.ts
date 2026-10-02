@@ -1,10 +1,14 @@
-import { iniciales } from '@zydesk/shared';
+import { horasJornada, iniciales, ZONA, type Calendario } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { paginar } from '../../core/http/paginacion.js';
 import { archivoDeId, archivosDe, archivosDeCorreo } from '../archivos/archivos.service.js';
+import { cargarCalendario } from '../departamentos/departamentos.service.js';
+import { hoyEnSantiago } from '../horas/horas.tipos.js';
 import type {
   ClienteBreveDatos,
+  LineaTiempoQueryDatos,
+  LineaTiempoSalidaDatos,
   TableroQueryDatos,
   TareaSalidaDatos,
   TicketResumenDatos,
@@ -396,6 +400,159 @@ export async function cargarTicket(m: EntityManager, id: number): Promise<Ticket
       resolvio_ticket: o.resolvio_ticket,
       creado_en: o.creado_en.toISOString(),
       cerrada_en: iso(o.cerrada_en),
+    })),
+  };
+}
+
+// ---- Mi día (spec fase 6 §10) ----
+
+export type GrupoMiDia = 'vencen_hoy' | 'vencidos' | 'detenidos';
+
+const FECHA_LIMITE_SANTIAGO = `(t.fecha_limite AT TIME ZONE 'America/Santiago')::date`;
+
+// Tickets abiertos donde la persona es responsable (principal u otro; los seguidores no cuentan).
+// `vencidos` excluye los que vencen hoy; `detenidos` (sin actividad hace más de 3 días, incluidos en espera)
+// excluye los que ya están en alguno de los dos grupos de fecha.
+const GRUPOS_MI_DIA: Record<GrupoMiDia, { condicion: string; orden: string }> = {
+  vencen_hoy: {
+    condicion: `${FECHA_LIMITE_SANTIAGO} = ${HOY_SANTIAGO}`,
+    orden: 't.fecha_limite ASC, t.id ASC',
+  },
+  vencidos: {
+    condicion: `${FECHA_LIMITE_SANTIAGO} < ${HOY_SANTIAGO}`,
+    orden: 't.fecha_limite ASC, t.id ASC',
+  },
+  detenidos: {
+    condicion: `t.actualizado_en < ((${HOY_SANTIAGO} - 3)::timestamp AT TIME ZONE 'America/Santiago')
+                AND NOT (t.fecha_limite IS NOT NULL AND ${FECHA_LIMITE_SANTIAGO} <= ${HOY_SANTIAGO})`,
+    orden: 't.actualizado_en ASC, t.id ASC',
+  },
+};
+
+export async function listarTicketsMiDia(
+  m: Consulta,
+  actor_id: number,
+  grupo: GrupoMiDia,
+  limite: number,
+): Promise<{ datos: TicketResumenDatos[]; total: number }> {
+  const { condicion, orden } = GRUPOS_MI_DIA[grupo];
+  const where = `t.archivado_en IS NULL AND t.cerrado_en IS NULL
+    AND EXISTS (SELECT 1 FROM ticket_responsable r WHERE r.ticket_id = t.id AND r.usuario_id = $1)
+    AND ${condicion}`;
+  const [cuenta]: { total: number }[] = await m.query(
+    `SELECT count(*)::int AS total FROM ticket t WHERE ${where}`,
+    [actor_id],
+  );
+  const filas: FilaResumen[] = await m.query(
+    `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${orden} LIMIT $2`,
+    [actor_id, limite],
+  );
+  return { datos: filas.map(aResumen), total: cuenta?.total ?? 0 };
+}
+
+// ---- Línea de tiempo (spec fase 6 §11, ADR 0016) ----
+
+const MS_DIA = 86_400_000;
+const MAX_ITEMS_LINEA = 500;
+
+const fechaSantiago = (d: Date): string =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(d);
+
+function fechasDelRango(desde: string, hasta: string): string[] {
+  const fechas: string[] = [];
+  for (let ms = Date.parse(desde); ms <= Date.parse(hasta); ms += MS_DIA) {
+    fechas.push(new Date(ms).toISOString().slice(0, 10));
+  }
+  return fechas;
+}
+
+export async function lineaDeTiempo(
+  m: EntityManager,
+  actor_id: number,
+  q: LineaTiempoQueryDatos,
+): Promise<LineaTiempoSalidaDatos> {
+  const fechas = fechasDelRango(q.desde, q.hasta);
+
+  // Días hábiles del departamento de quien mira (A8); sin departamento, lunes a viernes sin feriados.
+  const [yo]: { departamento_id: number | null }[] = await m.query(
+    `SELECT departamento_id FROM usuario WHERE id = $1`,
+    [actor_id],
+  );
+  const departamento_id = yo?.departamento_id ?? null;
+  let cal: Calendario | null = null;
+  const nombreFeriado = new Map<string, string>();
+  if (departamento_id !== null) {
+    const anios = [...new Set(fechas.map((f) => Number(f.slice(0, 4))))];
+    cal = await cargarCalendario(m, departamento_id, anios);
+    const feriados: { fecha: string; nombre: string }[] = await m.query(
+      `SELECT fecha::text AS fecha, nombre FROM feriado
+        WHERE fecha BETWEEN $1 AND $2 AND (departamento_id IS NULL OR departamento_id = $3::int)
+        ORDER BY fecha, departamento_id NULLS LAST`,
+      [q.desde, q.hasta, departamento_id],
+    );
+    for (const f of feriados) if (!nombreFeriado.has(f.fecha)) nombreFeriado.set(f.fecha, f.nombre);
+  }
+  const hoy = hoyEnSantiago();
+  const dias = fechas.map((fecha) => {
+    const diaSemana = new Date(`${fecha}T12:00:00Z`).getUTCDay();
+    return {
+      fecha,
+      habil: cal ? horasJornada(fecha, cal) > 0 : diaSemana >= 1 && diaSemana <= 5,
+      feriado: nombreFeriado.get(fecha) ?? null,
+      hoy: fecha === hoy,
+    };
+  });
+
+  const inicio = `(COALESCE(t.inicio_planificado, t.creado_en) AT TIME ZONE 'America/Santiago')::date`;
+  const filas: FilaResumen[] = await m.query(
+    `${SELECT_RESUMEN}
+      WHERE t.archivado_en IS NULL
+        AND (
+          ((t.cerrado_en IS NULL OR (t.cerrado_en AT TIME ZONE 'America/Santiago')::date >= $1::date)
+            AND ${inicio} <= $2::date
+            AND COALESCE(${FECHA_LIMITE_SANTIAGO}, ${inicio}) >= $1::date)
+          OR (t.cerrado_en IS NULL AND t.fecha_limite < now())
+        )
+      ORDER BY COALESCE(t.fecha_limite < now() AND t.cerrado_en IS NULL, false) DESC,
+               t.fecha_limite ASC NULLS LAST, t.id ASC
+      LIMIT ${MAX_ITEMS_LINEA + 1}`,
+    [q.desde, q.hasta],
+  );
+  if (filas.length > MAX_ITEMS_LINEA) {
+    throw new ErrorApp('VALIDACION', 'Datos inválidos', { hasta: ['Acorta el rango'] });
+  }
+  const items = filas.map((f) => {
+    const r = aResumen(f);
+    return {
+      id: r.id,
+      codigo: r.codigo,
+      asunto: r.asunto,
+      estado: r.estado,
+      prioridad: r.prioridad,
+      inicio: fechaSantiago(f.inicio_planificado ?? f.creado_en),
+      limite: f.fecha_limite ? fechaSantiago(f.fecha_limite) : null,
+      vencido: r.vencido,
+      cerrado: f.cerrado_en !== null,
+      responsable_id: r.responsables.find((x) => x.principal)?.id ?? null,
+      responsables: r.responsables,
+      cliente: r.cliente,
+      ot_vinculada: r.ot_vinculada,
+      actualizado_en: r.actualizado_en,
+    };
+  });
+
+  const personas: { id: number; nombre: string; color_avatar: string }[] = await m.query(
+    `SELECT id, nombre, color_avatar FROM usuario WHERE activo ORDER BY nombre, id`,
+  );
+  return {
+    dias,
+    items,
+    vencidos: items.filter((i) => i.vencido).length,
+    personas: personas.map((p) => ({
+      id: p.id,
+      nombre: p.nombre,
+      iniciales: iniciales(p.nombre),
+      color_avatar: p.color_avatar,
     })),
   };
 }

@@ -83,6 +83,18 @@ curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/mensajes/1/copiar-al-ticket
 ```
 
+Indicadores y exportación de la pantalla de OT (Fase 6a):
+
+```bash
+# Indicadores: por_facturar y esperando_cliente traen { n, neto }; neto es null sin reportes.ver
+curl -b cookies.txt http://localhost:3010/api/ots/indicadores
+
+# Exportar para facturación (ots.facturar): mismos filtros que GET /api/ots, sin paginar; attachment "ots-facturacion-AAAA-MM-DD.xlsx"
+curl -b cookies.txt -OJ "http://localhost:3010/api/ots/exportar.xlsx?estado_facturacion=por_facturar"
+```
+
+`OtResumen` incluye `esperando_cliente` (facturable Cotizada con cotización enviada) y `por_aprobar` (interna en Borrador con aprobador). La exportación responde `403 SIN_PERMISO` a Técnico y Solo lectura y `400 VALIDACION` (`detalles.filtros`) si los filtros abarcan más de 5 000 OT; deja una fila `exportacion { tipo: 'xlsx', entidad: 'ots', filtros }` en `auditoria` con los nombres de los filtros (sin valores) y no deja `evento`.
+
 Otras rutas: `GET /api/ots` (filtros `q`, `ticket_id`, `cliente_id`, `tipo`, `etapa`, `estado_facturacion`, `abiertas`, `responsable_id`, `aprobador_id`), `GET|PATCH /api/ots/:id`, `POST /api/ots/:id/aprobar` (interna), `PUT /api/ots/:id/aprobacion` (aprobación del cliente con respaldo adjunto), `POST /api/ots/:id/cancelar`, `POST /api/ots/:id/archivos`, `GET|POST /api/ots/:id/tareas`, `GET|POST /api/ots/:id/mensajes` y `GET /api/ots/:id/actividad`. Las tareas se editan por `PATCH|DELETE /api/tareas/:id` también en las OT.
 
 Errores propios: `OT_CERRADA` (409, la OT está cerrada o cancelada), `OT_TIPO_BLOQUEADO` (409, el tipo y el cliente solo cambian en Borrador), `MENSAJE_YA_COPIADO` (409) y `TRANSICION_INVALIDA` (409, con `detalles.entidad = 'ot'`).
@@ -149,6 +161,43 @@ curl -b cookies.txt -H "X-Requested-With: Zydesk" -X DELETE http://localhost:301
 ```
 
 Errores: `VALIDACION` (400: ticket y OT a la vez, tarea sin OT o de otra OT, "Sin ticket" sin descripción, `fecha` futura, destino inexistente), `SIN_PERMISO` (403: planilla ajena sin `horas.ver_todas`, o `PATCH`/`DELETE` de una fila ajena), `NO_ENCONTRADO` (404), `CONFLICTO` (409, `detalles.registro_id`: ya hay una fila manual en esa celda; edítala) y `OT_CERRADA` (409, `detalles.horas`: la OT está cerrada o cancelada; vale para crear, editar y borrar). Una fila no cambia de destino (`ticket_id` y `ot_id` no se aceptan en el `PATCH`): se borra y se crea. Las horas no dejan `evento` ni `auditoria`. `POST /api/cotizaciones/:id/importar-horas` acepta además `{"origen":"registradas"}`.
+
+## Avisos y preferencias
+
+Un aviso pertenece a la persona de la sesión: solo ella lo lista y lo marca leído; no hay `GET /api/avisos/:id`. Los avisos los crea el despachador a partir de los eventos de dominio, después del commit de la acción que los origina; la API no ofrece crearlos ni editarlos.
+
+```bash
+# Mis avisos (más recientes primero). filtro: todos | menciones | asignaciones | vencimientos; solo_no_leidos=true; pagina, por_pagina (máx. 200)
+curl -b cookies.txt "http://localhost:3010/api/avisos?filtro=menciones&solo_no_leidos=true"
+
+# Contador para el badge (la web lo sondea cada 60 s)
+curl -b cookies.txt http://localhost:3010/api/avisos/no-leidos
+
+# Marcar uno como leído (idempotente) y marcar todos
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/avisos/1/leer
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/avisos/leer-todos
+
+# Preferencias por evento y canal (9 filas, con los valores por defecto aplicados) y cambio parcial
+curl -b cookies.txt http://localhost:3010/api/yo/avisos/preferencias
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -X PUT \
+  -d '{"filas":[{"evento":"seguimiento","app":true,"telegram":false}]}' http://localhost:3010/api/yo/avisos/preferencias
+```
+
+La respuesta de `GET /api/avisos` es `{ datos, total, pagina, por_pagina, no_leidos }`; cada aviso trae `evento` (el tipo de preferencia), `tipo`, `texto`, `enlace` (ruta de la web), `entidad`, `entidad_id`, `actor`, `leido`, `leido_en` y `telegram` (`null` mientras no haya canal externo). Solo se listan los avisos con la preferencia "en la app" activa. Errores: `404 NO_ENCONTRADO` al marcar leído un aviso ajeno (no revela si existe), `400 VALIDACION` con `filtro` desconocido, `por_pagina` > 200, eventos repetidos o `resumen_diario` con `app: true`. Ninguna de estas rutas deja `evento` ni `auditoria`.
+
+## Mi día y línea de tiempo
+
+```bash
+# Mi día: siempre la persona de la sesión (no acepta usuario_id)
+curl -b cookies.txt http://localhost:3010/api/mi-dia
+
+# Línea de tiempo: rango de fechas AAAA-MM-DD (hasta − desde ≤ 62 días)
+curl -b cookies.txt "http://localhost:3010/api/tickets/linea-de-tiempo?desde=2026-09-28&hasta=2026-10-18"
+```
+
+`GET /api/mi-dia` devuelve `fecha` (hoy en Santiago), las listas `vencen_hoy`, `vencidos`, `por_aprobar` (vacía sin `ots.aprobar`), `menciones` (avisos `mencion` no leídos, máx. 10), `tareas` (abiertas, a nombre de la persona, en destinos no cerrados, máx. 20) y `detenidos` (sin actividad hace más de 3 días, máx. 10), y `conteos` con los totales sin recorte. Las listas de tickets consideran solo donde la persona es responsable (principal u otro), no seguidora.
+
+`GET /api/tickets/linea-de-tiempo` devuelve `dias` (cada fecha del rango con `habil`, `feriado` y `hoy`, según el departamento de quien consulta; sin departamento, lunes a viernes), `items` (tickets no archivados cuya barra `inicio`–`limite` toca el rango, más los vencidos abiertos aunque estén fuera de él; sin paginar), `vencidos` y `personas` (usuarios activos). Errores: `400 VALIDACION` si `desde`/`hasta` no son fechas ISO, `hasta` es anterior a `desde`, el rango supera 62 días o hay más de 500 tickets en el rango (`detalles.hasta`: "Acorta el rango").
 
 ## Regenerar `openapi.json`
 

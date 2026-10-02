@@ -1,12 +1,15 @@
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router';
-import { beforeEach, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import { respuesta, simularFetch } from '@/test/fetch';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { BarraInferior } from './BarraInferior';
 
 const salir = vi.hoisted(() => vi.fn());
 vi.mock('@/features/auth/api', () => ({ salir }));
+
+afterEach(() => vi.unstubAllGlobals());
 
 beforeEach(() => {
   salir.mockReset();
@@ -105,6 +108,23 @@ it('(g) Cerrar sesión llama a salir y navega a /ingresar', async () => {
   await userEvent.click(within(panel).getByRole('button', { name: 'Cerrar sesión' }));
   expect(salir).toHaveBeenCalledTimes(1);
   expect(await screen.findByText('/ingresar')).toBeTruthy();
+});
+
+it('con no_leidos: 3 el enlace Avisos lleva el badge «3»; con 0 no hay badge', async () => {
+  simularFetch(({ ruta }) =>
+    ruta === '/api/avisos/no-leidos' ? respuesta(200, { no_leidos: 3 }) : undefined,
+  );
+  const { unmount } = montar();
+  const badge = await screen.findByLabelText('3 avisos sin leer');
+  expect(badge.textContent).toBe('3');
+  expect(screen.getByRole('link', { name: /Avisos/ }).contains(badge)).toBe(true);
+  unmount();
+  simularFetch(({ ruta }) =>
+    ruta === '/api/avisos/no-leidos' ? respuesta(200, { no_leidos: 0 }) : undefined,
+  );
+  montar();
+  await new Promise((r) => setTimeout(r, 20));
+  expect(screen.queryByLabelText(/sin leer/)).toBeNull();
 });
 
 it('Más se pinta activo solo cuando la ruta no es de los otros cuatro accesos', () => {

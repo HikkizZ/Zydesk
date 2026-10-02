@@ -10,19 +10,23 @@ import type { EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
+import { registrarAuditoria } from '../../core/historial/auditoria.js';
 import { registrarCambios, registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import { publicarPendientes, type EventoPendiente } from '../../core/eventos/dominio.js';
 import { fuenteNumeros } from '../../core/numeracion/fuente.js';
 import { siguienteNumero } from '../../core/numeracion/numeracion.js';
+import { generarXlsxOts } from '../../integraciones/xlsx/ots.xlsx.js';
 import { asociarArchivos, archivosDe } from '../archivos/archivos.service.js';
+import { obtenerMarca } from '../configuracion/configuracion.service.js';
 import { moverTareasAbiertas } from '../tareas/tareas.service.js';
 import { bloquearTicket, registrarActividadEnTicket } from '../tickets/tickets.service.js';
 import { bloquearOt, otCerrada, registrarActividadEnOt } from './ots.acceso.js';
-import { bolsaVigente, errorValidacion, recortar } from './ots.comun.js';
-import { cargarOt, listarOts } from './ots.consulta.js';
+import { bolsaVigente, errorValidacion, hoyEnSantiago, recortar } from './ots.comun.js';
+import { cargarOt, indicadoresOts, listarOts, listarOtsParaExportar } from './ots.consulta.js';
 import type {
   ArchivosOtEntradaDatos,
+  IndicadoresOtsDatos,
   OtCrearEntradaDatos,
   OtEditarEntradaDatos,
   OtSalidaDatos,
@@ -35,6 +39,35 @@ export function obtenerOt(id: number): Promise<OtSalidaDatos> {
 
 export function listar(q: OtsQueryDatos): ReturnType<typeof listarOts> {
   return listarOts(dataSource.manager, q);
+}
+
+// Pantalla 10: los montos solo con `reportes.ver` (spec fase 6 §12, §25.10).
+export function obtenerIndicadores(actor: UsuarioSesion): Promise<IndicadoresOtsDatos> {
+  return indicadoresOts(dataSource.manager, actor.permisos.includes('reportes.ver'));
+}
+
+// "Exportar para facturación (.xlsx)" con los filtros vigentes. Deja `auditoria.exportacion` (ADR 0017):
+// solo los nombres de los filtros, sin valores, ids ni montos; no es una entidad, así que sin `evento` ni `archivo`.
+export async function exportarOts(
+  actor: UsuarioSesion,
+  q: OtsQueryDatos,
+  filtros: string[],
+): Promise<{ buffer: Buffer; nombre: string; tipo_mime: string }> {
+  const filas = await listarOtsParaExportar(dataSource.manager, q);
+  const { nombre_app } = await obtenerMarca();
+  const buffer = await generarXlsxOts(filas, nombre_app);
+  await enTransaccion(async (tx) => {
+    await registrarAuditoria(tx, {
+      accion: 'exportacion',
+      usuario_id: actor.id,
+      detalle: { tipo: 'xlsx', entidad: 'ots', filtros },
+    });
+  });
+  return {
+    buffer,
+    nombre: `ots-facturacion-${hoyEnSantiago()}.xlsx`,
+    tipo_mime: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  };
 }
 
 const ETIQUETA_CORTA: Record<TipoOt, string> = { facturable: 'Facturable', interna: 'Interna' };

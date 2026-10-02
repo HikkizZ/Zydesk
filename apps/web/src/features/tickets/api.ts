@@ -5,6 +5,9 @@ import type {
   CambioEstadoTicketDatos,
   CorreoParsearEntrada,
   CorreoParseadoSalida,
+  DiaLineaTiempo,
+  ItemLineaTiempo,
+  LineaTiempoSalida,
   MensajeEntrada,
   MensajeSalida,
   ResponsablesEntrada,
@@ -148,3 +151,15 @@ export async function invalidarTicket(queryClient: QueryClient, id: number) {
     queryClient.invalidateQueries({ queryKey: ['tablero'] }),
   ]);
 }
+
+// Línea de tiempo del equipo (ADR 0016, spec fase 6 §17) ------------------------------------
+export type LineaTiempoDatos = z.infer<typeof LineaTiempoSalida>;
+export type ItemLineaTiempoDatos = z.infer<typeof ItemLineaTiempo>;
+export type DiaLineaTiempoDatos = z.infer<typeof DiaLineaTiempo>;
+
+export const clavesLineaTiempo = {
+  rango: (desde: string, hasta: string) => ['linea-de-tiempo', desde, hasta] as const,
+};
+
+export const lineaDeTiempo = (desde: string, hasta: string) =>
+  obtener<LineaTiempoDatos>(conQuery('/api/tickets/linea-de-tiempo', { desde, hasta }));

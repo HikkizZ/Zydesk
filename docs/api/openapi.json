@@ -1395,6 +1395,920 @@
         }
       }
     },
+    "/avisos": {
+      "get": {
+        "summary": "Mis avisos (más recientes primero), con filtro por tipo y solo no leídos",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "pagina",
+            "schema": {
+              "default": 1,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "por_pagina",
+            "schema": {
+              "default": 50,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200
+            }
+          },
+          {
+            "in": "query",
+            "name": "filtro",
+            "schema": {
+              "default": "todos",
+              "type": "string",
+              "enum": [
+                "todos",
+                "menciones",
+                "asignaciones",
+                "vencimientos"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "solo_no_leidos",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "datos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "evento": {
+                            "type": "string",
+                            "enum": [
+                              "asignacion",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "seguimiento",
+                              "cotizacion",
+                              "por_facturar",
+                              "resumen_diario"
+                            ]
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "ticket_asignado",
+                              "seguidor_agregado",
+                              "tarea_asignada",
+                              "ot_por_aprobar",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "ot_cerrada",
+                              "ot_cancelada",
+                              "seguimiento",
+                              "cotizacion_aprobada",
+                              "cotizacion_rechazada",
+                              "por_facturar"
+                            ]
+                          },
+                          "texto": {
+                            "type": "string"
+                          },
+                          "enlace": {
+                            "type": "string"
+                          },
+                          "entidad": {
+                            "type": "string",
+                            "enum": [
+                              "ticket",
+                              "ot"
+                            ]
+                          },
+                          "entidad_id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "datos": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "actor": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "leido": {
+                            "type": "boolean"
+                          },
+                          "leido_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "telegram": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "enviado",
+                                  "pendiente",
+                                  "fallido",
+                                  "omitido"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "evento",
+                          "tipo",
+                          "texto",
+                          "enlace",
+                          "entidad",
+                          "entidad_id",
+                          "datos",
+                          "actor",
+                          "leido",
+                          "leido_en",
+                          "creado_en",
+                          "telegram"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "pagina": {
+                      "type": "number"
+                    },
+                    "por_pagina": {
+                      "type": "number"
+                    },
+                    "no_leidos": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "datos",
+                    "total",
+                    "pagina",
+                    "por_pagina",
+                    "no_leidos"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/{id}/leer": {
+      "post": {
+        "summary": "Marcar un aviso propio como leído (idempotente; uno ajeno responde 404)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "number"
+                    },
+                    "evento": {
+                      "type": "string",
+                      "enum": [
+                        "asignacion",
+                        "mencion",
+                        "vence_pronto",
+                        "vencio",
+                        "estado_ticket",
+                        "seguimiento",
+                        "cotizacion",
+                        "por_facturar",
+                        "resumen_diario"
+                      ]
+                    },
+                    "tipo": {
+                      "type": "string",
+                      "enum": [
+                        "ticket_asignado",
+                        "seguidor_agregado",
+                        "tarea_asignada",
+                        "ot_por_aprobar",
+                        "mencion",
+                        "vence_pronto",
+                        "vencio",
+                        "estado_ticket",
+                        "ot_cerrada",
+                        "ot_cancelada",
+                        "seguimiento",
+                        "cotizacion_aprobada",
+                        "cotizacion_rechazada",
+                        "por_facturar"
+                      ]
+                    },
+                    "texto": {
+                      "type": "string"
+                    },
+                    "enlace": {
+                      "type": "string"
+                    },
+                    "entidad": {
+                      "type": "string",
+                      "enum": [
+                        "ticket",
+                        "ot"
+                      ]
+                    },
+                    "entidad_id": {
+                      "type": "integer",
+                      "exclusiveMinimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "datos": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "actor": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "exclusiveMinimum": 0,
+                              "maximum": 9007199254740991
+                            },
+                            "nombre": {
+                              "type": "string"
+                            },
+                            "iniciales": {
+                              "type": "string"
+                            },
+                            "color_avatar": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "nombre",
+                            "iniciales",
+                            "color_avatar"
+                          ],
+                          "additionalProperties": false
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "leido": {
+                      "type": "boolean"
+                    },
+                    "leido_en": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "creado_en": {
+                      "type": "string",
+                      "format": "date-time",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                    },
+                    "telegram": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "enviado",
+                            "pendiente",
+                            "fallido",
+                            "omitido"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "evento",
+                    "tipo",
+                    "texto",
+                    "enlace",
+                    "entidad",
+                    "entidad_id",
+                    "datos",
+                    "actor",
+                    "leido",
+                    "leido_en",
+                    "creado_en",
+                    "telegram"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "No encontrado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/leer-todos": {
+      "post": {
+        "summary": "Marcar todos mis avisos como leídos",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "marcados": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "marcados"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/avisos/no-leidos": {
+      "get": {
+        "summary": "Cantidad de avisos no leídos (badge del menú, sondeo de 60 s)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "no_leidos": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "no_leidos"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/categorias": {
       "get": {
         "summary": "Listar categorías",
@@ -21660,6 +22574,1644 @@
         }
       }
     },
+    "/mi-dia": {
+      "get": {
+        "summary": "Mi día: vencimientos, por aprobar, menciones, tareas y tickets detenidos",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Mi día"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "fecha": {
+                      "type": "string",
+                      "format": "date",
+                      "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                    },
+                    "vencen_hoy": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "asunto": {
+                            "type": "string"
+                          },
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "estado": {
+                            "type": "string",
+                            "enum": [
+                              "nuevo",
+                              "en_curso",
+                              "en_espera",
+                              "resuelto",
+                              "descartado",
+                              "duplicado"
+                            ]
+                          },
+                          "espera_de": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "cliente",
+                                  "proveedor",
+                                  "repuesto",
+                                  "aprobacion"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "espera_detalle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "prioridad": {
+                            "type": "string",
+                            "enum": [
+                              "urgente",
+                              "alta",
+                              "media",
+                              "baja"
+                            ]
+                          },
+                          "responsables": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "iniciales": {
+                                  "type": "string"
+                                },
+                                "color_avatar": {
+                                  "type": "string"
+                                },
+                                "principal": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "iniciales",
+                                "color_avatar",
+                                "principal"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "fecha_limite": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "inicio_planificado": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "vencido": {
+                            "type": "boolean"
+                          },
+                          "vence_hoy": {
+                            "type": "boolean"
+                          },
+                          "tiene_correo": {
+                            "type": "boolean"
+                          },
+                          "n_mensajes": {
+                            "type": "number"
+                          },
+                          "motivo_cierre": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "duplicado_de": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "ticket",
+                              "ot_facturable",
+                              "ot_interna"
+                            ]
+                          },
+                          "ot_vinculada": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "tipo": {
+                                    "type": "string",
+                                    "enum": [
+                                      "facturable",
+                                      "interna"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "tipo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "archivado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "asunto",
+                          "cliente",
+                          "estado",
+                          "espera_de",
+                          "espera_detalle",
+                          "prioridad",
+                          "responsables",
+                          "fecha_limite",
+                          "inicio_planificado",
+                          "vencido",
+                          "vence_hoy",
+                          "tiene_correo",
+                          "n_mensajes",
+                          "motivo_cierre",
+                          "duplicado_de",
+                          "tipo",
+                          "ot_vinculada",
+                          "creado_en",
+                          "actualizado_en",
+                          "cerrado_en",
+                          "archivado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "vencidos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "asunto": {
+                            "type": "string"
+                          },
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "estado": {
+                            "type": "string",
+                            "enum": [
+                              "nuevo",
+                              "en_curso",
+                              "en_espera",
+                              "resuelto",
+                              "descartado",
+                              "duplicado"
+                            ]
+                          },
+                          "espera_de": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "cliente",
+                                  "proveedor",
+                                  "repuesto",
+                                  "aprobacion"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "espera_detalle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "prioridad": {
+                            "type": "string",
+                            "enum": [
+                              "urgente",
+                              "alta",
+                              "media",
+                              "baja"
+                            ]
+                          },
+                          "responsables": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "iniciales": {
+                                  "type": "string"
+                                },
+                                "color_avatar": {
+                                  "type": "string"
+                                },
+                                "principal": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "iniciales",
+                                "color_avatar",
+                                "principal"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "fecha_limite": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "inicio_planificado": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "vencido": {
+                            "type": "boolean"
+                          },
+                          "vence_hoy": {
+                            "type": "boolean"
+                          },
+                          "tiene_correo": {
+                            "type": "boolean"
+                          },
+                          "n_mensajes": {
+                            "type": "number"
+                          },
+                          "motivo_cierre": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "duplicado_de": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "ticket",
+                              "ot_facturable",
+                              "ot_interna"
+                            ]
+                          },
+                          "ot_vinculada": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "tipo": {
+                                    "type": "string",
+                                    "enum": [
+                                      "facturable",
+                                      "interna"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "tipo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "archivado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "asunto",
+                          "cliente",
+                          "estado",
+                          "espera_de",
+                          "espera_detalle",
+                          "prioridad",
+                          "responsables",
+                          "fecha_limite",
+                          "inicio_planificado",
+                          "vencido",
+                          "vence_hoy",
+                          "tiene_correo",
+                          "n_mensajes",
+                          "motivo_cierre",
+                          "duplicado_de",
+                          "tipo",
+                          "ot_vinculada",
+                          "creado_en",
+                          "actualizado_en",
+                          "cerrado_en",
+                          "archivado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "por_aprobar": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "facturable",
+                              "interna"
+                            ]
+                          },
+                          "etapa": {
+                            "type": "string",
+                            "enum": [
+                              "borrador",
+                              "cotizada",
+                              "aprobada",
+                              "en_ejecucion",
+                              "cerrada",
+                              "cancelada"
+                            ]
+                          },
+                          "estado_facturacion": {
+                            "type": "string",
+                            "enum": [
+                              "no_aplica",
+                              "pendiente",
+                              "por_facturar",
+                              "facturada"
+                            ]
+                          },
+                          "resolvio_ticket": {
+                            "type": [
+                              "boolean",
+                              "null"
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrada_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ticket": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "codigo": {
+                                "type": "string"
+                              },
+                              "asunto": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "codigo",
+                              "asunto"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "responsable_tecnico": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "aprobador": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "neto": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas": {
+                            "type": "object",
+                            "properties": {
+                              "estimadas": {
+                                "type": "number"
+                              },
+                              "reales": {
+                                "type": "number"
+                              },
+                              "registradas": {
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "estimadas",
+                              "reales",
+                              "registradas"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "inicio": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "termino": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "vencida": {
+                            "type": "boolean"
+                          },
+                          "esperando_cliente": {
+                            "type": "boolean"
+                          },
+                          "por_aprobar": {
+                            "type": "boolean"
+                          },
+                          "n_mensajes": {
+                            "type": "number"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "titulo",
+                          "tipo",
+                          "etapa",
+                          "estado_facturacion",
+                          "resolvio_ticket",
+                          "creado_en",
+                          "cerrada_en",
+                          "ticket",
+                          "cliente",
+                          "responsable_tecnico",
+                          "aprobador",
+                          "neto",
+                          "horas",
+                          "inicio",
+                          "termino",
+                          "vencida",
+                          "esperando_cliente",
+                          "por_aprobar",
+                          "n_mensajes",
+                          "actualizado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "menciones": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "number"
+                          },
+                          "evento": {
+                            "type": "string",
+                            "enum": [
+                              "asignacion",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "seguimiento",
+                              "cotizacion",
+                              "por_facturar",
+                              "resumen_diario"
+                            ]
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "ticket_asignado",
+                              "seguidor_agregado",
+                              "tarea_asignada",
+                              "ot_por_aprobar",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "ot_cerrada",
+                              "ot_cancelada",
+                              "seguimiento",
+                              "cotizacion_aprobada",
+                              "cotizacion_rechazada",
+                              "por_facturar"
+                            ]
+                          },
+                          "texto": {
+                            "type": "string"
+                          },
+                          "enlace": {
+                            "type": "string"
+                          },
+                          "entidad": {
+                            "type": "string",
+                            "enum": [
+                              "ticket",
+                              "ot"
+                            ]
+                          },
+                          "entidad_id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "datos": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "actor": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "leido": {
+                            "type": "boolean"
+                          },
+                          "leido_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "telegram": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "enviado",
+                                  "pendiente",
+                                  "fallido",
+                                  "omitido"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "evento",
+                          "tipo",
+                          "texto",
+                          "enlace",
+                          "entidad",
+                          "entidad_id",
+                          "datos",
+                          "actor",
+                          "leido",
+                          "leido_en",
+                          "creado_en",
+                          "telegram"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "tareas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "ticket_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "titulo": {
+                            "type": "string"
+                          },
+                          "responsable": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "iniciales": {
+                                    "type": "string"
+                                  },
+                                  "color_avatar": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "iniciales",
+                                  "color_avatar"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "fecha": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "hecha": {
+                            "type": "boolean"
+                          },
+                          "horas_estimadas": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_reales": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "horas_registradas": {
+                            "type": "number"
+                          },
+                          "hecha_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "orden": {
+                            "type": "number"
+                          },
+                          "vencida": {
+                            "type": "boolean"
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "destino": {
+                            "type": "object",
+                            "properties": {
+                              "tipo": {
+                                "type": "string",
+                                "enum": [
+                                  "ticket",
+                                  "ot"
+                                ]
+                              },
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "codigo": {
+                                "type": "string"
+                              },
+                              "titulo": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "tipo",
+                              "id",
+                              "codigo",
+                              "titulo"
+                            ],
+                            "additionalProperties": false
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "ticket_id",
+                          "ot_id",
+                          "titulo",
+                          "responsable",
+                          "fecha",
+                          "hecha",
+                          "horas_estimadas",
+                          "horas_reales",
+                          "horas_registradas",
+                          "hecha_en",
+                          "orden",
+                          "vencida",
+                          "creado_en",
+                          "actualizado_en",
+                          "destino"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "detenidos": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "numero": {
+                            "type": "number"
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "asunto": {
+                            "type": "string"
+                          },
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "estado": {
+                            "type": "string",
+                            "enum": [
+                              "nuevo",
+                              "en_curso",
+                              "en_espera",
+                              "resuelto",
+                              "descartado",
+                              "duplicado"
+                            ]
+                          },
+                          "espera_de": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "enum": [
+                                  "cliente",
+                                  "proveedor",
+                                  "repuesto",
+                                  "aprobacion"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "espera_detalle": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "prioridad": {
+                            "type": "string",
+                            "enum": [
+                              "urgente",
+                              "alta",
+                              "media",
+                              "baja"
+                            ]
+                          },
+                          "responsables": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "iniciales": {
+                                  "type": "string"
+                                },
+                                "color_avatar": {
+                                  "type": "string"
+                                },
+                                "principal": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "iniciales",
+                                "color_avatar",
+                                "principal"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "fecha_limite": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "inicio_planificado": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "vencido": {
+                            "type": "boolean"
+                          },
+                          "vence_hoy": {
+                            "type": "boolean"
+                          },
+                          "tiene_correo": {
+                            "type": "boolean"
+                          },
+                          "n_mensajes": {
+                            "type": "number"
+                          },
+                          "motivo_cierre": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "duplicado_de": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tipo": {
+                            "type": "string",
+                            "enum": [
+                              "ticket",
+                              "ot_facturable",
+                              "ot_interna"
+                            ]
+                          },
+                          "ot_vinculada": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "tipo": {
+                                    "type": "string",
+                                    "enum": [
+                                      "facturable",
+                                      "interna"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "tipo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "creado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          },
+                          "cerrado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "archivado_en": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "numero",
+                          "codigo",
+                          "asunto",
+                          "cliente",
+                          "estado",
+                          "espera_de",
+                          "espera_detalle",
+                          "prioridad",
+                          "responsables",
+                          "fecha_limite",
+                          "inicio_planificado",
+                          "vencido",
+                          "vence_hoy",
+                          "tiene_correo",
+                          "n_mensajes",
+                          "motivo_cierre",
+                          "duplicado_de",
+                          "tipo",
+                          "ot_vinculada",
+                          "creado_en",
+                          "actualizado_en",
+                          "cerrado_en",
+                          "archivado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "conteos": {
+                      "type": "object",
+                      "properties": {
+                        "vencen_hoy": {
+                          "type": "number"
+                        },
+                        "vencidos": {
+                          "type": "number"
+                        },
+                        "por_aprobar": {
+                          "type": "number"
+                        },
+                        "menciones": {
+                          "type": "number"
+                        },
+                        "tareas": {
+                          "type": "number"
+                        },
+                        "detenidos": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "vencen_hoy",
+                        "vencidos",
+                        "por_aprobar",
+                        "menciones",
+                        "tareas",
+                        "detenidos"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "fecha",
+                    "vencen_hoy",
+                    "vencidos",
+                    "por_aprobar",
+                    "menciones",
+                    "tareas",
+                    "detenidos",
+                    "conteos"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/openapi.json": {
       "get": {
         "summary": "Documento OpenAPI de la API",
@@ -22117,6 +24669,12 @@
                           "vencida": {
                             "type": "boolean"
                           },
+                          "esperando_cliente": {
+                            "type": "boolean"
+                          },
+                          "por_aprobar": {
+                            "type": "boolean"
+                          },
                           "n_mensajes": {
                             "type": "number"
                           },
@@ -22146,6 +24704,8 @@
                           "inicio",
                           "termino",
                           "vencida",
+                          "esperando_cliente",
+                          "por_aprobar",
                           "n_mensajes",
                           "actualizado_en"
                         ],
@@ -22540,6 +25100,12 @@
                       ]
                     },
                     "vencida": {
+                      "type": "boolean"
+                    },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
                       "type": "boolean"
                     },
                     "n_mensajes": {
@@ -23525,6 +26091,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -24111,6 +26679,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -25094,6 +27668,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -26200,6 +28776,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -27183,6 +29765,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -27661,6 +30245,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -28644,6 +31234,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -29429,6 +32021,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -30412,6 +33010,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -30894,6 +33494,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -31877,6 +34483,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -32462,6 +35070,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -33445,6 +36059,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -34664,6 +37280,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -35647,6 +38269,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -37472,6 +40096,356 @@
           },
           "409": {
             "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ots/exportar.xlsx": {
+      "get": {
+        "summary": "Exportar para facturación (.xlsx) las OT que cumplen los filtros (attachment)",
+        "description": "Permiso: ots.facturar",
+        "tags": [
+          "Órdenes de trabajo"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 80
+            }
+          },
+          {
+            "in": "query",
+            "name": "ticket_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "cliente_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "tipo",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "etapa",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "estado_facturacion",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "abiertas",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          },
+          {
+            "in": "query",
+            "name": "responsable_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "aprobador_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "orden",
+            "schema": {
+              "default": "-actualizado_en",
+              "type": "string",
+              "enum": [
+                "-actualizado_en",
+                "-creado_en",
+                "termino"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/ots/indicadores": {
+      "get": {
+        "summary": "Indicadores de la pantalla de OT (los montos solo con reportes.ver)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Órdenes de trabajo"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "por_facturar": {
+                      "type": "object",
+                      "properties": {
+                        "n": {
+                          "type": "number"
+                        },
+                        "neto": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "n",
+                        "neto"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "esperando_cliente": {
+                      "type": "object",
+                      "properties": {
+                        "n": {
+                          "type": "number"
+                        },
+                        "neto": {
+                          "type": [
+                            "number",
+                            "null"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "n",
+                        "neto"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "en_ejecucion": {
+                      "type": "number"
+                    },
+                    "horas_internas_mes": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "por_facturar",
+                    "esperando_cliente",
+                    "en_ejecucion",
+                    "horas_internas_mes"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
             "content": {
               "application/json": {
                 "schema": {
@@ -45245,6 +48219,12 @@
                     "vencida": {
                       "type": "boolean"
                     },
+                    "esperando_cliente": {
+                      "type": "boolean"
+                    },
+                    "por_aprobar": {
+                      "type": "boolean"
+                    },
                     "n_mensajes": {
                       "type": "number"
                     },
@@ -46228,6 +49208,8 @@
                     "inicio",
                     "termino",
                     "vencida",
+                    "esperando_cliente",
+                    "por_aprobar",
                     "n_mensajes",
                     "actualizado_en",
                     "alcance",
@@ -50632,6 +53614,412 @@
         }
       }
     },
+    "/tickets/linea-de-tiempo": {
+      "get": {
+        "summary": "Línea de tiempo del equipo (días hábiles del departamento de quien mira, ADR 0016)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Tickets"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "required": true
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "dias": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "fecha": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "habil": {
+                            "type": "boolean"
+                          },
+                          "feriado": {
+                            "type": [
+                              "string",
+                              "null"
+                            ]
+                          },
+                          "hoy": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "fecha",
+                          "habil",
+                          "feriado",
+                          "hoy"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "codigo": {
+                            "type": "string"
+                          },
+                          "asunto": {
+                            "type": "string"
+                          },
+                          "estado": {
+                            "type": "string",
+                            "enum": [
+                              "nuevo",
+                              "en_curso",
+                              "en_espera",
+                              "resuelto",
+                              "descartado",
+                              "duplicado"
+                            ]
+                          },
+                          "prioridad": {
+                            "type": "string",
+                            "enum": [
+                              "urgente",
+                              "alta",
+                              "media",
+                              "baja"
+                            ]
+                          },
+                          "inicio": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "limite": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date",
+                                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "vencido": {
+                            "type": "boolean"
+                          },
+                          "cerrado": {
+                            "type": "boolean"
+                          },
+                          "responsable_id": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "responsables": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "iniciales": {
+                                  "type": "string"
+                                },
+                                "color_avatar": {
+                                  "type": "string"
+                                },
+                                "principal": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "iniciales",
+                                "color_avatar",
+                                "principal"
+                              ],
+                              "additionalProperties": false
+                            }
+                          },
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "ot_vinculada": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "codigo": {
+                                    "type": "string"
+                                  },
+                                  "tipo": {
+                                    "type": "string",
+                                    "enum": [
+                                      "facturable",
+                                      "interna"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "codigo",
+                                  "tipo"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actualizado_en": {
+                            "type": "string",
+                            "format": "date-time",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "codigo",
+                          "asunto",
+                          "estado",
+                          "prioridad",
+                          "inicio",
+                          "limite",
+                          "vencido",
+                          "cerrado",
+                          "responsable_id",
+                          "responsables",
+                          "cliente",
+                          "ot_vinculada",
+                          "actualizado_en"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "vencidos": {
+                      "type": "number"
+                    },
+                    "personas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "integer",
+                            "exclusiveMinimum": 0,
+                            "maximum": 9007199254740991
+                          },
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "iniciales": {
+                            "type": "string"
+                          },
+                          "color_avatar": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "nombre",
+                          "iniciales",
+                          "color_avatar"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "dias",
+                    "items",
+                    "vencidos",
+                    "personas"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/tickets/tablero": {
       "get": {
         "summary": "Tickets del Tablero (no archivados, sin paginar)",
@@ -53505,6 +56893,385 @@
                     "terminos_version_vigente",
                     "nombre_app",
                     "logo_url"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/yo/avisos/preferencias": {
+      "get": {
+        "summary": "Mis preferencias de avisos por evento y canal (con los valores por defecto)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "filas": {
+                      "minItems": 9,
+                      "maxItems": 9,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "evento": {
+                            "type": "string",
+                            "enum": [
+                              "asignacion",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "seguimiento",
+                              "cotizacion",
+                              "por_facturar",
+                              "resumen_diario"
+                            ]
+                          },
+                          "app": {
+                            "type": "boolean"
+                          },
+                          "telegram": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "evento",
+                          "app",
+                          "telegram"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "telegram_vinculado": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "filas",
+                    "telegram_vinculado"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Cambiar mis preferencias de avisos (solo las filas enviadas)",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Avisos"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "filas": {
+                    "minItems": 1,
+                    "maxItems": 9,
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "evento": {
+                          "type": "string",
+                          "enum": [
+                            "asignacion",
+                            "mencion",
+                            "vence_pronto",
+                            "vencio",
+                            "estado_ticket",
+                            "seguimiento",
+                            "cotizacion",
+                            "por_facturar",
+                            "resumen_diario"
+                          ]
+                        },
+                        "app": {
+                          "type": "boolean"
+                        },
+                        "telegram": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "evento",
+                        "app",
+                        "telegram"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "filas"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "filas": {
+                      "minItems": 9,
+                      "maxItems": 9,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "evento": {
+                            "type": "string",
+                            "enum": [
+                              "asignacion",
+                              "mencion",
+                              "vence_pronto",
+                              "vencio",
+                              "estado_ticket",
+                              "seguimiento",
+                              "cotizacion",
+                              "por_facturar",
+                              "resumen_diario"
+                            ]
+                          },
+                          "app": {
+                            "type": "boolean"
+                          },
+                          "telegram": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "evento",
+                          "app",
+                          "telegram"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "telegram_vinculado": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "filas",
+                    "telegram_vinculado"
                   ],
                   "additionalProperties": false
                 }

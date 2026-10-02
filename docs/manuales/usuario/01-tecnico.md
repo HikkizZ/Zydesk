@@ -44,7 +44,7 @@ En **Actividad** hay pestañas con conteos: **Actividad** (todo), **Seguimiento*
 
 ## Menciones
 
-Escribe `@` en el redactor y elige a una persona activa de la lista. Su nombre queda resaltado en el mensaje. Por ahora la mención no envía avisos (llegan en una fase posterior).
+Escribe `@` en el redactor y elige a una persona activa de la lista. Su nombre queda resaltado en el mensaje y la persona recibe un aviso ("Camila Rojas te mencionó en una nota interna de TK-1048") que la lleva al mensaje; el aviso no incluye el texto. Vale en seguimientos y notas internas, de tickets y de OT. Mencionarte a ti mismo no genera aviso.
 
 ## Horas desde el redactor
 
@@ -125,6 +125,21 @@ Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordina
 ## Lista de órdenes de trabajo
 
 **Órdenes de trabajo** (`/ots`) es una vista de solo lectura de todas las OT, con filtros **Todas**, **Abiertas**, **Por facturar**, **Facturadas** e **Internas** (cada uno con su contador), búsqueda por código, título, cliente o ticket, y paginación. Cada fila abre la OT. La columna **Neto / horas** muestra el neto en pesos de la cotización vigente en las facturables y las horas en las internas. Los cambios se hacen desde la OT, no desde la lista. La ficha de cada cliente tiene además una tarjeta con sus OT.
+
+Arriba hay cuatro **indicadores**: **Por facturar** (OT cerradas pendientes de factura), **Esperando al cliente** (OT con cotización enviada y sin respuesta), **En ejecución** y **Horas internas del mes** (horas registradas en OT internas este mes). Cada uno es un enlace que deja la lista filtrada; "Esperando al cliente" filtra por la etapa Cotizada. Los montos en pesos solo los ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos ven «—».
+
+En la columna **Etapa**, una OT facturable Cotizada con cotización enviada se muestra como **Esperando aprobación**, y una interna en Borrador con aprobador asignado como **Borrador · por aprobar**. El botón **Exportar para facturación (.xlsx)** es de Coordinación y Administración ([manual de coordinación](02-coordinacion.md#exportar-para-facturación-xlsx)).
+
+## Línea de tiempo
+
+**Línea de tiempo** (menú, grupo Tickets; `/tickets/linea-de-tiempo`) responde "¿en qué está cada uno?": una columna por **día hábil** según el horario y los feriados de tu departamento (sin departamento, lunes a viernes) y una barra por ticket desde su inicio (inicio planificado o creación) hasta su fecha límite. La columna de hoy va destacada.
+
+- **Escala**: **Día** (una columna), **2 semanas** (10 días hábiles desde el lunes) o **Mes**. Las flechas mueven el rango y **Hoy** vuelve al actual. El rango va en la dirección de la página, así que se puede compartir.
+- **Agrupar por**: **Persona** (una fila por persona activa, tú primero; a la izquierda, su ticket En curso más reciente como "lo que hace ahora", o "Sin ticket en curso"; al final, "Sin asignar") o **Cliente** (una fila por cliente o área interna, y "Sin cliente").
+- **Barras**: el estilo depende del estado (en curso lleno, nuevo punteado, en espera rayado, resuelto gris) y el punto del color de la prioridad. Muestran código, asunto y la OT vinculada si la hay. Una barra **vencida** se prolonga hasta hoy con borde punteado y un triángulo; un ticket **sin fecha límite** ocupa una sola columna con "sin fecha". Varios tickets que se solapan en una fila se apilan. Cada barra abre el ticket.
+- **N vencidos**: el aviso superior cuenta los tickets vencidos del equipo; al pulsarlo quedan solo esas barras. Los vencidos abiertos aparecen aunque su fecha límite sea anterior al rango.
+
+Es una vista de solo lectura; en el celular se desplaza hacia el lado con la columna de nombres fija. Los tickets archivados no aparecen.
 
 ## Cotizar una OT
 

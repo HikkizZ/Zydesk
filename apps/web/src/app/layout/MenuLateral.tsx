@@ -2,6 +2,7 @@ import { ETIQUETA_ROL } from '@zydesk/shared';
 import { NavLink } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { useYo } from '@/features/auth/SesionProvider';
+import { InsigniaAvisos } from '@/features/avisos/components/InsigniaAvisos';
 import { cn } from '@/lib/utils';
 import { MENU, visible, type EntradaMenu } from './menu';
 
@@ -19,6 +20,7 @@ function Item({ entrada }: { entrada: EntradaMenu }) {
     <NavLink to={entrada.ruta} end className={claseItem}>
       <Icono size={18} strokeWidth={1.5} aria-hidden="true" />
       {entrada.etiqueta}
+      {entrada.ruta === '/avisos' ? <InsigniaAvisos className="ml-auto" /> : null}
     </NavLink>
   );
 }

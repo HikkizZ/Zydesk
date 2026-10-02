@@ -1,6 +1,6 @@
 # ADR 0021 — Precisiones surgidas al especificar e implementar la Fase 2
 
-**Estado**: aceptada · 2026-09-30 · precisa a ADR 0001, 0003, 0004, 0005, 0008, 0009, 0010 y 0017 (no cambia sus decisiones de fondo) · precisada por ADR 0023 (Fase 3)
+**Estado**: aceptada · 2026-09-30 · precisa a ADR 0001, 0003, 0004, 0005, 0008, 0009, 0010 y 0017 (no cambia sus decisiones de fondo) · precisada por ADR 0023 (Fase 3) y por ADR 0027 (Fase 6)
 
 ## Contexto
 

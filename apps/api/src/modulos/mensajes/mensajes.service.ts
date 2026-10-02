@@ -11,6 +11,7 @@ import type { z } from 'zod';
 import type { EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
+import { publicarPendientes, type EventoPendiente } from '../../core/eventos/dominio.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarEvento } from '../../core/historial/evento.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
@@ -124,6 +125,7 @@ export async function insertarMensaje(
   actor: UsuarioSesion,
   destino: { ticket_id: number } | { ot_id: number },
   e: MensajeEntradaDatos,
+  pendientes?: EventoPendiente[],
 ): Promise<Mensaje> {
   const mencionados = [...new Set(e.mencionados_ids)];
   if (mencionados.length > 0) {
@@ -156,7 +158,6 @@ export async function insertarMensaje(
     actor,
   );
   for (const usuario_id of mencionados) {
-    // Sin avisos: los publica la Fase 6
     await tx.query(`INSERT INTO mencion (mensaje_id, usuario_id) VALUES ($1, $2)`, [
       mensaje.id,
       usuario_id,
@@ -169,6 +170,21 @@ export async function insertarMensaje(
       horas: e.horas,
       ...destino,
     });
+  }
+  // El autor no se avisa a sí mismo
+  const avisar = mencionados.filter((i) => i !== actor.id);
+  if (avisar.length > 0) {
+    pendientes?.push([
+      'mencion',
+      {
+        mensaje_id: mensaje.id,
+        ticket_id: 'ticket_id' in destino ? destino.ticket_id : null,
+        ot_id: 'ot_id' in destino ? destino.ot_id : null,
+        tipo: e.tipo,
+        usuario_ids: avisar,
+        actor_id: actor.id,
+      },
+    ]);
   }
   return mensaje;
 }
@@ -183,15 +199,24 @@ export async function crearMensaje(
       copiar_al_ticket: ['Solo en mensajes de OT'],
     });
   }
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     // Permitido también en tickets cerrados y archivados
     await bloquearTicket(tx, ticket_id);
-    const mensaje = await insertarMensaje(tx, actor, { ticket_id }, e);
+    const mensaje = await insertarMensaje(tx, actor, { ticket_id }, e, pendientes);
     await registrarActividadEnTicket(tx, ticket_id, { respuesta: e.tipo === 'seguimiento' });
+    if (e.tipo === 'seguimiento') {
+      pendientes.push([
+        'ticket.seguimiento_nuevo',
+        { ticket_id, mensaje_id: mensaje.id, actor_id: actor.id, copiado: false },
+      ]);
+    }
 
     const fila = await tx.findOneByOrFail(Mensaje, { id: mensaje.id });
     return (await aSalidas(tx, [fila]))[0]!;
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // Permitido también con la OT cerrada o cancelada. Con `copiar_al_ticket` se bloquea ticket → OT (§1.2).
@@ -200,7 +225,8 @@ export async function crearMensajeDeOt(
   ot_id: number,
   e: MensajeEntradaDatos,
 ): Promise<MensajeSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     if (e.copiar_al_ticket) {
       const [previa]: { ticket_id: number }[] = await tx.query(
         `SELECT ticket_id FROM ot WHERE id = $1`,
@@ -216,13 +242,15 @@ export async function crearMensajeDeOt(
         horas: ['No se registran horas en una OT cerrada'],
       });
     }
-    const mensaje = await insertarMensaje(tx, actor, { ot_id }, e);
+    const mensaje = await insertarMensaje(tx, actor, { ot_id }, e, pendientes);
     await registrarActividadEnOt(tx, ot_id);
-    if (e.copiar_al_ticket) await copiarAlTicket(tx, actor, mensaje);
+    if (e.copiar_al_ticket) await copiarAlTicket(tx, actor, mensaje, pendientes);
 
     const fila = await tx.findOneByOrFail(Mensaje, { id: mensaje.id });
     return (await aSalidas(tx, [fila]))[0]!;
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Copiar al ticket (spec §6.2) ----
@@ -232,6 +260,7 @@ export async function copiarAlTicket(
   tx: EntityManager,
   actor: UsuarioSesion,
   mensaje: Mensaje,
+  pendientes?: EventoPendiente[],
 ): Promise<Mensaje> {
   const [ot]: { ticket_id: number; codigo: string }[] = await tx.query(
     `SELECT ticket_id, codigo FROM ot WHERE id = $1`,
@@ -274,6 +303,13 @@ export async function copiarAlTicket(
   await registrarActividadEnTicket(tx, ot!.ticket_id, {
     respuesta: mensaje.tipo === 'seguimiento',
   });
+  // Sin `pendientes` (cierre de OT) no se publica: `ot.cerrada` ya avisa a los mismos destinatarios
+  if (mensaje.tipo === 'seguimiento') {
+    pendientes?.push([
+      'ticket.seguimiento_nuevo',
+      { ticket_id: ot!.ticket_id, mensaje_id: copia.id, actor_id: actor.id, copiado: true },
+    ]);
+  }
   return copia;
 }
 
@@ -281,7 +317,8 @@ export async function copiarMensajeAlTicket(
   actor: UsuarioSesion,
   mensaje_id: number,
 ): Promise<MensajeSalidaDatos> {
-  return enTransaccion(async (tx) => {
+  const pendientes: EventoPendiente[] = [];
+  const salida = await enTransaccion(async (tx) => {
     const [previo]: { ot_id: number | null; ticket_id: number | null }[] = await tx.query(
       `SELECT m.ot_id, o.ticket_id FROM mensaje m LEFT JOIN ot o ON o.id = m.ot_id WHERE m.id = $1`,
       [mensaje_id],
@@ -292,10 +329,12 @@ export async function copiarMensajeAlTicket(
     await bloquearTicket(tx, previo.ticket_id!);
     await bloquearOt(tx, previo.ot_id);
     const mensaje = await tx.findOneByOrFail(Mensaje, { id: mensaje_id });
-    const copia = await copiarAlTicket(tx, actor, mensaje);
+    const copia = await copiarAlTicket(tx, actor, mensaje, pendientes);
     await registrarActividadEnOt(tx, previo.ot_id);
     return (await aSalidas(tx, [copia]))[0]!;
   });
+  publicarPendientes(pendientes);
+  return salida;
 }
 
 // ---- Listar ----

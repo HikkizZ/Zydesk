@@ -10,6 +10,7 @@ import {
 } from '../../modulos/clientes/clientes.service.js';
 import { versionTerminosVigente } from '../../modulos/legal/legal.service.js';
 import { sembrarPlantillas } from './desarrollo-cotizaciones.js';
+import { sembrarAvisos } from './desarrollo-avisos.js';
 import { sembrarHoras } from './desarrollo-horas.js';
 import { sembrarOts } from './desarrollo-ots.js';
 import { sembrarTickets } from './desarrollo-tickets.js';
@@ -286,4 +287,5 @@ export async function sembrarDesarrollo(contrasena: string | undefined): Promise
   await sembrarPlantillas();
   await sembrarOts(personas);
   await sembrarHoras(personas);
+  await sembrarAvisos(personas);
 }

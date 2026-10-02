@@ -6,3 +6,4 @@ export * from './origen-sesion.js';
 export * from './ticket.js';
 export * from './ot.js';
 export * from './cotizacion.js';
+export * from './aviso.js';

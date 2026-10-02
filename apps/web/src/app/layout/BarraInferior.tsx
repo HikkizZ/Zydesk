@@ -2,6 +2,7 @@ import { Menu } from 'lucide-react';
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { Sheet, SheetTrigger } from '@/components/ui/sheet';
+import { InsigniaAvisos } from '@/features/avisos/components/InsigniaAvisos';
 import { cn } from '@/lib/utils';
 import { MENU } from './menu';
 import { PanelMenuMovil } from './PanelMenuMovil';
@@ -15,7 +16,7 @@ const ACCESOS = [
 
 const claseAcceso = (activo: boolean) =>
   cn(
-    'flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 whitespace-nowrap text-xs font-medium',
+    'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 whitespace-nowrap text-xs font-medium',
     activo ? 'bg-white/10 text-fondo' : 'text-fondo/80',
   );
 
@@ -46,6 +47,9 @@ export function BarraInferior() {
           >
             <Icono size={18} strokeWidth={1.5} aria-hidden="true" />
             {etiqueta}
+            {ruta === '/avisos' ? (
+              <InsigniaAvisos className="absolute right-1/4 top-1.5 min-w-4 px-1 text-[10px] leading-4" />
+            ) : null}
           </Link>
         );
       })}

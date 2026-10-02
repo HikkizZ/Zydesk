@@ -1,8 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { expect, it } from 'vitest';
+import { afterEach, expect, it, vi } from 'vitest';
+import { respuesta, simularFetch } from '@/test/fetch';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { MenuLateral } from './MenuLateral';
 import { MENU } from './menu';
+
+afterEach(() => vi.unstubAllGlobals());
 
 const TEXTOS_COMUNES = [
   'Nuevo ticket',
@@ -51,6 +54,36 @@ it('muestra el nombre de la app, la persona y la etiqueta de su rol', () => {
   expect(screen.getByText('Diego Muñoz')).toBeTruthy();
   expect(screen.getByText('Coordinación')).toBeTruthy();
   expect(screen.getByText('DM')).toBeTruthy();
+});
+
+function conNoLeidos(n: number) {
+  simularFetch(({ ruta }) =>
+    ruta === '/api/avisos/no-leidos' ? respuesta(200, { no_leidos: n }) : undefined,
+  );
+  render(
+    <ConSesion yo={yoDePrueba()}>
+      <MenuLateral />
+    </ConSesion>,
+  );
+}
+
+it('con no_leidos: 3 aparece el badge «3» junto a Avisos', async () => {
+  conNoLeidos(3);
+  const badge = await screen.findByLabelText('3 avisos sin leer');
+  expect(badge.textContent).toBe('3');
+  expect(screen.getByRole('link', { name: /Avisos/ }).contains(badge)).toBe(true);
+});
+
+it('con no_leidos: 0 no hay badge', async () => {
+  conNoLeidos(0);
+  await screen.findByText('Avisos');
+  await new Promise((r) => setTimeout(r, 20));
+  expect(screen.queryByLabelText(/sin leer/)).toBeNull();
+});
+
+it('desde 100 el badge dice 99+', async () => {
+  conNoLeidos(100);
+  expect((await screen.findByLabelText('100 avisos sin leer')).textContent).toBe('99+');
 });
 
 it('menu.ts tiene 13 entradas con rutas únicas y solo Configuración exige permiso', () => {

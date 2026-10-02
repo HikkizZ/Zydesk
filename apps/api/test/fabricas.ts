@@ -2,13 +2,16 @@ import {
   ESTADOS_TICKET_CERRADOS,
   ZONA,
   calcularCotizacion,
+  type CanalActivo,
   type EstadoCotizacion,
   type EstadoFacturacion,
   type EstadoTicket,
   type EtapaOt,
+  type EventoAviso,
   type HorarioDia as HorarioDiaDatos,
   type Moneda,
   type TarifasSalidaDatos,
+  type TipoAviso,
   type TipoLinea,
   type TipoOt,
   type Unidad,
@@ -16,15 +19,17 @@ import {
 } from '@zydesk/shared';
 import argon2 from 'argon2';
 import type { Express } from 'express';
-import { randomUUID } from 'node:crypto';
+import { randomInt, randomUUID } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
 import { nombreCookie } from '../src/core/auth/cookie.js';
-import { crearSesion } from '../src/core/auth/sesiones.js';
+import { crearSesion, hashToken } from '../src/core/auth/sesiones.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
+import { Aviso } from '../src/modulos/avisos/aviso.entity.js';
+import { PreferenciaAviso } from '../src/modulos/avisos/preferencia-aviso.entity.js';
 import { Archivo } from '../src/modulos/archivos/archivo.entity.js';
 import { Categoria } from '../src/modulos/categorias/categoria.entity.js';
 import { Cliente } from '../src/modulos/clientes/cliente.entity.js';
@@ -42,6 +47,8 @@ import { Mensaje } from '../src/modulos/mensajes/mensaje.entity.js';
 import { Ot } from '../src/modulos/ots/ot.entity.js';
 import { Tarea } from '../src/modulos/tareas/tarea.entity.js';
 import { TicketResponsable } from '../src/modulos/tickets/ticket-responsable.entity.js';
+import { CodigoVinculo } from '../src/modulos/telegram/codigo-vinculo.entity.js';
+import { VinculoTelegram } from '../src/modulos/telegram/vinculo-telegram.entity.js';
 import { Ticket } from '../src/modulos/tickets/ticket.entity.js';
 import { Usuario } from '../src/modulos/usuarios/usuario.entity.js';
 
@@ -657,4 +664,127 @@ export async function ingresarComo(
     .map((c) => c.split(';')[0])
     .join('; ');
   return { cookie, csrf: 'Zydesk', agente };
+}
+
+const ALFABETO_CODIGO = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sin I, O, 0, 1 (§3.2)
+
+// Inserta directo un `aviso`. Por defecto una `mencion` sobre un ticket creado al vuelo (si no se pasa
+// `entidad_id`); `leido` fija `leido_en` en ahora.
+export async function crearAviso(
+  usuario_id: number,
+  datos: {
+    evento?: Aviso['evento'];
+    tipo?: TipoAviso;
+    texto?: string;
+    entidad?: Aviso['entidad'];
+    entidad_id?: number;
+    clave?: string | null;
+    leido?: boolean;
+    en_app?: boolean;
+    creado_en?: Date;
+    actor_id?: number | null;
+  } = {},
+): Promise<Aviso> {
+  const entidad = datos.entidad ?? 'ticket';
+  let entidad_id = datos.entidad_id;
+  let codigo = `${entidad === 'ticket' ? 'TK' : 'OT'}-0`;
+  if (entidad_id === undefined) {
+    const ticket = await crearTicket();
+    entidad_id = ticket.id;
+    codigo = ticket.codigo;
+  }
+  return dataSource.manager.save(Aviso, {
+    usuario_id,
+    evento: datos.evento ?? 'mencion',
+    tipo: datos.tipo ?? 'mencion',
+    clave: datos.clave ?? null,
+    texto: datos.texto ?? `Te mencionaron en ${codigo}`,
+    enlace: `/${entidad === 'ticket' ? 'tickets' : 'ots'}/${entidad_id}`,
+    entidad,
+    entidad_id,
+    datos: { codigo },
+    actor_id: datos.actor_id ?? null,
+    en_app: datos.en_app ?? true,
+    leido_en: datos.leido ? new Date() : null,
+    ...(datos.creado_en ? { creado_en: datos.creado_en } : {}),
+  });
+}
+
+// `INSERT … ON CONFLICT DO UPDATE` sobre (usuario, evento, canal).
+export async function fijarPreferencia(
+  usuario_id: number,
+  evento: EventoAviso,
+  canal: CanalActivo | 'correo',
+  activo: boolean,
+): Promise<void> {
+  await dataSource
+    .createQueryBuilder()
+    .insert()
+    .into(PreferenciaAviso)
+    .values({ usuario_id, evento, canal, activo })
+    .orUpdate(['activo', 'actualizado_en'], ['usuario_id', 'evento', 'canal'])
+    .execute();
+}
+
+let secuenciaChat = 100_000;
+
+// Inserta `vinculo_telegram` y, con `con_sesion` (por defecto), una sesión `origen = 'bot'` (`mantener`).
+// Devuelve el `token` en claro de esa sesión (null sin sesión).
+export async function crearVinculoTelegram(
+  usuario_id: number,
+  datos: { chat_id?: number; con_sesion?: boolean } = {},
+): Promise<{ chat_id: number; token: string | null }> {
+  const chat_id = datos.chat_id ?? ++secuenciaChat;
+  let sesion_id: string | null = null;
+  let token: string | null = null;
+  if (datos.con_sesion ?? true) {
+    const sesion = await crearSesion(dataSource.manager, {
+      usuario_id,
+      origen: 'bot',
+      mantener: true,
+      ip: null,
+      user_agent: 'Telegram',
+    });
+    sesion_id = sesion.id;
+    token = sesion.token;
+  }
+  await dataSource.manager.save(VinculoTelegram, {
+    usuario_id,
+    chat_id: String(chat_id),
+    telegram_usuario: null,
+    sesion_id,
+  });
+  return { chat_id, token };
+}
+
+// Inserta un `codigo_vinculo` (solo el hash va a BD) y devuelve el código en claro.
+export async function crearCodigoVinculo(
+  usuario_id: number,
+  datos: { expirado?: boolean; usado?: boolean } = {},
+): Promise<string> {
+  let codigo = '';
+  for (let i = 0; i < 8; i++) codigo += ALFABETO_CODIGO[randomInt(ALFABETO_CODIGO.length)];
+  await dataSource.manager.save(CodigoVinculo, {
+    codigo_hash: hashToken(codigo),
+    usuario_id,
+    expira_en: new Date(Date.now() + (datos.expirado ? -60_000 : 10 * 60_000)),
+    usado_en: datos.usado ? new Date() : null,
+  });
+  return codigo;
+}
+
+// Agente del bot: crea vínculo + sesión bot y llama con `Authorization: Bearer`, sin cookie ni
+// `X-Requested-With` (así llama el bot).
+export async function ingresarComoBot(
+  app: Express,
+  usuario: Pick<Usuario, 'id'>,
+): Promise<{ agente: ReturnType<typeof request.agent>; token: string }> {
+  const { token } = await crearVinculoTelegram(usuario.id);
+  return { agente: request.agent(app).set('Authorization', `Bearer ${token!}`), token: token! };
+}
+
+// Para `/api/bot/*`: autenticado con `X-Bot-Key`.
+// F6-T9: leer `env.BOT_API_KEY` cuando `config/env.ts` lo defina.
+export function comoBot(app: Express): ReturnType<typeof request.agent> {
+  return request.agent(app).set('X-Bot-Key', process.env.BOT_API_KEY ?? 'clave-bot-de-prueba');
 }

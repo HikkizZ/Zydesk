@@ -47,7 +47,7 @@ Para cambiar el rol o el departamento de alguien, usa los selectores de su fila.
 | Ver horas de todo el equipo          |       ✓        |      ✓       |    –    |      –       |
 | Cambiar configuración (esta sección) |       ✓        |      –       |    –    |      –       |
 
-Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. **Registrar horas** en la planilla va con "Crear y editar tickets" (cada persona registra solo las suyas); **Ver horas de todo el equipo** permite abrir la planilla de cualquier persona en solo lectura, sin editarla. Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
+Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. **Registrar horas** en la planilla va con "Crear y editar tickets" (cada persona registra solo las suyas); **Ver horas de todo el equipo** permite abrir la planilla de cualquier persona en solo lectura, sin editarla. **Ver reportes y montos** es lo que muestra los montos en pesos de los indicadores de **Órdenes de trabajo** (los técnicos ven «—»); **Marcar OT como facturada** habilita además **Exportar para facturación (.xlsx)** y el aviso "OT cerrada y lista para facturar". Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
 
 ## 3. Restablecer una contraseña
 
@@ -129,7 +129,7 @@ La tarjeta **Historial de cambios de numeración** lista quién cambió qué y c
 
 ## 10. Ingresos y registro de seguridad
 
-En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, cambios de configuración (también tarifas y plantillas) y descargas de documentos y cotizaciones. Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
+En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, cambios de configuración (también tarifas y plantillas), descargas de documentos y cotizaciones y exportaciones de OT para facturación (con los nombres de los filtros usados, sin montos). Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
 
 Puedes filtrar por acción, persona, correo y fechas. **Estos registros se conservan 1 año** y luego se borran automáticamente. No se pueden editar ni borrar desde la app.
 
@@ -179,7 +179,9 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Horas.** Las horas de una OT se registran desde el redactor o desde la planilla **Horas** (ver [manual de tickets](usuario/01-tecnico.md#registrar-horas)), opcionalmente contra una tarea; una OT cerrada o cancelada no admite más horas. La planilla no deja rastro en el historial de la OT ni en el registro de seguridad: el registro es la propia fila de horas.
 
-**Lo que todavía no existe.** Avisos, exportación de horas, reportes de horas y la pantalla completa de OT con indicadores en pesos llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
+**Indicadores y exportación.** La lista **Órdenes de trabajo** muestra arriba Por facturar, Esperando al cliente, En ejecución y Horas internas del mes; los montos en pesos solo con **Ver reportes y montos**. **Exportar para facturación (.xlsx)** (permiso de facturar) descarga las OT filtradas y deja una fila "Exportación" en el registro de seguridad (sección 10). La columna Neto de la lista sigue visible para todos los roles; se revisa en la Fase 7.
+
+**Lo que todavía no existe.** Exportación de horas y reportes de horas llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
 
 Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manual de coordinación](usuario/02-coordinacion.md).
 
@@ -208,6 +210,16 @@ En **Configuración → Plantillas**. Una plantilla tiene nombre (único), descr
 
 La app trae tres plantillas de ejemplo solo en las semillas de desarrollo.
 
-## 16. Referencia de la API
+## 16. Avisos
+
+Los avisos en la app no se configuran desde **Configuración**: cada persona maneja los suyos en **Avisos → Preferencias** (ver [Primeros pasos](usuario/00-primeros-pasos.md#avisos)). Lo que conviene saber:
+
+- **Valores por defecto.** Sin preferencia guardada, los ocho tipos de aviso están activos **en la app**. Para **Telegram** vienen activos salvo "Cambia el estado de un ticket que sigo" y "Nuevo seguimiento en un ticket que sigo"; el **Resumen diario** solo existe por Telegram. Telegram y el resumen diario quedan preparados pero no envían nada hasta la siguiente entrega de la Fase 6; mientras tanto la tarjeta de Telegram no se muestra.
+- **Quién recibe qué.** Los avisos llegan a quien tiene relación con el ticket o la OT (responsables, seguidores, mencionados, la persona que debe aprobar). "OT cerrada y lista para facturar" llega a todas las personas activas con permiso de facturar (Administración y Coordinación). Nadie recibe aviso de su propia acción y una persona desactivada no recibe nada.
+- **Sin contenido sensible.** El texto de un aviso lleva códigos, asuntos, nombres y etiquetas de estado; nunca el texto de mensajes o notas, motivos de cierre o cancelación ni montos.
+- **Vencimientos.** Una tarea automática revisa cada 30 minutos los tickets abiertos: avisa al responsable principal cuando faltan menos de 24 horas para la fecha límite y cuando ya pasó (una sola vez por ticket y fecha; si la fecha límite cambia, avisa de nuevo). Si la API corre con `EJECUTAR_JOBS=false`, estos avisos no se generan.
+- **Registro.** Los avisos no dejan rastro en el historial del ticket ni en el registro de seguridad: la fila del aviso es el registro. La limpieza de avisos leídos antiguos se agrega en la siguiente entrega.
+
+## 17. Referencia de la API
 
 Para integraciones y el bot futuro: con sesión de Administración, abre `/api/docs` (por ejemplo `http://localhost:3010/api/docs`) para ver todas las rutas. La guía de uso está en `docs/api/README.md`.

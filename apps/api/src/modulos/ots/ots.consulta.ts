@@ -7,7 +7,14 @@ import { usadasMesDeContrato } from '../clientes/clientes.service.js';
 import { cotizacionVigente } from '../cotizaciones/cotizaciones.consulta.js';
 import { SQL_HORAS_REGISTRADAS } from '../tareas/tareas.service.js';
 import { leerTarifas } from '../configuracion/configuracion.service.js';
-import type { OtResumenDatos, OtSalidaDatos, OtsQueryDatos } from './ots.tipos.js';
+import { errorValidacion } from './ots.comun.js';
+import type {
+  FilaExportacionOt,
+  IndicadoresOtsDatos,
+  OtResumenDatos,
+  OtSalidaDatos,
+  OtsQueryDatos,
+} from './ots.tipos.js';
 
 type Consulta = Pick<EntityManager, 'query'>;
 type TareaDatos = OtSalidaDatos['tareas'][number];
@@ -30,7 +37,9 @@ const SELECT_RESUMEN = `
               ELSE json_build_object('id', c.id, 'nombre', c.nombre, 'es_interno', c.es_interno) END AS cliente,
          ${persona('ur')} AS responsable_tecnico,
          ${persona('ua')} AS aprobador,
-         cv.neto_clp::float8 AS neto,
+         cv.neto_clp::float8 AS neto, o.n_factura, cv.codigo AS cot_codigo, cv.version AS cot_version,
+         COALESCE(o.tipo = 'facturable' AND o.etapa = 'cotizada' AND cv.estado = 'enviada', false) AS esperando_cliente,
+         (o.tipo = 'interna' AND o.etapa = 'borrador' AND o.aprobador_id IS NOT NULL) AS por_aprobar,
          json_build_object(
            'estimadas', COALESCE((SELECT sum(ta.horas_estimadas) FROM tarea ta WHERE ta.ot_id = o.id), 0)::float8,
            'reales', COALESCE((SELECT sum(ta.horas_reales) FROM tarea ta WHERE ta.ot_id = o.id), 0)::float8,
@@ -44,7 +53,8 @@ const SELECT_RESUMEN = `
     LEFT JOIN usuario ur ON ur.id = o.responsable_tecnico_id
     LEFT JOIN usuario ua ON ua.id = o.aprobador_id
     LEFT JOIN LATERAL (
-      SELECT CASE cq.moneda WHEN 'CLP' THEN cq.neto WHEN 'UF' THEN round(cq.neto * cq.valor_uf) END AS neto_clp
+      SELECT CASE cq.moneda WHEN 'CLP' THEN cq.neto WHEN 'UF' THEN round(cq.neto * cq.valor_uf) END AS neto_clp,
+             cq.estado, cq.codigo, cq.version
         FROM cotizacion cq WHERE cq.ot_id = o.id ORDER BY cq.version DESC LIMIT 1
     ) cv ON true`;
 
@@ -73,6 +83,11 @@ interface FilaResumen {
   responsable_tecnico: PersonaFila | null;
   aprobador: PersonaFila | null;
   neto: number | null;
+  n_factura: string | null;
+  cot_codigo: string | null;
+  cot_version: number | null;
+  esperando_cliente: boolean;
+  por_aprobar: boolean;
   horas: OtResumenDatos['horas'];
   vencida: boolean;
   n_mensajes: number;
@@ -104,6 +119,8 @@ function aResumen(f: FilaResumen): OtResumenDatos {
     inicio: f.inicio,
     termino: f.termino,
     vencida: f.vencida,
+    esperando_cliente: f.esperando_cliente,
+    por_aprobar: f.por_aprobar,
     n_mensajes: f.n_mensajes,
     actualizado_en: f.actualizado_en.toISOString(),
   };
@@ -418,4 +435,92 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
     tipo_cambiable: resumen.etapa === 'borrador',
     creado_por: e.creado_por,
   };
+}
+
+// ---- Indicadores y exportación (spec fase 6 §12) ----
+
+// Los montos (Σ neto CLP de la cotización vigente) van solo si `verMontos`; si no, `null`.
+export async function indicadoresOts(
+  m: Consulta,
+  verMontos: boolean,
+): Promise<IndicadoresOtsDatos> {
+  const [f]: {
+    por_facturar_n: number;
+    por_facturar_neto: number;
+    esperando_n: number;
+    esperando_neto: number;
+    en_ejecucion: number;
+  }[] = await m.query(
+    `SELECT count(*) FILTER (WHERE o.estado_facturacion = 'por_facturar')::int AS por_facturar_n,
+            COALESCE(sum(cv.neto_clp) FILTER (WHERE o.estado_facturacion = 'por_facturar'), 0)::float8 AS por_facturar_neto,
+            count(*) FILTER (WHERE esp.es)::int AS esperando_n,
+            COALESCE(sum(cv.neto_clp) FILTER (WHERE esp.es), 0)::float8 AS esperando_neto,
+            count(*) FILTER (WHERE o.etapa = 'en_ejecucion')::int AS en_ejecucion
+       FROM ot o
+       LEFT JOIN LATERAL (
+         SELECT CASE cq.moneda WHEN 'CLP' THEN cq.neto WHEN 'UF' THEN round(cq.neto * cq.valor_uf) END AS neto_clp,
+                cq.estado
+           FROM cotizacion cq WHERE cq.ot_id = o.id ORDER BY cq.version DESC LIMIT 1
+       ) cv ON true
+       CROSS JOIN LATERAL (
+         SELECT COALESCE(o.tipo = 'facturable' AND o.etapa = 'cotizada' AND cv.estado = 'enviada', false) AS es
+       ) esp`,
+  );
+  const [h]: { horas: number }[] = await m.query(
+    `SELECT COALESCE(sum(rh.horas), 0)::float8 AS horas
+       FROM registro_horas rh JOIN ot o ON o.id = rh.ot_id
+      WHERE o.tipo = 'interna'
+        AND rh.fecha >= date_trunc('month', ${HOY_SANTIAGO})::date
+        AND rh.fecha < (date_trunc('month', ${HOY_SANTIAGO}) + interval '1 month')::date`,
+  );
+  return {
+    por_facturar: { n: f!.por_facturar_n, neto: verMontos ? f!.por_facturar_neto : null },
+    esperando_cliente: { n: f!.esperando_n, neto: verMontos ? f!.esperando_neto : null },
+    en_ejecucion: f!.en_ejecucion,
+    horas_internas_mes: h!.horas,
+  };
+}
+
+export const MAX_FILAS_EXPORTACION = 5000;
+
+// Las OT que cumplen los filtros (sin paginar), en el orden pedido. Más de MAX_FILAS_EXPORTACION → 400.
+export async function listarOtsParaExportar(
+  m: Consulta,
+  q: OtsQueryDatos,
+): Promise<FilaExportacionOt[]> {
+  const { where, valores } = armarWhere(q);
+  const [cuenta]: { total: number }[] = await m.query(
+    `SELECT count(*)::int AS total
+       FROM ot o
+       JOIN ticket t ON t.id = o.ticket_id
+       LEFT JOIN cliente c ON c.id = o.cliente_id
+      WHERE ${where}`,
+    valores,
+  );
+  if ((cuenta?.total ?? 0) > MAX_FILAS_EXPORTACION) {
+    throw errorValidacion({
+      filtros: [`Más de ${MAX_FILAS_EXPORTACION} filas: filtra antes de exportar`],
+    });
+  }
+  const filas: FilaResumen[] = await m.query(
+    `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${ORDENES[q.orden]}`,
+    valores,
+  );
+  return filas.map((f) => ({
+    codigo: f.codigo,
+    titulo: f.titulo,
+    cliente: f.cliente?.nombre ?? null,
+    ticket: f.ticket.codigo,
+    tipo: f.tipo,
+    etapa: f.etapa,
+    estado_facturacion: f.estado_facturacion,
+    n_factura: f.n_factura,
+    cotizacion: f.cot_codigo === null ? null : `${f.cot_codigo} v${f.cot_version}`,
+    neto: f.neto,
+    horas: f.horas.registradas,
+    responsable: f.responsable_tecnico?.nombre ?? null,
+    inicio: f.inicio,
+    termino: f.termino,
+    cerrada_en: f.cerrada_en,
+  }));
 }

@@ -4,6 +4,7 @@ import { logger } from '../../config/logger.js';
 import { registrarJobArchivar } from './archivar.js';
 import { registrarJobArchivos } from './archivos.js';
 import { JOB_MANTENCION, mantencionLimpiar } from './mantencion.js';
+import { registrarJobVencimientos } from './vencimientos.js';
 
 export function crearBoss(): PgBoss {
   const boss = new PgBoss({ connectionString: env.DATABASE_URL, schema: 'pgboss' });
@@ -12,7 +13,8 @@ export function crearBoss(): PgBoss {
 }
 
 // Registra los workers y sus programaciones diarias (America/Santiago): mantención 03:00 (ADR 0017),
-// archivado de tickets 03:10 y limpieza de archivos huérfanos 04:00 (spec fase-2 §5.6 y §4.6).
+// archivado de tickets 03:10 y limpieza de archivos huérfanos 04:00 (spec fase-2 §5.6 y §4.6) y
+// vencimientos de tickets cada 30 minutos (spec fase-6 §8).
 export async function iniciarJobs(boss: PgBoss): Promise<void> {
   await boss.createQueue(JOB_MANTENCION);
   await boss.work(JOB_MANTENCION, async ([job]) => {
@@ -21,5 +23,6 @@ export async function iniciarJobs(boss: PgBoss): Promise<void> {
   await boss.schedule(JOB_MANTENCION, '0 3 * * *', {}, { tz: 'America/Santiago' });
   await registrarJobArchivar(boss);
   await registrarJobArchivos(boss);
+  await registrarJobVencimientos(boss);
   logger.info('jobs iniciados');
 }
