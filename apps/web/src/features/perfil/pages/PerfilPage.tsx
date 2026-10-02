@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ETIQUETA_ROL } from '@zydesk/shared';
+import { Bot } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
 import { TituloPagina } from '@/app/TituloPagina';
@@ -99,7 +100,14 @@ function SesionesActivas() {
               <TableRow key={s.id}>
                 <TableCell>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span>{nombreDispositivo(s.user_agent)}</span>
+                    {s.origen === 'bot' ? (
+                      <span className="inline-flex items-center gap-1.5">
+                        <Bot size={16} strokeWidth={1.5} aria-hidden="true" />
+                        Bot de Telegram
+                      </span>
+                    ) : (
+                      <span>{nombreDispositivo(s.user_agent)}</span>
+                    )}
                     {s.actual ? <Pill tono="acento">Esta sesión</Pill> : null}
                   </div>
                 </TableCell>
