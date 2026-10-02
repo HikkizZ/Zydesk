@@ -2,6 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import {
   CambioEstadoTicket,
+  LineaTiempoQuery,
+  LineaTiempoSalida,
   ResponsablesEntrada,
   SeguidoresEntrada,
   TableroQuery,
@@ -11,6 +13,7 @@ import {
   TicketSalida,
   TicketsQuery,
 } from '@zydesk/shared';
+import { dataSource } from '../../config/db.js';
 import { actorRequerido } from '../../core/auth/requiere.js';
 import { ruta } from '../../core/http/ruta.js';
 import {
@@ -23,6 +26,7 @@ import {
   obtenerTicket,
   tablero,
 } from './tickets.service.js';
+import { lineaDeTiempo } from './tickets.consulta.js';
 
 const idParam = z.coerce.number().int().positive();
 const paramsId = z.object({ id: idParam });
@@ -59,6 +63,18 @@ export function crearRutasTickets(): Router {
     query: TableroQuery,
     respuesta: z.array(TicketResumen),
     handler: async ({ query, actor }) => tablero(actorRequerido(actor), query),
+  });
+
+  ruta(router, {
+    metodo: 'get',
+    path: '/api/tickets/linea-de-tiempo',
+    resumen: 'Línea de tiempo del equipo (días hábiles del departamento de quien mira, ADR 0016)',
+    etiqueta: ETIQUETA,
+    permiso: 'sesion',
+    query: LineaTiempoQuery,
+    respuesta: LineaTiempoSalida,
+    handler: async ({ query, actor }) =>
+      lineaDeTiempo(dataSource.manager, actorRequerido(actor).id, query),
   });
 
   ruta(router, {

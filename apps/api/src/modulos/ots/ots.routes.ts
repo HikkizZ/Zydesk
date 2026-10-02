@@ -9,6 +9,7 @@ import {
   CancelarOt,
   CierreOt,
   FacturarOt,
+  IndicadoresOtsSalida,
   OtCrearEntrada,
   OtEditarEntrada,
   OtResumen,
@@ -16,6 +17,7 @@ import {
   OtsQuery,
 } from '@zydesk/shared';
 import { actorRequerido } from '../../core/auth/requiere.js';
+import { contentDisposition } from '../../core/http/descarga.js';
 import { ruta } from '../../core/http/ruta.js';
 import {
   aprobarOt,
@@ -25,7 +27,15 @@ import {
   registrarAprobacionCliente,
 } from './ots.etapas.service.js';
 import { cerrarOt } from './ots.cierre.service.js';
-import { agregarArchivos, convertirEnOt, editarOt, listar, obtenerOt } from './ots.service.js';
+import {
+  agregarArchivos,
+  convertirEnOt,
+  editarOt,
+  exportarOts,
+  listar,
+  obtenerIndicadores,
+  obtenerOt,
+} from './ots.service.js';
 
 const paramsId = z.object({ id: z.coerce.number().int().positive() });
 const ETIQUETA = 'Órdenes de trabajo';
@@ -36,6 +46,9 @@ const Paginado = z.object({
   pagina: z.number().int(),
   por_pagina: z.number().int(),
 });
+
+// La exportación no pagina: toma los mismos filtros que el listado (spec fase 6 §12).
+const OtsExportarQuery = OtsQuery.omit({ pagina: true, por_pagina: true });
 
 export function crearRutasOts(): Router {
   const router = Router();
@@ -63,6 +76,45 @@ export function crearRutasOts(): Router {
     query: OtsQuery,
     respuesta: Paginado,
     handler: async ({ query }) => listar(query),
+  });
+
+  // Antes de '/api/ots/:id' para que "indicadores" y "exportar.xlsx" no se interpreten como id.
+  ruta(router, {
+    metodo: 'get',
+    path: '/api/ots/indicadores',
+    resumen: 'Indicadores de la pantalla de OT (los montos solo con reportes.ver)',
+    etiqueta: ETIQUETA,
+    permiso: 'sesion',
+    respuesta: IndicadoresOtsSalida,
+    handler: async ({ actor }) => obtenerIndicadores(actorRequerido(actor)),
+  });
+
+  ruta(router, {
+    metodo: 'get',
+    path: '/api/ots/exportar.xlsx',
+    resumen: 'Exportar para facturación (.xlsx) las OT que cumplen los filtros (attachment)',
+    etiqueta: ETIQUETA,
+    permiso: 'ots.facturar',
+    query: OtsExportarQuery,
+    respuesta: z.unknown(),
+    handler: async ({ query, actor, req, res }) => {
+      const filtros = Object.keys(req.query)
+        .filter((k) => k in OtsExportarQuery.shape)
+        .sort();
+      const { buffer, nombre, tipo_mime } = await exportarOts(
+        actorRequerido(actor),
+        { ...query, pagina: 1, por_pagina: 50 },
+        filtros,
+      );
+      res.set({
+        'Content-Type': tipo_mime,
+        'Content-Length': String(buffer.length),
+        'Content-Disposition': contentDisposition('attachment', nombre),
+        'Cache-Control': 'no-store',
+      });
+      res.end(buffer);
+      return undefined;
+    },
   });
 
   ruta(router, {
