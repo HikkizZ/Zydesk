@@ -163,7 +163,7 @@ it('la columna "Neto / horas" muestra el neto de una facturable y las horas de u
   });
   render(
     <TooltipProvider>
-      <ConSesion yo={yoDePrueba()} ruta="/ots">
+      <ConSesion yo={yoDePrueba({ rol: 'lectura' })} ruta="/ots">
         <OtsPage />
       </ConSesion>
     </TooltipProvider>,
@@ -174,8 +174,37 @@ it('la columna "Neto / horas" muestra el neto de una facturable y las horas de u
   expect(screen.getByRole('columnheader', { name: 'Neto / horas' })).toBeTruthy();
   expect((await fila('OT-0219')).textContent).toContain('6 / 6 h');
   expect((await fila('OT-0219')).textContent).not.toContain('$');
-  // Facturable aún sin cotización: se muestran las horas como antes.
+  // Facturable aún sin cotización (con permiso para ver montos): se muestran las horas como antes.
   expect((await fila('OT-0220')).textContent).toContain('10 / 3 h');
+});
+
+it('sin reportes.ver la facturable muestra «—»; lectura ve el neto o, sin cotización, las horas', async () => {
+  const lista = (neto: number | null) => [otResumenDePrueba({ id: 21, codigo: 'OT-0221', neto })];
+  for (const [rol, neto, esperado] of [
+    ['tecnico', null, '—'],
+    ['lectura', 475000, '$475.000'],
+    ['lectura', null, '10 / 3 h'],
+  ] as const) {
+    simularFetch(manejarIndicadores, ({ ruta, metodo }) => {
+      if (metodo !== 'GET') return undefined;
+      if (ruta.startsWith('/api/clientes')) return respuesta(200, []);
+      if (ruta.startsWith('/api/ots')) {
+        return respuesta(200, { datos: lista(neto), total: 1, pagina: 1, por_pagina: 50 });
+      }
+      return undefined;
+    });
+    const { unmount } = render(
+      <TooltipProvider>
+        <ConSesion yo={yoDePrueba({ rol })} ruta="/ots">
+          <OtsPage />
+        </ConSesion>
+      </TooltipProvider>,
+    );
+    const tr = (await screen.findByRole('link', { name: 'OT-0221' })).closest('tr') as HTMLElement;
+    expect(tr.textContent, rol).toContain(esperado);
+    if (rol === 'tecnico') expect(tr.textContent).not.toContain('$');
+    unmount();
+  }
 });
 
 it('los indicadores muestran los montos con formato CLP, las OT y las horas', async () => {
