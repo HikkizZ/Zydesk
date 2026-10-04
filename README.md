@@ -18,7 +18,7 @@ Monorepo con API (Express), web (React + Vite), bot de Telegram (grammY) y un pa
 4. Levantar Postgres: `docker compose -f docker-compose.dev.yml up -d`.
    Si ya existía un volumen de una versión anterior a la Fase 1, o si cambian los roles o las bases en `docker/postgres-init/`, hay que recrearlo (**borra los datos de desarrollo**): `docker compose -f docker-compose.dev.yml down -v` y luego `up -d`.
 5. Aplicar las migraciones: `npm run db:migrar`.
-6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053) y 6 órdenes de trabajo (OT-0214 a OT-0219); `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
+6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053) y 7 órdenes de trabajo (OT-0213 a OT-0219); `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
    Para una instalación real, en vez de sembrar, crear la primera cuenta: `npm run db:admin -- --correo admin@ejemplo.cl --nombre "Nombre Apellido"`.
 7. Arrancar shared (watch), API, web y bot: `npm run dev` (sin `TELEGRAM_BOT_TOKEN` el proceso del bot termina en silencio).
 8. Abrir <http://localhost:5173>.

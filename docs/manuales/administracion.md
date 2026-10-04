@@ -47,7 +47,7 @@ Para cambiar el rol o el departamento de alguien, usa los selectores de su fila.
 | Ver horas de todo el equipo          |       ✓        |      ✓       |    –    |      –       |
 | Cambiar configuración (esta sección) |       ✓        |      –       |    –    |      –       |
 
-Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. El **bot de Telegram** actúa con la sesión de cada persona y respeta esta misma matriz: desde el chat nadie puede hacer más de lo que puede en la web. **Registrar horas** en la planilla va con "Crear y editar tickets" (cada persona registra solo las suyas); **Ver horas de todo el equipo** permite abrir la planilla de cualquier persona en solo lectura, sin editarla. **Ver reportes y montos** es lo que muestra los montos en pesos de los indicadores de **Órdenes de trabajo** (los técnicos ven «—»); **Marcar OT como facturada** habilita además **Exportar para facturación (.xlsx)** y el aviso "OT cerrada y lista para facturar". Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
+Algunas de estas acciones llegan en fases posteriores; la matriz ya está aplicada. El **bot de Telegram** actúa con la sesión de cada persona y respeta esta misma matriz: desde el chat nadie puede hacer más de lo que puede en la web. **Registrar horas** en la planilla va con "Crear y editar tickets" (cada persona registra solo las suyas); **Ver horas de todo el equipo** permite abrir la planilla de cualquier persona en solo lectura, sin editarla. **Ver reportes y montos** abre la pantalla **Reportes** y su exportación, y es lo que muestra los montos en pesos de los indicadores y de la columna **Neto** de la lista de **Órdenes de trabajo** (los técnicos ven «—»; el detalle de la OT y el cotizador siguen mostrando el neto a quien trabaja en ella); **Marcar OT como facturada** habilita además **Exportar para facturación (.xlsx)** y el aviso "OT cerrada y lista para facturar". Todas las personas pueden ver la lista de clientes; Técnicos y Coordinación también pueden agregar contactos a un cliente.
 
 ## 3. Restablecer una contraseña
 
@@ -71,9 +71,9 @@ En **Configuración → Departamentos y horarios**. Cada departamento tiene:
 
 - **Horario por día**: entrada, salida, colación (hora de inicio y minutos) y un interruptor para marcar el día como trabajado o libre. La app calcula las horas de cada día y la **jornada semanal**.
 - **Horario extendido desde**: desde esa hora se consideran "extendidas" las horas registradas (se cobra tarifa de horario extendido).
-- **Tiempo disponible para tickets (%)**: el resto se reserva para reuniones y trabajo interno; se usa para calcular la carga de cada persona.
+- **Tiempo disponible para tickets (%)**: el resto se reserva para reuniones y trabajo interno. Es la **capacidad semanal** del gráfico **Carga vs capacidad** de Reportes: jornada semanal del departamento × este porcentaje (por ejemplo, 41 h × 80 % = 32,8 h). Una persona sin departamento aparece "Sin jornada".
 
-Qué afecta: el horario, la colación y los feriados se usan para **contar los plazos en horas hábiles** y para la **jornada** de la planilla de **Horas**: cada día de la planilla se compara con las horas de ese día según el horario del departamento de la persona (0 en días libres y feriados, generales o del departamento). Una persona sin departamento no tiene jornada con la que comparar. "Horario extendido desde" no marca horas automáticamente: en la planilla, "fuera de horario" es una marca que pone la persona.
+Qué afecta: el horario, la colación y los feriados se usan para **contar los plazos en horas hábiles**, para la **resolución promedio en días hábiles** de Reportes (cada día cuenta por la fracción de jornada trabajada, según el departamento del responsable principal del ticket) y para la **jornada** de la planilla de **Horas**: cada día de la planilla se compara con las horas de ese día según el horario del departamento de la persona (0 en días libres y feriados, generales o del departamento). Una persona sin departamento no tiene jornada con la que comparar. "Horario extendido desde" no marca horas automáticamente: en la planilla, "fuera de horario" es una marca que pone la persona.
 
 Un departamento solo se puede **eliminar** si no tiene personas (activas o inactivas); si las tiene, el botón aparece deshabilitado.
 
@@ -129,7 +129,7 @@ La tarjeta **Historial de cambios de numeración** lista quién cambió qué y c
 
 ## 10. Ingresos y registro de seguridad
 
-En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, cambios de configuración (también tarifas y plantillas), descargas de documentos y cotizaciones, exportaciones de OT para facturación (con los nombres de los filtros usados, sin montos) y vinculaciones de Telegram (vinculado, intento fallido por código o por clave del bot, desvinculado; con el identificador del chat, nunca el código). Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
+En **Equipo y permisos**, el enlace **Ver ingresos y registro de seguridad** abre una tabla con: ingresos correctos y fallidos, cuentas bloqueadas, cierres de sesión, cambios y restablecimientos de contraseña, altas, bajas y cambios de rol de personas, aceptación de términos, cambios de configuración (también tarifas y plantillas), descargas de documentos y cotizaciones, exportaciones de OT para facturación y de Reportes (con los nombres de los filtros usados, sin montos) y vinculaciones de Telegram (vinculado, intento fallido por código o por clave del bot, desvinculado; con el identificador del chat, nunca el código). Cada fila guarda fecha y hora, persona, dirección IP y un detalle (por ejemplo, el navegador). Nunca se guardan contraseñas.
 
 Puedes filtrar por acción, persona, correo y fechas. **Estos registros se conservan 1 año** y luego se borran automáticamente. No se pueden editar ni borrar desde la app.
 
@@ -179,9 +179,9 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Horas.** Las horas de una OT se registran desde el redactor o desde la planilla **Horas** (ver [manual de tickets](usuario/01-tecnico.md#registrar-horas)), opcionalmente contra una tarea; una OT cerrada o cancelada no admite más horas. La planilla no deja rastro en el historial de la OT ni en el registro de seguridad: el registro es la propia fila de horas.
 
-**Indicadores y exportación.** La lista **Órdenes de trabajo** muestra arriba Por facturar, Esperando al cliente, En ejecución y Horas internas del mes; los montos en pesos solo con **Ver reportes y montos**. **Exportar para facturación (.xlsx)** (permiso de facturar) descarga las OT filtradas y deja una fila "Exportación" en el registro de seguridad (sección 10). La columna Neto de la lista sigue visible para todos los roles; se revisa en la Fase 7.
+**Indicadores y exportación.** La lista **Órdenes de trabajo** muestra arriba Por facturar, Esperando al cliente, En ejecución y Horas internas del mes; los montos en pesos solo con **Ver reportes y montos**. **Exportar para facturación (.xlsx)** (permiso de facturar) descarga las OT filtradas y deja una fila "Exportación" en el registro de seguridad (sección 10). La columna **Neto** de la lista también exige **Ver reportes y montos** (los técnicos ven «—»); el detalle de la OT y el cotizador siguen mostrando el neto a quien trabaja en ella. Las cifras agregadas (facturado en el período, por facturar hoy, horas) están en **Reportes** (ver el [manual de coordinación](usuario/02-coordinacion.md#reportes)).
 
-**Lo que todavía no existe.** Exportación de horas y reportes de horas llegan en fases posteriores. Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
+**Lo que todavía no existe.** Exportación de la planilla de horas en bruto (Reportes exporta las horas agregadas por semana). Las listas `/ots` y `/cotizaciones` son vistas de solo lectura.
 
 Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manual de coordinación](usuario/02-coordinacion.md).
 

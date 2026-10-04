@@ -86,7 +86,7 @@ curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/
 Indicadores y exportación de la pantalla de OT (Fase 6a):
 
 ```bash
-# Indicadores: por_facturar y esperando_cliente traen { n, neto }; neto es null sin reportes.ver
+# Indicadores: por_facturar y esperando_cliente traen { n, neto }; neto es null sin reportes.ver (igual que OtResumen.neto en GET /api/ots)
 curl -b cookies.txt http://localhost:3010/api/ots/indicadores
 
 # Exportar para facturación (ots.facturar): mismos filtros que GET /api/ots, sin paginar; attachment "ots-facturacion-AAAA-MM-DD.xlsx"
@@ -225,6 +225,22 @@ curl -b cookies.txt "http://localhost:3010/api/tickets/linea-de-tiempo?desde=202
 `GET /api/mi-dia` devuelve `fecha` (hoy en Santiago), las listas `vencen_hoy`, `vencidos`, `por_aprobar` (vacía sin `ots.aprobar`), `menciones` (avisos `mencion` no leídos, máx. 10), `tareas` (abiertas, a nombre de la persona, en destinos no cerrados, máx. 20) y `detenidos` (sin actividad hace más de 3 días, máx. 10), y `conteos` con los totales sin recorte. Las listas de tickets consideran solo donde la persona es responsable (principal u otro), no seguidora.
 
 `GET /api/tickets/linea-de-tiempo` devuelve `dias` (cada fecha del rango con `habil`, `feriado` y `hoy`, según el departamento de quien consulta; sin departamento, lunes a viernes), `items` (tickets no archivados cuya barra `inicio`–`limite` toca el rango, más los vencidos abiertos aunque estén fuera de él; sin paginar), `vencidos` y `personas` (usuarios activos). Errores: `400 VALIDACION` si `desde`/`hasta` no son fechas ISO, `hasta` es anterior a `desde`, el rango supera 62 días o hay más de 500 tickets en el rango (`detalles.hasta`: "Acorta el rango").
+
+## Reportes
+
+Un solo endpoint agregado y su exportación, ambos con `reportes.ver` (Administración, Coordinación y Solo lectura; Técnico recibe `403 SIN_PERMISO` antes de validar la query). Filtros: `desde` y `hasta` (`AAAA-MM-DD` en Santiago, ambos incluidos; por defecto el primer día del mes actual y hoy; a lo sumo 366 días), `departamento_id`, `cliente_id` y `usuario_id`.
+
+```bash
+# Reporte del período con filtro de departamento
+curl -b cookies.txt "http://localhost:3010/api/reportes?desde=2026-09-01&hasta=2026-09-30&departamento_id=1"
+
+# Exportar (attachment "reportes-<desde>_<hasta>.xlsx", cinco hojas)
+curl -b cookies.txt -OJ "http://localhost:3010/api/reportes/exportar.xlsx?desde=2026-09-01&hasta=2026-09-30&cliente_id=2"
+```
+
+`GET /api/reportes` devuelve `filtros` (los resueltos: `desde`, `hasta`, `departamento`, `cliente`, `usuario`), `indicadores` (`cerrados { total, resueltos, descartados, duplicados }`, `resolucion { promedio_dias, n, sin_calendario }` en días hábiles del departamento del responsable principal, `dentro_de_plazo { pct, dentro, n }` solo sobre resueltos con fecha límite y `horas { total, facturables, internas, fuera_de_horario, pct_facturables }`), `horas_por_semana` (una entrada por lunes ISO del período, con ceros), `carga` (una fila por usuario activo: `tickets_abiertos`, `horas_estimadas`, `capacidad_semanal`, `pct`; instantánea de hoy), `resolucion_por_prioridad` (siempre las cuatro, con `objetivo_dias` y `sobre_plazo`) y `por_cliente` (clientes externos con algún valor, luego «Interno» y «Sin cliente» con montos `null`; `facturado` del período y `por_facturar` de hoy, en CLP). Carga, abiertos y por facturar no dependen del período.
+
+Errores: `400 VALIDACION` con `detalles.hasta` si `hasta` es anterior a `desde`, el período supera un año (también tras aplicar los defectos: `desde=2024-01-01` sin `hasta`) o hay más de 5 000 tickets resueltos en el período ("Acorta el período"), y con `detalles.<campo>` si `departamento_id`, `cliente_id` o `usuario_id` no existe (un usuario o cliente inactivo sí se acepta). Las claves desconocidas de la query se ignoran. Auditoría: ver reportes no deja nada; la exportación deja exactamente una fila `exportacion { tipo: 'xlsx', entidad: 'reportes', filtros }` con los nombres de los filtros presentes (sin valores) y ningún `evento`. Sin `reportes.ver`, `GET /api/ots` devuelve `neto: null` en todas las filas; `GET /api/ots/:id` no cambia.
 
 ## Regenerar `openapi.json`
 
