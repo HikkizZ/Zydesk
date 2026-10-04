@@ -59,29 +59,31 @@ export function GraficoPrioridad({ resolucion }: { resolucion: ResolucionPriorid
           <Fila key={r.prioridad} r={r} escala={escala} />
         ))}
       </ul>
-      <table className="sr-only">
-        <caption>Resolución por prioridad</caption>
-        <thead>
-          <tr>
-            <th scope="col">Prioridad</th>
-            <th scope="col">Tickets</th>
-            <th scope="col">Promedio (días hábiles)</th>
-            <th scope="col">Objetivo (días hábiles)</th>
-            <th scope="col">Sobre plazo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {resolucion.map((r) => (
-            <tr key={r.prioridad}>
-              <th scope="row">{ETIQUETA_PRIORIDAD[r.prioridad]}</th>
-              <td>{r.n}</td>
-              <td>{r.promedio_dias === null ? '—' : numeroDias(r.promedio_dias)}</td>
-              <td>{r.objetivo_dias === null ? '—' : numeroDias(r.objetivo_dias)}</td>
-              <td>{r.sobre_plazo ? 'Sí' : 'No'}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Resolución por prioridad</caption>
+          <thead>
+            <tr>
+              <th scope="col">Prioridad</th>
+              <th scope="col">Tickets</th>
+              <th scope="col">Promedio (días hábiles)</th>
+              <th scope="col">Objetivo (días hábiles)</th>
+              <th scope="col">Sobre plazo</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {resolucion.map((r) => (
+              <tr key={r.prioridad}>
+                <th scope="row">{ETIQUETA_PRIORIDAD[r.prioridad]}</th>
+                <td>{r.n}</td>
+                <td>{r.promedio_dias === null ? '—' : numeroDias(r.promedio_dias)}</td>
+                <td>{r.objetivo_dias === null ? '—' : numeroDias(r.objetivo_dias)}</td>
+                <td>{r.sobre_plazo ? 'Sí' : 'No'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

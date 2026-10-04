@@ -152,27 +152,29 @@ export function GraficoHorasSemana({
           </p>
         </>
       )}
-      <table className="sr-only">
-        <caption>Horas por semana, facturables e internas</caption>
-        <thead>
-          <tr>
-            <th scope="col">Semana</th>
-            <th scope="col">Facturables</th>
-            <th scope="col">Internas</th>
-            <th scope="col">Total</th>
-          </tr>
-        </thead>
-        <tbody>
-          {puntos.map((p) => (
-            <tr key={p.semana}>
-              <th scope="row">{p.semana}</th>
-              <td>{numeroHoras(p.facturables)}</td>
-              <td>{numeroHoras(p.internas)}</td>
-              <td>{numeroHoras(p.total)}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Horas por semana, facturables e internas</caption>
+          <thead>
+            <tr>
+              <th scope="col">Semana</th>
+              <th scope="col">Facturables</th>
+              <th scope="col">Internas</th>
+              <th scope="col">Total</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {puntos.map((p) => (
+              <tr key={p.semana}>
+                <th scope="row">{p.semana}</th>
+                <td>{numeroHoras(p.facturables)}</td>
+                <td>{numeroHoras(p.internas)}</td>
+                <td>{numeroHoras(p.total)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

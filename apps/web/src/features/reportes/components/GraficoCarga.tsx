@@ -57,31 +57,33 @@ export function GraficoCarga({ carga }: { carga: CargaPersonaDatos[] }) {
           ))}
         </ul>
       )}
-      <table className="sr-only">
-        <caption>Carga vs capacidad</caption>
-        <thead>
-          <tr>
-            <th scope="col">Persona</th>
-            <th scope="col">Departamento</th>
-            <th scope="col">Tickets abiertos</th>
-            <th scope="col">Horas estimadas</th>
-            <th scope="col">Capacidad semanal</th>
-            <th scope="col">% de la capacidad</th>
-          </tr>
-        </thead>
-        <tbody>
-          {carga.map((c) => (
-            <tr key={c.usuario.id}>
-              <th scope="row">{c.usuario.nombre}</th>
-              <td>{c.departamento?.nombre ?? '—'}</td>
-              <td>{c.tickets_abiertos}</td>
-              <td>{numeroHoras(c.horas_estimadas)}</td>
-              <td>{c.capacidad_semanal === null ? '—' : numeroHoras(c.capacidad_semanal)}</td>
-              <td>{c.pct === null ? '—' : c.pct}</td>
+      <div className="sr-only">
+        <table>
+          <caption>Carga vs capacidad</caption>
+          <thead>
+            <tr>
+              <th scope="col">Persona</th>
+              <th scope="col">Departamento</th>
+              <th scope="col">Tickets abiertos</th>
+              <th scope="col">Horas estimadas</th>
+              <th scope="col">Capacidad semanal</th>
+              <th scope="col">% de la capacidad</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {carga.map((c) => (
+              <tr key={c.usuario.id}>
+                <th scope="row">{c.usuario.nombre}</th>
+                <td>{c.departamento?.nombre ?? '—'}</td>
+                <td>{c.tickets_abiertos}</td>
+                <td>{numeroHoras(c.horas_estimadas)}</td>
+                <td>{c.capacidad_semanal === null ? '—' : numeroHoras(c.capacidad_semanal)}</td>
+                <td>{c.pct === null ? '—' : c.pct}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </figure>
   );
 }

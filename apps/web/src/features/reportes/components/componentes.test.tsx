@@ -167,3 +167,20 @@ it('sin filas la tabla por cliente muestra el estado vacío', () => {
   montar(<TablaPorCliente filas={[]} />);
   expect(screen.getByText('Nada que mostrar con estos filtros')).toBeTruthy();
 });
+
+it('las tablas ocultas van dentro de un div sr-only (una tabla no se recorta y ensancha la página)', () => {
+  const r = reporteDePrueba();
+  montar(
+    <>
+      <GraficoHorasSemana semanas={r.horas_por_semana} ancho={600} alto={260} />
+      <GraficoCarga carga={r.carga} />
+      <GraficoPrioridad resolucion={r.resolucion_por_prioridad} />
+    </>,
+  );
+  const tablas = screen.getAllByRole('table');
+  expect(tablas).toHaveLength(3);
+  for (const t of tablas) {
+    expect(t.classList.contains('sr-only')).toBe(false);
+    expect(t.parentElement?.classList.contains('sr-only')).toBe(true);
+  }
+});
