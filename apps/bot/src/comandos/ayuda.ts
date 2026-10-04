@@ -10,7 +10,7 @@ export const TEXTO_AYUDA = [
   '/desvincular · quita la vinculación',
   '',
   '<b>Acciones</b>',
-  '• Responde a un aviso de un ticket u OT para registrar un seguimiento.',
+  '• Responde a un aviso o a la ficha de /ticket para registrar un seguimiento.',
   '• Reenvíame un mensaje de texto para crear un ticket con él.',
 ].join('\n');
 

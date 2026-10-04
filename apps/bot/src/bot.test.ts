@@ -5,6 +5,7 @@ import {
   callback,
   mensajeEnGrupo,
   mensajePrivado,
+  negritaEn,
   reenviado,
   reenviadoFoto,
   respuestaA,
@@ -311,13 +312,16 @@ describe('/ticket', () => {
 describe('responder un aviso', () => {
   // Texto plano de un aviso con el formato de Telegram (Telegram entrega `text` sin etiquetas)
   const aviso = 'Zydesk\n\nCamila te mencionó en TK-1048\n\nAbrir TK-1048';
+  const negritas = [negritaEn(aviso, 'TK-1048')];
 
   it('registra el seguimiento con el texto exacto', async () => {
     const t = armar({
       'GET /api/tickets': listadoTicketsFalso([ticket(1048)]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
-    await t.bot.handleUpdate(respuestaA(CHAT, 'Listo, <ya lo vi> & lo reviso', aviso));
+    await t.bot.handleUpdate(
+      respuestaA(CHAT, 'Listo, <ya lo vi> & lo reviso', aviso, true, negritas),
+    );
     const post = t.peticiones.find((p) => p.metodo === 'POST');
     expect(post?.ruta).toBe('/api/tickets/1148/mensajes');
     expect(post?.cuerpo).toEqual({ tipo: 'seguimiento', texto: 'Listo, <ya lo vi> & lo reviso' });
@@ -332,13 +336,13 @@ describe('responder un aviso', () => {
       ]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
-    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso));
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso, true, negritas));
     expect(t.peticiones.some((p) => p.metodo === 'POST')).toBe(true);
   });
 
   it('un ticket inexistente → «No encuentro TK-1048»', async () => {
     const t = armar({ 'GET /api/tickets': listadoTicketsFalso([]) });
-    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso));
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Gracias', aviso, true, negritas));
     expect(t.peticiones.some((p) => p.metodo === 'POST')).toBe(false);
     expect(textos(t.llamadas)[0]).toContain('No encuentro TK-1048');
   });
@@ -351,7 +355,11 @@ describe('responder un aviso', () => {
       },
       'POST /api/ots/7/mensajes': { status: 201, body: {} },
     });
-    await t.bot.handleUpdate(respuestaA(CHAT, 'Aprobado', 'Te pidieron aprobar OT-0219'));
+    await t.bot.handleUpdate(
+      respuestaA(CHAT, 'Aprobado', 'Te pidieron aprobar OT-0219', true, [
+        negritaEn('Te pidieron aprobar OT-0219', 'OT-0219'),
+      ]),
+    );
     expect(t.peticiones[0]?.query).toMatchObject({ q: '219' });
     expect(t.peticiones[1]).toMatchObject({ metodo: 'POST', ruta: '/api/ots/7/mensajes' });
   });
@@ -361,17 +369,67 @@ describe('responder un aviso', () => {
       'GET /api/tickets': listadoTicketsFalso([ticket(1048)]),
       'POST /api/tickets/1148/mensajes': { status: 201, body: {} },
     });
-    await t.bot.handleUpdate(respuestaA(CHAT, 'a'.repeat(20_500), aviso));
+    await t.bot.handleUpdate(respuestaA(CHAT, 'a'.repeat(20_500), aviso, true, negritas));
     const post = t.peticiones.find((p) => p.metodo === 'POST');
     expect((post?.cuerpo as { texto: string }).texto).toHaveLength(20_000);
     expect(textos(t.llamadas)[0]).toContain('se recortó');
+  });
+
+  it('el destino sale de la negrita, no del primer código del texto libre', async () => {
+    const t = armar({
+      'GET /api/tickets': listadoTicketsFalso([ticket(12)]),
+      'POST /api/tickets/112/mensajes': { status: 201, body: {} },
+    });
+    const texto = 'Zydesk\n\nCamila te asignó la tarea «OT-77 revisar» en TK-12';
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Voy', texto, true, [negritaEn(texto, 'TK-12')]));
+    const post = t.peticiones.find((p) => p.metodo === 'POST');
+    expect(post?.ruta).toBe('/api/tickets/112/mensajes');
+    expect(textos(t.llamadas)[0]).toContain('Seguimiento registrado en TK-12');
+  });
+
+  it('con emoji antes de la negrita los offsets UTF-16 siguen apuntando al código', async () => {
+    const t = armar({
+      'GET /api/tickets': listadoTicketsFalso([ticket(12)]),
+      'POST /api/tickets/112/mensajes': { status: 201, body: {} },
+    });
+    const texto = '📌 «OT-77 😀» en TK-12';
+    await t.bot.handleUpdate(respuestaA(CHAT, 'Voy', texto, true, [negritaEn(texto, 'TK-12')]));
+    expect(t.peticiones.find((p) => p.metodo === 'POST')?.ruta).toBe('/api/tickets/112/mensajes');
+  });
+
+  it('un mensaje citado con código pero sin negrita no registra nada', async () => {
+    const t = armar();
+    await t.bot.handleUpdate(respuestaA(CHAT, 'hola', 'Camila te mencionó en TK-1048'));
+    expect(t.peticiones).toHaveLength(0);
+    expect(textos(t.llamadas)[0]).toContain('Responde a un aviso o a la ficha de /ticket');
+  });
+
+  it('con varios códigos en negrita (lista de /mis) no elige ninguno', async () => {
+    const t = armar();
+    const texto = 'Mis tickets\n• TK-1048 · Alta\n• TK-1050 · Media';
+    await t.bot.handleUpdate(
+      respuestaA(CHAT, 'Voy', texto, true, [
+        negritaEn(texto, 'TK-1048'),
+        negritaEn(texto, 'TK-1050'),
+      ]),
+    );
+    expect(t.peticiones).toHaveLength(0);
+    expect(textos(t.llamadas)[0]).toContain('Responde a un aviso o a la ficha de /ticket');
+  });
+
+  it('responder a la confirmación de reenvío no cuenta como responder un aviso', async () => {
+    const t = armar();
+    await t.bot.handleUpdate(reenviado(CHAT, 'TK-5', 'Ana'));
+    const conf = t.llamadas.find((l) => l.method === 'sendMessage')?.payload;
+    expect(String(conf?.['text'])).toContain('<i>TK-5</i>');
+    expect(String(conf?.['text'])).not.toContain('<b>');
   });
 
   it('un mensaje citado sin código no llama a la API', async () => {
     const t = armar();
     await t.bot.handleUpdate(respuestaA(CHAT, 'hola', 'Un aviso sin código'));
     expect(t.peticiones).toHaveLength(0);
-    expect(textos(t.llamadas)[0]).toContain('Responde a un aviso de un ticket u OT');
+    expect(textos(t.llamadas)[0]).toContain('Responde a un aviso o a la ficha de /ticket');
   });
 
   it('si el mensaje citado no es del bot lo ignora como texto suelto', async () => {

@@ -99,7 +99,13 @@ export function mensajeEnGrupo(chatId: number, texto: string): Update {
 }
 
 /** Respuesta (reply) a un mensaje; `deBot` indica si el mensaje citado lo envió el bot. */
-export function respuestaA(chatId: number, texto: string, citado: string, deBot = true): Update {
+export function respuestaA(
+  chatId: number,
+  texto: string,
+  citado: string,
+  deBot = true,
+  entities: { type: string; offset: number; length: number }[] = [],
+): Update {
   return mensajePrivado(chatId, texto, {
     reply_to_message: {
       message_id: siguiente(),
@@ -107,8 +113,16 @@ export function respuestaA(chatId: number, texto: string, citado: string, deBot 
       chat: chatPrivado(chatId),
       from: deBot ? BOT_INFO : usuario(chatId),
       text: citado,
+      ...(entities.length > 0 ? { entities } : {}),
     },
   });
+}
+
+/** Entidad `bold` sobre la primera aparición de `fragmento` en `texto` (offsets UTF-16, como Telegram). */
+export function negritaEn(texto: string, fragmento: string) {
+  const offset = texto.indexOf(fragmento);
+  if (offset < 0) throw new Error(`«${fragmento}» no está en el texto`);
+  return { type: 'bold', offset, length: fragmento.length };
 }
 
 export function reenviado(chatId: number, texto: string, remitente: string): Update {

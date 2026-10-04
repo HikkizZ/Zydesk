@@ -7,7 +7,6 @@ export const CLAVES_REDACTADAS = [
   'codigo',
   'chat_id',
   'text',
-  'message',
   'x-bot-key',
 ];
 

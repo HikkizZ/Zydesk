@@ -43,6 +43,18 @@ describe('env del bot', () => {
     expect(() => cargarEnv({ ...base, NODE_ENV: 'production' })).toThrow(/API_URL/);
   });
 
+  it('WEB_URL solo admite http(s) y en producción exige https', () => {
+    expect(() => cargarEnv({ ...base, WEB_URL: 'javascript://x.com/%0Aalert(1)' })).toThrow(
+      /WEB_URL/,
+    );
+    expect(() => cargarEnv({ ...base, WEB_URL: 'ftp://x.com' })).toThrow(/WEB_URL/);
+    const prod = { ...base, NODE_ENV: 'production', API_URL: 'http://api:3000' };
+    expect(() => cargarEnv({ ...prod, WEB_URL: 'http://desk.example.com' })).toThrow(/WEB_URL/);
+    const e = cargarEnv({ ...prod, WEB_URL: 'https://desk.example.com/' });
+    expect(e.habilitado && e.WEB_URL).toBe('https://desk.example.com');
+    expect(cargarEnv({ ...base, WEB_URL: 'http://localhost:5173' }).habilitado).toBe(true);
+  });
+
   it('API_URL inválida falla', () => {
     expect(() => cargarEnv({ ...base, API_URL: 'no-es-url' })).toThrow(/API_URL/);
   });

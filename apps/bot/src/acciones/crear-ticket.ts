@@ -68,7 +68,7 @@ export async function ofrecerCrearTicket(ctx: Context, deps: Deps, texto: string
     deps.pendientes.guardar(chatId, clave, texto, solicitanteDe(mensaje as Reenviado));
     await responder(
       ctx,
-      `¿Crear un ticket con este texto?\n<b>${escaparHtml(primeraLinea(texto))}</b>`,
+      `¿Crear un ticket con este texto?\n<i>${escaparHtml(primeraLinea(texto))}</i>`,
       {
         reply_markup: {
           inline_keyboard: [

@@ -68,7 +68,8 @@ export function crearBot(opciones: {
     const texto = ctx.message.text;
     const citado = ctx.message.reply_to_message;
     if (citado && citado.from?.id === ctx.me.id) {
-      await responderAviso(ctx, deps, citado.text ?? citado.caption ?? '', texto);
+      const entidades = citado.text !== undefined ? citado.entities : citado.caption_entities;
+      await responderAviso(ctx, deps, citado.text ?? citado.caption ?? '', entidades ?? [], texto);
       return;
     }
     if (ctx.message.forward_origin) {

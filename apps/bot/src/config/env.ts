@@ -26,7 +26,14 @@ const esquema = z
     BOT_DATOS_DIR: z
       .preprocess(vacioAUndefined, z.string().default('./datos/bot'))
       .transform((v) => path.resolve(raizRepo, v)),
-    WEB_URL: z.preprocess(vacioAUndefined, z.string().url().optional()),
+    WEB_URL: z.preprocess(
+      vacioAUndefined,
+      z
+        .string()
+        .url()
+        .regex(/^https?:\/\//i, 'debe ser http(s)://')
+        .optional(),
+    ),
   })
   .superRefine((v, ctx) => {
     if (!v.TELEGRAM_BOT_TOKEN) return;
@@ -38,6 +45,16 @@ const esquema = z
           message: 'obligatoria con TELEGRAM_BOT_TOKEN',
         });
       }
+    }
+    if (
+      v.NODE_ENV === 'production' &&
+      !(v.WEB_URL ?? 'http://localhost:5173').startsWith('https://')
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['WEB_URL'],
+        message: 'en producción debe ser https://',
+      });
     }
     if (!v.API_URL && v.NODE_ENV === 'production') {
       ctx.addIssue({ code: 'custom', path: ['API_URL'], message: 'obligatoria en producción' });
