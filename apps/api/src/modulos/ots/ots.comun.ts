@@ -1,13 +1,11 @@
-import { ZONA } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { ErrorApp } from '../../core/errores/error-app.js';
+import { hoyEnSantiago } from '../../core/fechas.js';
 
 export const errorValidacion = (errores: Record<string, string[]>): ErrorApp =>
   new ErrorApp('VALIDACION', 'Datos inválidos', errores);
 
-// AAAA-MM-DD de hoy en Santiago
-export const hoyEnSantiago = (): string =>
-  new Intl.DateTimeFormat('en-CA', { timeZone: ZONA }).format(new Date());
+export { hoyEnSantiago };
 
 export const recortar = (s: string, n = 120): string => (s.length > n ? `${s.slice(0, n)}…` : s);
 

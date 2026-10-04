@@ -26,6 +26,7 @@ import { crearRutasLegal } from './modulos/legal/legal.routes.js';
 import { crearRutaSalud } from './modulos/salud/salud.routes.js';
 import { crearRutasHoras } from './modulos/horas/horas.routes.js';
 import { crearRutasMiDia } from './modulos/mi-dia/mi-dia.routes.js';
+import { crearRutasReportes } from './modulos/reportes/reportes.routes.js';
 import { crearRutasMensajes } from './modulos/mensajes/mensajes.routes.js';
 import { crearRutasOts } from './modulos/ots/ots.routes.js';
 import { crearRutasTelegram } from './modulos/telegram/telegram.routes.js';
@@ -78,6 +79,7 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasHoras());
   app.use(crearRutasAvisos());
   app.use(crearRutasMiDia());
+  app.use(crearRutasReportes());
   app.use(crearRutasTelegram());
   app.use(crearRutasArchivos());
   app.use(crearRutasCorreos());

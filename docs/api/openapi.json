@@ -40872,6 +40872,845 @@
         }
       }
     },
+    "/reportes": {
+      "get": {
+        "summary": "Reportes: indicadores, horas por semana, carga vs capacidad, resolución y tabla por cliente",
+        "description": "Permiso: reportes.ver",
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departamento_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "cliente_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "usuario_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "filtros": {
+                      "type": "object",
+                      "properties": {
+                        "desde": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "hasta": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "departamento": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "cliente": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "es_interno": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "es_interno"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "usuario": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "exclusiveMinimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "nombre": {
+                                  "type": "string"
+                                },
+                                "iniciales": {
+                                  "type": "string"
+                                },
+                                "color_avatar": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "nombre",
+                                "iniciales",
+                                "color_avatar"
+                              ],
+                              "additionalProperties": false
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "desde",
+                        "hasta",
+                        "departamento",
+                        "cliente",
+                        "usuario"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "indicadores": {
+                      "type": "object",
+                      "properties": {
+                        "cerrados": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "resueltos": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "descartados": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "duplicados": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "resueltos",
+                            "descartados",
+                            "duplicados"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "resolucion": {
+                          "type": "object",
+                          "properties": {
+                            "promedio_dias": {
+                              "type": [
+                                "number",
+                                "null"
+                              ]
+                            },
+                            "n": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "sin_calendario": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "promedio_dias",
+                            "n",
+                            "sin_calendario"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "dentro_de_plazo": {
+                          "type": "object",
+                          "properties": {
+                            "pct": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "dentro": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            },
+                            "n": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "required": [
+                            "pct",
+                            "dentro",
+                            "n"
+                          ],
+                          "additionalProperties": false
+                        },
+                        "horas": {
+                          "type": "object",
+                          "properties": {
+                            "total": {
+                              "type": "number"
+                            },
+                            "facturables": {
+                              "type": "number"
+                            },
+                            "internas": {
+                              "type": "number"
+                            },
+                            "fuera_de_horario": {
+                              "type": "number"
+                            },
+                            "pct_facturables": {
+                              "anyOf": [
+                                {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "total",
+                            "facturables",
+                            "internas",
+                            "fuera_de_horario",
+                            "pct_facturables"
+                          ],
+                          "additionalProperties": false
+                        }
+                      },
+                      "required": [
+                        "cerrados",
+                        "resolucion",
+                        "dentro_de_plazo",
+                        "horas"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "horas_por_semana": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "semana": {
+                            "type": "string",
+                            "format": "date",
+                            "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                          },
+                          "facturables": {
+                            "type": "number"
+                          },
+                          "internas": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "semana",
+                          "facturables",
+                          "internas"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "carga": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "usuario": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "integer",
+                                "exclusiveMinimum": 0,
+                                "maximum": 9007199254740991
+                              },
+                              "nombre": {
+                                "type": "string"
+                              },
+                              "iniciales": {
+                                "type": "string"
+                              },
+                              "color_avatar": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "nombre",
+                              "iniciales",
+                              "color_avatar"
+                            ],
+                            "additionalProperties": false
+                          },
+                          "departamento": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tickets_abiertos": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "horas_estimadas": {
+                            "type": "number"
+                          },
+                          "capacidad_semanal": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "pct": {
+                            "anyOf": [
+                              {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "usuario",
+                          "departamento",
+                          "tickets_abiertos",
+                          "horas_estimadas",
+                          "capacidad_semanal",
+                          "pct"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "resolucion_por_prioridad": {
+                      "minItems": 4,
+                      "maxItems": 4,
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "prioridad": {
+                            "type": "string",
+                            "enum": [
+                              "urgente",
+                              "alta",
+                              "media",
+                              "baja"
+                            ]
+                          },
+                          "n": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "promedio_dias": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "objetivo_dias": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "sobre_plazo": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "prioridad",
+                          "n",
+                          "promedio_dias",
+                          "objetivo_dias",
+                          "sobre_plazo"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "por_cliente": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "cliente": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "exclusiveMinimum": 0,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "nombre": {
+                                    "type": "string"
+                                  },
+                                  "es_interno": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "nombre",
+                                  "es_interno"
+                                ],
+                                "additionalProperties": false
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "nombre": {
+                            "type": "string"
+                          },
+                          "interno": {
+                            "type": "boolean"
+                          },
+                          "abiertos": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "cerrados": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991
+                          },
+                          "horas": {
+                            "type": "number"
+                          },
+                          "facturado": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          },
+                          "por_facturar": {
+                            "type": [
+                              "number",
+                              "null"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "cliente",
+                          "nombre",
+                          "interno",
+                          "abiertos",
+                          "cerrados",
+                          "horas",
+                          "facturado",
+                          "por_facturar"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "filtros",
+                    "indicadores",
+                    "horas_por_semana",
+                    "carga",
+                    "resolucion_por_prioridad",
+                    "por_cliente"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reportes/exportar.xlsx": {
+      "get": {
+        "summary": "Exportar los reportes (.xlsx, cinco hojas) con los filtros vigentes (attachment)",
+        "description": "Permiso: reportes.ver",
+        "tags": [
+          "Reportes"
+        ],
+        "parameters": [
+          {
+            "in": "query",
+            "name": "desde",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "hasta",
+            "schema": {
+              "type": "string",
+              "format": "date",
+              "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+            }
+          },
+          {
+            "in": "query",
+            "name": "departamento_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "cliente_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          },
+          {
+            "in": "query",
+            "name": "usuario_id",
+            "schema": {
+              "type": "integer",
+              "exclusiveMinimum": 0,
+              "maximum": 9007199254740991
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "400": {
+            "description": "Datos inválidos",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/salud": {
       "get": {
         "summary": "Estado de la API y de la base de datos",
