@@ -458,7 +458,7 @@ Ninguna pregunta bloquea, así que, según la regla acordada con el usuario, las
 
 ## 17. Estado de avance
 
-### Estado de avance (2026-10-04): fase implementada, pendiente la prueba manual
+### Estado de avance (2026-10-04): fase implementada y probada en el navegador
 
 Todo lo de §0 está implementado en `feat/fase-7-reportes` (commits desde `main`: spec; 7A contratos, `diasHabilesEntre`, migración 14 y fábricas; 7D neto de `/ots`; 7C pantalla 14 y «—» en la lista de OT; 7B API y exportación; 7E semillas). Las respuestas a §15 (las nueve con la recomendación) y las desviaciones de la implementación están en **ADR 0028**:
 
@@ -470,4 +470,5 @@ Todo lo de §0 está implementado en `feat/fase-7-reportes` (commits desde `main
 - **F7-T11 (revisión de seguridad)**: Fable con `sentry-security-review` y `/security-review` sobre el diff completo: sin hallazgos HIGH ni MEDIUM confirmados. Anotados como verificación, sin acción: el costo de `diasHabilesEntre` con tickets resueltos tras años abiertos (acotado por el tope de 5 000 filas y el período de un año) y el neto visible al técnico en el detalle (ADR 0028.24).
 - **F7-T12 (documentación)**: ADR 0028, `docs/decisiones/README.md`, CHANGELOG (Fase 7 en Añadido; Cambiado: Neto de `/ots` y semillas), manuales (coordinación: sección «Reportes»; primeros pasos: párrafo para Solo lectura; administración: capacidad, permiso y registro de seguridad), guía de la API («Reportes»), `README.md` (7 OT en las semillas), `CLAUDE.md` (fila de la tabla §2, módulo de solo lectura, `core/fechas.ts`); `openapi.json` regenerado.
 - **Fuera de la fase, anotado como mejora** (ADR 0028.25): tiempo de primera respuesta y horas de bolsa / a cotizar por cliente.
-- **Pendiente**: la **prueba manual en el navegador de F7-T9** (1440 y 390 px con `crojas`, `nvega` y `sdiaz`, cifras de §10.3 para «Últimos 30 días», Terreno con 3 personas, exportar con cinco hojas) y los criterios de §13 desde un clon limpio (duración de la suite de la API y del paso "Tests" de CI por anotar). Después, PR a `main` con confirmación del usuario y CI verde.
+- **Prueba manual de F7-T9 hecha** (ADR 0028.26): cifras de §10.3, Terreno con 3 personas, 390 px y exportación con cinco hojas; se corrigió el scroll horizontal de las tablas `sr-only`.
+- **Pendiente**: duración de la suite de la API y del paso "Tests" de CI por anotar al integrar. Después, PR a `main` con confirmación del usuario y CI verde.

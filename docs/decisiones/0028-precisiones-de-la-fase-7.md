@@ -47,7 +47,7 @@ La Fase 7 (reportes) agrega el módulo de solo lectura `modulos/reportes/` con `
 ### Fuera de esta fase
 
 25. **Mejoras anotadas, no implementadas**: indicador de **tiempo de primera respuesta** (`primera_respuesta_en` ya se guarda; la pantalla 14 no lo pide) y columnas de **horas de bolsa / a cotizar** por cliente (ADR 0015 separa ambas por `contrato_id`). También fuera: reportes al cliente, cierre de mes, comparación con el mes anterior, gráficos en el bot, cache de reportes y exportación de la planilla de horas en bruto (la hoja «Horas por semana» es agregada).
-26. **Prueba manual en el navegador (F7-T9)**: pendiente al escribir esta ADR; se anota en el estado de avance de la spec cuando se haga.
+26. **Prueba manual en el navegador (F7-T9, 2026-10-04)**: el usuario probó en su navegador y Opus revisó en el panel con una cuenta de Administración local: cifras de §10.3 para «Últimos 30 días», Terreno con 3 personas, 390 px sin scroll horizontal y exportación con cinco hojas. Se corrigió un scroll horizontal en escritorio: las tablas ocultas para lectores de pantalla llevaban `sr-only` en la propia `<table>`, que no se recorta; ahora van dentro de un `div` `sr-only`. Fuera de la fase quedó anotado que aceptar los términos no vuelve a pedir las consultas que fallaron mientras el diálogo estaba abierto (comportamiento de la Fase 1).
 
 ## Consecuencias
 
