@@ -25,8 +25,9 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import request from 'supertest';
 import { dataSource } from '../src/config/db.js';
+import { env } from '../src/config/env.js';
 import { nombreCookie } from '../src/core/auth/cookie.js';
-import { crearSesion, hashToken } from '../src/core/auth/sesiones.js';
+import { crearSesion } from '../src/core/auth/sesiones.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Aviso } from '../src/modulos/avisos/aviso.entity.js';
 import { PreferenciaAviso } from '../src/modulos/avisos/preferencia-aviso.entity.js';
@@ -48,6 +49,7 @@ import { Ot } from '../src/modulos/ots/ot.entity.js';
 import { Tarea } from '../src/modulos/tareas/tarea.entity.js';
 import { TicketResponsable } from '../src/modulos/tickets/ticket-responsable.entity.js';
 import { CodigoVinculo } from '../src/modulos/telegram/codigo-vinculo.entity.js';
+import { hashCodigo } from '../src/modulos/telegram/telegram.service.js';
 import { VinculoTelegram } from '../src/modulos/telegram/vinculo-telegram.entity.js';
 import { Ticket } from '../src/modulos/tickets/ticket.entity.js';
 import { Usuario } from '../src/modulos/usuarios/usuario.entity.js';
@@ -765,7 +767,7 @@ export async function crearCodigoVinculo(
   let codigo = '';
   for (let i = 0; i < 8; i++) codigo += ALFABETO_CODIGO[randomInt(ALFABETO_CODIGO.length)];
   await dataSource.manager.save(CodigoVinculo, {
-    codigo_hash: hashToken(codigo),
+    codigo_hash: hashCodigo(codigo),
     usuario_id,
     expira_en: new Date(Date.now() + (datos.expirado ? -60_000 : 10 * 60_000)),
     usado_en: datos.usado ? new Date() : null,
@@ -784,7 +786,6 @@ export async function ingresarComoBot(
 }
 
 // Para `/api/bot/*`: autenticado con `X-Bot-Key`.
-// F6-T9: leer `env.BOT_API_KEY` cuando `config/env.ts` lo defina.
 export function comoBot(app: Express): ReturnType<typeof request.agent> {
-  return request.agent(app).set('X-Bot-Key', process.env.BOT_API_KEY ?? 'clave-bot-de-prueba');
+  return request.agent(app).set('X-Bot-Key', env.BOT_API_KEY ?? '');
 }

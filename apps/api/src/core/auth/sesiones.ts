@@ -52,17 +52,20 @@ export async function crearSesion(
   return { token, mantener: o.mantener, ...fila };
 }
 
-// Borra las sesiones del usuario (salvo `excepto`) y audita un `sesion_cerrada` por cada una.
+// Borra las sesiones del usuario (salvo `excepto`; solo las de `origen` si se indica) y audita un
+// `sesion_cerrada` por cada una.
 export async function cerrarSesionesDeUsuario(
   tx: EntityManager,
   usuario_id: number,
   motivo: string,
   excepto?: string,
+  origen?: OrigenSesion,
 ): Promise<string[]> {
   // TypeORM devuelve [filas, cantidad] en DELETE ... RETURNING
   const [filas] = (await tx.query(
-    `DELETE FROM sesion WHERE usuario_id = $1 AND ($2::uuid IS NULL OR id <> $2::uuid) RETURNING id`,
-    [usuario_id, excepto ?? null],
+    `DELETE FROM sesion WHERE usuario_id = $1 AND ($2::uuid IS NULL OR id <> $2::uuid)
+        AND ($3::text IS NULL OR origen = $3) RETURNING id`,
+    [usuario_id, excepto ?? null, origen ?? null],
   )) as [{ id: string }[], number];
   for (const f of filas) {
     await registrarAuditoria(tx, {

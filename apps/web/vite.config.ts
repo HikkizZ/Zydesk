@@ -19,6 +19,8 @@ export default defineConfig(({ mode }) => {
       environment: 'jsdom',
       include: ['src/**/*.test.tsx', 'src/**/*.test.ts'],
       setupFiles: ['src/test/setup.ts'],
+      // Los tests con interacción (p. ej. el Cotizador) superan los 5 s por defecto en equipos lentos.
+      testTimeout: 15_000,
     },
   };
 });

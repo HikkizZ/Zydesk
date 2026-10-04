@@ -6,6 +6,7 @@ import {
 } from '@zydesk/shared';
 import type PgBoss from 'pg-boss';
 import { dataSource } from '../config/db.js';
+import { env } from '../config/env.js';
 import { logger } from '../config/logger.js';
 import { eventosDominio, type EventoPendiente } from '../core/eventos/dominio.js';
 import { enTransaccion } from '../core/historial/transaccion.js';
@@ -21,7 +22,7 @@ interface Configuracion {
 
 const config: Configuracion = {
   boss: null,
-  token: () => process.env['TELEGRAM_BOT_TOKEN'] || undefined,
+  token: () => env.TELEGRAM_BOT_TOKEN,
 };
 
 let conectado = false;

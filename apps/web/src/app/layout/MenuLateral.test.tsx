@@ -91,3 +91,15 @@ it('menu.ts tiene 13 entradas con rutas únicas y solo Configuración exige perm
   expect(new Set(MENU.map((e) => e.ruta)).size).toBe(13);
   expect(MENU.filter((e) => e.permiso).map((e) => e.etiqueta)).toEqual(['Configuración']);
 });
+
+it('todos los roles, incluido lectura, ven el enlace Ayuda hacia /ayuda', () => {
+  for (const rol of ['admin', 'coordinacion', 'tecnico', 'lectura'] as const) {
+    const { unmount } = render(
+      <ConSesion yo={yoDePrueba({ rol })}>
+        <MenuLateral />
+      </ConSesion>,
+    );
+    expect(screen.getByRole('link', { name: 'Ayuda' }).getAttribute('href')).toBe('/ayuda');
+    unmount();
+  }
+});

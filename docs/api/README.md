@@ -20,7 +20,7 @@ curl -b cookies.txt http://localhost:3010/api/yo
 curl -b cookies.txt -X POST http://localhost:3010/api/auth/salir -H "X-Requested-With: Zydesk"
 ```
 
-Si la cuenta tiene que cambiar la contraseña o aceptar los términos, el resto de la API responde `403` (`CONTRASENA_PENDIENTE` o `TERMINOS_PENDIENTES`) hasta que lo haga (`POST /api/yo/cambiar-contrasena`, `POST /api/yo/aceptar-terminos`). Las sesiones con `Authorization: Bearer <token>` (reservadas para el bot) no necesitan la cabecera CSRF.
+Si la cuenta tiene que cambiar la contraseña o aceptar los términos, el resto de la API responde `403` (`CONTRASENA_PENDIENTE` o `TERMINOS_PENDIENTES`) hasta que lo haga (`POST /api/yo/cambiar-contrasena`, `POST /api/yo/aceptar-terminos`). Las sesiones con `Authorization: Bearer <token>` (las del bot de Telegram; ver [Telegram y bot](#telegram-y-bot)) no necesitan la cabecera CSRF.
 
 ## Convenciones (ADR 0010)
 
@@ -29,7 +29,7 @@ Si la cuenta tiene que cambiar la contraseña o aceptar los términos, el resto 
 - Paginación por offset en los listados que la usan: `?pagina=1&por_pagina=50` (máximo 200) y respuesta `{ datos, total, pagina, por_pagina }`.
 - Errores siempre con la forma `{ "error": { "codigo": "...", "mensaje": "...", "detalles": {} } }`. Códigos principales: `VALIDACION` (400, `detalles.fieldErrors`), `NO_AUTENTICADO` (401), `SIN_PERMISO` (403), `CSRF` (403), `NO_ENCONTRADO` (404), `CONFLICTO` (409), `INGRESO_BLOQUEADO` (429) e `INTERNO` (500).
 - Cada ruta declara su permiso (`sesion`, `tickets.editar`, `config.editar`, etc.); aparece en su descripción en OpenAPI.
-- El ingreso se limita por IP (20 intentos por 15 minutos) y por cuenta (5 fallos seguidos).
+- El ingreso se limita por IP (20 intentos por 15 minutos) y por cuenta (5 fallos seguidos). `POST /api/bot/vincular` se limita por IP solo en fallos de clave (20 por 15 minutos) y por `chat_id` en códigos inválidos (5 por 15 minutos); ver «Telegram y bot».
 
 ## Tickets, archivos y correos
 
@@ -183,7 +183,34 @@ curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/
   -d '{"filas":[{"evento":"seguimiento","app":true,"telegram":false}]}' http://localhost:3010/api/yo/avisos/preferencias
 ```
 
-La respuesta de `GET /api/avisos` es `{ datos, total, pagina, por_pagina, no_leidos }`; cada aviso trae `evento` (el tipo de preferencia), `tipo`, `texto`, `enlace` (ruta de la web), `entidad`, `entidad_id`, `actor`, `leido`, `leido_en` y `telegram` (`null` mientras no haya canal externo). Solo se listan los avisos con la preferencia "en la app" activa. Errores: `404 NO_ENCONTRADO` al marcar leído un aviso ajeno (no revela si existe), `400 VALIDACION` con `filtro` desconocido, `por_pagina` > 200, eventos repetidos o `resumen_diario` con `app: true`. Ninguna de estas rutas deja `evento` ni `auditoria`.
+La respuesta de `GET /api/avisos` es `{ datos, total, pagina, por_pagina, no_leidos }`; cada aviso trae `evento` (el tipo de preferencia), `tipo`, `texto`, `enlace` (ruta de la web), `entidad`, `entidad_id`, `actor`, `leido`, `leido_en` y `telegram` (`enviado`, `pendiente`, `fallido` u `omitido`; `null` si no se encoló). Solo se listan los avisos con la preferencia "en la app" activa. Errores: `404 NO_ENCONTRADO` al marcar leído un aviso ajeno (no revela si existe), `400 VALIDACION` con `filtro` desconocido, `por_pagina` > 200, eventos repetidos o `resumen_diario` con `app: true`. Ninguna de estas rutas deja `evento` ni `auditoria`.
+
+## Telegram y bot
+
+La vinculación une la cuenta de la persona con su chat privado con el bot (spec fase 6 §9). El código es de un solo uso, vale 10 minutos y se devuelve una sola vez; en la base queda solo su HMAC.
+
+```bash
+# Estado: vinculado, telegram_usuario, vinculado_en, sesion_bot_activa, bot_usuario, disponible (hay TELEGRAM_BOT_TOKEN)
+curl -b cookies.txt http://localhost:3010/api/yo/telegram
+
+# Pedir un código (solo con cookie; desde el bot → 403). Respuesta: { codigo, expira_en, enlace: "https://t.me/<bot>?start=<codigo>" | null }
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/yo/telegram/codigo
+
+# Desvincular (idempotente; también vale con el Bearer del bot: es /desvincular). Cierra todas las sesiones de bot de la persona
+curl -b cookies.txt -H "X-Requested-With: Zydesk" -X DELETE http://localhost:3010/api/yo/telegram
+
+# Solo el bot: canjea el código por una sesión `origen = bot`. Única ruta que acepta X-Bot-Key (BOT_API_KEY); sin cookie no exige CSRF
+curl -H "X-Bot-Key: $BOT_API_KEY" -H "Content-Type: application/json" -X POST \
+  -d '{"codigo":"AB23CDEF","chat_id":123456789,"telegram_usuario":"sdiaz"}' http://localhost:3010/api/bot/vincular
+# → 201 { token, usuario: { id, nombre, iniciales, color_avatar, rol }, expira_en }
+
+# Desde ahí el bot actúa como la persona, sin cookie ni X-Requested-With
+curl -H "Authorization: Bearer <token>" http://localhost:3010/api/mi-dia
+curl -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -X POST \
+  -d '{"tipo":"seguimiento","texto":"Revisado desde Telegram"}' http://localhost:3010/api/tickets/1/mensajes
+```
+
+Errores: `503 TELEGRAM_NO_DISPONIBLE` al pedir un código sin `TELEGRAM_BOT_TOKEN` o sin `BOT_API_KEY` en la API (la clave firma el HMAC del código); `409 CONFLICTO { espera_s }` tras 5 códigos en 15 minutos; `401 CLAVE_BOT_INVALIDA` con `X-Bot-Key` ausente o distinta (comparación en tiempo constante); `400 CODIGO_INVALIDO` si el código no existe, venció, ya se usó o la persona está inactiva (mismo mensaje en todos los casos); `429 VINCULACION_BLOQUEADA` tras 5 códigos fallidos del mismo `chat_id` o 20 fallos de clave desde la misma IP en 15 minutos; `409 TELEGRAM_CHAT_EN_USO` si el chat ya está vinculado a otra cuenta. La sesión de bot dura 30 días sin uso o 90 en total; al vencer responde `401 NO_AUTENTICADO` como cualquier sesión, y el bot pide volver a vincular. Auditoría: `telegram_vinculado`, `telegram_vinculacion_fallida { motivo: 'codigo' | 'clave' }` y `telegram_desvinculado`; sin `evento`.
 
 ## Mi día y línea de tiempo
 

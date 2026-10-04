@@ -1,5 +1,5 @@
 import type PgBoss from 'pg-boss';
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   crearCliente,
   crearCotizacion,
@@ -12,13 +12,13 @@ import {
   fijarPreferencia,
   ingresarComo,
 } from '../../test/fabricas.js';
+import { fijarEnv } from '../../test/entorno.js';
 import { crearApp } from '../app.js';
 import { dataSource } from '../config/db.js';
 import { publicar } from '../core/eventos/dominio.js';
 import { conectarDespachador, esperarDespachos } from './despachador.js';
 
 beforeAll(() => conectarDespachador());
-afterEach(() => vi.unstubAllEnvs());
 
 interface FilaAviso {
   id: string;
@@ -483,7 +483,7 @@ describe('despachador: idempotencia, inactivos y preferencias', () => {
     );
 
   it('aviso_envio solo con vínculo y preferencia de Telegram activa; con token queda pendiente', async () => {
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
+    fijarEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
     const vinculado = await crearUsuario();
     const sinVinculo = await crearUsuario();
     const apagado = await crearUsuario();
@@ -503,7 +503,7 @@ describe('despachador: idempotencia, inactivos y preferencias', () => {
   });
 
   it('con vínculo pero sin token: omitido / sin_token', async () => {
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', '');
+    fijarEnv('TELEGRAM_BOT_TOKEN', undefined);
     const u = await crearUsuario();
     await crearVinculoTelegram(u.id);
     const t = await crearTicket();
@@ -512,7 +512,7 @@ describe('despachador: idempotencia, inactivos y preferencias', () => {
   });
 
   it('estado_ticket y seguimiento no van por Telegram por defecto', async () => {
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
+    fijarEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
     const u = await crearUsuario();
     await crearVinculoTelegram(u.id);
     const t = await crearTicket({ principal_id: u.id });
@@ -599,7 +599,7 @@ describe('despachador: integración con los servicios', () => {
   });
 
   it('con boss encola aviso.enviar por cada aviso pendiente de Telegram', async () => {
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
+    fijarEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
     const send = vi.fn().mockResolvedValue('job');
     conectarDespachador({ boss: { send } as unknown as PgBoss });
     try {
@@ -620,7 +620,7 @@ describe('despachador: integración con los servicios', () => {
   });
 
   it('si la cola falla el despachador no lanza y el aviso queda guardado', async () => {
-    vi.stubEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
+    fijarEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
     const send = vi.fn().mockRejectedValue(new Error('cola caída'));
     conectarDespachador({ boss: { send } as unknown as PgBoss });
     try {

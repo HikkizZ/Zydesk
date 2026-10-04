@@ -69,4 +69,18 @@ describe('logger', () => {
     expect(lineas[0]!['req_id']).toBe('abc');
     expect(lineas[1]).not.toHaveProperty('req_id');
   });
+
+  it('no deja los campos de un log pegados en el contexto', () => {
+    const { logger, lineas } = crearCaptura();
+    const store = { req_id: 'abc' };
+    contexto.run(store, () => {
+      logger.info({ a: 1, res: { req: { headers: { cookie: 'sesion=SECRETA' } } } }, 'primero');
+      logger.info('segundo');
+      expect(store).toEqual({ req_id: 'abc' });
+    });
+    expect(lineas[0]).toHaveProperty('a', 1);
+    expect(lineas[1]!['req_id']).toBe('abc');
+    expect(lineas[1]).not.toHaveProperty('a');
+    expect(lineas[1]).not.toHaveProperty('res');
+  });
 });

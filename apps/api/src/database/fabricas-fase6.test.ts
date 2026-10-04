@@ -7,7 +7,7 @@ import {
   fijarPreferencia,
 } from '../../test/fabricas.js';
 import { dataSource } from '../config/db.js';
-import { hashToken } from '../core/auth/sesiones.js';
+import { hashCodigo } from '../modulos/telegram/telegram.service.js';
 
 async function codigoError(consulta: Promise<unknown>): Promise<string | undefined> {
   try {
@@ -91,14 +91,14 @@ describe('fábricas de la Fase 6', () => {
     expect(codigo).toMatch(/^[A-HJ-NP-Z2-9]{8}$/);
     const filas: { usado_en: Date | null }[] = await dataSource.query(
       `SELECT usado_en FROM codigo_vinculo WHERE codigo_hash = $1`,
-      [hashToken(codigo)],
+      [hashCodigo(codigo)],
     );
     expect(filas).toHaveLength(1);
     expect(
       await codigoError(
         dataSource.query(
           `INSERT INTO codigo_vinculo (codigo_hash, usuario_id, expira_en) VALUES ($1, $2, now())`,
-          [hashToken(codigo), u.id],
+          [hashCodigo(codigo), u.id],
         ),
       ),
     ).toBe(UNICO);
@@ -110,11 +110,11 @@ describe('fábricas de la Fase 6', () => {
     const usado = await crearCodigoVinculo(u.id, { usado: true });
     const [a]: { vencido: boolean }[] = await dataSource.query(
       `SELECT expira_en < now() AS vencido FROM codigo_vinculo WHERE codigo_hash = $1`,
-      [hashToken(caducado)],
+      [hashCodigo(caducado)],
     );
     const [b]: { usado: boolean }[] = await dataSource.query(
       `SELECT usado_en IS NOT NULL AS usado FROM codigo_vinculo WHERE codigo_hash = $1`,
-      [hashToken(usado)],
+      [hashCodigo(usado)],
     );
     expect(a?.vencido).toBe(true);
     expect(b?.usado).toBe(true);

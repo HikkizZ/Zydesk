@@ -18,7 +18,10 @@ export type AccionAuditoria =
   | 'numeracion_cambiada'
   | 'terminos_aceptados'
   | 'exportacion'
-  | 'descarga_archivo';
+  | 'descarga_archivo'
+  | 'telegram_vinculado'
+  | 'telegram_vinculacion_fallida'
+  | 'telegram_desvinculado';
 
 // `detalle` nunca lleva contraseñas ni contenido; solo ids, correo, user_agent y valores de configuración.
 export async function registrarAuditoria(

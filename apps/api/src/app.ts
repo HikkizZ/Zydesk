@@ -28,6 +28,7 @@ import { crearRutasHoras } from './modulos/horas/horas.routes.js';
 import { crearRutasMiDia } from './modulos/mi-dia/mi-dia.routes.js';
 import { crearRutasMensajes } from './modulos/mensajes/mensajes.routes.js';
 import { crearRutasOts } from './modulos/ots/ots.routes.js';
+import { crearRutasTelegram } from './modulos/telegram/telegram.routes.js';
 import { crearRutasTareas } from './modulos/tareas/tareas.routes.js';
 import { crearRutasTickets } from './modulos/tickets/tickets.routes.js';
 import { crearRutasUsuarios } from './modulos/usuarios/usuarios.routes.js';
@@ -77,6 +78,7 @@ export function crearApp(deps: DependenciasApp): Express {
   app.use(crearRutasHoras());
   app.use(crearRutasAvisos());
   app.use(crearRutasMiDia());
+  app.use(crearRutasTelegram());
   app.use(crearRutasArchivos());
   app.use(crearRutasCorreos());
   app.use(crearRutasDocs());

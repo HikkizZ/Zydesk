@@ -14,12 +14,13 @@ describe('iniciarJobs', () => {
         void programaciones.push([n, cron, opc.tz]),
     } as unknown as PgBoss;
     await iniciarJobs(boss);
-    // `avisos.resumen_diario` y `aviso.enviar` llegan con el bloque 6C
     const esperadas = [
       'mantencion.limpiar',
       'tickets.archivar',
       'archivos.limpiar_huerfanos',
       'tickets.vencimientos',
+      'aviso.enviar',
+      'avisos.resumen_diario',
     ];
     expect([...colas].sort()).toEqual([...esperadas].sort());
     expect([...trabajadores].sort()).toEqual([...esperadas].sort());
@@ -33,6 +34,13 @@ describe('iniciarJobs', () => {
       '*/30 * * * *',
       'America/Santiago',
     ]);
-    expect(programaciones).toHaveLength(4);
+    expect(programaciones.find((p) => p[0] === 'avisos.resumen_diario')).toEqual([
+      'avisos.resumen_diario',
+      '30 8 * * 1-5',
+      'America/Santiago',
+    ]);
+    // `aviso.enviar` es una cola sin programación
+    expect(programaciones.find((p) => p[0] === 'aviso.enviar')).toBeUndefined();
+    expect(programaciones).toHaveLength(5);
   });
 });

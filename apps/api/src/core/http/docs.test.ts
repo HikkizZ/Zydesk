@@ -114,5 +114,6 @@ describe('documento OpenAPI', () => {
     expect(doc.paths['/salud']).toBeDefined();
     expect(doc.paths['/auth/ingresar'].post).toBeDefined();
     expect(a).not.toMatch(/\d{4}-\d{2}-\d{2}T\d{2}:/);
-  });
+    // Lanza el CLI dos veces: en equipos lentos supera el límite general de 15 s.
+  }, 60_000);
 });
