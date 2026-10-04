@@ -23,3 +23,4 @@ export * from './telegram.js';
 export * from './bot.js';
 export * from './mi-dia.js';
 export * from './linea-tiempo.js';
+export * from './reportes.js';

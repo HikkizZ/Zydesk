@@ -8,7 +8,8 @@ import {
 } from './cliente.js';
 import { DepartamentoEntrada, HorarioDiaEsquema } from './departamento.js';
 import { IngresoEntrada } from './auth.js';
-import { OtCrearEntrada, OtEditarEntrada, OtsQuery } from './ot.js';
+import { OtCrearEntrada, OtEditarEntrada, OtResumen, OtsQuery } from './ot.js';
+import { ReporteSalida, ReportesQuery } from './reportes.js';
 import { TareaEntrada } from './tarea.js';
 import { MensajeEntrada } from './mensaje.js';
 import { CambioEtapaOt, CierreOt } from '../estados/ot.js';
@@ -279,5 +280,88 @@ describe('CambioEtapaOt', () => {
   it('rechaza cotizada: la marca manual desapareció', () => {
     expect(CambioEtapaOt.safeParse({ etapa: 'cotizada' }).success).toBe(false);
     expect(CambioEtapaOt.safeParse({ etapa: 'borrador' }).success).toBe(true);
+  });
+});
+
+describe('ReportesQuery', () => {
+  it('acepta vacío, período y coerción de ids', () => {
+    expect(ReportesQuery.safeParse({}).success).toBe(true);
+    expect(ReportesQuery.safeParse({ desde: '2026-09-01', hasta: '2026-09-30' }).success).toBe(
+      true,
+    );
+    const r = ReportesQuery.safeParse({ departamento_id: '3' });
+    expect(r.success && r.data.departamento_id).toBe(3);
+  });
+
+  it('acepta 366 días y rechaza 367', () => {
+    expect(ReportesQuery.safeParse({ desde: '2025-01-01', hasta: '2026-01-01' }).success).toBe(
+      true,
+    );
+    expect(ReportesQuery.safeParse({ desde: '2025-01-01', hasta: '2026-01-02' }).success).toBe(
+      false,
+    );
+  });
+
+  it.each([
+    ['hasta anterior a desde', { desde: '2026-09-30', hasta: '2026-09-01' }],
+    ['fecha mal formada', { desde: '2026-9-1' }],
+    ['cliente_id no numérico', { cliente_id: 'x' }],
+  ])('rechaza %s', (_caso, q) => {
+    expect(ReportesQuery.safeParse(q).success).toBe(false);
+  });
+});
+
+describe('ReporteSalida', () => {
+  const prioridad = (p: string) => ({
+    prioridad: p,
+    n: 0,
+    promedio_dias: null,
+    objetivo_dias: null,
+    sobre_plazo: false,
+  });
+  const base = {
+    filtros: {
+      desde: '2026-09-01',
+      hasta: '2026-09-30',
+      departamento: null,
+      cliente: null,
+      usuario: null,
+    },
+    indicadores: {
+      cerrados: { total: 0, resueltos: 0, descartados: 0, duplicados: 0 },
+      resolucion: { promedio_dias: null, n: 0, sin_calendario: 0 },
+      dentro_de_plazo: { pct: null, dentro: 0, n: 0 },
+      horas: { total: 0, facturables: 0, internas: 0, fuera_de_horario: 0, pct_facturables: null },
+    },
+    horas_por_semana: [{ semana: '2026-08-31', facturables: 0, internas: 0 }],
+    carga: [],
+    resolucion_por_prioridad: ['urgente', 'alta', 'media', 'baja'].map(prioridad),
+    por_cliente: [
+      {
+        cliente: null,
+        nombre: 'Interno',
+        interno: true,
+        abiertos: 0,
+        cerrados: 0,
+        horas: 0,
+        facturado: null,
+        por_facturar: null,
+      },
+    ],
+  };
+
+  it('acepta una salida completa', () => {
+    expect(ReporteSalida.safeParse(base).success).toBe(true);
+  });
+
+  it('rechaza resolucion_por_prioridad con 3 filas', () => {
+    const r = { ...base, resolucion_por_prioridad: base.resolucion_por_prioridad.slice(0, 3) };
+    expect(ReporteSalida.safeParse(r).success).toBe(false);
+  });
+});
+
+describe('OtResumen.neto', () => {
+  it('acepta null', () => {
+    expect(OtResumen.shape.neto.safeParse(null).success).toBe(true);
   });
 });
