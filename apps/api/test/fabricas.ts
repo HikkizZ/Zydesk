@@ -148,13 +148,18 @@ export async function crearCliente(
 }
 
 export async function crearCategoria(
-  datos: { nombre?: string; responsable_defecto_id?: number | null; activo?: boolean } = {},
+  datos: {
+    nombre?: string;
+    responsable_defecto_id?: number | null;
+    activo?: boolean;
+    plazo_resolucion?: Categoria['plazo_resolucion'];
+  } = {},
 ): Promise<Categoria> {
   return dataSource.manager.save(Categoria, {
     nombre: datos.nombre ?? `Categoría ${siguiente()}`,
     responsable_defecto_id: datos.responsable_defecto_id ?? null,
     plazo_respuesta: { valor: 2, unidad: 'horas' },
-    plazo_resolucion: {
+    plazo_resolucion: datos.plazo_resolucion ?? {
       urgente: { valor: 4, unidad: 'horas' },
       alta: { valor: 1, unidad: 'dias' },
       media: { valor: 3, unidad: 'dias' },
@@ -178,6 +183,7 @@ export async function crearTicket(
     principal_id?: number | null;
     otros_ids?: number[];
     fecha_limite?: Date | null;
+    horas_estimadas?: number | null;
     cerrado_en?: Date | null;
     archivado_en?: Date | null;
     creado_por?: number | null;
@@ -224,7 +230,7 @@ export async function crearTicket(
     fecha_limite: datos.fecha_limite ?? null,
     respuesta_limite: null,
     primera_respuesta_en: null,
-    horas_estimadas: null,
+    horas_estimadas: datos.horas_estimadas ?? null,
     creado_por: datos.creado_por ?? null,
     ...(datos.creado_en ? { creado_en: datos.creado_en } : {}),
     ...(datos.actualizado_en ? { actualizado_en: datos.actualizado_en } : {}),
@@ -352,6 +358,9 @@ export async function crearOt(
     contrato_id?: number | null;
     resolvio_ticket?: boolean | null;
     resumen_cierre?: string | null;
+    facturada_en?: Date;
+    n_factura?: string;
+    cerrada_en?: Date;
     numero?: number;
   } = {},
 ): Promise<Ot> {
@@ -395,14 +404,14 @@ export async function crearOt(
     aprobada_por: null,
     aprobada_en: null,
     estado_facturacion,
-    n_factura: facturada ? `F-${numero}` : null,
-    facturada_en: facturada ? ahora : null,
+    n_factura: facturada ? (datos.n_factura ?? `F-${numero}`) : null,
+    facturada_en: facturada ? (datos.facturada_en ?? ahora) : null,
     facturada_por: null,
     resolvio_ticket: cerrada ? (datos.resolvio_ticket ?? true) : (datos.resolvio_ticket ?? null),
     resumen_cierre: cerrada
       ? (datos.resumen_cierre ?? 'Resumen de cierre de prueba')
       : (datos.resumen_cierre ?? null),
-    cerrada_en: cerrada ? ahora : null,
+    cerrada_en: cerrada ? (datos.cerrada_en ?? ahora) : null,
     cerrada_por: null,
     motivo_cancelacion: cancelada ? 'Cancelada en prueba' : null,
     cancelada_en: cancelada ? ahora : null,
