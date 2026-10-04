@@ -28,7 +28,7 @@ La primera vez (y cada vez que cambien los textos) verás una ventana con los **
 
 Abre **Perfil** (al pie del menú; en el celular, **Más → Perfil**). Ahí ves tus datos y tus **sesiones activas**: cada navegador o equipo donde has ingresado, con su nombre, desde cuándo y hasta cuándo vale.
 
-- Si ves un dispositivo que no reconoces, o dejaste la sesión abierta en un equipo ajeno, cierra esa sesión desde su fila.
+- Si ves un dispositivo que no reconoces, o dejaste la sesión abierta en un equipo ajeno, cierra esa sesión desde su fila. La sesión **Bot de Telegram** es la que usa el bot en tu nombre: cerrarla detiene los comandos del bot, pero sigues recibiendo avisos (ver el [manual del bot](04-bot-telegram.md#desvincular)).
 - **Cerrar las demás** deja abierta solo la sesión en la que estás.
 
 ## Cambiar tu contraseña
@@ -74,11 +74,19 @@ Nunca recibes un aviso por algo que hiciste tú (si te asignas un ticket o cambi
 
 - Los chips **Todos · Menciones · Asignaciones · Vencimientos** y el interruptor **Solo sin leer** filtran la lista; **Cargar más** trae los siguientes.
 - Al pulsar un aviso se marca leído y te lleva al ticket, la OT o el mensaje. **Marcar todo como leído** limpia el contador. Entrar a la pantalla no marca nada por sí solo.
-- **Preferencias** (a la derecha; en el celular, pestaña **Preferencias**): un interruptor **En la app** por cada tipo de aviso. Apagarlo hace que ese aviso no aparezca ni cuente. La columna **Telegram** se guarda, pero todavía no envía nada: la vinculación con Telegram llega en la siguiente entrega.
+- **Preferencias** (a la derecha; en el celular, pestaña **Preferencias**): dos interruptores por cada tipo de aviso, **En la app** y **Telegram**. Apagar **En la app** hace que ese aviso no aparezca ni cuente; **Telegram** solo tiene efecto si vinculaste tu cuenta. El **Resumen diario** (08:30, lunes a viernes) existe solo por Telegram.
+
+### Vincular Telegram
+
+En la tarjeta **Telegram** de Avisos, **Vincular Telegram** te da un código de un solo uso (y un QR en el computador) para unir tu cuenta con el bot de Zydesk en Telegram. Desde ahí recibes los avisos en el celular y puedes usar comandos como `/hoy`, responder un aviso para registrar un seguimiento o aprobar una OT con un botón. Todo está en el [manual del bot de Telegram](04-bot-telegram.md). Si la tarjeta no aparece, Administración aún no configuró el bot.
+
+## Ayuda
+
+**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página.
 
 ## En el celular
 
-En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol) y **Cerrar sesión**.
+En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol), **Ayuda** y **Cerrar sesión**.
 
 ## Trabajar con tickets
 

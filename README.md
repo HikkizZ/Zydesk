@@ -1,7 +1,7 @@
 # Zydesk
 
 Aplicación interna de gestión de tickets, órdenes de trabajo, cotizaciones y horas.
-Monorepo con API (Express), web (React + Vite) y un paquete compartido de tipos y utilidades.
+Monorepo con API (Express), web (React + Vite), bot de Telegram (grammY) y un paquete compartido de tipos y utilidades.
 
 ## Requisitos
 
@@ -20,7 +20,7 @@ Monorepo con API (Express), web (React + Vite) y un paquete compartido de tipos 
 5. Aplicar las migraciones: `npm run db:migrar`.
 6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053) y 6 órdenes de trabajo (OT-0214 a OT-0219); `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
    Para una instalación real, en vez de sembrar, crear la primera cuenta: `npm run db:admin -- --correo admin@ejemplo.cl --nombre "Nombre Apellido"`.
-7. Arrancar shared (watch), API y web: `npm run dev`.
+7. Arrancar shared (watch), API, web y bot: `npm run dev` (sin `TELEGRAM_BOT_TOKEN` el proceso del bot termina en silencio).
 8. Abrir <http://localhost:5173>.
 
 ### Puertos
@@ -31,13 +31,26 @@ Monorepo con API (Express), web (React + Vite) y un paquete compartido de tipos 
 | Web (Vite)        | 5173   |
 | Postgres (Docker) | 5433   |
 
+El bot no abre ningún puerto: usa long polling contra la API de Telegram y habla con la API de Zydesk por `API_URL`.
+
+### Bot de Telegram en desarrollo (opcional)
+
+El desarrollo normal no necesita Telegram. Para probar el bot de verdad:
+
+1. Crea un bot de desarrollo con **@BotFather** (`/newbot`) y copia su token. El token va **solo** en tu `.env` local, nunca en el repo ni en el chat.
+2. Completa en `.env`: `TELEGRAM_BOT_TOKEN=<token>`, `TELEGRAM_BOT_USUARIO=<usuario sin @>` y `BOT_CLAVE_CIFRADO=<salida de openssl rand -base64 32>`. `BOT_API_KEY`, `WEB_URL`, `API_URL` y `BOT_DATOS_DIR` ya traen valores de desarrollo en `.env.example` (en producción `BOT_API_KEY` debe tener al menos 32 caracteres y `WEB_URL` ser `https://`).
+3. Reinicia `npm run dev` (o solo el bot: `npm run dev -w @zydesk/bot`). El log dice `bot iniciado`; si Telegram rechaza el token, el proceso termina con un error.
+4. Entra a la web, abre **Avisos → Vincular Telegram** y envía el código al bot (`/vincular CÓDIGO` o el enlace **Abrir en Telegram**). Prueba `/hoy`, `/mis`, `/ticket 1048`, responde un aviso y reenvíale un texto.
+
+Las sesiones de los chats quedan cifradas en `BOT_DATOS_DIR` (por defecto `./datos/bot`, ignorado por git). Con `WEB_URL=http://localhost:5173` los enlaces de los mensajes se ven como texto (Telegram solo hace clicables los `https`). Más detalles en la sección 17 del [manual de administración](docs/manuales/administracion.md) y en el [manual del bot](docs/manuales/usuario/04-bot-telegram.md).
+
 ### Usuarios de ejemplo
 
 Todas las cuentas de ejemplo usan el correo `<usuario>@zydesk.local` y la contraseña de `SEMILLA_PASSWORD`. Por ejemplo: `hikki@zydesk.local` (Administración), `crojas@zydesk.local` (Coordinación), `dmunoz@zydesk.local` (Técnico) y `nvega@zydesk.local` (Solo lectura). La referencia de la API está en <http://localhost:3010/api/docs> (requiere sesión de Administración).
 
 ## Base de test
 
-Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el script de inicio de Docker; se conecta con `TEST_DATABASE_URL` y `TEST_DATABASE_URL_OWNER`). Con Postgres levantado, `npm test` aplica las migraciones y vacía la base entre tests; no toca la base de desarrollo.
+Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el script de inicio de Docker; se conecta con `TEST_DATABASE_URL` y `TEST_DATABASE_URL_OWNER`). Con Postgres levantado, `npm test` aplica las migraciones y vacía la base entre tests; no toca la base de desarrollo. Los tests del bot no usan base de datos ni Telegram: doblan las actualizaciones de grammY y la API de Zydesk.
 
 Para correr los tests sin pisar otra ejecución en paralelo, crea una base propia con `npm run db:test:crear -- <sufijo>` (por ejemplo `2h`) y usa `TEST_BD_SUFIJO=<sufijo>` al correr `npm run test -w @zydesk/api` (con `npx cross-env` en Windows).
 
@@ -53,14 +66,14 @@ El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada
 
 | Script                  | Qué hace                                                                                        |
 | ----------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`           | Compila `shared` y levanta shared (watch), API y web                                            |
-| `npm run build`         | Compila los tres paquetes                                                                       |
-| `npm test`              | Corre los tests de los tres paquetes                                                            |
-| `npm run typecheck`     | Compila `shared` y revisa tipos en los tres paquetes                                            |
+| `npm run dev`           | Compila `shared` y levanta shared (watch), API, web y bot                                       |
+| `npm run build`         | Compila los cuatro paquetes                                                                     |
+| `npm test`              | Corre los tests de los cuatro paquetes                                                          |
+| `npm run typecheck`     | Compila `shared` y revisa tipos en los cuatro paquetes                                          |
 | `npm run lint`          | ESLint                                                                                          |
 | `npm run format`        | Prettier (escribe)                                                                              |
 | `npm run format:check`  | Prettier (solo revisa)                                                                          |
-| `npm run clean`         | Borra los `dist/` de los tres paquetes                                                          |
+| `npm run clean`         | Borra los `dist/` de los cuatro paquetes                                                        |
 | `npm run db:migrar`     | Aplica las migraciones pendientes (como `zydesk_owner`)                                         |
 | `npm run db:revertir`   | Revierte la última migración (`-- --todo` las revierte todas)                                   |
 | `npm run db:admin`      | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`) |
@@ -74,6 +87,7 @@ El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada
 ```
 apps/api        API Express 5 (pino, TypeORM, Zod)
 apps/web        React 19 + Vite + React Router + TanStack Query + Tailwind v4
+apps/bot        Bot de Telegram (grammY, long polling); sin BD, habla solo con la API
 packages/shared Tipos, errores, formato y utilidades compartidas (se compila a dist/)
 docs            Plan, decisiones (ADR), especificaciones por fase, manuales y API
 ```
@@ -87,6 +101,7 @@ docs            Plan, decisiones (ADR), especificaciones por fase, manuales y AP
 - [Manual de usuario: primeros pasos](docs/manuales/usuario/00-primeros-pasos.md)
 - [Manual de tickets para el equipo](docs/manuales/usuario/01-tecnico.md)
 - [Manual de coordinación: aprobar, cerrar y facturar OT](docs/manuales/usuario/02-coordinacion.md)
+- [Manual del bot de Telegram](docs/manuales/usuario/04-bot-telegram.md)
 - [Guía de la API](docs/api/README.md)
 - [Documentos legales (borradores)](docs/legal/README.md)
 - [Cambios por versión](docs/CHANGELOG.md)

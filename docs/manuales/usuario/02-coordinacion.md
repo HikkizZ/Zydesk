@@ -82,7 +82,7 @@ Una OT facturable cerrada aparece como **Por facturar** (en la lista, el filtro 
 
 ## Por aprobar en Mi día
 
-En **Mi día**, el cuadro y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan.
+En **Mi día**, el cuadro y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan; si tienes Telegram vinculado, ese aviso llega con el botón **Aprobar OT**, que la aprueba sin iniciar la ejecución (ver el [manual del bot](04-bot-telegram.md#aprobar-una-ot-desde-el-botón)). La aprobación del cliente sigue siendo solo desde la web, porque exige el respaldo adjunto.
 
 ## Avisos de facturación
 
@@ -103,4 +103,4 @@ Un ticket con una OT abierta no se puede resolver, descartar ni marcar como dupl
 
 ## Lo que todavía no está
 
-La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y la exportación de horas y los reportes de horas llegan en fases posteriores. Los avisos por Telegram y el bot llegan en la siguiente entrega de la Fase 6. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes.
+La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y la exportación de horas y los reportes de horas llegan en fases posteriores. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes. El bot de Telegram no registra la aprobación del cliente ni "Marcar facturada".
