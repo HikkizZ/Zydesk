@@ -4,17 +4,23 @@ import { MANUALES, manualesDe, manualPorClave } from './manuales';
 import { encabezadosDe } from './slug';
 
 it('manualesDe devuelve los manuales de cada rol en el orden fijo', () => {
-  expect(manualesDe('lectura').map((m) => m.clave)).toEqual(['primeros-pasos']);
-  expect(manualesDe('tecnico').map((m) => m.clave)).toEqual(['primeros-pasos', 'tecnico']);
+  expect(manualesDe('lectura').map((m) => m.clave)).toEqual(['primeros-pasos', 'bot-telegram']);
+  expect(manualesDe('tecnico').map((m) => m.clave)).toEqual([
+    'primeros-pasos',
+    'tecnico',
+    'bot-telegram',
+  ]);
   expect(manualesDe('coordinacion').map((m) => m.clave)).toEqual([
     'primeros-pasos',
     'tecnico',
     'coordinacion',
+    'bot-telegram',
   ]);
   expect(manualesDe('admin').map((m) => m.clave)).toEqual([
     'primeros-pasos',
     'tecnico',
     'coordinacion',
+    'bot-telegram',
     'administracion',
   ]);
   expect(ROLES.every((r) => manualesDe(r).length >= 1)).toBe(true);

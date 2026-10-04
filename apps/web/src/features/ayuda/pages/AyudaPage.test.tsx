@@ -36,13 +36,13 @@ it('(a) /ayuda redirige a primeros pasos y el h1 es «Ayuda»', () => {
   expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
 });
 
-it('(b) lectura no ve pestañas; admin ve 4 con aria-current en la actual', () => {
+it('(b) lectura ve 2 pestañas; admin ve 5 con aria-current en la actual', () => {
   const { unmount } = montar('lectura', '/ayuda/primeros-pasos');
-  expect(screen.queryByRole('navigation', { name: 'Manuales' })).toBeNull();
+  expect(pestanas().getAllByRole('link')).toHaveLength(2);
   unmount();
   montar('admin', '/ayuda/tecnico');
   const enlaces = pestanas().getAllByRole('link');
-  expect(enlaces).toHaveLength(4);
+  expect(enlaces).toHaveLength(5);
   expect(
     enlaces.filter((e) => e.getAttribute('aria-current') === 'page').map((e) => e.textContent),
   ).toEqual(['Manual de tickets para el equipo']);
@@ -53,10 +53,10 @@ it('(c) un manual inexistente muestra «Página no encontrada»', () => {
   expect(screen.getByRole('heading', { name: 'Página no encontrada' })).toBeTruthy();
 });
 
-it('(d) un técnico en el manual de coordinación lo ve, con solo 2 pestañas', () => {
+it('(d) un técnico en el manual de coordinación lo ve, con solo 3 pestañas', () => {
   montar('tecnico', '/ayuda/coordinacion');
   expect(screen.getByRole('heading', { level: 2, name: /Manual de coordinación/ })).toBeTruthy();
-  expect(pestanas().getAllByRole('link')).toHaveLength(2);
+  expect(pestanas().getAllByRole('link')).toHaveLength(3);
 });
 
 it('(e) la tabla de «Avisos» se renderiza como table', () => {
@@ -115,4 +115,10 @@ it('los ids de los encabezados coinciden con los del índice «En esta página»
     const id = e.getAttribute('href')!.slice(1);
     expect(articulo.querySelector(`[id="${id}"]`), id).not.toBeNull();
   }
+});
+
+it('un # malformado (%) no rompe la página', () => {
+  montar('tecnico', '/ayuda/primeros-pasos#%');
+  expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Ayuda');
+  expect(scrollIntoView).not.toHaveBeenCalled();
 });

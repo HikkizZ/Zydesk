@@ -10,6 +10,16 @@ import { encabezadosDe } from '../slug';
 
 const claseEnlaceIndice = 'block rounded-md px-2 py-1 text-sm text-acento hover:underline';
 
+// Un `#%` malformado hace lanzar a `decodeURIComponent`: se usa el hash tal cual.
+function idDeHash(hash: string): string {
+  const crudo = hash.slice(1);
+  try {
+    return decodeURIComponent(crudo);
+  } catch {
+    return crudo;
+  }
+}
+
 export function AyudaPage() {
   const yo = useYo();
   const { manual: clave } = useParams();
@@ -23,7 +33,7 @@ export function AyudaPage() {
       window.scrollTo(0, 0);
       return;
     }
-    const destino = document.getElementById(decodeURIComponent(hash.slice(1)));
+    const destino = document.getElementById(idDeHash(hash));
     if (!destino) return;
     destino.scrollIntoView();
     destino.focus();

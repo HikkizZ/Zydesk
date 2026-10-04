@@ -3,8 +3,10 @@ import administracion from '../../../../../docs/manuales/administracion.md?raw';
 import primerosPasos from '../../../../../docs/manuales/usuario/00-primeros-pasos.md?raw';
 import tecnico from '../../../../../docs/manuales/usuario/01-tecnico.md?raw';
 import coordinacion from '../../../../../docs/manuales/usuario/02-coordinacion.md?raw';
+import botTelegram from '../../../../../docs/manuales/usuario/04-bot-telegram.md?raw';
 
-export type ClaveManual = 'primeros-pasos' | 'tecnico' | 'coordinacion' | 'administracion';
+export type ClaveManual =
+  'primeros-pasos' | 'tecnico' | 'coordinacion' | 'bot-telegram' | 'administracion';
 
 export interface Manual {
   clave: ClaveManual;
@@ -33,6 +35,12 @@ export const MANUALES: readonly Manual[] = [
   ]),
   manual('tecnico', '01-tecnico.md', tecnico, ['tecnico', 'coordinacion', 'admin']),
   manual('coordinacion', '02-coordinacion.md', coordinacion, ['coordinacion', 'admin']),
+  manual('bot-telegram', '04-bot-telegram.md', botTelegram, [
+    'lectura',
+    'tecnico',
+    'coordinacion',
+    'admin',
+  ]),
   manual('administracion', 'administracion.md', administracion, ['admin']),
 ];
 
