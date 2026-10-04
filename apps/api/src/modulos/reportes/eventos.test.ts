@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { ingresarComo } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
-import { QUERY_BASE, descargar, montarEscenario } from './reportes.escenario.js';
+import { QUERY_BASE, descargar, montarEscenario } from '../../../test/escenario-reportes.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 

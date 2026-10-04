@@ -11,7 +11,7 @@ import {
   crearTarea,
   crearTicket,
   crearUsuario,
-} from '../../../test/fabricas.js';
+} from './fabricas.js';
 
 // Escenario de fábricas con fechas fijas de la spec fase 7 §10.2 (instantes en hora de Santiago, -03:00).
 

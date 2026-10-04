@@ -14,7 +14,13 @@ import {
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 import { crearLogger, logger as loggerGlobal } from '../../config/logger.js';
-import { QUERY_BASE, descargar, en, leerLibro, montarEscenario } from './reportes.escenario.js';
+import {
+  QUERY_BASE,
+  descargar,
+  en,
+  leerLibro,
+  montarEscenario,
+} from '../../../test/escenario-reportes.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 

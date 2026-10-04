@@ -9,7 +9,7 @@ import {
   descargar,
   leerLibro,
   montarEscenario,
-} from './reportes.escenario.js';
+} from '../../../test/escenario-reportes.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 
