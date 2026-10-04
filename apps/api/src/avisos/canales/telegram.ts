@@ -10,7 +10,7 @@ export function construirMensaje(aviso: AvisoParaEnviar): {
 } {
   const url = `${env.WEB_URL}${aviso.enlace}`;
   const codigo = typeof aviso.datos['codigo'] === 'string' ? aviso.datos['codigo'] : null;
-  // Los textos ya traen el código: se resalta su primera aparición (el primer TK-/OT- del mensaje es el que usa
+  // Los textos ya traen el código: se resalta su primera aparición (la negrita con el código es la que usa
   // «responder un aviso» para resolver el destino). Si el texto no lo trae, se antepone.
   const texto = escaparHtml(aviso.texto);
   let cuerpo = texto;

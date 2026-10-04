@@ -1,4 +1,5 @@
 import { Writable } from 'node:stream';
+import { createHash } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -241,6 +242,36 @@ describe('prueba 7: clave del bot', () => {
     const correcta = await comoBot(a).post('/api/bot/vincular').send(cuerpo);
     expect(correcta.status).toBe(429);
     expect(await auditorias('telegram_vinculacion_fallida')).toHaveLength(20);
+  });
+});
+
+describe('límite por IP solo cuenta fallos de clave', () => {
+  it('20 códigos inválidos desde 4 chats no bloquean la vinculación de un 5.º chat', async () => {
+    const u = await crearUsuario();
+    const bot = comoBot(app());
+    for (let chat = 1; chat <= 4; chat++) {
+      for (let i = 0; i < 5; i++) {
+        const r = await bot.post('/api/bot/vincular').send({ codigo: 'ZZZZZZZZ', chat_id: chat });
+        expect(r.status).toBe(400);
+      }
+    }
+    expect(await auditorias('telegram_vinculacion_fallida')).toHaveLength(20);
+    const codigo = await crearCodigoVinculo(u.id);
+    const r = await bot.post('/api/bot/vincular').send({ codigo, chat_id: 5 });
+    expect(r.status).toBe(201);
+  });
+});
+
+describe('hash del código de vinculación', () => {
+  it('no es el SHA-256 plano del código y la vinculación sigue funcionando', async () => {
+    conToken();
+    const u = await crearUsuario();
+    const { agente } = await ingresarComo(app(), u);
+    const codigo = (await agente.post('/api/yo/telegram/codigo')).body.codigo as string;
+    const [fila] = await dataSource.query(`SELECT codigo_hash FROM codigo_vinculo`);
+    expect(fila.codigo_hash).not.toBe(createHash('sha256').update(codigo).digest('hex'));
+    const r = await comoBot(app()).post('/api/bot/vincular').send({ codigo, chat_id: 31 });
+    expect(r.status).toBe(201);
   });
 });
 

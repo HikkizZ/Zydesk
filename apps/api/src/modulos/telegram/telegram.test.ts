@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 import {
@@ -12,9 +11,9 @@ import {
 import { fijarEnv } from '../../../test/entorno.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
+import { hashCodigo } from './telegram.service.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
-const sha256 = (t: string): string => createHash('sha256').update(t).digest('hex');
 const comoTokenBearer = (token: string): ReturnType<typeof request.agent> =>
   request.agent(app()).set('Authorization', `Bearer ${token}`);
 const conToken = (): void => fijarEnv('TELEGRAM_BOT_TOKEN', 'token-de-prueba');
@@ -62,7 +61,7 @@ describe('POST /api/yo/telegram/codigo', () => {
     expect(r.body.codigo).toMatch(/^[A-HJ-NP-Z2-9]{8}$/);
     expect(r.body.enlace).toBe(`https://t.me/zydesk_dev_bot?start=${r.body.codigo}`);
     const [fila] = await dataSource.query(`SELECT codigo_hash, expira_en FROM codigo_vinculo`);
-    expect(fila.codigo_hash).toBe(sha256(r.body.codigo));
+    expect(fila.codigo_hash).toBe(hashCodigo(r.body.codigo));
     const dur = new Date(fila.expira_en).getTime() - Date.now();
     expect(dur).toBeGreaterThan(9 * 60_000);
     expect(dur).toBeLessThanOrEqual(10 * 60_000);

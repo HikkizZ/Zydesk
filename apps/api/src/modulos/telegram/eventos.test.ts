@@ -36,7 +36,11 @@ describe('vinculación de Telegram: auditoría', () => {
       `SELECT accion, usuario_id, detalle FROM auditoria ORDER BY id`,
     );
     expect(filas).toEqual([
-      { accion: 'telegram_vinculacion_fallida', usuario_id: null, detalle: { chat_id: 31 } },
+      {
+        accion: 'telegram_vinculacion_fallida',
+        usuario_id: null,
+        detalle: { chat_id: 31, motivo: 'codigo' },
+      },
       { accion: 'telegram_vinculado', usuario_id: u.id, detalle: { chat_id: 31 } },
     ]);
     expect(await cuenta('evento')).toBe(0);

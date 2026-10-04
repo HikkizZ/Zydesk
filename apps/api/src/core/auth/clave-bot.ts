@@ -23,7 +23,9 @@ export function claveBotValida(recibida: string | undefined): boolean {
 }
 
 // `/api/bot/*` (solo `POST /api/bot/vincular`): autentica con la clave compartida `X-Bot-Key` (spec fase 6
-// §9.3). Más de 20 fallos por IP en 15 minutos (clave o código) → 429. La clave no identifica a nadie.
+// §9.3). Más de 20 fallos de **clave** por IP en 15 minutos → 429. Los códigos inválidos no cuentan aquí (en producción
+// la única IP es la del bot: bloquearía a toda la organización); se limitan por chat en `telegram.service.ts`.
+// La clave no identifica a nadie.
 export const requiereClaveBot: RequestHandler = async (req, _res, next) => {
   try {
     const ip = ipReal(req);
@@ -31,7 +33,7 @@ export const requiereClaveBot: RequestHandler = async (req, _res, next) => {
       const [r]: { total: number }[] = await dataSource.query(
         `SELECT count(*)::int AS total FROM auditoria
           WHERE ip = $1::inet AND accion = 'telegram_vinculacion_fallida'
-            AND creado_en > now() - interval '15 minutes'`,
+            AND detalle->>'motivo' = 'clave' AND creado_en > now() - interval '15 minutes'`,
         [ip],
       );
       if ((r?.total ?? 0) >= LIMITE_FALLOS_POR_IP) {

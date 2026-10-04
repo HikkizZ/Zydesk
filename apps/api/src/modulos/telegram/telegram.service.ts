@@ -1,10 +1,10 @@
-import { randomInt } from 'node:crypto';
+import { createHmac, randomInt } from 'node:crypto';
 import { iniciales, type Rol } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { dataSource } from '../../config/db.js';
 import { env } from '../../config/env.js';
 import { logger } from '../../config/logger.js';
-import { cerrarSesionesDeUsuario, crearSesion, hashToken } from '../../core/auth/sesiones.js';
+import { cerrarSesionesDeUsuario, crearSesion } from '../../core/auth/sesiones.js';
 import type { UsuarioSesion } from '../../core/auth/tipos.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { registrarAuditoria } from '../../core/historial/auditoria.js';
@@ -26,6 +26,14 @@ function generarCodigo(): string {
   let c = '';
   for (let i = 0; i < LARGO_CODIGO; i++) c += ALFABETO[randomInt(ALFABETO.length)];
   return c;
+}
+
+// HMAC-SHA256 con `BOT_API_KEY`: un volcado de la BD no basta para recuperar offline un código de 40 bits
+// (ADR 0027). Solo para `codigo_vinculo`; las sesiones siguen con `hashToken`.
+export function hashCodigo(codigo: string): string {
+  return createHmac('sha256', env.BOT_API_KEY ?? '')
+    .update(codigo)
+    .digest('hex');
 }
 
 export async function obtenerEstado(actor: UsuarioSesion): Promise<TelegramEstadoSalidaDatos> {
@@ -56,7 +64,7 @@ export async function crearCodigo(actor: UsuarioSesion): Promise<CodigoVinculoSa
   if (actor.autenticado_por !== 'cookie') {
     throw new ErrorApp('SIN_PERMISO', 'Solo puedes pedir el código desde la web');
   }
-  if (!env.TELEGRAM_BOT_TOKEN) {
+  if (!env.TELEGRAM_BOT_TOKEN || !env.BOT_API_KEY) {
     throw new ErrorApp('TELEGRAM_NO_DISPONIBLE', 'Telegram no está configurado en el servidor');
   }
   const { codigo, codigo_id, expira_en } = await enTransaccion(async (tx) => {
@@ -83,7 +91,7 @@ export async function crearCodigo(actor: UsuarioSesion): Promise<CodigoVinculoSa
     const [fila]: { id: number; expira_en: Date }[] = await tx.query(
       `INSERT INTO codigo_vinculo (codigo_hash, usuario_id, expira_en)
        VALUES ($1, $2, now() + interval '10 minutes') RETURNING id, expira_en`,
-      [hashToken(codigo), actor.id],
+      [hashCodigo(codigo), actor.id],
     );
     return { codigo, codigo_id: fila!.id, expira_en: fila!.expira_en };
   });
@@ -152,7 +160,7 @@ async function vincularEnTx(
             u.nombre, u.color_avatar, u.rol, u.activo
        FROM codigo_vinculo c JOIN usuario u ON u.id = c.usuario_id
       WHERE c.codigo_hash = $1 FOR UPDATE OF c`,
-    [hashToken(e.codigo)],
+    [hashCodigo(e.codigo)],
   );
   // Inexistente, usado, vencido o de un usuario inactivo: el mismo error
   if (!c || !c.vigente || !c.activo) throw codigoInvalido();
@@ -212,7 +220,7 @@ export async function vincular(e: BotVincularEntradaDatos): Promise<BotVincularS
       // Fuera de la transacción revertida
       await registrarAuditoria(null, {
         accion: 'telegram_vinculacion_fallida',
-        detalle: { chat_id: e.chat_id },
+        detalle: { chat_id: e.chat_id, motivo: 'codigo' },
       });
     }
     const pg = (err as { driverError?: { code?: string } }).driverError;
