@@ -40,7 +40,13 @@ export const MENU: EntradaMenu[] = [
   { etiqueta: 'Órdenes de trabajo', ruta: '/ots', icono: Wrench, grupo: 'Trabajo' },
   { etiqueta: 'Cotizador', ruta: '/cotizaciones', icono: Calculator, grupo: 'Trabajo' },
   { etiqueta: 'Horas', ruta: '/horas', icono: Clock, grupo: 'Trabajo' },
-  { etiqueta: 'Reportes', ruta: '/reportes', icono: BarChart3, grupo: 'Administración' },
+  {
+    etiqueta: 'Reportes',
+    ruta: '/reportes',
+    icono: BarChart3,
+    grupo: 'Administración',
+    permiso: 'reportes.ver',
+  },
   { etiqueta: 'Clientes', ruta: '/clientes', icono: Building2, grupo: 'Administración' },
   {
     etiqueta: 'Configuración',
