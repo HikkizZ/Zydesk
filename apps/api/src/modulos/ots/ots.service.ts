@@ -37,8 +37,9 @@ export function obtenerOt(id: number): Promise<OtSalidaDatos> {
   return cargarOt(dataSource.manager, id);
 }
 
-export function listar(q: OtsQueryDatos): ReturnType<typeof listarOts> {
-  return listarOts(dataSource.manager, q);
+// El neto de cada fila solo con `reportes.ver` (spec fase 7 §7).
+export function listar(actor: UsuarioSesion, q: OtsQueryDatos): ReturnType<typeof listarOts> {
+  return listarOts(dataSource.manager, q, actor.permisos.includes('reportes.ver'));
 }
 
 // Pantalla 10: los montos solo con `reportes.ver` (spec fase 6 §12, §25.10).

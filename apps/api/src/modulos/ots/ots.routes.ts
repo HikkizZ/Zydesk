@@ -75,7 +75,7 @@ export function crearRutasOts(): Router {
     permiso: 'sesion',
     query: OtsQuery,
     respuesta: Paginado,
-    handler: async ({ query }) => listar(query),
+    handler: async ({ query, actor }) => listar(actorRequerido(actor), query),
   });
 
   // Antes de '/api/ots/:id' para que "indicadores" y "exportar.xlsx" no se interpreten como id.

@@ -98,7 +98,7 @@ const aBreve = (p: PersonaFila | null): OtResumenDatos['responsable_tecnico'] =>
     ? null
     : { id: p.id, nombre: p.nombre, iniciales: iniciales(p.nombre), color_avatar: p.color_avatar };
 
-function aResumen(f: FilaResumen): OtResumenDatos {
+function aResumen(f: FilaResumen, verMontos: boolean): OtResumenDatos {
   return {
     id: f.id,
     numero: f.numero,
@@ -114,7 +114,7 @@ function aResumen(f: FilaResumen): OtResumenDatos {
     cliente: f.cliente,
     responsable_tecnico: aBreve(f.responsable_tecnico),
     aprobador: aBreve(f.aprobador),
-    neto: f.neto,
+    neto: verMontos ? f.neto : null,
     horas: f.horas,
     inicio: f.inicio,
     termino: f.termino,
@@ -173,9 +173,11 @@ const ORDENES: Record<OtsQueryDatos['orden'], string> = {
   termino: 'o.termino ASC NULLS LAST, o.id ASC',
 };
 
+// `neto` va solo si `verMontos` (`reportes.ver`, fase 7 §7); por defecto se oculta.
 export async function listarOts(
   m: Consulta,
   q: OtsQueryDatos,
+  verMontos = false,
 ): Promise<{ datos: OtResumenDatos[]; total: number; pagina: number; por_pagina: number }> {
   const { where, valores } = armarWhere(q);
   const [cuenta]: { total: number }[] = await m.query(
@@ -190,7 +192,11 @@ export async function listarOts(
     `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${ORDENES[q.orden]} LIMIT $${valores.length + 1} OFFSET $${valores.length + 2}`,
     [...valores, q.por_pagina, (q.pagina - 1) * q.por_pagina],
   );
-  return paginar(filas.map(aResumen), cuenta?.total ?? 0, q);
+  return paginar(
+    filas.map((f) => aResumen(f, verMontos)),
+    cuenta?.total ?? 0,
+    q,
+  );
 }
 
 // ---- Detalle ----
@@ -388,7 +394,7 @@ export async function cargarOt(m: EntityManager, id: number): Promise<OtSalidaDa
   }
 
   return {
-    ...aResumen(resumen),
+    ...aResumen(resumen, true),
     alcance: e.alcance,
     cliente_id: e.cliente_id,
     contacto: e.contacto,

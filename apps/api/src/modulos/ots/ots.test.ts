@@ -4,6 +4,7 @@ import {
   crearBolsa,
   crearCliente,
   crearContacto,
+  crearCotizacion,
   crearOt,
   crearTarea,
   crearTicket,
@@ -312,6 +313,28 @@ describe('GET /api/ots y GET /api/ots/:id', () => {
     const pag = await agente.get('/api/ots?por_pagina=2&pagina=2&orden=-creado_en');
     expect(pag.body.datos.map((o: { id: number }) => o.id)).toEqual([porFacturar.id, o218.id]);
     expect((await agente.get('/api/ots?orden=numero')).status).toBe(400);
+  });
+
+  it('7D: el neto de la lista solo con reportes.ver; el detalle lo conserva', async () => {
+    const t = await crearTicket();
+    const ot = await crearOt(t.id, { etapa: 'cerrada' });
+    await crearOt(t.id, { tipo: 'interna', etapa: 'en_ejecucion' });
+    await crearCotizacion(ot.id, {
+      estado: 'aprobada',
+      lineas: [{ cantidad: 1, precio_unitario: 475_000 }],
+    });
+    const netos = (r: { body: { datos: { neto: number | null }[] } }) =>
+      r.body.datos.map((o) => o.neto);
+    const tecnico = await como('tecnico');
+    const lista = await tecnico.agente.get('/api/ots');
+    expect(lista.status).toBe(200);
+    expect(lista.body.datos).toHaveLength(2);
+    expect(netos(lista)).toEqual([null, null]);
+    const lectura = await (await como('lectura')).agente.get('/api/ots');
+    expect(netos(lectura)).toContain(475_000);
+    const detalle = await tecnico.agente.get(`/api/ots/${ot.id}`);
+    expect(detalle.body.neto).toBe(475_000);
+    expect(detalle.body.cotizacion.neto).toBe(475_000);
   });
 
   it('vencida: término pasado y no final', async () => {

@@ -454,4 +454,22 @@ describe('prueba 17: exportar para facturación e indicadores', () => {
       expect(r.body.por_facturar, rol).toEqual({ n: 1, neto: 475_000 });
     }
   });
+
+  it('prueba 10 (fase 7): neto de la lista null para tecnico, numérico con reportes.ver; exportar sigue 403 sin ots.facturar', async () => {
+    const t = await crearTicket();
+    const ot = await crearOt(t.id, { etapa: 'cerrada' });
+    await crearCotizacion(ot.id, {
+      estado: 'aprobada',
+      lineas: [{ cantidad: 1, precio_unitario: 475_000 }],
+    });
+    const tecnico = await (await como('tecnico')).agente.get('/api/ots');
+    expect(tecnico.body.datos.map((o: { neto: number | null }) => o.neto)).toEqual([null]);
+    for (const rol of ['lectura', 'coordinacion', 'admin'] as const) {
+      const r = await (await como(rol)).agente.get('/api/ots');
+      expect(r.body.datos[0].neto, rol).toBe(475_000);
+    }
+    expect((await (await como('lectura')).agente.get('/api/ots/exportar.xlsx')).status).toBe(403);
+    const detalle = await (await como('tecnico')).agente.get(`/api/ots/${ot.id}`);
+    expect(detalle.body.cotizacion.neto).toBe(475_000);
+  });
 });
