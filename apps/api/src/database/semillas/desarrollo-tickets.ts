@@ -27,6 +27,7 @@ interface TicketSemilla {
   archivado?: number; // días atrás
   motivo?: string;
   duplicado_de?: number;
+  horas_estimadas?: number; // estimación del ticket (carga del reporte; spec fase 7 §10.1)
   correo?: boolean;
   mensajes: Mensaje[];
   tareas?: [titulo: string, responsable: string][]; // abiertas, sin fecha
@@ -47,19 +48,19 @@ const TICKETS: TicketSemilla[] = [
   { numero: 1012, asunto: 'Cableado estructurado oficina Temuco', cliente: 'Transportes Austral', estado: 'resuelto', prioridad: 'media', responsables: ['treyes'], vence: -20, categoria: 'Redes y VPN', creado: 28, cerrado: 20, archivado: 13, mensajes: [['seguimiento', 'treyes', 'Cableado terminado y certificado en los 14 puntos.']] },
   { numero: 1024, asunto: 'Restablecer acceso a portal de proveedores', cliente: 'Clínica Los Robles', estado: 'resuelto', prioridad: 'alta', responsables: ['imorales', 'jperez'], vence: -2, categoria: 'Accesos y usuarios', creado: 6, cerrado: 2, correo: true, mensajes: [['seguimiento', 'imorales', 'Se restableció la contraseña y se verificó el ingreso con el usuario.'], ['nota_interna', 'jperez', 'El portal bloquea tras 3 intentos; avisar al cliente.']] },
   { numero: 1026, asunto: 'Impresora del piso 3 atasca papel', cliente: 'Oficina central', estado: 'resuelto', prioridad: 'media', responsables: ['sdiaz'], vence: -2, categoria: 'Hardware y equipos', creado: 5, cerrado: 1, mensajes: [['seguimiento', 'sdiaz', 'Se limpió el rodillo de arrastre y se cambió la bandeja.']] },
-  { numero: 1028, asunto: 'Revisión de cámaras de seguridad acceso norte', cliente: 'Viña Santa Clara', estado: 'en_espera', espera: { de: 'repuesto', detalle: 'Fuente de poder del DVR' }, prioridad: 'alta', responsables: ['treyes'], vence: 7, categoria: 'Seguridad y cámaras', creado: 7, correo: true, mensajes: [['seguimiento', 'treyes', 'Dos cámaras sin señal; se pidió la fuente de poder del DVR.'], ['nota_interna', 'treyes', 'Llega en 5 días hábiles según el proveedor.']] },
-  { numero: 1030, asunto: 'Licencias de software de diseño por renovar', cliente: 'Marketing', estado: 'en_espera', espera: { de: 'proveedor', detalle: 'Cotización de renovación' }, prioridad: 'baja', responsables: ['nvega'], vence: 9, categoria: 'Accesos y usuarios', creado: 9, mensajes: [] },
-  { numero: 1033, asunto: 'Renovación de plataforma de respaldo', cliente: 'Constructora Andes', estado: 'en_espera', espera: { de: 'aprobacion', detalle: 'Aprobación del cliente' }, prioridad: 'media', responsables: ['fcastro'], vence: 6, categoria: 'Hardware y equipos', creado: 8, mensajes: [['seguimiento', 'fcastro', 'Se envió la propuesta de renovación; esperamos la aprobación.']] },
-  { numero: 1035, asunto: 'Configurar respaldo semanal en NAS', cliente: 'Clínica Los Robles', estado: 'en_curso', prioridad: 'media', responsables: ['imorales'], vence: 6, categoria: 'Hardware y equipos', creado: 6, mensajes: [['seguimiento', 'imorales', 'NAS configurado; falta programar la tarea del domingo.'], ['nota_interna', 'imorales', 'Verificar espacio disponible antes de activar la retención.']] },
+  { numero: 1028, asunto: 'Revisión de cámaras de seguridad acceso norte', cliente: 'Viña Santa Clara', estado: 'en_espera', espera: { de: 'repuesto', detalle: 'Fuente de poder del DVR' }, prioridad: 'alta', responsables: ['treyes'], vence: 7, categoria: 'Seguridad y cámaras', creado: 7, correo: true, horas_estimadas: 6, mensajes: [['seguimiento', 'treyes', 'Dos cámaras sin señal; se pidió la fuente de poder del DVR.'], ['nota_interna', 'treyes', 'Llega en 5 días hábiles según el proveedor.']] },
+  { numero: 1030, asunto: 'Licencias de software de diseño por renovar', cliente: 'Marketing', estado: 'en_espera', espera: { de: 'proveedor', detalle: 'Cotización de renovación' }, prioridad: 'baja', responsables: ['nvega'], vence: 9, categoria: 'Accesos y usuarios', creado: 9, horas_estimadas: 2, mensajes: [] },
+  { numero: 1033, asunto: 'Renovación de plataforma de respaldo', cliente: 'Constructora Andes', estado: 'en_espera', espera: { de: 'aprobacion', detalle: 'Aprobación del cliente' }, prioridad: 'media', responsables: ['fcastro'], vence: 6, categoria: 'Hardware y equipos', creado: 8, horas_estimadas: 3, mensajes: [['seguimiento', 'fcastro', 'Se envió la propuesta de renovación; esperamos la aprobación.']] },
+  { numero: 1035, asunto: 'Configurar respaldo semanal en NAS', cliente: 'Clínica Los Robles', estado: 'en_curso', prioridad: 'media', responsables: ['imorales'], vence: 6, categoria: 'Hardware y equipos', creado: 6, horas_estimadas: 4, mensajes: [['seguimiento', 'imorales', 'NAS configurado; falta programar la tarea del domingo.'], ['nota_interna', 'imorales', 'Verificar espacio disponible antes de activar la retención.']] },
   { numero: 1037, asunto: 'Reemplazo de switch en bodega central', cliente: 'Operaciones', estado: 'en_curso', prioridad: 'media', responsables: ['vsoto'], vence: 1, categoria: 'Redes y VPN', creado: 4, mensajes: [['seguimiento', 'vsoto', 'Switch nuevo en sitio; el cambio se hará fuera de horario.']] },
-  { numero: 1040, asunto: 'Caída intermitente de VPN para equipo en terreno', cliente: 'Transportes Austral', estado: 'en_curso', prioridad: 'urgente', responsables: ['dmunoz', 'treyes'], vence: 0, categoria: 'Redes y VPN', creado: 3, correo: true, mensajes: [['seguimiento', 'dmunoz', 'Reproduje la caída: el túnel se reinicia cada 30 minutos.'], ['nota_interna', 'treyes', 'Posible problema con la renegociación de claves del router.'], ['seguimiento', 'dmunoz', 'Se ajustó el tiempo de vida de la clave; monitoreando.'], ['nota_interna', 'dmunoz', 'Si persiste, cambiar el router de la bodega.']] },
+  { numero: 1040, asunto: 'Caída intermitente de VPN para equipo en terreno', cliente: 'Transportes Austral', estado: 'en_curso', prioridad: 'urgente', responsables: ['dmunoz', 'treyes'], vence: 0, categoria: 'Redes y VPN', creado: 3, correo: true, horas_estimadas: 4, mensajes: [['seguimiento', 'dmunoz', 'Reproduje la caída: el túnel se reinicia cada 30 minutos.'], ['nota_interna', 'treyes', 'Posible problema con la renegociación de claves del router.'], ['seguimiento', 'dmunoz', 'Se ajustó el tiempo de vida de la clave; monitoreando.'], ['nota_interna', 'dmunoz', 'Si persiste, cambiar el router de la bodega.']] },
   { numero: 1042, asunto: 'Migración de correo a nuevo dominio', cliente: 'Constructora Andes', estado: 'en_curso', prioridad: 'alta', responsables: ['crojas', 'mfuentes'], vence: 3, categoria: 'Correo', creado: 5, mensajes: [['seguimiento', 'crojas', 'Dominio nuevo validado; empezamos por los buzones de gerencia.'], ['nota_interna', 'mfuentes', 'Hay 3 alias que hay que recrear a mano.'], ['seguimiento', 'mfuentes', 'Migrados 12 de 30 buzones.']] },
   { numero: 1044, asunto: 'VPN no conecta desde bodega', cliente: 'Transportes Austral', estado: 'duplicado', duplicado_de: 1040, prioridad: 'media', responsables: ['dmunoz'], vence: -3, categoria: 'Redes y VPN', creado: 4, cerrado: 3, mensajes: [] },
   { numero: 1047, asunto: 'Oferta de proveedor reenviada al soporte', cliente: null, estado: 'descartado', motivo: 'No corresponde: publicidad de proveedor', prioridad: 'baja', responsables: ['jperez'], vence: -1, categoria: 'Correo', creado: 3, cerrado: 1, correo: true, mensajes: [] },
   { numero: 1048, asunto: 'Error al emitir facturas desde el ERP', cliente: 'Viña Santa Clara', estado: 'en_curso', prioridad: 'alta', responsables: ['sdiaz', 'crojas'], vence: 0, categoria: 'ERP / Facturación', creado: 2, correo: true, mensajes: [] },
-  { numero: 1049, asunto: 'Alta de usuario para nueva contadora', cliente: 'Administración y Finanzas', estado: 'nuevo', prioridad: 'baja', responsables: ['jperez'], vence: 5, categoria: 'Accesos y usuarios', creado: 2, mensajes: [] },
+  { numero: 1049, asunto: 'Alta de usuario para nueva contadora', cliente: 'Administración y Finanzas', estado: 'nuevo', prioridad: 'baja', responsables: ['jperez'], vence: 5, categoria: 'Accesos y usuarios', creado: 2, horas_estimadas: 1, mensajes: [] },
   { numero: 1050, asunto: 'Solicitud de cotización: mantención preventiva de 12 equipos', cliente: 'Clínica Los Robles', estado: 'nuevo', prioridad: 'media', responsables: [], vence: 2, categoria: 'Hardware y equipos', creado: 1, correo: true, mensajes: [] },
-  { numero: 1051, asunto: 'Servidor de archivos no responde en sucursal Temuco', cliente: 'Transportes Austral', estado: 'nuevo', prioridad: 'urgente', responsables: ['dmunoz'], vence: 0, categoria: 'Redes y VPN', creado: 0, correo: true, mensajes: [], tareas: [['Revisar el estado del servidor de archivos en la sucursal', 'dmunoz']] },
+  { numero: 1051, asunto: 'Servidor de archivos no responde en sucursal Temuco', cliente: 'Transportes Austral', estado: 'nuevo', prioridad: 'urgente', responsables: ['dmunoz'], vence: 0, categoria: 'Redes y VPN', creado: 0, correo: true, horas_estimadas: 3, mensajes: [], tareas: [['Revisar el estado del servidor de archivos en la sucursal', 'dmunoz']] },
   { numero: 1053, asunto: 'Reemplazo de UPS en sala de servidores', cliente: 'Operaciones', estado: 'en_curso', prioridad: 'media', responsables: ['vsoto'], vence: 4, categoria: 'Hardware y equipos', creado: 2, mensajes: [] },
 ];
 
@@ -201,9 +202,9 @@ async function sembrarTicket(
     const [{ id }] = await tx.query(
       `INSERT INTO ticket (numero, codigo, asunto, descripcion, cliente_id, solicitante_nombre, solicitante_correo,
                            origen, prioridad, categoria_id, estado, espera_de, espera_detalle, motivo_cierre,
-                           duplicado_de_id, fecha_limite, primera_respuesta_en, creado_por, creado_en,
-                           actualizado_en, cerrado_en, archivado_en)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $19, $20, $21)
+                           duplicado_de_id, fecha_limite, primera_respuesta_en, horas_estimadas, creado_por,
+                           creado_en, actualizado_en, cerrado_en, archivado_en)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $20, $21, $22)
        RETURNING id`,
       [
         t.numero,
@@ -223,6 +224,7 @@ async function sembrarTicket(
         duplicado_de_id,
         fecha_limite,
         hayRespuesta ? new Date(creado_en.getTime() + 3_600_000) : null,
+        t.horas_estimadas ?? null,
         camila,
         creado_en,
         cerrado_en,
