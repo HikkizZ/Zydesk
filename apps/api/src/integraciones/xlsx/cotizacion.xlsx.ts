@@ -1,4 +1,10 @@
-import { decimalesDe, formatearCLP, formatearFecha, redondear } from '@zydesk/shared';
+import {
+  decimalesDe,
+  ETIQUETA_FUENTE_UF,
+  formatearFecha,
+  formatearValorUf,
+  redondear,
+} from '@zydesk/shared';
 import ExcelJS from 'exceljs';
 import type { CotizacionSalidaDatos } from '../../modulos/cotizaciones/cotizaciones.tipos.js';
 import type { MarcaDocumento } from '../documentos.js';
@@ -60,9 +66,11 @@ export async function generarXlsx(
   ws.getCell('B5').value = `${cot.ot.codigo} · ${cot.ot.titulo}`;
   etiqueta('A6', 'Ticket');
   ws.getCell('B6').value = cot.ot.ticket.codigo;
-  if (cot.moneda === 'UF' && cot.valor_uf !== null) {
+  if (cot.valor_uf !== null) {
+    // También en CLP: documenta el tipo de cambio con que se convirtieron las tarifas (spec 8b §5.6)
+    const fechaUf = formatearFecha(aFecha(cot.valor_uf_fecha ?? cot.fecha_emision));
     ws.getCell('D6').value =
-      `Valor UF al ${formatearFecha(aFecha(cot.fecha_emision))}: ${formatearCLP(cot.valor_uf)}`;
+      `Valor UF del ${fechaUf} (${ETIQUETA_FUENTE_UF[cot.valor_uf_fuente ?? 'manual']}): ${formatearValorUf(cot.valor_uf)}`;
   }
   etiqueta('A7', 'Aplica IVA');
   ws.getCell('B7').value = cot.aplica_iva;

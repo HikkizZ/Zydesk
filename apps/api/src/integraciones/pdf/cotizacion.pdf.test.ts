@@ -1,7 +1,8 @@
+import { formatearCLP } from '@zydesk/shared';
 import zlib from 'node:zlib';
 import { describe, expect, it } from 'vitest';
 import { cotizacionDePrueba } from '../../../test/cotizacion-salida.js';
-import { generarPdf } from './cotizacion.pdf.js';
+import { generarPdf, leyendaEquivalencia } from './cotizacion.pdf.js';
 
 const marca = { nombre_app: 'Zydesk' };
 
@@ -99,5 +100,23 @@ describe('generarPdf (prueba 17)', () => {
       },
     });
     expect(svg.subarray(0, 5).toString('latin1')).toBe('%PDF-');
+  });
+
+  it('la equivalencia en pesos lleva fecha, fuente y valor UF con dos decimales solo en UF', () => {
+    const uf = cotizacionDePrueba({
+      moneda: 'UF',
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    });
+    expect(leyendaEquivalencia(uf)).toBe(
+      `Equivale a ${formatearCLP(uf.total_clp!)} al valor UF del 5 oct 2026 (Boostr): $41.098,15`,
+    );
+    const clp = cotizacionDePrueba({
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    });
+    expect(leyendaEquivalencia(clp)).toBeNull();
   });
 });

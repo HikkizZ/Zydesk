@@ -1,4 +1,10 @@
-import { formatearCLP, formatearFecha, formatearMonto } from '@zydesk/shared';
+import {
+  ETIQUETA_FUENTE_UF,
+  formatearCLP,
+  formatearFecha,
+  formatearMonto,
+  formatearValorUf,
+} from '@zydesk/shared';
 import PdfPrinter from 'pdfmake';
 import vfs from 'pdfmake/build/vfs_fonts.js';
 import type { Content, ContentTable, TDocumentDefinitions } from 'pdfmake/interfaces.js';
@@ -30,6 +36,13 @@ const pct = (n: number): string => String(n).replace('.', ',');
 
 function datos(rotulo: string, valor: string): Content {
   return { text: [{ text: `${rotulo}: `, color: GRIS }, valor], margin: [0, 1, 0, 1] };
+}
+
+// Solo en UF (en una cotización en pesos el cliente no necesita el tipo de cambio; spec 8b §5.6).
+export function leyendaEquivalencia(cot: CotizacionSalidaDatos): string | null {
+  if (cot.moneda !== 'UF' || cot.total_clp === null || cot.valor_uf === null) return null;
+  const fuente = ETIQUETA_FUENTE_UF[cot.valor_uf_fuente ?? 'manual'];
+  return `Equivale a ${formatearCLP(cot.total_clp)} al valor UF del ${fecha(cot.valor_uf_fecha ?? cot.fecha_emision)} (${fuente}): ${formatearValorUf(cot.valor_uf)}`;
 }
 
 // PDF de la cotización (spec fase 4 §7.2). Nunca incluye `nota_interna`. El logo solo si es PNG o JPEG.
@@ -142,9 +155,10 @@ export function generarPdf(cot: CotizacionSalidaDatos, marca: MarcaDocumento): P
   };
 
   const contenido: Content[] = [...encabezado, bloqueDatos, tabla, totales];
-  if (cot.moneda === 'UF' && cot.total_clp !== null) {
+  const equivale = leyendaEquivalencia(cot);
+  if (equivale !== null) {
     contenido.push({
-      text: `Equivale a ${formatearCLP(cot.total_clp)} al valor UF del ${fecha(cot.fecha_emision)}`,
+      text: equivale,
       alignment: 'right',
       color: GRIS,
       fontSize: 8,

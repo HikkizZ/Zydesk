@@ -349,7 +349,7 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
     expect(evs[1].datos).toMatchObject({ cotizacion_id: cb.id, n: 1, origen: 'tareas' });
   });
 
-  it('tareas sin horas → 400; cotización en UF → 400; no editable → 409', async () => {
+  it('tareas sin horas → 400; cotización en UF con tarifa en pesos → convierte; no editable → 409', async () => {
     await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const { agente } = await como();
     const { ot } = await otFacturable();
@@ -367,9 +367,11 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
       `UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000, valor_uf_fuente = 'manual' WHERE id = $1`,
       [c.id],
     );
+    // ADR 0030 (sustituye 0025.24): ya no hay 400 `moneda`; 38.000 CLP / 38.000 = 1 UF por hora
     const uf = await agente.post(`/api/cotizaciones/${c.id}/importar-horas`).send({});
-    expect(uf.status).toBe(400);
-    expect(uf.body.error.detalles).toHaveProperty('moneda');
+    expect(uf.status).toBe(200);
+    expect(uf.body.lineas).toHaveLength(1);
+    expect(uf.body.lineas[0]).toMatchObject({ cantidad: 2, precio_unitario: 1 });
     const enviada = await otFacturable('cotizada');
     const ce = await crearCotizacion(enviada.ot.id, { estado: 'enviada' });
     expect((await agente.post(`/api/cotizaciones/${ce.id}/importar-horas`).send({})).status).toBe(
@@ -466,7 +468,7 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
     expect((await agente.get(`/api/cotizaciones/${c.id}`)).body.lineas).toHaveLength(0);
   });
 
-  it('sin horas registradas → 400 origen; UF → 400 moneda; sin tarifa normal → 409; las otras fuentes no cambian', async () => {
+  it('sin horas registradas → 400 origen; UF → convierte; sin tarifa normal → 409; las otras fuentes no cambian', async () => {
     await fijarTarifas({
       hora_normal: { moneda: 'CLP', valor: 38000 },
       hora_extendida: { moneda: 'CLP', valor: 45000 },
@@ -484,8 +486,10 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
       [c.id],
     );
     const uf = await importar(agente, c.id);
-    expect(uf.status).toBe(400);
-    expect(uf.body.error.detalles).toHaveProperty('moneda');
+    expect(uf.status).toBe(200);
+    expect(uf.body.lineas).toHaveLength(1);
+    expect(uf.body.lineas[0]).toMatchObject({ cantidad: 1, precio_unitario: 1 });
+    await dataSource.query(`DELETE FROM linea_cotizacion WHERE cotizacion_id = $1`, [c.id]);
     await dataSource.query(
       `UPDATE cotizacion SET moneda = 'CLP', valor_uf = NULL, valor_uf_fuente = NULL WHERE id = $1`,
       [c.id],
