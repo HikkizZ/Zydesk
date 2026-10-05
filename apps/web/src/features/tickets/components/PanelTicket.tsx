@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { ETIQUETA_PRIORIDAD, PRIORIDADES, type Prioridad } from '@zydesk/shared';
+import { ChevronDown } from 'lucide-react';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -39,10 +40,12 @@ function Fila({
 }) {
   return (
     <div className="flex flex-col gap-1 py-3">
-      <div className="flex items-center justify-between gap-2">
-        <dt className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">{etiqueta}</dt>
+      <dt className="flex items-center justify-between gap-2">
+        <span className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">
+          {etiqueta}
+        </span>
         {acciones}
-      </div>
+      </dt>
       <dd className="text-sm">{children}</dd>
     </div>
   );
@@ -65,11 +68,13 @@ export function PanelTicket({
   puedeEditar,
   onCambiarEstado,
   onConvertir,
+  plegable = false,
 }: {
   ticket: TicketDatos;
   puedeEditar: boolean;
   onCambiarEstado: () => void;
   onConvertir: () => void;
+  plegable?: boolean;
 }) {
   const yo = useYo();
   const queryClient = useQueryClient();
@@ -93,8 +98,8 @@ export function PanelTicket({
     onError: (err) => toast.error(mensajeDe(err)),
   });
 
-  return (
-    <aside aria-label="Datos del ticket" className="flex flex-col gap-4">
+  const contenido = (
+    <>
       <section className="rounded-lg border border-borde bg-superficie px-4">
         <dl className="divide-y">
           <Fila
@@ -204,7 +209,7 @@ export function PanelTicket({
             {ticket.cliente ? (
               <Link
                 to={`/clientes/${ticket.cliente.id}`}
-                className="text-acento underline underline-offset-2"
+                className="inline-flex min-h-11 items-center text-acento underline underline-offset-2 lg:min-h-0"
               >
                 {ticket.cliente.nombre}
               </Link>
@@ -285,6 +290,33 @@ export function PanelTicket({
           </div>
         ) : null}
       </section>
+    </>
+  );
+
+  return (
+    <aside aria-label="Datos del ticket" id="datos" className="flex scroll-mt-4 flex-col gap-4">
+      {plegable ? (
+        <details className="group rounded-lg border border-borde bg-superficie">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 font-titulo text-base font-semibold">
+            <span className="shrink-0">Datos del ticket</span>
+            <span aria-hidden="true">·</span>
+            <span className="min-w-0 truncate">{ticket.cliente?.nombre ?? 'Sin cliente'}</span>
+            <span aria-hidden="true">·</span>
+            {ticket.responsables.length === 0 ? (
+              <span className="shrink-0 text-alta">Sin responsable</span>
+            ) : (
+              <Avatares personas={ticket.responsables} />
+            )}
+            <ChevronDown
+              aria-hidden="true"
+              className="ml-auto size-4 shrink-0 group-open:rotate-180"
+            />
+          </summary>
+          <div className="flex flex-col gap-4 border-t border-borde p-3">{contenido}</div>
+        </details>
+      ) : (
+        contenido
+      )}
 
       <DialogoResponsables
         ticket={ticket}

@@ -3,6 +3,7 @@ import { formatearFecha } from '@zydesk/shared';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { TituloPagina } from '@/app/TituloPagina';
+import { AtajosSecciones } from '@/components/dominio/AtajosSecciones';
 import { Cargando } from '@/components/dominio/Cargando';
 import { Codigo } from '@/components/dominio/Codigo';
 import { DialogoCambiarEstado } from '@/components/dominio/DialogoCambiarEstado';
@@ -27,6 +28,7 @@ import {
   type TipoActividad,
 } from '@/features/tickets/api';
 import { ErrorApi } from '@/lib/api';
+import { useEsMovil } from '@/lib/useMediaQuery';
 import { ActividadLista } from '../components/ActividadLista';
 import { BotonConvertir } from '../components/BotonConvertir';
 import { CorreoOriginal } from '../components/CorreoOriginal';
@@ -48,11 +50,22 @@ const ETIQUETA_TIPO: Record<TipoActividad, string> = {
 };
 const SIETE_DIAS = 7 * 24 * 60 * 60 * 1000;
 
-function Tarjeta({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Tarjeta({
+  titulo,
+  id,
+  className,
+  children,
+}: {
+  titulo: string;
+  id: string;
+  className: string;
+  children: ReactNode;
+}) {
   return (
     <section
+      id={id}
       aria-label={titulo}
-      className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
+      className={`scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 ${className}`}
     >
       <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
       {children}
@@ -79,6 +92,7 @@ export function TicketDetallePage() {
   const id = Number(idParam);
   const valido = Number.isInteger(id) && id > 0;
   const puedeEditar = usePermiso('tickets.editar');
+  const esMovil = useEsMovil();
   const [params, setParams] = useSearchParams();
   const pedido = params.get('actividad');
   const tipo: TipoActividad = TIPOS.find((t) => t === pedido) ?? 'todo';
@@ -204,12 +218,25 @@ export function TicketDetallePage() {
         </div>
       </header>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-        <div className="flex min-w-0 flex-col gap-4">
+      <AtajosSecciones
+        etiqueta="En este ticket"
+        secciones={[
+          { id: 'datos', etiqueta: 'Datos' },
+          { id: 'descripcion', etiqueta: 'Descripción' },
+          { id: 'tareas', etiqueta: 'Tareas' },
+          { id: 'actividad', etiqueta: 'Actividad' },
+          ...(t.correo ? [{ id: 'correo', etiqueta: 'Correo' }] : []),
+          { id: 'archivos', etiqueta: 'Archivos' },
+        ]}
+      />
+
+      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+        {/* Bajo lg, las secciones son hijas directas del grid (display: contents) para poder reordenarlas con `order`; el DOM no cambia. */}
+        <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
           {cerrado ? (
             <div
               role="status"
-              className="flex flex-wrap items-center gap-3 rounded-lg border border-borde bg-superficie-suave px-4 py-3 text-sm"
+              className="order-1 flex flex-wrap items-center gap-3 rounded-lg border border-borde bg-superficie-suave px-4 py-3 text-sm lg:order-none"
             >
               <span>
                 {t.archivado_en
@@ -233,7 +260,7 @@ export function TicketDetallePage() {
             </div>
           ) : null}
 
-          <Tarjeta titulo="Descripción">
+          <Tarjeta titulo="Descripción" id="descripcion" className="order-3 lg:order-none">
             {t.descripcion ? (
               <p className="text-sm break-words whitespace-pre-wrap">{t.descripcion}</p>
             ) : (
@@ -242,25 +269,27 @@ export function TicketDetallePage() {
           </Tarjeta>
 
           {t.correo ? (
-            <Tarjeta titulo="Correo original">
+            <Tarjeta titulo="Correo original" id="correo" className="order-7 lg:order-none">
               <CorreoOriginal correo={t.correo} />
             </Tarjeta>
           ) : null}
 
-          <Tarjeta titulo="Archivos del ticket">
+          <Tarjeta titulo="Archivos del ticket" id="archivos" className="order-8 lg:order-none">
             <GaleriaArchivos archivos={archivos} />
           </Tarjeta>
 
           <section
+            id="tareas"
             aria-label="Tareas"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
+            className="order-4 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 lg:order-none"
           >
             <ListaTareas ticketId={t.id} tareas={t.tareas} cerrado={cerrado} />
           </section>
 
           <section
+            id="actividad"
             aria-label="Actividad"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
+            className="order-5 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 lg:order-none"
           >
             <Tabs value={tipo} onValueChange={cambiarTipo}>
               <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">
@@ -284,18 +313,21 @@ export function TicketDetallePage() {
           </section>
 
           {puedeEditar ? (
-            <div className="sticky bottom-14 z-[5] -mx-6 border-t bg-fondo px-6 py-3 shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.25)] lg:static lg:mx-0 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+            <div className="order-6 sticky bottom-14 z-[5] -mx-6 border-t bg-fondo px-6 py-3 shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.25)] lg:static lg:order-none lg:mx-0 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
               <Redactor ticketId={t.id} />
             </div>
           ) : null}
         </div>
 
-        <PanelTicket
-          ticket={t}
-          puedeEditar={puedeEditar}
-          onCambiarEstado={() => setEstadoAbierto(true)}
-          onConvertir={() => setConvirtiendo(true)}
-        />
+        <div className="order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
+          <PanelTicket
+            plegable={esMovil}
+            ticket={t}
+            puedeEditar={puedeEditar}
+            onCambiarEstado={() => setEstadoAbierto(true)}
+            onConvertir={() => setConvirtiendo(true)}
+          />
+        </div>
       </div>
 
       <DialogoCambiarEstado
