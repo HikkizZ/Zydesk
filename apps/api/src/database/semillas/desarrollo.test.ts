@@ -27,7 +27,7 @@ describe('sembrarDesarrollo', () => {
     expect(await contar('cliente', 'es_interno')).toBe(4);
     expect(await contar('categoria')).toBe(6);
     expect(await contar('contrato_bolsa')).toBe(1);
-    expect(await contar('tarifa_cliente')).toBe(2);
+    expect(await contar('tarifa_cliente')).toBe(4);
     expect(await contar('contacto')).toBe(4);
   });
 
@@ -186,6 +186,39 @@ describe('sembrarDesarrollo', () => {
     const det = await agente.get(`/api/ots/${o215.id}`);
     expect(det.body.costo_interno.tarifa).toBe(18000);
     expect(det.body.costo_interno.monto).toBe(det.body.horas.registradas * 18000);
+
+    expect(await contar('cotizacion', 'valor_uf IS NOT NULL')).toBe(0);
+    const tarifas = await agente.get('/api/config/tarifas');
+    expect(tarifas.body.hora_normal).toEqual({ moneda: 'CLP', valor: 38000 });
+    expect(tarifas.body.costo_interno).toBe(18000);
+  });
+
+  it('siembra el indicador UF de hoy (1 fila, fuente semilla) y las tarifas en UF de Transportes Austral', async () => {
+    await sembrarDesarrollo(CLAVE);
+    await sembrarDesarrollo(CLAVE);
+    expect(await contar('indicador_uf')).toBe(1);
+    expect(await contar('indicador_uf', `fuente = 'semilla' AND fecha = '${hoy()}'`)).toBe(1);
+    expect(await contar('tarifa_cliente', "moneda = 'CLP'")).toBe(2);
+    expect(await contar('tarifa_cliente', "moneda = 'UF'")).toBe(2);
+
+    const agente = request
+      .agent(crearApp({ comprobarBd: async () => true }))
+      .set('X-Requested-With', 'Zydesk');
+    await agente
+      .post('/api/auth/ingresar')
+      .send({ correo: 'hikki@zydesk.local', contrasena: CLAVE });
+    const uf = await agente.get('/api/indicadores/uf');
+    expect(uf.status).toBe(200);
+    expect(uf.body).toMatchObject({ valor: 41098.15, fuente: 'semilla', desactualizado: false });
+    const [a] = await dataSource.query(
+      `SELECT id FROM cliente WHERE nombre = 'Transportes Austral'`,
+    );
+    const ficha = await agente.get(`/api/clientes/${a.id}`);
+    expect(ficha.status).toBe(200);
+    expect(ficha.body.tarifas).toEqual([
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
+      { concepto: 'hora_extendida', moneda: 'UF', valor: 1 },
+    ]);
   });
 
   it('siembra la planilla de sdiaz con las cifras del diseño, sin fechas futuras y sin duplicar ni borrar', async () => {

@@ -1,6 +1,7 @@
 import { politicaContrasena, type Plazo } from '@zydesk/shared';
 import { dataSource } from '../../config/db.js';
 import { hashear } from '../../core/auth/contrasena.js';
+import { hoyEnSantiago } from '../../core/fechas.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import {
   crearBolsa,
@@ -246,6 +247,32 @@ async function sembrarClientes(): Promise<void> {
   }
 }
 
+// Tarifa en UF de un cliente externo (spec fase 8b §10.2): solo si todavía no tiene tarifas.
+async function sembrarTarifasAustral(): Promise<void> {
+  const [austral] = await dataSource.query(`SELECT id FROM cliente WHERE nombre = $1`, [
+    'Transportes Austral',
+  ]);
+  if (!austral) return;
+  if (
+    (await dataSource.query(`SELECT 1 FROM tarifa_cliente WHERE cliente_id = $1`, [austral.id]))
+      .length > 0
+  )
+    return;
+  await reemplazarTarifas(austral.id, [
+    { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
+    { concepto: 'hora_extendida', moneda: 'UF', valor: 1 },
+  ]);
+}
+
+// UF de hoy ficticia (valor verificado el 2026-10-05); nunca en `sembrarBase` (corre en producción).
+async function sembrarIndicadorUf(): Promise<void> {
+  await dataSource.query(
+    `INSERT INTO indicador_uf (fecha, valor, fuente) VALUES ($1, 41098.15, 'semilla')
+       ON CONFLICT (fecha) DO NOTHING`,
+    [hoyEnSantiago()],
+  );
+}
+
 // Tarifas del diseño (spec fase 4 §14): solo si la clave sigue con los valores de la semilla base.
 const TARIFAS_BASE = {
   hora_normal: null,
@@ -283,6 +310,8 @@ export async function sembrarDesarrollo(contrasena: string | undefined): Promise
   await sembrarCategorias(personas);
   await sembrarClientes();
   await sembrarTickets(personas);
+  await sembrarTarifasAustral();
+  await sembrarIndicadorUf();
   await sembrarTarifas(); // antes de las OT: las cotizaciones toman de ahí IVA, validez y condiciones
   await sembrarPlantillas();
   await sembrarOts(personas);
