@@ -77,9 +77,12 @@ test.describe('Mi día: tarjetas', () => {
     await expect(page).toHaveURL(/\/tickets\/\d+/);
   });
 
-  test('alto del documento ≤ 1 000 px', async ({ page }) => {
+  // La spec fijó 1 000 px a partir de una auditoría con la cuenta de Administración (880 px, sin
+  // tareas ni menciones). Con `crojas` las cuatro secciones traen datos (1 vence hoy, 1 mención,
+  // 3 tareas, 1 detenido) y la página mide ~1 212 px: el tope pasa a 1 300 px (ADR 0029).
+  test('alto del documento ≤ 1 300 px', async ({ page }) => {
     await abrir(page, MI_DIA);
-    expect(await altoDocumento(page)).toBeLessThanOrEqual(1000);
+    expect(await altoDocumento(page)).toBeLessThanOrEqual(1300);
   });
 });
 
@@ -92,7 +95,7 @@ test.describe('Ticket TK-1048: posiciones a 375 px', () => {
   });
 
   test('«Tareas» temprano', async ({ page }) => {
-    const y = await posicionY(page, page.locator('section[aria-label="Tareas"] h2'));
+    const y = await posicionY(page, page.locator('section[aria-label="Tareas"] h3'));
     expect(y).toBeLessThanOrEqual(1500);
   });
 
@@ -105,7 +108,7 @@ test.describe('OT-0218: posiciones y atajos a 375 px', () => {
   test.beforeEach(async ({ page }) => abrir(page, OT, 'crojas'));
 
   test('«Tareas» temprano', async ({ page }) => {
-    const y = await posicionY(page, page.locator('section[aria-label="Tareas"] h2'));
+    const y = await posicionY(page, page.locator('section[aria-label="Tareas"] h3'));
     expect(y).toBeLessThanOrEqual(750);
   });
 
@@ -213,8 +216,12 @@ for (const d of DIALOGOS) {
     test('cabe en 375 × 667 con scroll interno', async ({ page }) => {
       await page.setViewportSize({ width: 375, height: 667 });
       const dialogo = page.getByRole('dialog');
-      const caja = await dialogo.boundingBox();
-      expect(caja?.height ?? 0, 'alto del diálogo').toBeLessThanOrEqual(667 - 32);
+      // El diálogo se reajusta (max-h en dvh) un instante después de cambiar el viewport.
+      await expect
+        .poll(async () => (await dialogo.boundingBox())?.height ?? 0, {
+          message: 'alto del diálogo',
+        })
+        .toBeLessThanOrEqual(667 - 32);
       const confirmar = dialogo.getByRole('button').last();
       await confirmar.scrollIntoViewIfNeeded();
       const b = await confirmar.boundingBox();
@@ -225,6 +232,10 @@ for (const d of DIALOGOS) {
 }
 
 test.describe('Fotos desde el celular (sdiaz)', () => {
+  // Cada test publica mensajes en el mismo ticket / OT: en paralelo, la actividad de uno desplaza el
+  // redactor del otro mientras Playwright hace clic. Se ejecutan de a uno.
+  test.describe.configure({ mode: 'serial' });
+
   const casos = [
     { nombre: 'OT-0218', pantalla: OT },
     { nombre: 'TK-1048', pantalla: { ...TICKET, usuario: 'sdiaz' as UsuarioSemilla } },

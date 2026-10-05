@@ -17,6 +17,8 @@ const BASE = `
   const visible = (el) => {
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) return false;
+    // El contenido de un <details> cerrado no se pinta (solo su summary).
+    if (el.closest('details:not([open])') && !el.closest('summary')) return false;
     const st = getComputedStyle(el);
     return st.visibility !== 'hidden' && st.display !== 'none';
   };
@@ -68,6 +70,9 @@ export function objetivosChicos(
       if (el.classList.contains('sr-only') || el.closest('[aria-hidden="true"]')) continue;
       const tipo = el.getAttribute('data-objetivo');
       if (tipo === 'cubre-tarjeta') continue;
+      // Un <label for> que solo rotula (no envuelve su control) no es un objetivo: el control que
+      // rotula se mide por sí mismo. Sí se mide el label que envuelve a su control (CasillaTactil).
+      if (el.tagName === 'LABEL' && !el.querySelector('input, button, select, textarea')) continue;
       const r = el.getBoundingClientRect();
       const label = el.closest('label');
       const lr = label ? label.getBoundingClientRect() : null;
