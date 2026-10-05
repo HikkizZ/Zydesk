@@ -270,7 +270,10 @@ test.describe('Fotos desde el celular (sdiaz)', () => {
       await abrir(page, c.pantalla);
       const camara = await abrirRedactor(page);
       await camara.setInputFiles(FOTOS[0]!);
-      const quitar = page.getByRole('button', { name: /^Quitar/ });
+      // Solo dentro del redactor: las tareas tienen sus propios «Quitar tarea: …».
+      const quitar = page
+        .locator('section[aria-label="Redactor"]')
+        .getByRole('button', { name: /^Quitar/ });
       await expect(quitar).toHaveCount(1, { timeout: 15_000 });
       const borrado = page.waitForResponse(
         (r) => r.request().method() === 'DELETE' && /\/api\/archivos\/\d+$/.test(r.url()),
