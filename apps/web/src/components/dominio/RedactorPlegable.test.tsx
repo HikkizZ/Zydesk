@@ -107,3 +107,23 @@ it('tras enviar vuelve a la barra y avisa con onEnviado', async () => {
   expect(texto()).toBeNull();
   expect(escribir()).toBeTruthy();
 });
+
+it('className va en la raíz: en la barra sticky en móvil y en el contenedor en escritorio', () => {
+  simularFetch(() => undefined);
+  const { unmount } = render(
+    <ConSesion yo={yoDePrueba()}>
+      <RedactorPlegable ticketId={7} className="order-6" />
+    </ConSesion>,
+  );
+  expect(screen.getByRole('region', { name: 'Redactor' }).parentElement?.className).toBe('order-6');
+  unmount();
+  simularMovil();
+  render(
+    <ConSesion yo={yoDePrueba()}>
+      <RedactorPlegable ticketId={7} className="order-6" />
+    </ConSesion>,
+  );
+  const barra = screen.getByRole('group', { name: 'Redactor' }).parentElement!;
+  expect(barra.className).toContain('sticky');
+  expect(barra.className).toContain('order-6');
+});

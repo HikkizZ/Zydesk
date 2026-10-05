@@ -15,7 +15,7 @@ import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { PillTipo } from '@/components/dominio/PillTipo';
 import { ListaTareas } from '@/components/dominio/ListaTareas';
-import { Redactor } from '@/components/dominio/Redactor';
+import { RedactorPlegable } from '@/components/dominio/RedactorPlegable';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -313,9 +313,7 @@ export function TicketDetallePage() {
           </section>
 
           {puedeEditar ? (
-            <div className="order-6 sticky bottom-14 z-[5] -mx-6 border-t bg-fondo px-6 py-3 shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.25)] lg:static lg:order-none lg:mx-0 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-              <Redactor ticketId={t.id} />
-            </div>
+            <RedactorPlegable ticketId={t.id} className="order-6 lg:order-none" />
           ) : null}
         </div>
 

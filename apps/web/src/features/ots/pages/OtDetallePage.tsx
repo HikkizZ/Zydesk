@@ -12,7 +12,7 @@ import { ListaTareas } from '@/components/dominio/ListaTareas';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { PillTipoOt } from '@/components/dominio/PillTipoOt';
-import { Redactor } from '@/components/dominio/Redactor';
+import { RedactorPlegable } from '@/components/dominio/RedactorPlegable';
 import { Etapas } from '@/components/dominio/Etapas';
 import { AtajosSecciones } from '@/components/dominio/AtajosSecciones';
 import { Button } from '@/components/ui/button';
@@ -290,19 +290,13 @@ export function OtDetallePage() {
         </section>
 
         {puedeEditar ? (
-          <div
-            className={cn(
-              COLUMNA,
-              'sticky bottom-14 z-[5] order-5 -mx-6 border-t bg-fondo px-6 py-3 shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.25)] lg:static lg:mx-0 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none',
-            )}
-          >
-            <Redactor
-              destino={{ tipo: 'ot', id: ot.id }}
-              copiaAlTicket
-              codigoTicket={ot.ticket.codigo}
-              sinHoras={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
-            />
-          </div>
+          <RedactorPlegable
+            className={cn(COLUMNA, 'order-5')}
+            destino={{ tipo: 'ot', id: ot.id }}
+            copiaAlTicket
+            codigoTicket={ot.ticket.codigo}
+            sinHoras={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
+          />
         ) : null}
 
         <PanelOt
