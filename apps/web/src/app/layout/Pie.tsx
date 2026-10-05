@@ -5,11 +5,17 @@ export function Pie({ nombreApp, className }: { nombreApp: string; className?: s
   return (
     <footer className={`mt-10 text-sm text-tinta-2 ${className ?? ''}`}>
       {nombreApp} ·{' '}
-      <Link to="/terminos" className="underline underline-offset-2">
+      <Link
+        to="/terminos"
+        className="inline-flex min-h-11 items-center underline underline-offset-2 lg:min-h-0"
+      >
         Términos de uso
       </Link>{' '}
       ·{' '}
-      <Link to="/privacidad" className="underline underline-offset-2">
+      <Link
+        to="/privacidad"
+        className="inline-flex min-h-11 items-center underline underline-offset-2 lg:min-h-0"
+      >
         Privacidad
       </Link>
     </footer>

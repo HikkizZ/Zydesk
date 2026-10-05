@@ -19,6 +19,7 @@ export function InsigniaAvisos({ className }: { className?: string }) {
   if (n <= 0) return null;
   return (
     <span
+      data-letra="insignia"
       aria-label={n === 1 ? '1 aviso sin leer' : `${n} avisos sin leer`}
       className={cn(
         'inline-flex min-w-5 items-center justify-center rounded-full bg-urgente-punto px-1.5 text-xs font-semibold leading-5 text-white',
