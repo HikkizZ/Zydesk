@@ -731,3 +731,12 @@ Detener los procesos locales de desarrollo con `taskkill /PID <pid> /T /F` (CLAU
 ## 21. Estado de avance
 
 _(Se completa durante la fase: commits por bloque, respuestas a §19, desviaciones, cifras de CI, tiempos de despliegue/rollback/restauración, resultados de `trivy`/`npm audit`, hallazgos de la revisión de seguridad, fecha de `v1.0.0`.)_
+
+### Estado al 2026-10-05 (para retomar en otro equipo)
+
+- **Nada implementado todavía.** Solo existe esta spec (rama `feat/fase-9-puesta-en-marcha`, desde `main` con las Fases 0–8b integradas en `52df530`).
+- **Antes de programar hay que resolver las preguntas bloqueantes B1–B8 de §19** con el usuario. Para B1, el usuario corre en el VPS: `docker --version && docker compose version && docker network ls && ls /srv/apps /srv/apps/nexus-infra/proxy/conf.d && which age rclone zstd flock` y pega la salida; los scripts de `docker/vps/` se ajustan a eso. El agente nunca entra al VPS ni ejecuta pasos de root.
+- **B7 (historia de la demo, §11.3) requiere el visto bueno explícito del usuario antes de F9-T10**: el usuario pidió que se le avise antes de crear los datos de la demo. Ajuste propuesto por Opus y pendiente de confirmar: los correos de la demo no usan `@demo.zydesk.cl` (dominio que no es del usuario) sino un subdominio suyo, p. ej. `@demo.zytech.dev`, o uno reservado (`.test`).
+- Las preguntas no bloqueantes (B9–B22) se implementan con la recomendación si el usuario no dice otra cosa (regla acordada desde la Fase 7).
+- Lo único que puede avanzar sin las respuestas es el bloque 9A (versionado, ADR 0032).
+- Reglas de trabajo vigentes: responder al usuario siempre en español; commits con `/conventional-commit` en español, sin `Co-Authored-By`; push y PR solo con confirmación explícita; revisión de seguridad de cierre (Fable + `/security-review`) antes del PR.
