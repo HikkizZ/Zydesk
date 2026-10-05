@@ -1,10 +1,13 @@
 import {
   calcularCotizacion,
-  formatearCLP,
+  convertirTarifa,
+  ETIQUETA_CONCEPTO_TARIFA,
   formatearFecha,
   formatearMonto,
+  formatearValorUf,
   transicionesEtapaDesde,
   type EstadoCotizacion,
+  type TarifaConMoneda,
   type Moneda,
 } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
@@ -25,6 +28,7 @@ import {
 } from '../ots/ots.acceso.js';
 import { errorValidacion, hoyEnSantiago, recortar } from '../ots/ots.comun.js';
 import { asignarContactoSiVacio, registrarEtapa } from '../ots/ots.etapas.service.js';
+import { leerUfVigente } from '../indicadores/indicadores.service.js';
 import { bloquearTicket, registrarActividadEnTicket } from '../tickets/tickets.service.js';
 import { cargarCotizacion, listarCotizaciones } from './cotizaciones.consulta.js';
 import type { MarcaDocumento } from '../../integraciones/documentos.js';
@@ -153,12 +157,13 @@ export async function crearCotizacion(
       [ot_id],
     );
     const tarifas = await leerTarifas(tx);
+    const uf = await leerUfVigente(tx);
     const codigo = `COT-${ot.codigo.replace(/^\D+/, '')}`;
     const [fila]: { id: number; version: number }[] = await tx.query(
       `INSERT INTO cotizacion (ot_id, version, codigo, estado, contacto_id, fecha_emision, validez_dias, moneda,
-                               aplica_iva, iva_pct, condiciones, creado_por)
+                               aplica_iva, iva_pct, condiciones, creado_por, valor_uf, valor_uf_fecha, valor_uf_fuente)
        VALUES ($1, (SELECT COALESCE(MAX(version), 0) + 1 FROM cotizacion WHERE ot_id = $1), $2, 'borrador', $3, $4,
-               $5, 'CLP', true, $6, $7, $8)
+               $5, 'CLP', true, $6, $7, $8, $9, $10, $11)
        RETURNING id, version`,
       [
         ot_id,
@@ -169,6 +174,9 @@ export async function crearCotizacion(
         tarifas.iva_pct,
         tarifas.condiciones_defecto,
         actor.id,
+        uf?.valor ?? null,
+        uf?.fecha ?? null,
+        uf?.fuente ?? null,
       ],
     );
     await registrarEvento(tx, {
@@ -220,7 +228,7 @@ const formatearFechaIso = (f: string): string => formatearFecha(new Date(`${f}T1
 const ETIQUETAS_CAMBIO: Record<string, (v: unknown) => string> = {
   fecha_emision: (v) => formatearFechaIso(String(v)),
   validez_dias: (v) => `${String(v)} días`,
-  valor_uf: (v) => formatearCLP(Number(v)),
+  valor_uf: (v) => formatearValorUf(Number(v)),
   aplica_iva: (v) => (v ? 'sí' : 'no'),
   lineas: (v) => {
     const n = (JSON.parse(String(v)) as unknown[]).length;
@@ -296,8 +304,21 @@ async function escribirCotizacion(
   if ([...r.lineas, r.subtotal, r.neto, r.iva, r.total].some((n) => Math.abs(n) > MAX_NUMERIC)) {
     throw errorValidacion({ lineas: ['El total supera el máximo permitido'] });
   }
+  // Procedencia del valor UF (spec 8b §4.7): el cliente no la dicta. Igual al guardado → se conserva; distinto →
+  // la de la fila vigente de `indicador_uf` solo si coincide con ella; cualquier otro valor es 'manual'; null → ambas null.
+  const conservar = e.valor_uf === cot.valor_uf;
+  let ufFecha: string | null = null;
+  let ufFuente: string | null = null;
+  if (!conservar && e.valor_uf !== null) {
+    const vigente = await leerUfVigente(tx);
+    const coincide = vigente !== null && vigente.valor === e.valor_uf;
+    ufFecha = coincide ? vigente.fecha : null;
+    ufFuente = coincide ? vigente.fuente : 'manual';
+  }
   await tx.query(
     `UPDATE cotizacion SET contacto_id = $2, fecha_emision = $3, validez_dias = $4, moneda = $5, valor_uf = $6,
+                           valor_uf_fecha = CASE WHEN $15::boolean THEN valor_uf_fecha ELSE $16::date END,
+                           valor_uf_fuente = CASE WHEN $15::boolean THEN valor_uf_fuente ELSE $17::text END,
                            aplica_iva = $7, condiciones = $8, nota_interna = $9, subtotal = $10, descuentos = $11,
                            neto = $12, iva = $13, total = $14, actualizado_en = now()
       WHERE id = $1`,
@@ -307,7 +328,7 @@ async function escribirCotizacion(
       e.fecha_emision,
       e.validez_dias,
       e.moneda,
-      e.moneda === 'UF' ? e.valor_uf : null,
+      e.valor_uf,
       e.aplica_iva,
       e.condiciones,
       e.nota_interna,
@@ -316,6 +337,9 @@ async function escribirCotizacion(
       r.neto,
       r.iva,
       r.total,
+      conservar,
+      ufFecha,
+      ufFuente,
     ],
   );
   await tx.query(`DELETE FROM linea_cotizacion WHERE cotizacion_id = $1`, [cot.id]);
@@ -379,17 +403,19 @@ async function lineasActuales(tx: EntityManager, id: number): Promise<LineaGuard
 }
 
 // Tarifa del cliente si existe y si no la global (B12); `null` si ninguna está definida.
+type ConceptoPrecio = 'hora_normal' | 'hora_extendida' | 'traslado_km';
+
 async function tarifaDe(
   tx: EntityManager,
   cliente_id: number | null,
-  concepto: 'hora_normal' | 'hora_extendida' | 'traslado_km',
-): Promise<number | null> {
+  concepto: ConceptoPrecio,
+): Promise<TarifaConMoneda | null> {
   if (cliente_id !== null) {
-    const [t]: { valor: number }[] = await tx.query(
-      `SELECT valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1 AND concepto = $2`,
+    const [t]: TarifaConMoneda[] = await tx.query(
+      `SELECT moneda, valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1 AND concepto = $2`,
       [cliente_id, concepto],
     );
-    if (t) return t.valor;
+    if (t) return t;
   }
   return (await leerTarifas(tx))[concepto];
 }
@@ -397,9 +423,47 @@ async function tarifaDe(
 const tarifaFaltante = (concepto: string): ErrorApp =>
   new ErrorApp('TARIFA_FALTANTE', 'Configura la tarifa en Configuración → Tarifas', { concepto });
 
-// Las tarifas están en pesos: una cotización en UF no puede recibir precios tomados de ellas.
-const tarifaEnPesos = (): ErrorApp =>
-  errorValidacion({ moneda: ['Las tarifas están en pesos: cambia la moneda a CLP primero'] });
+// Lo que `agregarLineas` deja en `datos` del evento: moneda de la (primera) tarifa usada y, si hubo conversión,
+// el valor UF con que se convirtió (ADR 0017: el `evento` sí lleva montos).
+interface UsoTarifas {
+  tarifa_moneda?: Moneda;
+  convertido: boolean;
+}
+
+// Precio unitario en la moneda de la cotización (spec 8b §4.3): sin tarifa → 409 TARIFA_FALTANTE (antes que el
+// 400); hace falta convertir y la cotización no tiene valor UF → 400 VALIDACION { valor_uf }.
+async function precioDeTarifa(
+  tx: EntityManager,
+  ot: OtBloqueada,
+  cot: CotizacionBloqueada,
+  concepto: ConceptoPrecio,
+  uso: UsoTarifas,
+): Promise<number> {
+  const tarifa = await tarifaDe(tx, ot.cliente_id, concepto);
+  if (tarifa === null) throw tarifaFaltante(concepto);
+  const precio = convertirTarifa(tarifa, cot.moneda, cot.valor_uf);
+  if (precio === null) {
+    throw errorValidacion({
+      valor_uf: [
+        `Indica el valor de la UF para convertir la tarifa de ${ETIQUETA_CONCEPTO_TARIFA[concepto]} (${tarifa.moneda})`,
+      ],
+    });
+  }
+  registrarUso(uso, tarifa.moneda, tarifa.moneda !== cot.moneda);
+  return precio;
+}
+
+function registrarUso(uso: UsoTarifas, moneda: Moneda, convertido: boolean): void {
+  uso.tarifa_moneda ??= moneda;
+  uso.convertido ||= convertido;
+}
+
+function datosDeUso(uso: UsoTarifas, cot: CotizacionBloqueada): Record<string, unknown> {
+  return {
+    ...(uso.tarifa_moneda ? { tarifa_moneda: uso.tarifa_moneda } : {}),
+    ...(uso.convertido ? { valor_uf: cot.valor_uf } : {}),
+  };
+}
 
 async function agregarLineas(
   tx: EntityManager,
@@ -455,9 +519,10 @@ async function agregarLineas(
 // con la misma separación. La tarifa extendida solo se exige si hay horas fuera de horario.
 async function lineasDeHorasRegistradas(
   tx: EntityManager,
-  cliente_id: number | null,
-  ot_id: number,
+  ot: OtBloqueada,
+  cot: CotizacionBloqueada,
   tarifaNormal: number,
+  uso: UsoTarifas,
 ): Promise<LineaGuardable[]> {
   const filas: { titulo: string | null; normales: number; extendidas: number }[] = await tx.query(
     `SELECT t.titulo,
@@ -467,7 +532,7 @@ async function lineasDeHorasRegistradas(
       WHERE r.ot_id = $1
       GROUP BY t.id, t.titulo, t.orden
       ORDER BY (t.id IS NULL), t.orden, t.id`,
-    [ot_id],
+    [ot.id],
   );
   let tarifaExtendida: number | null = null;
   const lineas: LineaGuardable[] = [];
@@ -483,8 +548,7 @@ async function lineasDeHorasRegistradas(
     const nombre = f.titulo ?? 'Horas registradas sin tarea';
     if (f.normales > 0) lineas.push(linea(nombre, f.normales, tarifaNormal));
     if (f.extendidas > 0) {
-      tarifaExtendida ??= await tarifaDe(tx, cliente_id, 'hora_extendida');
-      if (tarifaExtendida === null) throw tarifaFaltante('hora_extendida');
+      tarifaExtendida ??= await precioDeTarifa(tx, ot, cot, 'hora_extendida', uso);
       lineas.push(linea(`${nombre} (fuera de horario)`, f.extendidas, tarifaExtendida));
     }
   }
@@ -499,16 +563,23 @@ export async function importarHoras(
   return enTransaccion(async (tx) => {
     const { ot, cot } = await bloquearCotizacion(tx, id);
     exigirEditable(ot, cot);
-    const tarifaHora = await tarifaDe(tx, ot.cliente_id, 'hora_normal');
-    if (tarifaHora === null) throw tarifaFaltante('hora_normal');
-    if (cot.moneda === 'UF') throw tarifaEnPesos();
+    const uso: UsoTarifas = { convertido: false };
+    const tarifaHora = await precioDeTarifa(tx, ot, cot, 'hora_normal', uso);
 
     if (e.origen === 'registradas') {
-      const lineas = await lineasDeHorasRegistradas(tx, ot.cliente_id, ot.id, tarifaHora);
+      const lineas = await lineasDeHorasRegistradas(tx, ot, cot, tarifaHora, uso);
       if (lineas.length === 0) {
         throw errorValidacion({ origen: ['La OT no tiene horas registradas'] });
       }
-      await agregarLineas(tx, actor, ot, cot, lineas, {}, { origen: 'registradas' });
+      await agregarLineas(
+        tx,
+        actor,
+        ot,
+        cot,
+        lineas,
+        {},
+        { origen: 'registradas', ...datosDeUso(uso, cot) },
+      );
       return cargarCotizacion(tx, id);
     }
 
@@ -537,7 +608,7 @@ export async function importarHoras(
         descuento_pct: 0,
       })),
       {},
-      { origen: 'tareas' },
+      { origen: 'tareas', ...datosDeUso(uso, cot) },
     );
     return cargarCotizacion(tx, id);
   });
@@ -566,18 +637,34 @@ export async function aplicarPlantilla(
     );
 
     // Precio de la plantilla o, si es null, la tarifa por unidad (h → hora normal, km → traslado; un/gl → 0).
+    // Los precios fijos de la plantilla son pesos y se convierten a la moneda de la cotización (spec 8b §14.3).
+    const uso: UsoTarifas = { convertido: false };
     const nuevas: LineaGuardable[] = [];
     for (const l of lineasPlantilla) {
-      let precio = l.precio_unitario;
-      if (precio === null) {
-        if (l.unidad === 'h' || l.unidad === 'km') {
-          const concepto = l.unidad === 'h' ? 'hora_normal' : 'traslado_km';
-          precio = await tarifaDe(tx, ot.cliente_id, concepto);
-          if (precio === null) throw tarifaFaltante(concepto);
-          if (cot.moneda === 'UF') throw tarifaEnPesos();
-        } else {
-          precio = 0;
+      let precio: number;
+      if (l.precio_unitario !== null) {
+        const convertido = convertirTarifa(
+          { moneda: 'CLP', valor: l.precio_unitario },
+          cot.moneda,
+          cot.valor_uf,
+        );
+        if (convertido === null) {
+          throw errorValidacion({
+            valor_uf: ['Indica el valor de la UF para convertir el precio de la plantilla (CLP)'],
+          });
         }
+        precio = convertido;
+        registrarUso(uso, 'CLP', cot.moneda !== 'CLP');
+      } else if (l.unidad === 'h' || l.unidad === 'km') {
+        precio = await precioDeTarifa(
+          tx,
+          ot,
+          cot,
+          l.unidad === 'h' ? 'hora_normal' : 'traslado_km',
+          uso,
+        );
+      } else {
+        precio = 0;
       }
       nuevas.push({ ...l, precio_unitario: precio });
     }
@@ -588,7 +675,7 @@ export async function aplicarPlantilla(
       cot,
       nuevas,
       { condiciones: plantilla.condiciones },
-      { origen: 'plantilla', plantilla_id: plantilla.id },
+      { origen: 'plantilla', plantilla_id: plantilla.id, ...datosDeUso(uso, cot) },
     );
     return cargarCotizacion(tx, id);
   });
@@ -707,16 +794,23 @@ export async function duplicarCotizacion(
       );
     }
 
-    // El `iva_pct` es el de la original (snapshot fiscal); la fecha de emisión es hoy.
+    // El `iva_pct` es el de la original (snapshot fiscal); la fecha de emisión es hoy y la vN toma la UF del día
+    // (spec 8b §5.2); sin indicador copia los tres campos de la original (van siempre juntos).
+    const uf = await leerUfVigente(tx);
+    const columnasUf = uf
+      ? '$4::numeric, $5::date, $6::text'
+      : 'valor_uf, valor_uf_fecha, valor_uf_fuente';
     const [nueva]: { id: number; version: number }[] = await tx.query(
       `INSERT INTO cotizacion (ot_id, version, codigo, estado, contacto_id, fecha_emision, validez_dias, moneda,
-                               valor_uf, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos,
+                               valor_uf, valor_uf_fecha, valor_uf_fuente, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos,
                                neto, iva, total, creado_por)
-       SELECT ot_id, version + 1, codigo, 'borrador', contacto_id, $2::date, validez_dias, moneda, valor_uf,
-              aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos, neto, iva, total, $3
+       SELECT ot_id, version + 1, codigo, 'borrador', contacto_id, $2::date, validez_dias, moneda,
+              ${columnasUf}, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos, neto, iva, total, $3
          FROM cotizacion WHERE id = $1
        RETURNING id, version`,
-      [id, hoyEnSantiago(), actor.id],
+      uf
+        ? [id, hoyEnSantiago(), actor.id, uf.valor, uf.fecha, uf.fuente]
+        : [id, hoyEnSantiago(), actor.id],
     );
     await tx.query(
       `INSERT INTO linea_cotizacion (cotizacion_id, orden, tipo, descripcion, cantidad, unidad, precio_unitario,

@@ -1,3 +1,4 @@
+import type { Moneda } from '@zydesk/shared';
 import { Column, Entity, PrimaryColumn } from 'typeorm';
 import { numericoANumero } from '../../database/transformadores.js';
 
@@ -8,6 +9,9 @@ export class TarifaCliente {
 
   @PrimaryColumn({ type: 'text' })
   concepto!: 'hora_normal' | 'hora_extendida' | 'hora_urgencia' | 'traslado_km';
+
+  @Column({ type: 'text', default: 'CLP' })
+  moneda!: Moneda;
 
   @Column({ type: 'numeric', precision: 14, scale: 2, transformer: numericoANumero })
   valor!: number;

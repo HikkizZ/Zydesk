@@ -13,8 +13,9 @@ import { ReporteSalida, ReportesQuery } from './reportes.js';
 import { TareaEntrada } from './tarea.js';
 import { MensajeEntrada } from './mensaje.js';
 import { CambioEtapaOt, CierreOt } from '../estados/ot.js';
-import { CotizacionEntrada, ImportarHorasEntrada } from './cotizacion.js';
-import { PlantillaLineaEntrada, TarifasEntrada } from './configuracion.js';
+import { CotizacionEntrada, CotizacionSalida, ImportarHorasEntrada } from './cotizacion.js';
+import { PlantillaLineaEntrada, TarifaMonto, TarifasEntrada } from './configuracion.js';
+import { IndicadorUfSalida } from './indicadores.js';
 
 describe('rut', () => {
   it.each([
@@ -130,8 +131,8 @@ describe('otros esquemas', () => {
   it('Tarifas sin conceptos repetidos', () => {
     expect(
       TarifaClienteEntrada.safeParse([
-        { concepto: 'hora_normal', valor: 1 },
-        { concepto: 'hora_normal', valor: 2 },
+        { concepto: 'hora_normal', moneda: 'CLP', valor: 1 },
+        { concepto: 'hora_normal', moneda: 'CLP', valor: 2 },
       ]).success,
     ).toBe(false);
   });
@@ -245,7 +246,7 @@ describe('ImportarHorasEntrada', () => {
 
 describe('TarifasEntrada', () => {
   const base = {
-    hora_normal: 38000,
+    hora_normal: { moneda: 'CLP', valor: 38000 },
     hora_extendida: null,
     hora_urgencia: null,
     traslado_km: null,
@@ -254,12 +255,66 @@ describe('TarifasEntrada', () => {
     validez_dias_defecto: 30,
     condiciones_defecto: null,
   };
-  it('acepta montos enteros o null', () => {
+  it('acepta tarifas con moneda o null', () => {
     expect(TarifasEntrada.safeParse(base).success).toBe(true);
+    expect(
+      TarifasEntrada.safeParse({ ...base, hora_normal: { moneda: 'UF', valor: 0.8 } }).success,
+    ).toBe(true);
+    expect(TarifasEntrada.safeParse({ ...base, costo_interno: 18000 }).success).toBe(true);
   });
-  it('rechaza decimales y negativos', () => {
-    expect(TarifasEntrada.safeParse({ ...base, hora_normal: 100.5 }).success).toBe(false);
-    expect(TarifasEntrada.safeParse({ ...base, traslado_km: -1 }).success).toBe(false);
+  it('rechaza decimales en CLP y negativos', () => {
+    const malo = (t: object) => TarifasEntrada.safeParse({ ...base, hora_normal: t }).success;
+    expect(malo({ moneda: 'CLP', valor: 38000.5 })).toBe(false);
+    expect(malo({ moneda: 'UF', valor: 0.123 })).toBe(false);
+    expect(malo({ moneda: 'UF', valor: 100000 })).toBe(false);
+    expect(malo({ moneda: 'UTM', valor: 1 })).toBe(false);
+    expect(malo({ moneda: 'CLP', valor: -1 })).toBe(false);
+    expect(malo({ moneda: 'UF', valor: -0.5 })).toBe(false);
+  });
+  it('rechaza la forma antigua y costo_interno con moneda', () => {
+    expect(TarifasEntrada.safeParse({ ...base, hora_normal: 38000 }).success).toBe(false);
+    expect(
+      TarifasEntrada.safeParse({ ...base, costo_interno: { moneda: 'CLP', valor: 18000 } }).success,
+    ).toBe(false);
+  });
+});
+
+describe('TarifaMonto', () => {
+  it('acepta CLP entero y UF con dos decimales', () => {
+    expect(TarifaMonto.safeParse({ moneda: 'CLP', valor: 38000 }).success).toBe(true);
+    expect(TarifaMonto.safeParse({ moneda: 'UF', valor: 0.8 }).success).toBe(true);
+  });
+});
+
+describe('TarifaClienteEntrada (moneda)', () => {
+  it('acepta moneda por concepto y rechaza costo_interno', () => {
+    expect(
+      TarifaClienteEntrada.safeParse([{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }])
+        .success,
+    ).toBe(true);
+    expect(
+      TarifaClienteEntrada.safeParse([{ concepto: 'costo_interno', moneda: 'CLP', valor: 1 }])
+        .success,
+    ).toBe(false);
+    expect(
+      TarifaClienteEntrada.safeParse([{ concepto: 'hora_normal', moneda: 'UF', valor: 0.123 }])
+        .success,
+    ).toBe(false);
+  });
+});
+
+describe('IndicadorUfSalida', () => {
+  const base = {
+    fecha: '2026-10-05',
+    valor: 41098.15,
+    fuente: 'boostr',
+    obtenido_en: '2026-10-05T10:00:00.000Z',
+    hoy: '2026-10-05',
+    desactualizado: false,
+  };
+  it('acepta fuentes externas y rechaza manual', () => {
+    expect(IndicadorUfSalida.safeParse(base).success).toBe(true);
+    expect(IndicadorUfSalida.safeParse({ ...base, fuente: 'manual' }).success).toBe(false);
   });
 });
 
@@ -363,5 +418,15 @@ describe('ReporteSalida', () => {
 describe('OtResumen.neto', () => {
   it('acepta null', () => {
     expect(OtResumen.shape.neto.safeParse(null).success).toBe(true);
+  });
+});
+
+describe('CotizacionSalida (procedencia de la UF)', () => {
+  it('acepta fuente manual con fecha null', () => {
+    const { valor_uf, valor_uf_fecha, valor_uf_fuente } = CotizacionSalida.shape;
+    expect(valor_uf.safeParse(41098.15).success).toBe(true);
+    expect(valor_uf_fecha.safeParse(null).success).toBe(true);
+    expect(valor_uf_fuente.safeParse('manual').success).toBe(true);
+    expect(valor_uf_fuente.safeParse('otra').success).toBe(false);
   });
 });

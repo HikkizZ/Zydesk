@@ -100,7 +100,7 @@ En el menú **Clientes**. Los clientes y las **áreas internas** (por ejemplo, M
 - **Desactivar** un cliente lo oculta de la lista (se ve con **Mostrar inactivos**); los clientes nunca se borran, porque los tickets futuros los usarán.
 - **Contactos**: personas del cliente con su área, correo, teléfono y si **aprueban cotizaciones**. Pueden agregarlos Administración, Coordinación y Técnicos.
 - **Bolsa de horas** (opcional): un contrato mensual de horas de soporte. Se agrega con **Agregar bolsa** (Administración o Coordinación): horas al mes, fecha desde la que rige y, si corresponde, hasta cuándo y fecha de renovación. Solo puede haber **una vigente a la vez**: si las fechas se solapan con otra, la app avisa. Para renovar, cierra el contrato anterior poniéndole fecha de término y agrega el nuevo. La ficha muestra las **horas usadas este mes** del contrato vigente: la suma de las horas registradas en las OT que descuentan de esa bolsa en el mes en curso.
-- **Tarifas por cliente**: en **Editar tarifas** se fijan valores propios para hora normal, horario extendido, fin de semana/urgencia y traslado por km. Si dejas marcada **Usar tarifa global**, el cliente usará la tarifa general de **Configuración → Tarifas** (sección 14). Los montos se entienden **más IVA**. La aplicación no trae tarifas cargadas: las define cada organización.
+- **Tarifas por cliente**: en **Editar tarifas** se fijan valores propios para hora normal, horario extendido, fin de semana/urgencia y traslado por km, cada uno **en pesos o en UF** (selector de moneda junto al valor; en pesos sin decimales, en UF con dos). Si dejas marcada **Usar tarifa global**, el cliente usará la tarifa general de **Configuración → Tarifas** (sección 14). Los montos se entienden **más IVA**. La tarifa del cliente manda aunque esté en otra moneda que la global o que la cotización: al cotizar, la app la convierte con el valor UF guardado en esa cotización (la ficha muestra, por ejemplo, «UF 0,80 + IVA»). La aplicación no trae tarifas cargadas: las define cada organización.
 
 ## 8. Categorías y plazos
 
@@ -199,16 +199,21 @@ En **Configuración → Tarifas**. Dos tarjetas y un solo botón **Guardar**:
 
 ![Pestaña Tarifas con las tarifas globales, el IVA y la validez de las cotizaciones](img/administracion/tarifas.png)
 
-- **Tarifas** globales: hora normal, horario extendido, fin de semana/urgencia, traslado por km y **costo interno (OT internas)**, en pesos enteros más IVA. Un campo vacío es una tarifa **sin definir**: se muestra como `[TARIFA]`. Las tarifas por cliente (sección 7) tienen prioridad sobre estas.
+- **Tarifas** globales: hora normal, horario extendido, fin de semana/urgencia y traslado por km, cada una **en pesos o en UF** (selector de moneda junto al valor: en pesos sin decimales, en UF con dos; cambiar la moneda no convierte el número escrito, es una tarifa nueva), más el **costo interno (OT internas)**, siempre en pesos. Todas más IVA. Un campo vacío es una tarifa **sin definir**: se muestra como `[TARIFA]`. Las tarifas por cliente (sección 7) tienen prioridad sobre estas.
+- **UF del día**: bajo las tarifas, la línea «UF del día: $41.098,15 · 5 oct 2026 · Boostr» muestra el último valor que la app conoce y de dónde salió. Si dice **puede estar desactualizada**, el valor es de un día anterior (las fuentes no respondieron hoy). Es informativa: la UF no se edita aquí (ver «Valor de la UF» más abajo).
 - **Cotizaciones**: **IVA %** (por defecto 19), **validez por defecto** (15 o 30 días) y **condiciones comerciales por defecto**, que cada cotización nueva copia al crearse.
 
 Qué afecta:
 
 - **Importar horas** en el Cotizador usa la tarifa de hora normal del cliente o, si no tiene, la global. Si ninguna está definida, la importación se detiene y pide configurarla aquí. Con origen **registradas**, las horas marcadas fuera de horario usan la tarifa de **horario extendido** (del cliente o la global), que también debe estar definida si hay horas de ese tipo. Lo mismo para las líneas de plantilla sin precio (hora normal para `h`, traslado para `km`).
+- **Tarifa en una moneda, cotización en la otra**: la app convierte el precio por hora con el **valor UF guardado en esa cotización** y lo redondea como monto de la moneda de la cotización (0,80 UF → $32.879/h; $38.000 → UF 0,92/h, al valor 41 098,15). Si la cotización está en pesos y no tiene valor UF, importar o aplicar una plantilla con una tarifa en UF se detiene y pide escribirlo primero. Los precios fijos de las plantillas (sección 15) son pesos y se convierten igual.
+- **Cambiar una tarifa o recibir una UF nueva nunca cambia una cotización existente**: las cotizaciones guardan sus precios y totales; solo las líneas que se importen después usan el valor nuevo.
 - **Cambiar el IVA solo afecta a cotizaciones nuevas**: cada cotización guarda el porcentaje con que nació y lo conserva al duplicarse.
 - **Costo interno**: las OT internas muestran horas registradas × esta tarifa. Sin ella, la tarjeta pide configurarla.
 
-Cada guardado queda en el registro de seguridad (sección 10) con los campos que cambiaron, sin los montos.
+Cada guardado queda en el registro de seguridad (sección 10) con los campos que cambiaron, sin los montos ni las monedas.
+
+**Valor de la UF.** Una tarea programada de la API (`indicadores.uf`) consulta el valor del día **una vez por hora** a [Boostr](https://boostr.cl) y, si no responde, a [mindicador.cl](https://mindicador.cl); cuando ya tiene el valor de hoy no vuelve a consultar. Solo se acepta una respuesta razonable (un valor entre 20 000 y 200 000 pesos, con fecha de los últimos 7 días); la petición no lleva ningún dato de la instalación. Cada cotización **guarda el valor UF con que nació** (al crearla y al duplicarla, también en pesos) con su fecha y procedencia; ese valor se usa para convertir tarifas, para la equivalencia en pesos y para las sumas de la lista de OT y de Reportes, y **nunca cambia solo**: quien edita la cotización puede cambiarlo a mano (queda «Ingresado a mano») o volver al del día con **Usar UF del día**. Si ambas fuentes fallan, la app sigue funcionando con el último valor conocido (marcado «puede estar desactualizada» aquí y en el cotizador) y cada cotización admite el valor escrito a mano; si nunca hubo valor, la tarjeta lo dice y la cotización lo pide al convertir. En `.env`, `UF_ACTUALIZAR=false` apaga estas consultas (entornos sin internet; en producción debe ser `true`); los fallos quedan en el log de la API (`fuente de uf falló`, `uf no actualizada`), sin el valor.
 
 ## 15. Plantillas de cotización
 
@@ -216,7 +221,7 @@ En **Configuración → Plantillas**. Una plantilla tiene nombre (único), descr
 
 ![Pestaña Plantillas con las plantillas de cotización](img/administracion/plantillas.png)
 
-- **Precio vacío = tarifa vigente al aplicar**: así una subida de tarifas no obliga a editar las plantillas. Las líneas de materiales y gastos sin precio quedan en 0 para completarlas en la cotización.
+- **Precio vacío = tarifa vigente al aplicar**: así una subida de tarifas no obliga a editar las plantillas. Las líneas de materiales y gastos sin precio quedan en 0 para completarlas en la cotización. Los **precios fijos** se escriben en **pesos**; en una cotización en UF se convierten con su valor UF ($90.000 → UF 2,19 al valor 41 098,15).
 - Las plantillas no se borran: **Desactivar…** (con confirmación) las saca de la lista del Cotizador; **Ver inactivas** las muestra y **Reactivar** las devuelve.
 - Al aplicar una plantilla a una cotización sin condiciones comerciales, se copian las de la plantilla.
 

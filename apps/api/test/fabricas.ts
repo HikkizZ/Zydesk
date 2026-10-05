@@ -3,11 +3,13 @@ import {
   ZONA,
   calcularCotizacion,
   type CanalActivo,
+  type ConceptoTarifa,
   type EstadoCotizacion,
   type EstadoFacturacion,
   type EstadoTicket,
   type EtapaOt,
   type EventoAviso,
+  type FuenteUf,
   type HorarioDia as HorarioDiaDatos,
   type Moneda,
   type TarifasSalidaDatos,
@@ -28,6 +30,7 @@ import { dataSource } from '../src/config/db.js';
 import { env } from '../src/config/env.js';
 import { nombreCookie } from '../src/core/auth/cookie.js';
 import { crearSesion } from '../src/core/auth/sesiones.js';
+import { hoyEnSantiago } from '../src/core/fechas.js';
 import { directorioArchivos } from '../src/integraciones/storage/storage.js';
 import { Aviso } from '../src/modulos/avisos/aviso.entity.js';
 import { PreferenciaAviso } from '../src/modulos/avisos/preferencia-aviso.entity.js';
@@ -468,6 +471,8 @@ export async function crearCotizacion(
     estado?: EstadoCotizacion;
     moneda?: Moneda;
     valor_uf?: number | null;
+    valor_uf_fecha?: string | null;
+    valor_uf_fuente?: FuenteUf | null;
     aplica_iva?: boolean;
     iva_pct?: number;
     contacto_id?: number | null;
@@ -494,6 +499,7 @@ export async function crearCotizacion(
   const lineas = (datos.lineas ?? []).map((l) => ({ ...l, descuento_pct: l.descuento_pct ?? 0 }));
   const calculo = calcularCotizacion(lineas, { moneda, aplica_iva, iva_pct });
   const ahora = new Date();
+  const valor_uf = datos.valor_uf === undefined ? (moneda === 'UF' ? 38000 : null) : datos.valor_uf;
   const cotizacion = await dataSource.manager.save(Cotizacion, {
     ot_id,
     version,
@@ -503,7 +509,9 @@ export async function crearCotizacion(
     fecha_emision: datos.fecha_emision ?? ahora.toISOString().slice(0, 10),
     validez_dias: datos.validez_dias ?? 30,
     moneda,
-    valor_uf: datos.valor_uf === undefined ? (moneda === 'UF' ? 38000 : null) : datos.valor_uf,
+    valor_uf,
+    valor_uf_fecha: datos.valor_uf_fecha ?? null,
+    valor_uf_fuente: datos.valor_uf_fuente ?? (valor_uf !== null ? 'manual' : null),
     aplica_iva,
     iva_pct,
     condiciones: datos.condiciones ?? null,
@@ -573,8 +581,8 @@ export async function crearPlantilla(
 // Escribe la clave `tarifas` de `configuracion` fusionando con la semilla de la fábrica.
 export async function fijarTarifas(parcial: Partial<TarifasSalidaDatos> = {}): Promise<void> {
   const tarifas: TarifasSalidaDatos = {
-    hora_normal: 38000,
-    hora_extendida: 45000,
+    hora_normal: { moneda: 'CLP', valor: 38000 },
+    hora_extendida: { moneda: 'CLP', valor: 45000 },
     hora_urgencia: null,
     traslado_km: null,
     costo_interno: null,
@@ -588,6 +596,44 @@ export async function fijarTarifas(parcial: Partial<TarifasSalidaDatos> = {}): P
      ON CONFLICT (clave) DO UPDATE SET valor = EXCLUDED.valor`,
     [JSON.stringify(tarifas)],
   );
+}
+
+// Fusiona `parcial` con la clave `tarifas` ya guardada (forma nueva: { moneda, valor } por concepto).
+export async function guardarTarifasGlobales(parcial: Partial<TarifasSalidaDatos>): Promise<void> {
+  await dataSource.query(
+    `UPDATE configuracion SET valor = valor || $1::jsonb, actualizado_en = now() WHERE clave = 'tarifas'`,
+    [JSON.stringify(parcial)],
+  );
+}
+
+// Tarifa de un cliente (tabla `tarifa_cliente`); por defecto en pesos.
+export async function crearTarifaCliente(
+  cliente_id: number,
+  concepto: ConceptoTarifa,
+  datos: { moneda?: Moneda; valor: number },
+): Promise<void> {
+  await dataSource.query(
+    `INSERT INTO tarifa_cliente (cliente_id, concepto, moneda, valor) VALUES ($1, $2, $3, $4)`,
+    [cliente_id, concepto, datos.moneda ?? 'CLP', datos.valor],
+  );
+}
+
+// Fila de `indicador_uf` (por defecto hoy, 41098,15, semilla); no pisa una fila existente de esa fecha.
+export async function crearIndicadorUf(
+  datos: { fecha?: string; valor?: number; fuente?: 'boostr' | 'mindicador' | 'semilla' } = {},
+): Promise<{ fecha: string; valor: number; fuente: string }> {
+  const fecha = datos.fecha ?? hoyEnSantiago();
+  const valor = datos.valor ?? 41098.15;
+  const fuente = datos.fuente ?? 'semilla';
+  await dataSource.query(
+    `INSERT INTO indicador_uf (fecha, valor, fuente) VALUES ($1, $2, $3) ON CONFLICT (fecha) DO NOTHING`,
+    [fecha, valor, fuente],
+  );
+  const [fila]: { fecha: string; valor: string; fuente: string }[] = await dataSource.query(
+    `SELECT fecha::text AS fecha, valor, fuente FROM indicador_uf WHERE fecha = $1`,
+    [fecha],
+  );
+  return { fecha: fila!.fecha, valor: Number(fila!.valor), fuente: fila!.fuente };
 }
 
 // Directorio de archivos de los tests: el mismo que usa el Storage de la app (TEST_ARCHIVOS_DIR o uno temporal por proceso).

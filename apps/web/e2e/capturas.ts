@@ -32,6 +32,7 @@ const ticket = (codigo: string) => async (page: Page) =>
 const ot = (codigo: string) => async (page: Page) => `/ots/${await idDeOt(page, codigo)}`;
 const dialogo = (page: Page) => page.getByRole('dialog');
 const TICKET = 'TK-1048';
+let versionTemporal: number | null = null; // v2 de COT-0218 creada para la captura del cotizador
 
 async function abrirRedactor(page: Page) {
   const plegado = page.getByRole('button', { name: 'Escribir seguimiento' });
@@ -197,9 +198,25 @@ const CAPTURAS: Captura[] = [
     archivo: 'cotizador',
     cuenta: 'crojas',
     ruta: async (page) => {
+      // COT-0218 v1 se sembró sin valor_uf: se duplica como v2 (la API toma la UF del día) para mostrar la UF
+      // y su procedencia. Es la única captura que escribe, y solo en la base de las semillas.
       const r = await page.request.get(`/api/ots/${await idDeOt(page, 'OT-0218')}`);
       const { cotizacion } = (await r.json()) as { cotizacion: { id: number } };
-      return `/cotizaciones/${cotizacion.id}`;
+      const d = await page.request.post(`/api/cotizaciones/${cotizacion.id}/duplicar`, {
+        headers: { 'X-Requested-With': 'Zydesk' },
+      });
+      expect(d.status()).toBe(201);
+      const v2 = (await d.json()) as { id: number };
+      versionTemporal = v2.id;
+      return `/cotizaciones/${v2.id}`;
+    },
+    // La v2 en borrador deshabilitaría «Registrar aprobación del cliente» de OT-0218 en capturas posteriores.
+    limpiar: async (page) => {
+      const d = await page.request.delete(`/api/cotizaciones/${versionTemporal}`, {
+        headers: { 'X-Requested-With': 'Zydesk' },
+      });
+      expect(d.status()).toBe(204);
+      versionTemporal = null;
     },
   },
   { manual: 'tecnico', archivo: 'tablero', cuenta: 'crojas', ruta: fija('/tickets') },

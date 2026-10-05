@@ -65,6 +65,25 @@ export function enClp(monto: number, moneda: Moneda, valor_uf: number | null): n
   return redondear(monto * valor_uf, 'CLP');
 }
 
+export interface TarifaConMoneda {
+  moneda: Moneda;
+  valor: number;
+}
+
+// Precio unitario de una tarifa expresado en la moneda de la cotización, redondeado como monto de esa
+// moneda (ADR 0007, Fase 8b). Si hace falta convertir y valor_uf es null → null.
+export function convertirTarifa(
+  t: TarifaConMoneda,
+  destino: Moneda,
+  valor_uf: number | null,
+): number | null {
+  if (t.moneda === destino) return t.valor;
+  if (valor_uf === null) return null;
+  return destino === 'CLP'
+    ? redondear(t.valor * valor_uf, 'CLP')
+    : redondear(t.valor / valor_uf, 'UF');
+}
+
 // Suma días calendario a una fecha AAAA-MM-DD, sin zona horaria.
 export function venceEl(fecha_emision: string, validez_dias: 15 | 30): string {
   return format(addDays(parseISO(fecha_emision), validez_dias), 'yyyy-MM-dd');

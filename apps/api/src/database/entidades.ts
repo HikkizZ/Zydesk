@@ -9,6 +9,7 @@ import { PreferenciaAviso } from '../modulos/avisos/preferencia-aviso.entity.js'
 import { Sesion } from '../modulos/auth/sesion.entity.js';
 import { Categoria } from '../modulos/categorias/categoria.entity.js';
 import { Cliente } from '../modulos/clientes/cliente.entity.js';
+import { IndicadorUf } from '../modulos/indicadores/indicador-uf.entity.js';
 import { Cotizacion } from '../modulos/cotizaciones/cotizacion.entity.js';
 import { Contacto } from '../modulos/clientes/contacto.entity.js';
 import { ContratoBolsa } from '../modulos/clientes/contrato-bolsa.entity.js';
@@ -46,6 +47,7 @@ export const entidades = [
   Contacto,
   ContratoBolsa,
   TarifaCliente,
+  IndicadorUf,
   Departamento,
   Feriado,
   HorarioDia,

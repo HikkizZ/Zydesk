@@ -1,6 +1,12 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { calcularCotizacion, CotizacionEntrada, type CotizacionEntradaDatos } from '@zydesk/shared';
+import {
+  calcularCotizacion,
+  convertirTarifa,
+  CotizacionEntrada,
+  type CotizacionEntradaDatos,
+  type TarifaClienteSalidaDatos,
+} from '@zydesk/shared';
 import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router';
@@ -14,6 +20,7 @@ import { PillEstadoCotizacion } from '@/components/dominio/PillEstadoCotizacion'
 import { Button } from '@/components/ui/button';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { cliente as obtenerCliente } from '@/features/clientes/api';
+import { formatearDiaAnio } from '@/features/clientes/formato';
 import { ErrorApi } from '@/lib/api';
 import {
   clavesCotizacion,
@@ -77,10 +84,12 @@ type DialogoAbierto = 'horas' | 'plantilla' | null;
 function Editor({
   cotizacion,
   tarifas,
+  tarifasCliente,
   contactos,
 }: {
   cotizacion: CotizacionSalidaDatos;
   tarifas: TarifasSalidaDatos | undefined;
+  tarifasCliente: TarifaClienteSalidaDatos[];
   contactos: ContactoOpcion[];
 }) {
   const queryClient = useQueryClient();
@@ -112,6 +121,18 @@ function Editor({
     typeof valores.valor_uf === 'number' && Number.isFinite(valores.valor_uf)
       ? valores.valor_uf
       : null;
+
+  // Procedencia del valor mientras el campo no cambie respecto de lo guardado.
+  const procedencia =
+    valorUf !== null && valorUf === cotizacion.valor_uf && cotizacion.valor_uf_fuente !== null
+      ? cotizacion.valor_uf_fecha
+        ? `del ${formatearDiaAnio(cotizacion.valor_uf_fecha)}`
+        : 'ingresado a mano'
+      : undefined;
+  // Tarifa de hora normal (la del cliente si existe, si no la global) en la moneda del borrador.
+  const tarifaHora =
+    tarifasCliente.find((t) => t.concepto === 'hora_normal') ?? tarifas?.hora_normal;
+  const precioNuevaLinea = tarifaHora ? (convertirTarifa(tarifaHora, moneda, valorUf) ?? 0) : 0;
 
   const refrescar = () =>
     invalidarCotizacion(queryClient, cotizacion.id, cotizacion.ot.id, cotizacion.ot.ticket.id);
@@ -211,7 +232,7 @@ function Editor({
               moneda={moneda}
               totalesLinea={calculo.lineas}
               editable={editable}
-              precioNuevaLinea={moneda === 'CLP' ? (tarifas?.hora_normal ?? 0) : 0}
+              precioNuevaLinea={precioNuevaLinea}
               vistaTarjetas={vistaTarjetas}
               pistaBloqueo={pistaBloqueo}
               alImportar={() => setDialogo('horas')}
@@ -228,6 +249,7 @@ function Editor({
             aplicaIva={aplicaIva}
             ivaPct={cotizacion.iva_pct}
             valorUf={valorUf}
+            procedencia={procedencia}
           />
         </div>
         <VersionesCotizacion cotizacion={cotizacion} className="lg:col-start-2 lg:row-start-2" />
@@ -302,6 +324,7 @@ export function CotizadorPage() {
       key={`${cot.id}-${cot.actualizado_en}`}
       cotizacion={cot}
       tarifas={tarifas.data}
+      tarifasCliente={cliente.data?.tarifas ?? []}
       contactos={contactos}
     />
   );

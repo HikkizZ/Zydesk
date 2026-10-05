@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { crearCliente, crearTicket, crearUsuario, ingresarComo } from '../../../test/fabricas.js';
+import {
+  crearCliente,
+  crearTarifaCliente,
+  crearTicket,
+  crearUsuario,
+  ingresarComo,
+} from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
 
@@ -329,20 +335,20 @@ describe('tarifas', () => {
     const admin = await como('admin');
     const c = await crearCliente();
     const r1 = await admin.put(`/api/clientes/${c.id}/tarifas`).send([
-      { concepto: 'hora_extendida', valor: 45000 },
-      { concepto: 'hora_normal', valor: 38000.5 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
     ]);
     expect(r1.status).toBe(200);
     expect(r1.body).toEqual([
-      { concepto: 'hora_normal', valor: 38000.5 },
-      { concepto: 'hora_extendida', valor: 45000 },
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
     ]);
     const r2 = await admin
       .put(`/api/clientes/${c.id}/tarifas`)
-      .send([{ concepto: 'traslado_km', valor: 500 }]);
-    expect(r2.body).toEqual([{ concepto: 'traslado_km', valor: 500 }]);
+      .send([{ concepto: 'traslado_km', moneda: 'CLP', valor: 500 }]);
+    expect(r2.body).toEqual([{ concepto: 'traslado_km', moneda: 'CLP', valor: 500 }]);
     expect((await admin.get(`/api/clientes/${c.id}`)).body.tarifas).toEqual([
-      { concepto: 'traslado_km', valor: 500 },
+      { concepto: 'traslado_km', moneda: 'CLP', valor: 500 },
     ]);
     expect((await admin.put(`/api/clientes/${c.id}/tarifas`).send([])).body).toEqual([]);
   });
@@ -351,18 +357,64 @@ describe('tarifas', () => {
     const admin = await como('admin');
     const c = await crearCliente();
     const rep = [
-      { concepto: 'hora_normal', valor: 1 },
-      { concepto: 'hora_normal', valor: 2 },
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 1 },
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 2 },
     ];
     expect((await admin.put(`/api/clientes/${c.id}/tarifas`).send(rep)).status).toBe(400);
     expect(
       (
         await admin
           .put(`/api/clientes/${c.id}/tarifas`)
-          .send([{ concepto: 'hora_normal', valor: -1 }])
+          .send([{ concepto: 'hora_normal', moneda: 'CLP', valor: -1 }])
       ).status,
     ).toBe(400);
     expect((await admin.put('/api/clientes/99999/tarifas').send([])).status).toBe(404);
+  });
+
+  it('entradas manipuladas → 400 por campo y nada queda escrito (sin auditoría)', async () => {
+    const admin = await como('admin');
+    const c = await crearCliente();
+    await crearTarifaCliente(c.id, 'hora_normal', { valor: 1000 });
+    const [{ n: antes }] = await dataSource.query(`SELECT count(*)::int AS n FROM auditoria`);
+    for (const malo of [
+      [{ concepto: 'hora_normal', valor: 38000 }],
+      [{ concepto: 'hora_normal', moneda: 'UTM', valor: 1 }],
+      [{ concepto: 'hora_normal', moneda: 'UF', valor: 0.123 }],
+      [{ concepto: 'hora_normal', moneda: 'CLP', valor: 38000.5 }],
+      [{ concepto: 'hora_normal', moneda: 'UF', valor: 1e9 }],
+      [{ concepto: 'costo_interno', moneda: 'CLP', valor: 1 }],
+    ]) {
+      const r = await admin.put(`/api/clientes/${c.id}/tarifas`).send(malo);
+      expect(r.status, JSON.stringify(malo)).toBe(400);
+      expect(r.body.error.codigo).toBe('VALIDACION');
+    }
+    expect((await admin.get(`/api/clientes/${c.id}`)).body.tarifas).toEqual([
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 1000 },
+    ]);
+    const [{ n: despues }] = await dataSource.query(`SELECT count(*)::int AS n FROM auditoria`);
+    expect(despues).toBe(antes);
+  });
+
+  it('PUT sigue siendo solo de admin (técnico, coordinación y lectura → 403)', async () => {
+    const c = await crearCliente();
+    for (const rol of ['coordinacion', 'tecnico', 'lectura'] as const) {
+      const agente = await como(rol);
+      const r = await agente
+        .put(`/api/clientes/${c.id}/tarifas`)
+        .send([{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }]);
+      expect(r.status, rol).toBe(403);
+    }
+  });
+
+  it('GET devuelve la moneda de una tarifa creada por fábrica (por defecto CLP)', async () => {
+    const admin = await como('admin');
+    const c = await crearCliente();
+    await crearTarifaCliente(c.id, 'hora_normal', { moneda: 'UF', valor: 0.8 });
+    await crearTarifaCliente(c.id, 'hora_extendida', { valor: 45000 });
+    expect((await admin.get(`/api/clientes/${c.id}`)).body.tarifas).toEqual([
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
+    ]);
   });
 });
 

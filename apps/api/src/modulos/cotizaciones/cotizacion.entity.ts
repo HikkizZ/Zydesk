@@ -1,4 +1,4 @@
-import type { EstadoCotizacion, Moneda, ValidezDias } from '@zydesk/shared';
+import type { EstadoCotizacion, FuenteUf, Moneda, ValidezDias } from '@zydesk/shared';
 import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
 import { numericoANumero } from '../../database/transformadores.js';
 
@@ -41,6 +41,13 @@ export class Cotizacion {
     transformer: numericoANumero,
   })
   valor_uf!: number | null;
+
+  // AAAA-MM-DD; null si el valor es manual o no hay valor
+  @Column({ type: 'date', nullable: true })
+  valor_uf_fecha!: string | null;
+
+  @Column({ type: 'text', nullable: true })
+  valor_uf_fuente!: FuenteUf | null;
 
   @Column({ type: 'boolean', default: true })
   aplica_iva!: boolean;

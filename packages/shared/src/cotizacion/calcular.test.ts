@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { calcularCotizacion, enClp, venceEl, type LineaCalculo } from './calcular.js';
-import { formatearMonto } from '../formato/moneda.js';
+import {
+  calcularCotizacion,
+  convertirTarifa,
+  enClp,
+  totalLinea,
+  venceEl,
+  type LineaCalculo,
+  type TarifaConMoneda,
+} from './calcular.js';
+import { formatearMonto, formatearValorUf } from '../formato/moneda.js';
 
 const l = (cantidad: number, precio_unitario: number, descuento_pct = 0): LineaCalculo => ({
   cantidad,
@@ -111,5 +119,57 @@ describe('formatearMonto', () => {
     [-1, 'UF', '-UF 1,00'],
   ] as const)('%s %s -> %s', (n, moneda, esperado) => {
     expect(formatearMonto(n, moneda)).toBe(esperado);
+  });
+});
+
+describe('convertirTarifa (UF 41098,15)', () => {
+  const uf_valor = 41098.15;
+  const clp38: TarifaConMoneda = { moneda: 'CLP', valor: 38000 };
+  const uf08: TarifaConMoneda = { moneda: 'UF', valor: 0.8 };
+  it.each([
+    ['misma moneda CLP', clp38, 'CLP', uf_valor, 38000],
+    ['misma moneda UF', uf08, 'UF', uf_valor, 0.8],
+    ['UF a CLP (caso del usuario)', uf08, 'CLP', uf_valor, 32879],
+    ['UF 1,00 a CLP', { moneda: 'UF', valor: 1 }, 'CLP', uf_valor, 41098],
+    ['CLP 38000 a UF', clp38, 'UF', uf_valor, 0.92],
+    ['CLP 45000 a UF', { moneda: 'CLP', valor: 45000 }, 'UF', uf_valor, 1.09],
+    ['CLP 90000 a UF (precio fijo)', { moneda: 'CLP', valor: 90000 }, 'UF', uf_valor, 2.19],
+    ['sin valor UF, hace falta', uf08, 'CLP', null, null],
+    ['sin valor UF, no hace falta', clp38, 'CLP', null, 38000],
+    ['cero', { moneda: 'UF', valor: 0 }, 'CLP', uf_valor, 0],
+  ] as const)('%s', (_caso, t, destino, valor, esperado) => {
+    expect(convertirTarifa(t, destino, valor)).toBe(esperado);
+  });
+
+  it('línea completa tras convertir', () => {
+    const pClp = convertirTarifa(uf08, 'CLP', uf_valor)!;
+    expect(totalLinea(l(3, pClp), 'CLP')).toBe(98637);
+    const pUf = convertirTarifa(clp38, 'UF', uf_valor)!;
+    expect(totalLinea(l(3, pUf), 'UF')).toBe(2.76);
+  });
+
+  it('diseño COT-0218 en UF con tarifas globales convertidas', () => {
+    const p38 = convertirTarifa(clp38, 'UF', uf_valor)!;
+    const p45 = convertirTarifa({ moneda: 'CLP', valor: 45000 }, 'UF', uf_valor)!;
+    const p90 = convertirTarifa({ moneda: 'CLP', valor: 90000 }, 'UF', uf_valor)!;
+    expect([p38, p45, p90]).toEqual([0.92, 1.09, 2.19]);
+    const r = calcularCotizacion([l(3, p38), l(4, p38), l(2, p45), l(1, p38), l(1, p90, 10)], uf);
+    expect(r).toMatchObject({
+      subtotal: 11.73,
+      descuentos: 0.22,
+      neto: 11.51,
+      iva: 2.19,
+      total: 13.7,
+    });
+    expect(enClp(r.neto, 'UF', uf_valor)).toBe(473040);
+  });
+});
+
+describe('formatearValorUf', () => {
+  it.each([
+    [41098.15, '$41.098,15'],
+    [41098, '$41.098,00'],
+  ])('%s -> %s', (n, esperado) => {
+    expect(formatearValorUf(n)).toBe(esperado);
   });
 });

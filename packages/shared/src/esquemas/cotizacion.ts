@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { ESTADOS_COTIZACION, MONEDAS, TIPOS_LINEA, UNIDADES } from '../enums/cotizacion.js';
+import { FUENTES_UF } from '../enums/tarifa.js';
 import { ETAPAS_OT, TIPOS_OT } from '../enums/ot.js';
 import {
   ClienteBreve,
@@ -102,6 +103,8 @@ export const CotizacionSalida = CotizacionBreve.extend({
   validez_dias: validez,
   vence_el: fechaIso,
   valor_uf: z.number().nullable(),
+  valor_uf_fecha: fechaIso.nullable(), // fecha del indicador; null si es manual o no hay valor
+  valor_uf_fuente: z.enum(FUENTES_UF).nullable(), // null solo si valor_uf es null
   aplica_iva: z.boolean(),
   iva_pct: z.number(),
   condiciones: z.string().nullable(),

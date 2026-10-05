@@ -89,14 +89,14 @@ describe('fábricas de la Fase 4', () => {
   });
 
   it('fijarTarifas fusiona con la semilla de la fábrica y es repetible', async () => {
-    await fijarTarifas({ hora_normal: 40000 });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 40000 } });
     await fijarTarifas({ costo_interno: 15000 });
     const [fila] = await dataSource.query(
       `SELECT valor FROM configuracion WHERE clave = 'tarifas'`,
     );
     expect(fila.valor).toEqual({
-      hora_normal: 38000,
-      hora_extendida: 45000,
+      hora_normal: { moneda: 'CLP', valor: 38000 },
+      hora_extendida: { moneda: 'CLP', valor: 45000 },
       hora_urgencia: null,
       traslado_km: null,
       costo_interno: 15000,

@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { CONCEPTOS_TARIFA, ETIQUETA_CONCEPTO_TARIFA, formatearCLP } from '@zydesk/shared';
+import { CONCEPTOS_TARIFA, ETIQUETA_CONCEPTO_TARIFA, formatearMonto } from '@zydesk/shared';
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -122,7 +122,7 @@ function Condiciones({ c, puedeEditar }: { c: ClienteSalidaDatos; puedeEditar: b
             <div key={concepto}>
               <dt className="text-sm text-tinta-2">{ETIQUETA_CONCEPTO_TARIFA[concepto]}</dt>
               <dd className="font-medium">
-                {t ? `${formatearCLP(t.valor)} + IVA` : 'Tarifa global'}
+                {t ? `${formatearMonto(t.valor, t.moneda)} + IVA` : 'Tarifa global'}
               </dd>
             </div>
           );

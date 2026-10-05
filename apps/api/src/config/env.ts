@@ -41,6 +41,10 @@ const esquema = z
     EJECUTAR_JOBS: z
       .preprocess(vacioAUndefined, z.enum(['true', 'false']).default('true'))
       .transform((v) => v === 'true'),
+    // Consulta diaria de la UF a Boostr y mindicador.cl (spec fase-8b §7): `false` apaga las llamadas salientes
+    UF_ACTUALIZAR: z
+      .preprocess(vacioAUndefined, z.enum(['true', 'false']).default('true'))
+      .transform((v) => v === 'true'),
     ADMIN_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
     SEMILLA_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
     // Telegram (spec fase 6 §9.1): sin token el canal queda `omitido / sin_token`. Nunca en el repo ni en logs.

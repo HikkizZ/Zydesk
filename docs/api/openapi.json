@@ -5261,12 +5261,20 @@
                               "traslado_km"
                             ]
                           },
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
                           "valor": {
                             "type": "number"
                           }
                         },
                         "required": [
                           "concepto",
+                          "moneda",
                           "valor"
                         ],
                         "additionalProperties": false
@@ -5806,12 +5814,20 @@
                               "traslado_km"
                             ]
                           },
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
                           "valor": {
                             "type": "number"
                           }
                         },
                         "required": [
                           "concepto",
+                          "moneda",
                           "valor"
                         ],
                         "additionalProperties": false
@@ -6418,12 +6434,20 @@
                               "traslado_km"
                             ]
                           },
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
                           "valor": {
                             "type": "number"
                           }
                         },
                         "required": [
                           "concepto",
+                          "moneda",
                           "valor"
                         ],
                         "additionalProperties": false
@@ -8551,12 +8575,20 @@
                               "traslado_km"
                             ]
                           },
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
                           "valor": {
                             "type": "number"
                           }
                         },
                         "required": [
                           "concepto",
+                          "moneda",
                           "valor"
                         ],
                         "additionalProperties": false
@@ -9129,12 +9161,20 @@
                               "traslado_km"
                             ]
                           },
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
                           "valor": {
                             "type": "number"
                           }
                         },
                         "required": [
                           "concepto",
+                          "moneda",
                           "valor"
                         ],
                         "additionalProperties": false
@@ -9367,6 +9407,19 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "moneda": {
+                      "type": "string",
+                      "enum": [
+                        "CLP",
+                        "UF"
+                      ]
+                    },
+                    "valor": {
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 999999999,
+                      "multipleOf": 0.01
+                    },
                     "concepto": {
                       "type": "string",
                       "enum": [
@@ -9375,16 +9428,12 @@
                         "hora_urgencia",
                         "traslado_km"
                       ]
-                    },
-                    "valor": {
-                      "type": "number",
-                      "minimum": 0,
-                      "maximum": 99999999
                     }
                   },
                   "required": [
-                    "concepto",
-                    "valor"
+                    "moneda",
+                    "valor",
+                    "concepto"
                   ]
                 }
               }
@@ -9410,12 +9459,20 @@
                           "traslado_km"
                         ]
                       },
+                      "moneda": {
+                        "type": "string",
+                        "enum": [
+                          "CLP",
+                          "UF"
+                        ]
+                      },
                       "valor": {
                         "type": "number"
                       }
                     },
                     "required": [
                       "concepto",
+                      "moneda",
                       "valor"
                     ],
                     "additionalProperties": false
@@ -12338,9 +12395,27 @@
                     "hora_normal": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12350,9 +12425,27 @@
                     "hora_extendida": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12362,9 +12455,27 @@
                     "hora_urgencia": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12374,9 +12485,27 @@
                     "traslado_km": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12524,9 +12653,26 @@
                   "hora_normal": {
                     "anyOf": [
                       {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 999999999
+                        "type": "object",
+                        "properties": {
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
+                          "valor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 999999999,
+                            "multipleOf": 0.01
+                          }
+                        },
+                        "required": [
+                          "moneda",
+                          "valor"
+                        ]
                       },
                       {
                         "type": "null"
@@ -12536,9 +12682,26 @@
                   "hora_extendida": {
                     "anyOf": [
                       {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 999999999
+                        "type": "object",
+                        "properties": {
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
+                          "valor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 999999999,
+                            "multipleOf": 0.01
+                          }
+                        },
+                        "required": [
+                          "moneda",
+                          "valor"
+                        ]
                       },
                       {
                         "type": "null"
@@ -12548,9 +12711,26 @@
                   "hora_urgencia": {
                     "anyOf": [
                       {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 999999999
+                        "type": "object",
+                        "properties": {
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
+                          "valor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 999999999,
+                            "multipleOf": 0.01
+                          }
+                        },
+                        "required": [
+                          "moneda",
+                          "valor"
+                        ]
                       },
                       {
                         "type": "null"
@@ -12560,9 +12740,26 @@
                   "traslado_km": {
                     "anyOf": [
                       {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 999999999
+                        "type": "object",
+                        "properties": {
+                          "moneda": {
+                            "type": "string",
+                            "enum": [
+                              "CLP",
+                              "UF"
+                            ]
+                          },
+                          "valor": {
+                            "type": "number",
+                            "minimum": 0,
+                            "maximum": 999999999,
+                            "multipleOf": 0.01
+                          }
+                        },
+                        "required": [
+                          "moneda",
+                          "valor"
+                        ]
                       },
                       {
                         "type": "null"
@@ -12637,9 +12834,27 @@
                     "hora_normal": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12649,9 +12864,27 @@
                     "hora_extendida": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12661,9 +12894,27 @@
                     "hora_urgencia": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -12673,9 +12924,27 @@
                     "traslado_km": {
                       "anyOf": [
                         {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 999999999
+                          "type": "object",
+                          "properties": {
+                            "moneda": {
+                              "type": "string",
+                              "enum": [
+                                "CLP",
+                                "UF"
+                              ]
+                            },
+                            "valor": {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 999999999,
+                              "multipleOf": 0.01
+                            }
+                          },
+                          "required": [
+                            "moneda",
+                            "valor"
+                          ],
+                          "additionalProperties": false
                         },
                         {
                           "type": "null"
@@ -14007,6 +14276,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -14306,6 +14603,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -14865,6 +15164,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -15164,6 +15491,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -15621,6 +15950,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -15920,6 +16277,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -16684,6 +17043,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -16983,6 +17370,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -17421,6 +17810,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -17720,6 +18137,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -18178,6 +18597,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -18477,6 +18924,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",
@@ -22135,6 +22584,140 @@
           },
           "409": {
             "description": "Conflicto",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/indicadores/uf": {
+      "get": {
+        "summary": "Valor vigente de la UF (null si aún no hay valor) y si está desactualizado",
+        "description": "Permiso: sesion",
+        "tags": [
+          "Indicadores"
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta correcta",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "fecha": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "valor": {
+                          "type": "number"
+                        },
+                        "fuente": {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla"
+                          ]
+                        },
+                        "obtenido_en": {
+                          "type": "string",
+                          "format": "date-time",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d+)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                        },
+                        "hoy": {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        "desactualizado": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "fecha",
+                        "valor",
+                        "fuente",
+                        "obtenido_en",
+                        "hoy",
+                        "desactualizado"
+                      ],
+                      "additionalProperties": false
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No autenticado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "codigo": {
+                          "type": "string"
+                        },
+                        "mensaje": {
+                          "type": "string"
+                        },
+                        "detalles": {}
+                      },
+                      "required": [
+                        "codigo",
+                        "mensaje"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Sin permiso",
             "content": {
               "application/json": {
                 "schema": {
@@ -36688,6 +37271,34 @@
                         "null"
                       ]
                     },
+                    "valor_uf_fecha": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "format": "date",
+                          "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "valor_uf_fuente": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "enum": [
+                            "boostr",
+                            "mindicador",
+                            "semilla",
+                            "manual"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
                     "aplica_iva": {
                       "type": "boolean"
                     },
@@ -36987,6 +37598,8 @@
                     "validez_dias",
                     "vence_el",
                     "valor_uf",
+                    "valor_uf_fecha",
+                    "valor_uf_fuente",
                     "aplica_iva",
                     "iva_pct",
                     "condiciones",

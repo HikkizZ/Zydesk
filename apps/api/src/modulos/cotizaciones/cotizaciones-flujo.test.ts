@@ -299,7 +299,7 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
   });
 
   it('tarifa del cliente (40.000) gana a la global (38.000); sin ella se usa la global', async () => {
-    await fijarTarifas({ hora_normal: 38000 });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const { agente } = await como();
     const a = await otFacturable();
     const b = await otFacturable();
@@ -349,8 +349,8 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
     expect(evs[1].datos).toMatchObject({ cotizacion_id: cb.id, n: 1, origen: 'tareas' });
   });
 
-  it('tareas sin horas → 400; cotización en UF → 400; no editable → 409', async () => {
-    await fijarTarifas({ hora_normal: 38000 });
+  it('tareas sin horas → 400; cotización en UF con tarifa en pesos → convierte; no editable → 409', async () => {
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const { agente } = await como();
     const { ot } = await otFacturable();
     await crearTarea({ ot_id: ot.id }, { titulo: 'Sin horas' });
@@ -363,12 +363,15 @@ describe('POST /api/cotizaciones/:id/importar-horas (§5.5)', () => {
       .send({ origen: 'reales' });
     expect(reales.status).toBe(400);
     await crearTarea({ ot_id: ot.id }, { horas_estimadas: 2 });
-    await dataSource.query(`UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000 WHERE id = $1`, [
-      c.id,
-    ]);
+    await dataSource.query(
+      `UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000, valor_uf_fuente = 'manual' WHERE id = $1`,
+      [c.id],
+    );
+    // ADR 0030 (sustituye 0025.24): ya no hay 400 `moneda`; 38.000 CLP / 38.000 = 1 UF por hora
     const uf = await agente.post(`/api/cotizaciones/${c.id}/importar-horas`).send({});
-    expect(uf.status).toBe(400);
-    expect(uf.body.error.detalles).toHaveProperty('moneda');
+    expect(uf.status).toBe(200);
+    expect(uf.body.lineas).toHaveLength(1);
+    expect(uf.body.lineas[0]).toMatchObject({ cantidad: 2, precio_unitario: 1 });
     const enviada = await otFacturable('cotizada');
     const ce = await crearCotizacion(enviada.ot.id, { estado: 'enviada' });
     expect((await agente.post(`/api/cotizaciones/${ce.id}/importar-horas`).send({})).status).toBe(
@@ -384,7 +387,10 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
     lineas.map((l) => [l.descripcion, l.cantidad, l.precio_unitario, l.tipo, l.unidad]);
 
   it('una línea por tarea a hora normal, otra fuera de horario a extendida y una "sin tarea"', async () => {
-    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+    await fijarTarifas({
+      hora_normal: { moneda: 'CLP', valor: 38000 },
+      hora_extendida: { moneda: 'CLP', valor: 45000 },
+    });
     const { agente, usuario } = await como();
     const { ot, cliente } = await otFacturable();
     await dataSource.query(
@@ -421,7 +427,10 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
   });
 
   it('sin tarifa del cliente usa la extendida global; con solo horas normales no exige extendida', async () => {
-    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+    await fijarTarifas({
+      hora_normal: { moneda: 'CLP', valor: 38000 },
+      hora_extendida: { moneda: 'CLP', valor: 45000 },
+    });
     const { agente, usuario } = await como();
     const a = await otFacturable();
     const ta = await crearTarea({ ot_id: a.ot.id }, { titulo: 'Soporte' });
@@ -436,7 +445,7 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
     expect(resumen(ra.body.lineas)).toEqual([
       ['Soporte (fuera de horario)', 2, 45000, 'mano_de_obra', 'h'],
     ]);
-    await fijarTarifas({ hora_normal: 38000, hora_extendida: null });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 }, hora_extendida: null });
     const b = await otFacturable();
     const tb = await crearTarea({ ot_id: b.ot.id }, { titulo: 'Soporte' });
     await crearRegistroHoras(usuario.id, { ot_id: b.ot.id, tarea_id: tb.id, horas: 2 });
@@ -447,7 +456,7 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
   });
 
   it('horas fuera de horario sin tarifa extendida → 409 TARIFA_FALTANTE { concepto: hora_extendida }', async () => {
-    await fijarTarifas({ hora_normal: 38000, hora_extendida: null });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 }, hora_extendida: null });
     const { agente, usuario } = await como();
     const { ot } = await otFacturable();
     await crearRegistroHoras(usuario.id, { ot_id: ot.id, horas: 2, fuera_de_horario: true });
@@ -459,8 +468,11 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
     expect((await agente.get(`/api/cotizaciones/${c.id}`)).body.lineas).toHaveLength(0);
   });
 
-  it('sin horas registradas → 400 origen; UF → 400 moneda; sin tarifa normal → 409; las otras fuentes no cambian', async () => {
-    await fijarTarifas({ hora_normal: 38000, hora_extendida: 45000 });
+  it('sin horas registradas → 400 origen; UF → convierte; sin tarifa normal → 409; las otras fuentes no cambian', async () => {
+    await fijarTarifas({
+      hora_normal: { moneda: 'CLP', valor: 38000 },
+      hora_extendida: { moneda: 'CLP', valor: 45000 },
+    });
     const { agente, usuario } = await como();
     const { ot } = await otFacturable();
     await crearTarea({ ot_id: ot.id }, { titulo: 'Con estimadas', horas_estimadas: 2 });
@@ -469,20 +481,24 @@ describe('POST /api/cotizaciones/:id/importar-horas con origen registradas (F5-T
     expect(vacio.status).toBe(400);
     expect(vacio.body.error.detalles).toHaveProperty('origen');
     await crearRegistroHoras(usuario.id, { ot_id: ot.id, horas: 1 });
-    await dataSource.query(`UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000 WHERE id = $1`, [
-      c.id,
-    ]);
+    await dataSource.query(
+      `UPDATE cotizacion SET moneda = 'UF', valor_uf = 38000, valor_uf_fuente = 'manual' WHERE id = $1`,
+      [c.id],
+    );
     const uf = await importar(agente, c.id);
-    expect(uf.status).toBe(400);
-    expect(uf.body.error.detalles).toHaveProperty('moneda');
-    await dataSource.query(`UPDATE cotizacion SET moneda = 'CLP', valor_uf = NULL WHERE id = $1`, [
-      c.id,
-    ]);
+    expect(uf.status).toBe(200);
+    expect(uf.body.lineas).toHaveLength(1);
+    expect(uf.body.lineas[0]).toMatchObject({ cantidad: 1, precio_unitario: 1 });
+    await dataSource.query(`DELETE FROM linea_cotizacion WHERE cotizacion_id = $1`, [c.id]);
+    await dataSource.query(
+      `UPDATE cotizacion SET moneda = 'CLP', valor_uf = NULL, valor_uf_fuente = NULL WHERE id = $1`,
+      [c.id],
+    );
     await fijarTarifas({ hora_normal: null });
     const sin = await importar(agente, c.id);
     expect(sin.status).toBe(409);
     expect(sin.body.error.detalles).toEqual({ concepto: 'hora_normal' });
-    await fijarTarifas({ hora_normal: 38000 });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const est = await agente.post(`/api/cotizaciones/${c.id}/importar-horas`).send({});
     expect(resumen(est.body.lineas)).toEqual([['Con estimadas', 2, 38000, 'mano_de_obra', 'h']]);
   });
@@ -530,7 +546,10 @@ describe('POST /api/cotizaciones/:id/aplicar-plantilla (§5.6)', () => {
   });
 
   it('precio de la plantilla o tarifa vigente; un/gl sin precio → 0; copia condiciones si faltaban', async () => {
-    await fijarTarifas({ hora_normal: 38000, traslado_km: 900 });
+    await fijarTarifas({
+      hora_normal: { moneda: 'CLP', valor: 38000 },
+      traslado_km: { moneda: 'CLP', valor: 900 },
+    });
     const { agente } = await como();
     const { ot, cliente } = await otFacturable();
     await dataSource.query(

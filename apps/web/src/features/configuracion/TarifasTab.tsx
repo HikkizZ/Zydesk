@@ -1,15 +1,21 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  CONCEPTOS_TARIFA_GLOBAL,
+  CONCEPTOS_TARIFA,
   ETIQUETA_CONCEPTO_TARIFA,
+  ETIQUETA_FUENTE_UF,
   TarifasEntrada,
+  formatearValorUf,
+  type ConceptoTarifa,
+  type Moneda,
   type TarifasEntradaDatos,
   type TarifasSalidaDatos,
 } from '@zydesk/shared';
 import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { toast } from 'sonner';
+import { formatearDiaAnio } from '@/features/clientes/formato';
+import { indicadorUf, clavesCotizacion, STALE_UF } from '@/features/cotizador/api';
 import { Campo } from '@/components/dominio/Campo';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
@@ -17,6 +23,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { guardarTarifas, tarifas } from './api';
+import { EntradaTarifa } from './EntradaTarifa';
 import { Seleccion } from './Seleccion';
 import { Tarjeta } from './Tarjeta';
 
@@ -24,13 +31,45 @@ import { Tarjeta } from './Tarjeta';
 const aMonto = (v: unknown) => (v === '' || v === null || v === undefined ? null : Number(v));
 const aTextoOpcional = (v: unknown) => (typeof v === 'string' && v.trim() !== '' ? v : null);
 
-const UNIDAD_CONCEPTO: Record<(typeof CONCEPTOS_TARIFA_GLOBAL)[number], string> = {
+const UNIDAD_CONCEPTO: Record<ConceptoTarifa | 'costo_interno', string> = {
   hora_normal: 'por hora',
   hora_extendida: 'por hora',
   hora_urgencia: 'por hora',
   traslado_km: 'por km',
   costo_interno: 'por hora',
 };
+
+type Texto = Record<ConceptoTarifa, string>;
+type Monedas = Record<ConceptoTarifa, Moneda>;
+
+// Línea informativa con el indicador diario de la UF (el admin no lo edita aquí).
+function LineaUf() {
+  const consulta = useQuery({
+    queryKey: clavesCotizacion.uf,
+    queryFn: indicadorUf,
+    staleTime: STALE_UF,
+  });
+  if (!consulta.isSuccess) return null;
+  const uf = consulta.data;
+  if (uf === null) {
+    return (
+      <p className="text-sm text-tinta-3">
+        Sin valor de la UF todavía: en cada cotización puedes escribirlo a mano
+      </p>
+    );
+  }
+  const fuente = ETIQUETA_FUENTE_UF[uf.fuente];
+  return uf.desactualizado ? (
+    <p className="text-sm text-tinta-3">
+      UF del {formatearDiaAnio(uf.fecha)} ({formatearValorUf(uf.valor)}, {fuente}):{' '}
+      <strong className="font-semibold text-alta">puede estar desactualizada</strong>
+    </p>
+  ) : (
+    <p className="text-sm text-tinta-3">
+      UF del día: {formatearValorUf(uf.valor)} · {formatearDiaAnio(uf.fecha)} · {fuente}
+    </p>
+  );
+}
 
 function FormularioTarifas({ datos }: { datos: TarifasSalidaDatos }) {
   const queryClient = useQueryClient();
@@ -40,17 +79,40 @@ function FormularioTarifas({ datos }: { datos: TarifasSalidaDatos }) {
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { errors },
   } = useForm<TarifasEntradaDatos>({
     resolver: zodResolver(TarifasEntrada),
     defaultValues: datos,
   });
+  // El texto escrito y la moneda elegida viven aparte para no perder "0." ni la moneda de una tarifa vacía.
+  const [textos, setTextos] = useState<Texto>(
+    () =>
+      Object.fromEntries(CONCEPTOS_TARIFA.map((c) => [c, String(datos[c]?.valor ?? '')])) as Texto,
+  );
+  const [monedas, setMonedas] = useState<Monedas>(
+    () =>
+      Object.fromEntries(CONCEPTOS_TARIFA.map((c) => [c, datos[c]?.moneda ?? 'CLP'])) as Monedas,
+  );
+  const fijar = (concepto: ConceptoTarifa, texto: string, moneda: Moneda) => {
+    setTextos((t) => ({ ...t, [concepto]: texto }));
+    setMonedas((m) => ({ ...m, [concepto]: moneda }));
+    // Vacío = sin definir (`null`, se muestra "[TARIFA]").
+    setValue(concepto, texto.trim() === '' ? null : { moneda, valor: Number(texto) }, {
+      shouldDirty: true,
+    });
+  };
 
   const guardar = useMutation({
     mutationFn: guardarTarifas,
     onSuccess: async (guardadas) => {
       toast.success('Tarifas guardadas');
       reset(guardadas);
+      setTextos(
+        Object.fromEntries(
+          CONCEPTOS_TARIFA.map((c) => [c, String(guardadas[c]?.valor ?? '')]),
+        ) as Texto,
+      );
       await queryClient.invalidateQueries({ queryKey: ['tarifas'] });
     },
     onError: (err) => setErrorGeneral(mensajeDeError(err)),
@@ -67,30 +129,48 @@ function FormularioTarifas({ datos }: { datos: TarifasSalidaDatos }) {
     >
       <Tarjeta titulo="Tarifas">
         <div className="flex flex-col gap-4">
-          {CONCEPTOS_TARIFA_GLOBAL.map((concepto) => (
-            <div key={concepto} className="grid items-start gap-2 sm:grid-cols-[1fr_auto] sm:gap-4">
-              <Campo
-                etiqueta={ETIQUETA_CONCEPTO_TARIFA[concepto]}
-                error={errors[concepto]?.message}
-                ayuda={UNIDAD_CONCEPTO[concepto]}
-              >
-                {(p) => (
-                  <div className="flex max-w-xs items-center gap-2">
-                    <span className="text-tinta-2">$</span>
-                    <Input
-                      type="number"
-                      step={1}
-                      min={0}
-                      placeholder="[TARIFA]"
-                      className="font-mono"
-                      {...p}
-                      {...register(concepto, { setValueAs: aMonto })}
-                    />
-                  </div>
-                )}
-              </Campo>
-            </div>
+          {CONCEPTOS_TARIFA.map((concepto) => (
+            <Campo
+              key={concepto}
+              etiqueta={ETIQUETA_CONCEPTO_TARIFA[concepto]}
+              error={errors[concepto]?.valor?.message ?? errors[concepto]?.message}
+              ayuda={UNIDAD_CONCEPTO[concepto]}
+            >
+              {(p) => (
+                <EntradaTarifa
+                  id={p.id}
+                  etiqueta={ETIQUETA_CONCEPTO_TARIFA[concepto]}
+                  moneda={monedas[concepto]}
+                  texto={textos[concepto]}
+                  alCambiarMoneda={(m) => fijar(concepto, textos[concepto], m)}
+                  alCambiarTexto={(t) => fijar(concepto, t, monedas[concepto])}
+                  invalido={p['aria-invalid']}
+                  describedby={p['aria-describedby']}
+                />
+              )}
+            </Campo>
           ))}
+          <Campo
+            etiqueta={ETIQUETA_CONCEPTO_TARIFA.costo_interno}
+            error={errors.costo_interno?.message}
+            ayuda={UNIDAD_CONCEPTO.costo_interno}
+          >
+            {(p) => (
+              <div className="flex max-w-xs items-center gap-2">
+                <span className="text-tinta-2">$</span>
+                <Input
+                  type="number"
+                  step={1}
+                  min={0}
+                  placeholder="[TARIFA]"
+                  className="font-mono"
+                  {...p}
+                  {...register('costo_interno', { setValueAs: aMonto })}
+                />
+              </div>
+            )}
+          </Campo>
+          <LineaUf />
         </div>
       </Tarjeta>
 

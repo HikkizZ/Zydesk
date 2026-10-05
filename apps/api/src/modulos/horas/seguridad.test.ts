@@ -327,7 +327,8 @@ describe('prueba 16: logs sin contenido', () => {
     } finally {
       for (const e of espias) e.mockRestore();
     }
-    const todo = [...lineas, ...global].join('\n');
+    // Sin las marcas de tiempo: «…:36.750Z» contiene «6.75» y hacía fallar la prueba al azar.
+    const todo = [...lineas, ...global].join('\n').replace(/"time":"[^"]*"/g, '');
     expect(lineas.length).toBeGreaterThan(0);
     for (const secreto of ['DESCRIPCION-SECRETA-789', 'OTRA-SECRETA-321', '7.25', '6.75']) {
       expect(todo).not.toContain(secreto);

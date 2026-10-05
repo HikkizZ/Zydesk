@@ -58,15 +58,27 @@ const TARIFAS_DEFECTO: TarifasSalidaDatos = {
   condiciones_defecto: null,
 };
 
+const CONCEPTOS_CON_MONEDA = ['hora_normal', 'hora_extendida', 'hora_urgencia', 'traslado_km'];
+
+// Red de compatibilidad (spec fase 8b §5.3): un concepto numérico (forma antigua) se envuelve como pesos.
+export function normalizarTarifas(valor: unknown): unknown {
+  if (typeof valor !== 'object' || valor === null || Array.isArray(valor)) return valor;
+  const copia: Record<string, unknown> = { ...(valor as Record<string, unknown>) };
+  for (const k of CONCEPTOS_CON_MONEDA) {
+    if (typeof copia[k] === 'number') copia[k] = { moneda: 'CLP', valor: copia[k] };
+  }
+  return copia;
+}
+
 // Spec fase 4 §8.1: la usan cotizaciones y cargarOt; sin la clave (base antigua) devuelve los valores por defecto.
 export async function leerTarifas(
   m: EntityManager = dataSource.manager,
 ): Promise<TarifasSalidaDatos> {
   const valor = await leerClave(m, 'tarifas');
-  return valor === null ? { ...TARIFAS_DEFECTO } : TarifasSalida.parse(valor);
+  return valor === null ? { ...TARIFAS_DEFECTO } : TarifasSalida.parse(normalizarTarifas(valor));
 }
 
-// Spec fase 4 §8.1: el detalle de auditoría lleva solo los nombres de los campos cambiados, nunca los montos.
+// Spec fase 4 §8.1 y fase 8b §5.3: el detalle de auditoría lleva solo los nombres de los campos cambiados, nunca montos ni monedas.
 export async function guardarTarifas(
   actor: UsuarioSesion,
   e: TarifasEntradaDatos,
@@ -74,7 +86,7 @@ export async function guardarTarifas(
   return enTransaccion(async (tx) => {
     const actual = await leerTarifas(tx);
     const campos = (Object.keys(e) as (keyof TarifasEntradaDatos)[]).filter(
-      (k) => e[k] !== actual[k],
+      (k) => JSON.stringify(e[k]) !== JSON.stringify(actual[k]),
     );
     await guardarClave(tx, 'tarifas', e);
     await registrarAuditoria(tx, {

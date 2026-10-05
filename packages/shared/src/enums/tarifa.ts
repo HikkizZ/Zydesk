@@ -16,3 +16,13 @@ export const ETIQUETA_CONCEPTO_TARIFA: Record<ConceptoTarifaGlobal, string> = {
   traslado_km: 'Traslado por km',
   costo_interno: 'Costo interno (OT internas)',
 };
+
+// Procedencia del valor de la UF (ADR 0007, precisado por la Fase 8b): 'manual' solo vive en la cotización.
+export const FUENTES_UF = ['boostr', 'mindicador', 'semilla', 'manual'] as const;
+export type FuenteUf = (typeof FUENTES_UF)[number];
+export const ETIQUETA_FUENTE_UF: Record<FuenteUf, string> = {
+  boostr: 'Boostr',
+  mindicador: 'mindicador.cl',
+  semilla: 'Semilla de desarrollo',
+  manual: 'Ingresado a mano',
+};

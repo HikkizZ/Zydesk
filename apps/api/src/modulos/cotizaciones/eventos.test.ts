@@ -175,7 +175,7 @@ describe('cobertura de eventos de cotización', () => {
   it.each(CASOS.map((c) => [c.nombre, c] as const))(
     '%s aumenta los eventos de la OT con el cotizacion_id esperado',
     async (_nombre, caso) => {
-      await fijarTarifas({ hora_normal: 38000 });
+      await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
       const usuario = await crearUsuario({ rol: 'admin' });
       const { agente } = await ingresarComo(app(), usuario);
       const cliente = await crearCliente();

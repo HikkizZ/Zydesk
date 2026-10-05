@@ -90,7 +90,7 @@ const FICHA: ClienteSalidaDatos = {
       },
     ],
   },
-  tarifas: [{ concepto: 'hora_normal', valor: 38000 }],
+  tarifas: [{ concepto: 'hora_normal', moneda: 'CLP', valor: 38000 }],
   creado_en: '2026-01-01T12:00:00.000Z',
   actualizado_en: '2026-01-01T12:00:00.000Z',
 };
@@ -373,9 +373,36 @@ it('editar tarifas: "Usar tarifa global" quita el concepto del PUT', async () =>
     (llamadasA('PUT', '/api/clientes/1/tarifas')[0]![1] as RequestInit).body as string,
   );
   expect(cuerpo).toEqual([
-    { concepto: 'hora_normal', valor: 38000 },
-    { concepto: 'hora_extendida', valor: 45000 },
+    { concepto: 'hora_normal', moneda: 'CLP', valor: 38000 },
+    { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
   ]);
+});
+
+it('editar tarifas: una tarifa en UF viaja con su moneda y la ficha la muestra en UF', async () => {
+  const usuario = userEvent.setup();
+  fetchSimulado.mockImplementation((ruta: string) => {
+    if (ruta === '/api/clientes/1') {
+      return Promise.resolve(
+        respuesta(200, {
+          ...FICHA,
+          tarifas: [{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }],
+        }),
+      );
+    }
+    if (ruta.startsWith('/api/tickets?') || ruta.startsWith('/api/ots?')) {
+      return Promise.resolve(respuesta(200, { datos: [], total: 0, pagina: 1, por_pagina: 20 }));
+    }
+    return Promise.resolve(respuesta(200, ACTIVOS));
+  });
+  pantalla({ rol: 'admin' }, '/clientes/1');
+  expect(await screen.findByText('UF 0,80 + IVA')).toBeTruthy();
+  await usuario.click(screen.getByRole('button', { name: 'Editar tarifas' }));
+  expect(((await screen.findByLabelText('Hora normal')) as HTMLInputElement).value).toBe('0.8');
+  await usuario.click(screen.getByRole('button', { name: 'Guardar' }));
+  await waitFor(() => expect(llamadasA('PUT', '/api/clientes/1/tarifas').length).toBe(1));
+  expect(
+    JSON.parse((llamadasA('PUT', '/api/clientes/1/tarifas')[0]![1] as RequestInit).body as string),
+  ).toEqual([{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }]);
 });
 
 it('agregar bolsa: un 409 por solape se muestra en el diálogo', async () => {

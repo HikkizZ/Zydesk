@@ -50,6 +50,7 @@ jobs:
           cp .env.example .env
           echo 'SEMILLA_PASSWORD=Semilla.CI.Prueba.1' >> .env
           echo 'ADMIN_PASSWORD=Admin.CI.Prueba.1' >> .env
+          echo 'UF_ACTUALIZAR=false' >> .env
 
       - name: Crear roles y bases (mismo 01-roles.sql que el desarrollo local)
         run: |

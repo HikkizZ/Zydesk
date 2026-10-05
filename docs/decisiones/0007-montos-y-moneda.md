@@ -1,6 +1,6 @@
 # ADR 0007 — Montos, moneda, IVA y redondeo
 
-**Estado**: aceptada · 2026-09-29
+**Estado**: aceptada · 2026-09-29 · precisada por ADR 0030 (valor UF automático; tarifas con moneda)
 
 ## Contexto
 

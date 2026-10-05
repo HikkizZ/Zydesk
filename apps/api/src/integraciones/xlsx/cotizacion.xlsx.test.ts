@@ -117,7 +117,29 @@ describe('generarXlsx (prueba 17)', () => {
     expect((ws.getCell('H10').value as ExcelJS.CellFormulaValue).formula).toContain(',2)');
     expect(totalDe(ws, 'Neto').result).toBe(3.33);
     expect(totalDe(ws, 'Total').result).toBe(3.96);
-    expect(String(ws.getCell('D6').value)).toContain('Valor UF al');
+    expect(String(ws.getCell('D6').value)).toBe(
+      'Valor UF del 29 sep 2026 (Ingresado a mano): $38.000,00',
+    );
+  });
+
+  it('la leyenda del valor UF usa la fecha y la fuente del indicador, también en CLP', async () => {
+    const uf = cotizacionDePrueba({
+      moneda: 'UF',
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    });
+    const wsUf = await leer(await generarXlsx(uf, marca));
+    expect(wsUf.getCell('D6').value).toBe('Valor UF del 5 oct 2026 (Boostr): $41.098,15');
+    const clp = cotizacionDePrueba({
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'mindicador',
+    });
+    const wsClp = await leer(await generarXlsx(clp, marca));
+    expect(wsClp.getCell('D6').value).toBe('Valor UF del 5 oct 2026 (mindicador.cl): $41.098,15');
+    const sin = await leer(await generarXlsx(cotizacionDePrueba(), marca));
+    expect(sin.getCell('D6').value).toBeNull();
   });
 
   it('IVA desactivado: aplica IVA FALSE e IVA con result 0', async () => {

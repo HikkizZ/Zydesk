@@ -10,7 +10,7 @@ import {
 } from '../../../test/fabricas.js';
 import { crearApp } from '../../app.js';
 import { dataSource } from '../../config/db.js';
-import { leerTarifas } from './configuracion.service.js';
+import { leerTarifas, normalizarTarifas } from './configuracion.service.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
 
@@ -20,10 +20,10 @@ async function como(rol: 'admin' | 'coordinacion' | 'tecnico' | 'lectura') {
 }
 
 const entrada = (extra: object = {}) => ({
-  hora_normal: 38000,
-  hora_extendida: 45000,
+  hora_normal: { moneda: 'CLP', valor: 38000 },
+  hora_extendida: { moneda: 'CLP', valor: 45000 },
   hora_urgencia: null,
-  traslado_km: 500,
+  traslado_km: { moneda: 'CLP', valor: 500 },
   costo_interno: 12000,
   iva_pct: 19,
   validez_dias_defecto: 30,
@@ -54,9 +54,38 @@ describe('leerTarifas', () => {
     });
   });
 
+  it('compatibilidad: un concepto numérico (forma antigua) se lee como pesos', async () => {
+    await dataSource.query(
+      `UPDATE configuracion SET valor = valor || '{"hora_normal": 38000, "traslado_km": 500}'::jsonb WHERE clave = 'tarifas'`,
+    );
+    const t = await leerTarifas();
+    expect(t.hora_normal).toEqual({ moneda: 'CLP', valor: 38000 });
+    expect(t.traslado_km).toEqual({ moneda: 'CLP', valor: 500 });
+    expect(t.hora_extendida).toBeNull();
+  });
+
+  it('normalizarTarifas envuelve solo los cuatro conceptos numéricos y deja intacto el resto', () => {
+    expect(
+      normalizarTarifas({
+        hora_normal: 1,
+        hora_extendida: { moneda: 'UF', valor: 1 },
+        hora_urgencia: null,
+        costo_interno: 18000,
+        iva_pct: 19,
+      }),
+    ).toEqual({
+      hora_normal: { moneda: 'CLP', valor: 1 },
+      hora_extendida: { moneda: 'UF', valor: 1 },
+      hora_urgencia: null,
+      costo_interno: 18000,
+      iva_pct: 19,
+    });
+    expect(normalizarTarifas(null)).toBeNull();
+  });
+
   it('lee lo guardado', async () => {
-    await fijarTarifas({ hora_normal: 40000 });
-    expect((await leerTarifas()).hora_normal).toBe(40000);
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 40000 } });
+    expect((await leerTarifas()).hora_normal).toEqual({ moneda: 'CLP', valor: 40000 });
   });
 });
 
@@ -114,18 +143,86 @@ describe('/api/config/tarifas', () => {
     expect(b.detalle).toEqual({ seccion: 'tarifas', campos: ['iva_pct'] });
   });
 
-  it('valida: decimales, negativos, IVA fuera de rango y validez distinta de 15/30 → 400', async () => {
+  it('valida: forma antigua, monedas, decimales, topes, negativos, costo_interno con moneda, IVA y validez → 400 sin escribir nada', async () => {
     const { agente } = await como('admin');
+    await fijarTarifas();
+    const [{ valor: antes }] = await dataSource.query(
+      `SELECT valor FROM configuracion WHERE clave = 'tarifas'`,
+    );
+    const [{ n: auditorias }] = await dataSource.query(
+      `SELECT count(*)::int AS n FROM auditoria WHERE accion = 'config_cambiada'`,
+    );
     for (const malo of [
-      { hora_normal: 38000.5 },
-      { hora_normal: -1 },
+      { hora_normal: 38000 },
+      { hora_normal: { moneda: 'UTM', valor: 1 } },
+      { hora_normal: { moneda: 'UF', valor: 0.123 } },
+      { hora_normal: { moneda: 'CLP', valor: 38000.5 } },
+      { hora_normal: { moneda: 'UF', valor: 1e9 } },
+      { hora_normal: { moneda: 'UF', valor: 100000 } },
+      { hora_normal: { moneda: 'CLP', valor: -1 } },
+      { costo_interno: { moneda: 'CLP', valor: 18000 } },
       { iva_pct: 101 },
       { validez_dias_defecto: 20 },
     ]) {
       const r = await agente.put('/api/config/tarifas').send(entrada(malo));
       expect(r.status, JSON.stringify(malo)).toBe(400);
       expect(r.body.error.codigo).toBe('VALIDACION');
+      expect(r.headers['x-request-id']).toBeTruthy();
     }
+    const [{ valor: despues }] = await dataSource.query(
+      `SELECT valor FROM configuracion WHERE clave = 'tarifas'`,
+    );
+    expect(despues).toEqual(antes);
+    const [{ n }] = await dataSource.query(
+      `SELECT count(*)::int AS n FROM auditoria WHERE accion = 'config_cambiada'`,
+    );
+    expect(n).toBe(auditorias);
+  });
+
+  it('acepta UF con dos decimales y la auditoría no lleva montos ni monedas', async () => {
+    const { agente } = await como('admin');
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
+    const r = await agente
+      .put('/api/config/tarifas')
+      .send(entrada({ hora_normal: { moneda: 'UF', valor: 0.8 } }));
+    expect(r.status).toBe(200);
+    expect(r.body.hora_normal).toEqual({ moneda: 'UF', valor: 0.8 });
+    const [a] = await dataSource.query(
+      `SELECT detalle FROM auditoria WHERE accion = 'config_cambiada' ORDER BY id DESC LIMIT 1`,
+    );
+    expect(a.detalle.seccion).toBe('tarifas');
+    expect(a.detalle.campos).toContain('hora_normal');
+    const texto = JSON.stringify(a.detalle);
+    for (const prohibido of ['UF', 'CLP', '0.8', '38000']) expect(texto).not.toContain(prohibido);
+  });
+
+  it('cambiar solo la moneda con el mismo número también lista el concepto', async () => {
+    const { agente } = await como('admin');
+    const base = entrada({ hora_normal: { moneda: 'CLP', valor: 1 } });
+    await agente.put('/api/config/tarifas').send(base);
+    await agente
+      .put('/api/config/tarifas')
+      .send({ ...base, hora_normal: { moneda: 'UF', valor: 1 } });
+    const [a] = await dataSource.query(
+      `SELECT detalle FROM auditoria WHERE accion = 'config_cambiada' ORDER BY id DESC LIMIT 1`,
+    );
+    expect(a.detalle).toEqual({ seccion: 'tarifas', campos: ['hora_normal'] });
+  });
+
+  it('una tarifa en UF no altera una cotización existente', async () => {
+    const { agente } = await como('admin');
+    const ot = await crearOt((await crearTicket()).id);
+    const cot = await crearCotizacion(ot.id, {
+      lineas: [{ cantidad: 1, precio_unitario: 100000 }],
+    });
+    await agente
+      .put('/api/config/tarifas')
+      .send(entrada({ hora_normal: { moneda: 'UF', valor: 0.8 } }));
+    const [f] = await dataSource.query(
+      `SELECT neto::float AS neto, total::float AS total FROM cotizacion WHERE id = $1`,
+      [cot.id],
+    );
+    expect(f).toEqual({ neto: 100000, total: 119000 });
   });
 
   it('cambiar iva_pct no altera cotizaciones existentes (snapshot)', async () => {

@@ -249,7 +249,7 @@ describe('PUT /api/cotizaciones/:id (§5.3)', () => {
     expect(fila).toEqual({ neto: 475000, total: 565250, iva_pct: 19 });
   });
 
-  it('el IVA desactivado deja total = neto; la moneda CLP borra valor_uf', async () => {
+  it('el IVA desactivado deja total = neto; en CLP el valor_uf se conserva como manual (spec 8b)', async () => {
     const { agente } = await como();
     const { ot, contacto } = await otFacturable();
     const c = await crearCotizacion(ot.id);
@@ -258,7 +258,11 @@ describe('PUT /api/cotizaciones/:id (§5.3)', () => {
       .send(entrada(contacto.id, { aplica_iva: false, valor_uf: 38000 }));
     expect(r.status).toBe(200);
     expect(r.body.totales).toMatchObject({ iva: 0, total: 475000 });
-    expect(r.body.valor_uf).toBeNull();
+    expect(r.body).toMatchObject({
+      valor_uf: 38000,
+      valor_uf_fecha: null,
+      valor_uf_fuente: 'manual',
+    });
   });
 
   it('UF con valor_uf: totales en UF y total_clp', async () => {

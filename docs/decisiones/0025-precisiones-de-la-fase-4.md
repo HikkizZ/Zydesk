@@ -1,6 +1,6 @@
 # ADR 0025 — Precisiones surgidas al especificar e implementar la Fase 4
 
-**Estado**: aceptada · 2026-10-01 · precisa a ADR 0001, 0003, 0004, 0006, 0007, 0010, 0011, 0013, 0014, 0015, 0017, 0020, 0021, 0022 y 0024 (no cambia sus decisiones de fondo) · sustituye el punto 1 de ADR 0023 · precisada por ADR 0027 (Fase 6)
+**Estado**: aceptada · 2026-10-01 · precisa a ADR 0001, 0003, 0004, 0006, 0007, 0010, 0011, 0013, 0014, 0015, 0017, 0020, 0021, 0022 y 0024 (no cambia sus decisiones de fondo) · sustituye el punto 1 de ADR 0023 · precisada por ADR 0027 (Fase 6) · precisada por ADR 0030 (sustituye 0025.24 y 0025.28 en UF)
 
 ## Contexto
 

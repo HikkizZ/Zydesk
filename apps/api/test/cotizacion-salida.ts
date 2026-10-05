@@ -89,6 +89,8 @@ export function cotizacionDePrueba(
     validez_dias,
     vence_el: venceEl(fecha_emision, validez_dias),
     valor_uf,
+    valor_uf_fecha: null,
+    valor_uf_fuente: valor_uf !== null ? 'manual' : null,
     aplica_iva,
     iva_pct,
     condiciones: 'Pago a 30 días desde la factura.',

@@ -1,6 +1,6 @@
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { Rol } from '@zydesk/shared';
+import type { IndicadorUfSalidaDatos, Rol } from '@zydesk/shared';
 import { Route, Routes, useLocation } from 'react-router';
 import { afterEach, beforeAll, expect, it, vi } from 'vitest';
 import { Toaster } from '@/components/ui/sonner';
@@ -51,7 +51,16 @@ const CLIENTE = {
     },
   ],
   bolsa: { vigente: null, historial: [] },
-  tarifas: [] as { concepto: string; valor: number }[],
+  tarifas: [] as { concepto: string; moneda: 'CLP' | 'UF'; valor: number }[],
+};
+
+const UF_DEL_DIA: IndicadorUfSalidaDatos = {
+  fecha: '2026-10-05',
+  valor: 41098.15,
+  fuente: 'boostr',
+  obtenido_en: '2026-10-05T11:07:00.000Z',
+  hoy: '2026-10-05',
+  desactualizado: false,
 };
 
 function Ubicacion() {
@@ -63,6 +72,8 @@ interface Opciones {
   cliente?: typeof CLIENTE;
   manejador?: (l: Llamada) => Response | Promise<Response> | undefined;
   otras?: CotizacionSalidaDatos[];
+  uf?: IndicadorUfSalidaDatos | null;
+  tarifas?: ReturnType<typeof tarifasDePrueba>;
 }
 
 function montar(cot: CotizacionSalidaDatos, opciones: Opciones = {}) {
@@ -77,7 +88,12 @@ function montar(cot: CotizacionSalidaDatos, opciones: Opciones = {}) {
         const c = todas.find((x) => x.id === Number(una[1]));
         return c ? respuesta(200, c) : undefined;
       }
-      if (ruta === '/api/config/tarifas') return respuesta(200, tarifasDePrueba());
+      if (ruta === '/api/config/tarifas') {
+        return respuesta(200, opciones.tarifas ?? tarifasDePrueba());
+      }
+      if (ruta === '/api/indicadores/uf') {
+        return respuesta(200, opciones.uf === undefined ? UF_DEL_DIA : opciones.uf);
+      }
       if (ruta === '/api/config/plantillas-cotizacion') {
         return respuesta(200, [plantillaDePrueba()]);
       }
@@ -340,10 +356,116 @@ it('en UF aparece el Valor UF y los montos van como "UF 12,50"', async () => {
   expect(within(totales()).getByText(/≈/).textContent).toContain('$475.000');
 });
 
-it('en CLP no se muestra el Valor UF', async () => {
+it('en CLP el Valor UF también se muestra, con su procedencia', async () => {
+  montar(
+    borradorDePrueba({
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    }),
+  );
+  await esperarCarga();
+  expect((screen.getByLabelText('Valor UF') as HTMLInputElement).value).toBe('41098.15');
+  expect(screen.getByText('Del 5 oct 2026 · Boostr')).toBeTruthy();
+});
+
+it('con valor UF manual la ayuda dice "Ingresado a mano"; sin valor avisa que no se convertirán tarifas', async () => {
+  montar(borradorDePrueba({ valor_uf: 41000, valor_uf_fecha: null, valor_uf_fuente: 'manual' }));
+  await esperarCarga();
+  expect(screen.getByText('Ingresado a mano')).toBeTruthy();
+});
+
+it('sin valor UF la ayuda avisa que las tarifas en UF no se podrán convertir', async () => {
   montar(borradorDePrueba());
   await esperarCarga();
-  expect(screen.queryByLabelText('Valor UF')).toBeNull();
+  expect(
+    screen.getByText('Sin valor: las tarifas en UF no se podrán convertir').className,
+  ).toContain('text-alta');
+});
+
+it('"Usar UF del día" escribe el valor y al guardar lo envía en una cotización en CLP', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(borradorDePrueba(), {
+    manejador: ({ metodo, ruta }) =>
+      metodo === 'PUT' && ruta === '/api/cotizaciones/5'
+        ? respuesta(200, borradorDePrueba({ valor_uf: 41098.15 }))
+        : undefined,
+  });
+  await esperarCarga();
+  const boton = await screen.findByRole('button', { name: 'Usar UF del día' });
+  await waitFor(() => expect((boton as HTMLButtonElement).disabled).toBe(false));
+  await usuario.click(boton);
+  expect((screen.getByLabelText('Valor UF') as HTMLInputElement).value).toBe('41098.15');
+  expect(screen.getByText('Del 5 oct 2026 · Boostr')).toBeTruthy();
+  await waitFor(() => expect(guardar().disabled).toBe(false));
+  await usuario.click(guardar());
+  await waitFor(() => expect(llamadas.some((l) => l.metodo === 'PUT')).toBe(true));
+  expect((llamadas.find((l) => l.metodo === 'PUT')?.cuerpo as { valor_uf: number }).valor_uf).toBe(
+    41098.15,
+  );
+});
+
+it('"Usar UF del día" queda deshabilitado si no hay valor de la UF', async () => {
+  montar(borradorDePrueba(), { uf: null });
+  await esperarCarga();
+  const boton = (await screen.findByRole('button', {
+    name: 'Usar UF del día',
+  })) as HTMLButtonElement;
+  expect(boton.disabled).toBe(true);
+});
+
+it('con la UF desactualizada el botón sigue activo y la ayuda lo advierte', async () => {
+  const usuario = userEvent.setup();
+  montar(borradorDePrueba(), { uf: { ...UF_DEL_DIA, fecha: '2026-10-01', desactualizado: true } });
+  await esperarCarga();
+  const boton = await screen.findByRole('button', { name: 'Usar UF del día' });
+  await waitFor(() => expect((boton as HTMLButtonElement).disabled).toBe(false));
+  await usuario.click(boton);
+  expect(screen.getByText('UF del 1 oct 2026: puede estar desactualizada')).toBeTruthy();
+});
+
+it('el cotizador no ofrece "Usar UF del día" en una cotización que no se edita', async () => {
+  montar(cotizacionDePrueba());
+  await esperarCarga();
+  expect(boton('Usar UF del día')).toBeNull();
+});
+
+it('en CLP con tarifa del cliente en UF, "Agregar línea" usa el precio convertido', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(
+    borradorDePrueba({
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    }),
+    { cliente: { ...CLIENTE, tarifas: [{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }] } },
+  );
+  await esperarCarga();
+  await screen.findByLabelText('Contacto');
+  // Las tarifas llegan en consultas aparte: se espera a que resuelvan antes de agregar la línea.
+  await waitFor(() => expect(llamadas.some((l) => l.ruta === '/api/clientes/1')).toBe(true));
+  await new Promise((r) => setTimeout(r, 50));
+  await usuario.click(screen.getByRole('button', { name: 'Agregar línea' }));
+  const precio = screen.getByLabelText('Precio unitario de la línea 6') as HTMLInputElement;
+  expect(precio.value).toBe('32879');
+});
+
+it('en UF con tarifa global en CLP, "Agregar línea" deja el precio convertido', async () => {
+  const usuario = userEvent.setup();
+  montar(
+    borradorDePrueba({
+      moneda: 'UF',
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    }),
+  );
+  await esperarCarga();
+  await screen.findByLabelText('Contacto');
+  await new Promise((r) => setTimeout(r, 50));
+  await usuario.click(screen.getByRole('button', { name: 'Agregar línea' }));
+  const precio = screen.getByLabelText('Precio unitario de la línea 6') as HTMLInputElement;
+  expect(precio.value).toBe('0.92');
 });
 
 it('bajo 768 px las líneas se muestran como tarjetas; desde 768 px, como tabla', async () => {
@@ -461,11 +583,57 @@ it('"Importar horas" ofrece las horas registradas con su total, la tarifa extend
 it('"Importar horas" prefiere la tarifa del cliente', async () => {
   const usuario = userEvent.setup();
   montar(borradorDePrueba(), {
-    cliente: { ...CLIENTE, tarifas: [{ concepto: 'hora_normal', valor: 40000 }] },
+    cliente: { ...CLIENTE, tarifas: [{ concepto: 'hora_normal', moneda: 'CLP', valor: 40000 }] },
   });
   await esperarCarga();
   await usuario.click(boton('Importar horas de las tareas…') as HTMLButtonElement);
   expect(await screen.findByText('Tarifa del cliente $40.000/h')).toBeTruthy();
+});
+
+it('"Importar horas" muestra el precio convertido de una tarifa en UF y lo importa', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(
+    borradorDePrueba({
+      valor_uf: 41098.15,
+      valor_uf_fecha: '2026-10-05',
+      valor_uf_fuente: 'boostr',
+    }),
+    {
+      cliente: { ...CLIENTE, tarifas: [{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }] },
+      manejador: ({ metodo, ruta }) =>
+        metodo === 'POST' && ruta === '/api/cotizaciones/5/importar-horas'
+          ? respuesta(200, borradorDePrueba())
+          : undefined,
+    },
+  );
+  await esperarCarga();
+  await usuario.click(boton('Importar horas de las tareas…') as HTMLButtonElement);
+  const dialogo = await screen.findByRole('dialog');
+  expect(
+    await within(dialogo).findByText(
+      'Tarifa del cliente UF 0,80/h ≈ $32.879/h al valor UF $41.098,15',
+    ),
+  ).toBeTruthy();
+  await usuario.click(within(dialogo).getByRole('button', { name: 'Importar' }));
+  await waitFor(() => expect(llamadas.some((l) => l.ruta.endsWith('/importar-horas'))).toBe(true));
+});
+
+it('"Importar horas" se deshabilita sin valor UF cuando hay que convertir la tarifa', async () => {
+  const usuario = userEvent.setup();
+  montar(borradorDePrueba(), {
+    cliente: { ...CLIENTE, tarifas: [{ concepto: 'hora_normal', moneda: 'UF', valor: 0.8 }] },
+  });
+  await esperarCarga();
+  await usuario.click(boton('Importar horas de las tareas…') as HTMLButtonElement);
+  const dialogo = await screen.findByRole('dialog');
+  expect(
+    await within(dialogo).findByText(
+      'Indica el valor de la UF en Datos y guarda antes de importar',
+    ),
+  ).toBeTruthy();
+  expect(
+    (within(dialogo).getByRole('button', { name: 'Importar' }) as HTMLButtonElement).disabled,
+  ).toBe(true);
 });
 
 it('"Aplicar plantilla" lista las plantillas activas y aplica la elegida', async () => {

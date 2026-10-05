@@ -94,6 +94,8 @@ interface FilaCotizacion {
   total: number;
   neto_clp: number | null;
   valor_uf: number | null;
+  valor_uf_fecha: string | null;
+  valor_uf_fuente: CotizacionSalidaDatos['valor_uf_fuente'];
   aplica_iva: boolean;
   iva_pct: number;
   fecha_emision: string;
@@ -120,7 +122,8 @@ export async function cargarCotizacion(m: Consulta, id: number): Promise<Cotizac
     `SELECT c.id, c.ot_id, c.version, c.codigo, c.estado, c.moneda,
             c.subtotal::float8 AS subtotal, c.descuentos::float8 AS descuentos, c.neto::float8 AS neto,
             c.iva::float8 AS iva, c.total::float8 AS total, ${netoClpSql('c')} AS neto_clp,
-            c.valor_uf::float8 AS valor_uf, c.aplica_iva, c.iva_pct::float8 AS iva_pct,
+            c.valor_uf::float8 AS valor_uf, c.valor_uf_fecha::text AS valor_uf_fecha,
+            c.valor_uf_fuente, c.aplica_iva, c.iva_pct::float8 AS iva_pct,
             c.fecha_emision::text AS fecha_emision, c.validez_dias, c.condiciones, c.nota_interna,
             c.enviada_en, c.rechazada_en, c.aprobada_en, c.creado_en, c.actualizado_en,
             json_build_object('id', o.id, 'codigo', o.codigo, 'titulo', o.titulo, 'tipo', o.tipo) AS ot,
@@ -193,6 +196,8 @@ export async function cargarCotizacion(m: Consulta, id: number): Promise<Cotizac
     validez_dias: f.validez_dias,
     vence_el: venceEl(f.fecha_emision, f.validez_dias),
     valor_uf: f.valor_uf,
+    valor_uf_fecha: f.valor_uf_fecha,
+    valor_uf_fuente: f.valor_uf_fuente,
     aplica_iva: f.aplica_iva,
     iva_pct: f.iva_pct,
     condiciones: f.condiciones,
