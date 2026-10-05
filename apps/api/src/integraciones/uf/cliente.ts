@@ -41,7 +41,9 @@ export interface UfObtenida {
 }
 
 const URLS: Record<FuenteExterna, string> = { boostr: URL_BOOSTR, mindicador: URL_MINDICADOR };
-const TIMEOUT_MS = 10_000;
+// mindicador.cl tarda de 3 a 8 s en responder (medido el 2026-10-05); el job corre en segundo plano, así
+// que se le da margen.
+const TIMEOUT_MS = 20_000;
 const MAX_BYTES = 65_536;
 const VALOR_MIN = 20_000;
 const VALOR_MAX = 200_000;
