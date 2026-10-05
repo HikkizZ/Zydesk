@@ -12,8 +12,13 @@ function contrasenaSemilla(): string {
   if (process.env.SEMILLA_PASSWORD) return process.env.SEMILLA_PASSWORD;
   const raiz = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../..');
   const texto = fs.readFileSync(path.join(raiz, '.env'), 'utf8');
-  const m = /^SEMILLA_PASSWORD=(.*)$/m.exec(texto);
-  const valor = m?.[1]?.trim().replace(/^(['"])(.*)\1$/, '$2');
+  // Como dotenv, gana la última línea: el `.env` del CI copia `.env.example` (con la clave vacía) y
+  // agrega el valor al final.
+  const lineas = [...texto.matchAll(/^SEMILLA_PASSWORD=(.*)$/gm)];
+  const valor = lineas
+    .at(-1)?.[1]
+    ?.trim()
+    .replace(/^(['"])(.*)\1$/, '$2');
   if (!valor) throw new Error('Falta SEMILLA_PASSWORD (entorno o .env de la raíz)');
   return valor;
 }
