@@ -40,6 +40,9 @@ export function DialogoTerminos() {
     try {
       await aceptarTerminos(version);
       await recargar();
+      // Las consultas de la página de fondo fallaron con «términos pendientes» mientras el diálogo
+      // estaba abierto: se vuelven a pedir.
+      void queryClient.invalidateQueries();
     } catch (err) {
       setError(mensajeDeError(err));
       setEnviando(false);

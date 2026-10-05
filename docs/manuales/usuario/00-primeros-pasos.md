@@ -88,6 +88,10 @@ En la tarjeta **Telegram** de Avisos, **Vincular Telegram** te da un código de 
 
 En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol), **Ayuda** y **Cerrar sesión**.
 
+## Reportes
+
+**Reportes** (menú lateral; en el celular, **Más → Reportes**) muestra las cifras del equipo por período, departamento, cliente y persona: tickets cerrados, resolución promedio en días hábiles, % dentro de plazo, horas facturables, carga de cada persona y una tabla por cliente con lo facturado y lo por facturar, y permite exportarlo a `.xlsx`. Lo ven Administración, Coordinación y **Solo lectura**, con los montos incluidos; los técnicos no tienen esta pantalla. Qué significa cada indicador está en el [manual de coordinación](02-coordinacion.md#reportes).
+
 ## Trabajar con tickets
 
 Crear tickets (también desde un correo), registrar seguimientos y notas, tareas, horas, estados, Tablero y Tabla están explicados en el [manual de tickets para el equipo](01-tecnico.md).

@@ -3,7 +3,7 @@ import { dataSource } from '../../config/db.js';
 import { enTransaccion } from '../../core/historial/transaccion.js';
 import { fechaRelativa, instante, type Tx } from './desarrollo-tickets.js';
 
-// Semillas del cotizador (spec fase 4 §14): plantillas y 4 cotizaciones v1 de los diseños. Idempotentes por
+// Semillas del cotizador (spec fase 4 §14): plantillas y 5 cotizaciones v1 de los diseños. Idempotentes por
 // nombre de plantilla y por (codigo, version). Los totales salen de `calcularCotizacion` (ADR 0007). Las
 // cotizaciones llevan los mismos campos y eventos que el flujo real (crear → enviar → aprobar). Los
 // primeros números de `creada`/`enviada` son días atrás en Santiago.
@@ -51,6 +51,8 @@ const servicio = (
 
 // prettier-ignore
 const COTIZACIONES: CotizacionSemilla[] = [
+  { ot: 'OT-0213', estado: 'aprobada', creada: [27, '10:20'], enviada: [27, '11:00'],
+    lineas: [servicio('Cableado estructurado 14 puntos', 380000)] },
   { ot: 'OT-0218', estado: 'enviada', creada: [1, '10:40'], enviada: [1, '10:55'],
     nota_interna: 'Paula pidió detallar el soporte post-implementación por separado.',
     lineas: [

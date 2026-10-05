@@ -8,13 +8,13 @@ import {
 import { sembrarCotizacion } from './desarrollo-cotizaciones.js';
 import { fechaRelativa, instante, type Tx } from './desarrollo-tickets.js';
 
-// Semillas de OT de desarrollo (spec fase 3 §13): OT-0214 a OT-0219. Idempotentes por `codigo`; insertan
+// Semillas de OT de desarrollo (spec fase 3 §13): OT-0213 (facturada, spec fase 7 §10.1) y OT-0214 a OT-0219. Idempotentes por `codigo`; insertan
 // con `numero` explícito (no simulan la conversión: las tareas del ticket se conservan) y al final suben el
 // contador de OT a 219. Las fechas son relativas a "hoy" en Santiago; `dia` = días atrás.
 
 type Tipo = 'facturable' | 'interna';
 type Etapa = 'borrador' | 'cotizada' | 'en_ejecucion' | 'cerrada';
-type Facturacion = 'no_aplica' | 'pendiente' | 'por_facturar';
+type Facturacion = 'no_aplica' | 'pendiente' | 'por_facturar' | 'facturada';
 type Forma = 'orden_de_compra' | 'correo' | 'cotizacion_firmada';
 
 interface TareaOt {
@@ -48,11 +48,17 @@ interface OtSemilla {
   aprobada_por?: string; // interna: quien aprobó
   aprobacion?: { forma: Forma; archivo: string; quien: string; dia: number };
   cierre?: { resumen: string; dia: number; quien: string };
+  facturada?: { dia: number; quien: string; n_factura: string };
   tareas: TareaOt[];
 }
 
 // prettier-ignore
 const OTS: OtSemilla[] = [
+  { numero: 213, ticket: 1012, tipo: 'facturable', etapa: 'cerrada', facturacion: 'facturada', responsable: 'treyes', titulo: 'Cableado estructurado oficina Temuco', cliente: 'Transportes Austral', contacto: '[NOMBRE]', creado: 27, creador: 'crojas', inicio: 26, termino: 20, oc: 'OC-3920',
+    aprobacion: { forma: 'orden_de_compra', archivo: 'oc-3920.txt', quien: 'crojas', dia: 26 },
+    cierre: { resumen: 'Cableado terminado y certificado en los 14 puntos.', dia: 20, quien: 'treyes' },
+    facturada: { dia: 15, quien: 'crojas', n_factura: 'F-1187' },
+    tareas: [{ titulo: 'Cableado de 14 puntos', quien: 'treyes', est: 12, real: 12, hecha: true }] },
   { numero: 214, ticket: 1033, tipo: 'facturable', etapa: 'cotizada', facturacion: 'pendiente', responsable: 'fcastro', titulo: 'Renovación de plataforma de respaldo', cliente: 'Constructora Andes', contacto: '[NOMBRE]', creado: 6, creador: 'fcastro', tareas: [] },
   { numero: 215, ticket: 1037, tipo: 'interna', etapa: 'en_ejecucion', facturacion: 'no_aplica', responsable: 'vsoto', titulo: 'Reemplazo de switch en bodega central', cliente: 'Operaciones', creado: 3, creador: 'fcastro', inicio: 2, centro_costo: 'Operaciones', area: 'Operaciones', aprobador: 'fcastro', aprobada_por: 'fcastro', tareas: [
     { titulo: 'Instalar el switch nuevo y migrar los puertos', quien: 'vsoto', est: 5 },
@@ -153,6 +159,7 @@ async function sembrarOt(
     const creado_en = await instante(tx, o.creado, '10:02');
     const cierre = o.cierre;
     const cerrada_en = cierre ? await instante(tx, cierre.dia, '16:00') : null;
+    const facturada_en = o.facturada ? await instante(tx, o.facturada.dia, '14:00') : null;
     const aprobada_dia = o.aprobacion?.dia ?? (o.aprobada_por ? o.creado : null);
     const aprobada_en = aprobada_dia === null ? null : await instante(tx, aprobada_dia, '11:30');
     const aprobada_por = o.aprobacion
@@ -165,9 +172,10 @@ async function sembrarOt(
       `INSERT INTO ot (numero, codigo, ticket_id, tipo, etapa, titulo, alcance, responsable_tecnico_id, cliente_id,
                        contacto_id, inicio, termino, oc_cliente, condicion_pago, centro_costo, area_solicitante,
                        aprobador_id, aprobada_por, aprobada_en, estado_facturacion, resolvio_ticket, resumen_cierre,
-                       cerrada_en, cerrada_por, creado_por, creado_en, actualizado_en)
+                       cerrada_en, cerrada_por, n_factura, facturada_en, facturada_por, creado_por, creado_en,
+                       actualizado_en)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22,
-               $23, $24, $25, $26, $26)
+               $23, $24, $25, $26, $27, $28, $29, $29)
        RETURNING id`,
       [
         o.numero,
@@ -194,6 +202,9 @@ async function sembrarOt(
         cierre?.resumen ?? null,
         cerrada_en,
         cierre ? p(cierre.quien) : null,
+        o.facturada?.n_factura ?? null,
+        facturada_en,
+        o.facturada ? p(o.facturada.quien) : null,
         p(o.creador),
         creado_en,
       ],
@@ -346,6 +357,14 @@ async function sembrarOt(
         nuevo: 'Por facturar',
         datos: null,
       });
+      if (o.facturada && facturada_en) {
+        await evento(tx, 'ot', id, p(o.facturada.quien), facturada_en, 'cambio', {
+          campo: 'estado_facturacion',
+          anterior: 'Por facturar',
+          nuevo: 'Facturada',
+          datos: { n_factura: o.facturada.n_factura },
+        });
+      }
       await evento(tx, 'ticket', ticket!.id, quien, cerrada_en, 'ot_cerrada', {
         nuevo: `${codigo} cerrada · resolvió el ticket`,
         datos: {

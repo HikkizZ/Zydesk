@@ -51,7 +51,7 @@ it('(b) al pulsar Más aparece el diálogo "Menú" y aria-expanded="true"', asyn
   expect(botonMas().getAttribute('aria-expanded')).toBe('true');
 });
 
-it('(c) admin ve Configuración en el panel, técnico no; ambos ven el resto', async () => {
+it('(c) admin ve Configuración en el panel, técnico no; Reportes lo ven todos menos el técnico; el resto lo ven ambos', async () => {
   const comunes = [
     'Tablero',
     'Tabla',
@@ -59,7 +59,6 @@ it('(c) admin ve Configuración en el panel, técnico no; ambos ven el resto', a
     'Órdenes de trabajo',
     'Cotizador',
     'Horas',
-    'Reportes',
     'Clientes',
   ];
   for (const rol of ['admin', 'tecnico'] as const) {
@@ -71,6 +70,19 @@ it('(c) admin ve Configuración en el panel, técnico no; ambos ven el resto', a
     }
     expect(within(panel).queryByRole('link', { name: 'Configuración' }) !== null).toBe(
       rol === 'admin',
+    );
+    expect(within(panel).queryByRole('link', { name: 'Reportes' }) !== null).toBe(rol === 'admin');
+    unmount();
+  }
+});
+
+it('(c) coordinación y solo lectura ven Reportes en el panel', async () => {
+  for (const rol of ['coordinacion', 'lectura'] as const) {
+    const { unmount } = montar(rol);
+    await userEvent.click(botonMas());
+    const panel = await screen.findByRole('dialog', { name: 'Menú' });
+    expect(within(panel).getByRole('link', { name: 'Reportes' }).getAttribute('href')).toBe(
+      '/reportes',
     );
     unmount();
   }

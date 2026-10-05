@@ -94,6 +94,27 @@ En **Órdenes de trabajo**, el botón **Exportar para facturación (.xlsx)** des
 
 Uso típico a fin de mes: chip **Por facturar** y exportar. Exige permiso de facturar (Coordinación y Administración); para los demás roles el botón queda deshabilitado. Cada exportación queda en el registro de seguridad de Administración (solo con los nombres de los filtros usados, sin montos). Si los filtros abarcan más de 5.000 OT, la app pide acotarlos. **Marcar facturada** sigue haciéndose desde cada OT.
 
+## Reportes
+
+**Reportes** (menú lateral; en el celular, **Más → Reportes**) reúne las cifras del equipo. Lo ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos no tienen la entrada en el menú.
+
+Arriba, los **filtros**: **Período** (Este mes por defecto; Mes anterior; Últimos 30 o 90 días; Personalizado con dos fechas, hasta un año), **Departamento**, **Cliente** y **Persona**. Un texto bajo los filtros resume lo que estás viendo ("Período del 1 al 4 de octubre de 2026 · Soporte TI") y la URL guarda los filtros, así que puedes compartirla.
+
+Qué mide cada parte:
+
+- **Tickets cerrados**: los que se cerraron dentro del período (resueltos, descartados y duplicados, también los ya archivados). Un ticket reabierto deja de contar hasta que se cierre otra vez.
+- **Resolución promedio**: días hábiles entre la creación y el cierre de los tickets **resueltos** en el período, según el horario y los feriados del departamento del **responsable principal** (si no tiene, el del responsable por defecto de la categoría). Cada día cuenta por la fracción de jornada trabajada: un ticket abierto y cerrado a la misma hora en dos días hábiles seguidos vale 1,0 día; un viernes corto o un feriado pesan lo que corresponde. Si algún ticket no tiene departamento con el que calcular, la tarjeta indica "n sin calendario" y ese ticket no entra en el promedio.
+- **Dentro de plazo**: de los resueltos en el período que tenían fecha límite, cuántos se cerraron **antes o en** su fecha límite. Los descartados y duplicados no se miden contra un plazo.
+- **Horas facturables**: de las horas registradas en la planilla con fecha en el período, qué parte está en OT facturables; el resto (tickets, OT internas y "Sin ticket") es interno.
+- **Horas por semana**: las mismas horas, apiladas por semana (lunes a domingo) en facturables e internas, con el total sobre cada barra. En pantallas angostas se muestran solo las últimas 8 semanas; exporta para ver todas.
+- **Carga vs capacidad**: una fila por persona activa, con sus **tickets abiertos** (como responsable principal o colaborador) y sus **horas estimadas**: las de los tickets abiertos donde es principal más las de las tareas de OT pendientes a su nombre, frente a su **capacidad semanal** (la jornada del departamento × el % de tiempo disponible para tickets que fija Administración). "2 · 14/33 h" se lee "2 tickets abiertos, 14 h estimadas de 33 h disponibles"; sobre el 100 % el número va en rojo. Es una foto de **hoy**, no del período.
+- **Resolución por prioridad**: para Urgente, Alta, Media y Baja, el promedio de días hábiles de los resueltos del período frente al **objetivo** (el promedio de los plazos de resolución de sus categorías, en días hábiles). "Sobre plazo" en rojo cuando el promedio supera el objetivo.
+- **Tabla por cliente**: una fila por cliente externo con **abiertos** (hoy), **cerrados** y **horas** del período, **facturado** (neto de las OT marcadas facturadas en el período) y **por facturar** (neto de las OT cerradas que hoy faltan cobrar, destacado en ámbar). Las áreas internas van agrupadas en una sola fila **Interno** y los tickets sin cliente en **Sin cliente**, ambas sin montos. Los montos son el neto de la cotización aprobada de cada OT.
+
+Con un filtro de departamento o persona, los tickets se atribuyen por su responsable principal, las horas por quien las registró y los montos por el responsable técnico de la OT. Si el período es inválido (fin antes del inicio, más de un año o un filtro que ya no existe) el mensaje aparece bajo los filtros.
+
+**Exportar (.xlsx)** descarga `reportes-AAAA-MM-DD_AAAA-MM-DD.xlsx` con cinco hojas (Resumen, Horas por semana, Carga vs capacidad, Resolución por prioridad y Por cliente) con las mismas cifras que la pantalla y totales al pie. Cada exportación queda en el registro de seguridad de Administración (solo con los nombres de los filtros usados, sin montos). Los nombres van siempre como texto.
+
 ## Resolver un ticket que tiene una OT abierta
 
 Un ticket con una OT abierta no se puede resolver, descartar ni marcar como duplicado directamente: la app muestra la lista de OT abiertas con su etapa. Tienes dos caminos:
@@ -103,4 +124,4 @@ Un ticket con una OT abierta no se puede resolver, descartar ni marcar como dupl
 
 ## Lo que todavía no está
 
-La cotización no se envía por correo desde la app (se descarga y se envía fuera), el PDF no lleva los datos de la empresa, y la exportación de horas y los reportes de horas llegan en fases posteriores. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes. El bot de Telegram no registra la aprobación del cliente ni "Marcar facturada".
+La cotización no se envía por correo desde la app (se descarga y se envía fuera) y el PDF no lleva los datos de la empresa. Las horas de otra persona se ven pero no se editan, y no hay cierre de mes ni exportación de la planilla de horas en bruto (Reportes exporta las horas agregadas por semana). Reportes no mide el tiempo de primera respuesta ni separa las horas de bolsa de las horas a cotizar por cliente. El bot de Telegram no registra la aprobación del cliente ni "Marcar facturada".

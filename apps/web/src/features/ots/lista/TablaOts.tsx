@@ -14,6 +14,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
+import { MontoOculto } from '@/features/ots/lista/IndicadoresOts';
+import { usePermiso } from '@/features/auth/SesionProvider';
 import type { OtResumenDatos } from '@/features/ots/api';
 import { cn } from '@/lib/utils';
 
@@ -27,6 +29,7 @@ function etiquetaDerivada(ot: OtResumenDatos) {
 }
 
 function Fila({ ot }: { ot: OtResumenDatos }) {
+  const verMontos = usePermiso('reportes.ver');
   return (
     <TableRow>
       <TableCell className="sticky left-0 z-10 bg-superficie">
@@ -53,7 +56,9 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
         <PillEtapaOt etapa={ot.etapa} {...etiquetaDerivada(ot)} />
       </TableCell>
       <TableCell className="font-mono text-sm whitespace-nowrap">
-        {ot.tipo === 'facturable' && ot.neto !== null ? (
+        {ot.tipo === 'facturable' && !verMontos ? (
+          <MontoOculto />
+        ) : ot.tipo === 'facturable' && ot.neto !== null ? (
           <Monto valor={ot.neto} />
         ) : (
           <>

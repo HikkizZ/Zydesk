@@ -54,7 +54,10 @@ export const router = createBrowserRouter([
               { path: '/cotizaciones', element: <CotizacionesPage /> },
               { path: '/cotizaciones/:id', element: <CotizadorPage /> },
               { path: '/horas', element: <HorasPage /> },
-              { path: '/reportes', element: <ReportesPage /> },
+              {
+                element: <RequierePermiso permiso="reportes.ver" />,
+                children: [{ path: '/reportes', element: <ReportesPage /> }],
+              },
               { path: '/clientes', element: <ClientesPage /> },
               { path: '/clientes/:id', element: <ClientesPage /> },
               {

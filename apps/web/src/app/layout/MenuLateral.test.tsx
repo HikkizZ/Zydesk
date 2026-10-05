@@ -17,7 +17,6 @@ const TEXTOS_COMUNES = [
   'Órdenes de trabajo',
   'Cotizador',
   'Horas',
-  'Reportes',
   'Clientes',
 ];
 
@@ -27,20 +26,33 @@ it('un administrador ve todas las entradas, incluida Configuración', () => {
       <MenuLateral />
     </ConSesion>,
   );
-  for (const texto of [...TEXTOS_COMUNES, 'Configuración']) {
+  for (const texto of [...TEXTOS_COMUNES, 'Reportes', 'Configuración']) {
     expect(screen.getByText(texto)).toBeTruthy();
   }
 });
 
-it('un técnico no ve Configuración (el resto sí)', () => {
+it('un técnico no ve Configuración ni Reportes (el resto sí)', () => {
   render(
     <ConSesion yo={yoDePrueba({ rol: 'tecnico' })}>
       <MenuLateral />
     </ConSesion>,
   );
   expect(screen.queryByText('Configuración')).toBeNull();
+  expect(screen.queryByText('Reportes')).toBeNull();
   for (const texto of TEXTOS_COMUNES) {
     expect(screen.getByText(texto)).toBeTruthy();
+  }
+});
+
+it('coordinación y solo lectura ven Reportes', () => {
+  for (const rol of ['coordinacion', 'lectura'] as const) {
+    const { unmount } = render(
+      <ConSesion yo={yoDePrueba({ rol })}>
+        <MenuLateral />
+      </ConSesion>,
+    );
+    expect(screen.getByText('Reportes')).toBeTruthy();
+    unmount();
   }
 });
 
@@ -86,10 +98,13 @@ it('desde 100 el badge dice 99+', async () => {
   expect((await screen.findByLabelText('100 avisos sin leer')).textContent).toBe('99+');
 });
 
-it('menu.ts tiene 13 entradas con rutas únicas y solo Configuración exige permiso', () => {
+it('menu.ts tiene 13 entradas con rutas únicas y solo Reportes y Configuración exigen permiso', () => {
   expect(MENU).toHaveLength(13);
   expect(new Set(MENU.map((e) => e.ruta)).size).toBe(13);
-  expect(MENU.filter((e) => e.permiso).map((e) => e.etiqueta)).toEqual(['Configuración']);
+  expect(MENU.filter((e) => e.permiso).map((e) => e.etiqueta)).toEqual([
+    'Reportes',
+    'Configuración',
+  ]);
 });
 
 it('todos los roles, incluido lectura, ven el enlace Ayuda hacia /ayuda', () => {
