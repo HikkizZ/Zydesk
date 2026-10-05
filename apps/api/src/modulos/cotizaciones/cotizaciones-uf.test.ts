@@ -258,7 +258,7 @@ describe('PUT: procedencia de valor_uf sin confiar en el cliente (spec 8b §4.7 
       valor_uf_fuente: 'manual',
       valor_uf_fecha: null,
     });
-    // exactamente el valor de una fila conocida → su fecha y su fuente
+    // exactamente el valor de la fila vigente → su fecha y su fuente
     const conocido = await agente
       .put(`/api/cotizaciones/${c.id}`)
       .send(entrada(contacto.id, { valor_uf: 41098.15, valor_uf_fuente: 'manual' }));
@@ -266,6 +266,23 @@ describe('PUT: procedencia de valor_uf sin confiar en el cliente (spec 8b §4.7 
       valor_uf: 41098.15,
       valor_uf_fuente: 'semilla',
       valor_uf_fecha: hoyEnSantiago(),
+    });
+  });
+
+  it('el valor de una fila antigua (con otra más nueva) no hereda su procedencia: queda manual', async () => {
+    await crearIndicadorUf({ fecha: '2026-09-01', valor: 40000, fuente: 'boostr' });
+    await crearIndicadorUf();
+    const { agente } = await como();
+    const { ot, contacto } = await otFacturable();
+    const c = await crearCotizacion(ot.id);
+    const antiguo = await agente
+      .put(`/api/cotizaciones/${c.id}`)
+      .send(entrada(contacto.id, { valor_uf: 40000 }));
+    expect(antiguo.status).toBe(200);
+    expect(antiguo.body).toMatchObject({
+      valor_uf: 40000,
+      valor_uf_fuente: 'manual',
+      valor_uf_fecha: null,
     });
   });
 
@@ -464,7 +481,7 @@ describe('snapshot: la UF y las tarifas nuevas nunca alteran una cotización (sp
 });
 
 describe('módulos (spec 8b §9.11)', () => {
-  it('cotizaciones.service solo lee indicador_uf: leerUfVigente y la consulta de procedencia', () => {
+  it('cotizaciones.service solo lee indicador_uf a través de leerUfVigente', () => {
     const fuente = readFileSync(
       fileURLToPath(new URL('./cotizaciones.service.ts', import.meta.url)),
       'utf8',
@@ -473,10 +490,7 @@ describe('módulos (spec 8b §9.11)', () => {
       /import \{ leerUfVigente \} from '..\/indicadores\/indicadores\.service\.js'/,
     );
     expect(fuente).not.toMatch(/(INSERT INTO|UPDATE|DELETE FROM)\s+indicador_uf/i);
-    const lecturas = fuente.match(/FROM indicador_uf/g) ?? [];
-    expect(lecturas).toHaveLength(1);
-    expect(fuente).toContain(
-      'SELECT fecha::text AS fecha, fuente FROM indicador_uf WHERE valor = $1',
-    );
+    // la procedencia por coincidencia usa la fila vigente (leerUfVigente), sin consulta propia
+    expect(fuente).not.toMatch(/FROM indicador_uf/);
   });
 });

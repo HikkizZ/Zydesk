@@ -305,17 +305,15 @@ async function escribirCotizacion(
     throw errorValidacion({ lineas: ['El total supera el máximo permitido'] });
   }
   // Procedencia del valor UF (spec 8b §4.7): el cliente no la dicta. Igual al guardado → se conserva; distinto →
-  // la de la fila de `indicador_uf` con exactamente ese valor o, si no hay, 'manual'; null → ambas null.
+  // la de la fila vigente de `indicador_uf` solo si coincide con ella; cualquier otro valor es 'manual'; null → ambas null.
   const conservar = e.valor_uf === cot.valor_uf;
   let ufFecha: string | null = null;
   let ufFuente: string | null = null;
   if (!conservar && e.valor_uf !== null) {
-    const [fila]: { fecha: string; fuente: string }[] = await tx.query(
-      `SELECT fecha::text AS fecha, fuente FROM indicador_uf WHERE valor = $1 ORDER BY fecha DESC LIMIT 1`,
-      [e.valor_uf],
-    );
-    ufFecha = fila?.fecha ?? null;
-    ufFuente = fila?.fuente ?? 'manual';
+    const vigente = await leerUfVigente(tx);
+    const coincide = vigente !== null && vigente.valor === e.valor_uf;
+    ufFecha = coincide ? vigente.fecha : null;
+    ufFuente = coincide ? vigente.fuente : 'manual';
   }
   await tx.query(
     `UPDATE cotizacion SET contacto_id = $2, fecha_emision = $3, validez_dias = $4, moneda = $5, valor_uf = $6,
