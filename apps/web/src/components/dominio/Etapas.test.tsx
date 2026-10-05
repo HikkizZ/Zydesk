@@ -67,3 +67,14 @@ it('al montar deja el paso actual a la vista, centrado en el stepper', () => {
     Element.prototype.scrollIntoView = original as typeof original;
   }
 });
+
+it('el stepper desplazable es alcanzable con teclado y recorta sus textos solo-lector', () => {
+  render(
+    <Etapas ot={{ tipo: 'facturable', etapa: 'en_ejecucion', estado_facturacion: 'pendiente' }} />,
+  );
+  const lista = screen.getByRole('list', { name: 'Etapas de la OT' });
+  expect(lista.getAttribute('tabindex')).toBe('0');
+  // `relative`: sin él, los `sr-only` (absolute) escapan del `overflow-x-auto` y ensanchan la página.
+  expect(lista.className).toContain('relative');
+  expect(lista.className).toContain('overflow-x-auto');
+});

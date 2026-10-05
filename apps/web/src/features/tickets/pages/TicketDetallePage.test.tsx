@@ -122,6 +122,12 @@ function montar(
   return llamadas;
 }
 
+it('bajo lg el grid tiene una sola columna con minmax(0,1fr) para que el contenido no ensanche la página', async () => {
+  montar();
+  const tareas = await screen.findByRole('region', { name: 'Tareas' });
+  expect(tareas.closest('.grid')?.className).toContain('grid-cols-1');
+});
+
 it('muestra las pestañas con sus conteos y filtra al cambiar', async () => {
   const usuario = userEvent.setup();
   montar();

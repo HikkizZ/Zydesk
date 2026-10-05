@@ -126,6 +126,12 @@ function montar(
 
 const boton = (nombre: string | RegExp) => screen.queryByRole('button', { name: nombre });
 
+it('bajo lg el grid tiene una sola columna con minmax(0,1fr) para que el contenido no ensanche la página', async () => {
+  montar(otDePrueba());
+  const tareas = await screen.findByRole('region', { name: 'Tareas' });
+  expect(tareas.closest('.grid')?.className).toContain('grid-cols-1');
+});
+
 it('muestra el encabezado, las etapas con Cotizada actual y la cotización sin crear', async () => {
   montar(otDePrueba());
   expect(
@@ -258,8 +264,11 @@ it('la galería agrupa por pestaña y suma los archivos del ticket de origen', a
     },
   );
   const galeria = await screen.findByRole('region', { name: 'Fotos y archivos' });
-  expect(await within(galeria).findByRole('tab', { name: 'Todo (4)' })).toBeTruthy();
+  const pestana = await within(galeria).findByRole('tab', { name: 'Todo (4)' });
   expect(within(galeria).getAllByText('desde TK-1048')).toHaveLength(2);
+  // La pestaña activa controla un panel que existe (axe: aria-valid-attr-value).
+  const panel = within(galeria).getByRole('tabpanel');
+  expect(pestana.getAttribute('aria-controls')).toBe(panel.id);
 
   await usuario.click(within(galeria).getByRole('tab', { name: 'Fotos (2)' }));
   expect(within(galeria).getAllByRole('img')).toHaveLength(2);

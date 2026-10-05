@@ -88,7 +88,7 @@ function CampoHoras({
         const nuevo = texto.trim() === '' ? null : Number(texto);
         if (nuevo !== valor) onGuardar(nuevo);
       }}
-      className="h-11 w-20 px-2 text-right font-mono lg:h-9 lg:w-[72px]"
+      className="h-11 w-[72px] px-2 text-right font-mono sm:w-20 lg:h-9 lg:w-[72px]"
     />
   );
 }
@@ -259,7 +259,7 @@ export function ListaTareas({
               </span>
             ) : null}
             {conHoras ? (
-              <span className="flex items-center gap-1 sm:gap-1.5">
+              <span className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-1.5">
                 <span aria-hidden="true" className="text-xs text-tinta-2 sm:hidden">
                   Est.
                 </span>

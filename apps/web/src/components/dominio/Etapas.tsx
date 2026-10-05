@@ -35,7 +35,8 @@ export function Etapas({
     <ol
       ref={lista}
       aria-label="Etapas de la OT"
-      className="flex items-center gap-2 overflow-x-auto pb-1"
+      tabIndex={0}
+      className="relative flex items-center gap-2 overflow-x-auto pb-1 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
     >
       {pasos.map((etiqueta, i) => {
         const hecho = actual !== null && i < actual;

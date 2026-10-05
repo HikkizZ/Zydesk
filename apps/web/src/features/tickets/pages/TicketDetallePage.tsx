@@ -230,7 +230,7 @@ export function TicketDetallePage() {
         ]}
       />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
         {/* Bajo lg, las secciones son hijas directas del grid (display: contents) para poder reordenarlas con `order`; el DOM no cambia. */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
           {cerrado ? (

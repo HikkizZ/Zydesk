@@ -216,7 +216,7 @@ export function OtDetallePage() {
         ]}
       />
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-x-6">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-x-6">
         <section
           id="etapas"
           aria-label="Etapas"
