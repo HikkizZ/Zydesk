@@ -74,7 +74,7 @@ Dónde se ven las horas acumuladas:
 
 - **OT**: la tarjeta **Horas** del panel suma las registradas, y cada tarea muestra las suyas en la columna **Reg.**. En una OT interna, la tarjeta **Costo interno** multiplica las horas registradas por la tarifa de costo interno.
 - **Ficha del cliente**: la tarjeta **Bolsa de horas** muestra "12,5 / 20 h usadas este mes" para el contrato vigente (en rojo si supera la bolsa), sumando las horas registradas en las OT que descuentan de esa bolsa en el mes en curso. La OT muestra la misma cifra junto a la casilla **Descuenta de la bolsa**.
-- **Cotizador**: **Importar horas** con origen **registradas** lleva las horas de la planilla a la cotización, con las de fuera de horario a tarifa extendida.
+- **Cotizador**: **Importar horas** con origen **registradas** lleva las horas de la planilla a la cotización, con las de fuera de horario a tarifa extendida; si la tarifa está en UF y la cotización en pesos (o al revés), el precio se convierte con el **valor UF guardado en esa cotización**. Las sumas en pesos de la lista de **Órdenes de trabajo**, de **Por facturar** y de **Reportes** usan ese mismo valor guardado, así que no cambian cuando cambia la UF del día.
 
 ## Cancelar una OT
 

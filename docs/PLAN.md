@@ -217,6 +217,9 @@ Siguen el orden de la spec (§9). Cada fase entrega algo usable y demostrable.
 ### Fase 8 — Móvil
 - Pulido móvil de Mi día, detalle de ticket, seguimiento con fotos y OT.
 
+### Fase 8b — Tarifas en UF e indicador diario
+- Tarifas globales y por cliente en CLP o UF; valor de la UF obtenido cada hora (Boostr, respaldo mindicador.cl) y guardado como snapshot con su procedencia en cada cotización; conversión del precio unitario al importar horas y aplicar plantillas (ADR 0030).
+
 ### Fase 9 — Puesta en marcha
 - Despliegue con Docker Compose en el VPS (`desk.zytech.dev`), respaldos (`pg_dump` + archivos a un destino externo), guía de actualización.
 - Documentos legales revisados por quien corresponda antes de cargar datos reales.

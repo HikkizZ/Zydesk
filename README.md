@@ -17,11 +17,13 @@ Monorepo con API (Express), web (React + Vite), bot de Telegram (grammY) y un pa
 3. Instalar dependencias: `npm install`.
 4. Levantar Postgres: `docker compose -f docker-compose.dev.yml up -d`.
    Si ya existía un volumen de una versión anterior a la Fase 1, o si cambian los roles o las bases en `docker/postgres-init/`, hay que recrearlo (**borra los datos de desarrollo**): `docker compose -f docker-compose.dev.yml down -v` y luego `up -d`.
-5. Aplicar las migraciones: `npm run db:migrar`.
-6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053) y 7 órdenes de trabajo (OT-0213 a OT-0219); `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
+5. Aplicar las migraciones: `npm run db:migrar`. Repítelo cada vez que cambies a una rama con migraciones nuevas: `npm run db:reiniciar` vacía y siembra, pero **no migra**.
+6. Cargar datos de ejemplo: `npm run db:sembrar` (idempotente; incluye 18 tickets de ejemplo (TK-1012 a TK-1053), 7 órdenes de trabajo (OT-0213 a OT-0219), tarifas en pesos y en UF y la UF de hoy con fuente «semilla»; `npm run db:reiniciar` vacía la base de desarrollo y la vuelve a sembrar).
    Para una instalación real, en vez de sembrar, crear la primera cuenta: `npm run db:admin -- --correo admin@ejemplo.cl --nombre "Nombre Apellido"`.
 7. Arrancar shared (watch), API, web y bot: `npm run dev` (sin `TELEGRAM_BOT_TOKEN` el proceso del bot termina en silencio).
 8. Abrir <http://localhost:5173>.
+
+Con internet, la API consulta el valor de la UF una vez por hora (Boostr y, de respaldo, mindicador.cl; job `indicadores.uf`) y lo guarda en `indicador_uf`; `UF_ACTUALIZAR=false` en `.env` apaga esas llamadas salientes (CI, entornos sin internet) y la UF se escribe a mano en cada cotización. Los tests nunca salen a internet.
 
 ### Puertos
 
@@ -84,7 +86,7 @@ El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada
 | `npm run db:revertir`   | Revierte la última migración (`-- --todo` las revierte todas)                                   |
 | `npm run db:admin`      | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`) |
 | `npm run db:sembrar`    | Carga datos de ejemplo (lee `SEMILLA_PASSWORD`)                                                 |
-| `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar                                               |
+| `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar (no migra: antes `db:migrar`)                 |
 | `npm run db:test:crear` | Crea una base de test propia (`-- <sufijo>`); usarla con `TEST_BD_SUFIJO=<sufijo>`              |
 | `npm run api:openapi`   | Regenera `docs/api/openapi.json`                                                                |
 | `npm run test:movil`    | Auditoría móvil con Playwright + axe (Chromium; requiere `npx playwright install chromium`)     |

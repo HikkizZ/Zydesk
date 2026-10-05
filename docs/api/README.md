@@ -109,19 +109,22 @@ Una cotización nace de una OT facturable con cliente externo (`POST /api/ots/:i
 # Crear la v1 en borrador (201; 409 COTIZACION_NO_EDITABLE si ya hay un borrador o una enviada vigente)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/ots/1/cotizaciones
 
-# Guardar encabezado y todas las líneas (PUT completo; en UF, valor_uf es obligatorio)
+# Guardar encabezado y todas las líneas (PUT completo; en UF, valor_uf es obligatorio; en CLP puede ir y se guarda).
+# valor_uf_fecha y valor_uf_fuente del cuerpo se ignoran: la API los resuelve (igual al guardado → se conservan;
+# igual a la UF vigente de GET /api/indicadores/uf → su fecha y fuente; cualquier otro valor → 'manual' sin fecha)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -X PUT \
-  -d '{"contacto_id":1,"fecha_emision":"2026-10-01","validez_dias":30,"moneda":"CLP","valor_uf":null,"aplica_iva":true,"condiciones":"Forma de pago: 30 días.","nota_interna":null,"lineas":[{"tipo":"mano_de_obra","descripcion":"Diagnóstico","cantidad":3,"unidad":"h","precio_unitario":38000,"descuento_pct":0}]}' \
+  -d '{"contacto_id":1,"fecha_emision":"2026-10-01","validez_dias":30,"moneda":"CLP","valor_uf":41098.15,"aplica_iva":true,"condiciones":"Forma de pago: 30 días.","nota_interna":null,"lineas":[{"tipo":"mano_de_obra","descripcion":"Diagnóstico","cantidad":3,"unidad":"h","precio_unitario":38000,"descuento_pct":0}]}' \
   http://localhost:3010/api/cotizaciones/1
 
-# Importar horas de las tareas (origen: estimadas | reales) o aplicar una plantilla
+# Importar horas de las tareas (origen: estimadas | reales | registradas) o aplicar una plantilla. La tarifa (del cliente, si no
+# la global, cada una con su moneda) se convierte a la moneda de la cotización con su valor_uf (0,80 UF → 32879; 38000 → 0.92)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -d '{"origen":"estimadas"}' http://localhost:3010/api/cotizaciones/1/importar-horas
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -H "Content-Type: application/json" -d '{"plantilla_id":1}' http://localhost:3010/api/cotizaciones/1/aplicar-plantilla
 
 # Marcar como enviada (exige líneas y contacto; la OT pasa a cotizada; la versión enviada anterior queda reemplazada)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/cotizaciones/1/enviar
 
-# Duplicar como nueva versión (201; 409 COTIZACION_APROBADA si ya fue aprobada)
+# Duplicar como nueva versión (201; 409 COTIZACION_APROBADA si ya fue aprobada). La vN toma la UF vigente (la v1 también nace con ella)
 curl -b cookies.txt -H "X-Requested-With: Zydesk" -X POST http://localhost:3010/api/cotizaciones/1/duplicar
 
 # Descargar (la cookie basta; attachment "COT-0218_v1.xlsx" o ".pdf", con -BORRADOR si no se envió)
@@ -129,9 +132,18 @@ curl -b cookies.txt -OJ http://localhost:3010/api/cotizaciones/1/descargar.xlsx
 curl -b cookies.txt -OJ http://localhost:3010/api/cotizaciones/1/descargar.pdf
 ```
 
-Otras rutas: `GET /api/cotizaciones` (filtros `q`, `estado`, `cliente_id`, `ot_id`, `solo_vigentes`, `orden`), `GET|DELETE /api/cotizaciones/:id` (eliminar solo el borrador vigente), `GET|PUT /api/config/tarifas` (`PUT` con `config.editar`) y `GET|POST /api/config/plantillas-cotizacion`, `PUT /api/config/plantillas-cotizacion/:id`, `PATCH /api/config/plantillas-cotizacion/:id/activo` (mutaciones con `config.editar`). `PUT /api/ots/:id/aprobacion` exige una cotización vigente `enviada` y la deja `aprobada`; `POST /api/ots/:id/cambiar-etapa { "etapa": "borrador" }` desde Cotizada la deja `rechazada`.
+Otras rutas: `GET /api/cotizaciones` (filtros `q`, `estado`, `cliente_id`, `ot_id`, `solo_vigentes`, `orden`), `GET|DELETE /api/cotizaciones/:id` (eliminar solo el borrador vigente), `GET|PUT /api/config/tarifas` (`PUT` con `config.editar`; cada concepto `hora_normal`, `hora_extendida`, `hora_urgencia` y `traslado_km` es `{ "moneda": "CLP" | "UF", "valor": 38000 }` o `null`, con pesos enteros y UF con dos decimales hasta 99 999; `costo_interno` sigue siendo un número en pesos), `PUT /api/clientes/:id/tarifas` (`config.editar`; `[{ "concepto": "hora_normal", "moneda": "UF", "valor": 0.8 }]`, sin conceptos repetidos; `GET /api/clientes/:id` devuelve `tarifas[].moneda`) y `GET|POST /api/config/plantillas-cotizacion`, `PUT /api/config/plantillas-cotizacion/:id`, `PATCH /api/config/plantillas-cotizacion/:id/activo` (mutaciones con `config.editar`). `PUT /api/ots/:id/aprobacion` exige una cotización vigente `enviada` y la deja `aprobada`; `POST /api/ots/:id/cambiar-etapa { "etapa": "borrador" }` desde Cotizada la deja `rechazada`.
 
-Errores propios: `COTIZACION_NO_EDITABLE` (409, no es borrador o no es la vigente), `COTIZACION_APROBADA` (409, lo aprobado está congelado), `COTIZACION_REQUERIDA` (409, la OT necesita una cotización enviada; `detalles.cotizacion`) y `TARIFA_FALTANTE` (409, `detalles.concepto`). Cada descarga deja un `evento` en la OT y una fila `exportacion` en `auditoria`.
+Errores propios: `COTIZACION_NO_EDITABLE` (409, no es borrador o no es la vigente), `COTIZACION_APROBADA` (409, lo aprobado está congelado), `COTIZACION_REQUERIDA` (409, la OT necesita una cotización enviada; `detalles.cotizacion`) y `TARIFA_FALTANTE` (409, `detalles.concepto`). `importar-horas` y `aplicar-plantilla` responden `400 VALIDACION` con `detalles.fieldErrors.valor_uf` cuando la tarifa está en otra moneda que la cotización y esta no tiene `valor_uf` (solo posible en CLP); el borrador no se toca. `CotizacionSalida` incluye `valor_uf`, `valor_uf_fecha` (`null` si es manual) y `valor_uf_fuente` (`boostr` | `mindicador` | `semilla` | `manual`; `null` solo sin valor). Cada descarga deja un `evento` en la OT y una fila `exportacion` en `auditoria`.
+
+## Indicadores
+
+Una sola ruta de lectura, con cualquier sesión (también el Bearer del bot). Devuelve el último valor conocido de la UF (puede ser de días atrás) o `null` si la tabla está vacía; `desactualizado` es `fecha < hoy` en Santiago. No hay ruta de escritura: `indicador_uf` la llena el job `indicadores.uf` cada hora (Boostr, respaldo mindicador.cl; `UF_ACTUALIZAR=false` lo apaga) y las semillas. Sin `evento` ni `auditoria`.
+
+```bash
+curl -b cookies.txt http://localhost:3010/api/indicadores/uf
+# → {"fecha":"2026-10-05","valor":41098.15,"fuente":"boostr","obtenido_en":"2026-10-05T12:07:03.512Z","hoy":"2026-10-05","desactualizado":false}
+```
 
 ## Horas
 
