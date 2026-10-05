@@ -14,6 +14,7 @@ export function TotalesCotizacion({
   aplicaIva,
   ivaPct,
   valorUf,
+  procedencia,
   className,
 }: {
   totales: Totales;
@@ -21,6 +22,8 @@ export function TotalesCotizacion({
   aplicaIva: boolean;
   ivaPct: number;
   valorUf: number | null;
+  /** De dónde viene el valor UF («del 5 oct 2026», «ingresado a mano»); sin dato, «indicado». */
+  procedencia?: string | undefined;
   className?: string;
 }) {
   const enPesos = moneda === 'UF' ? enClp(totales.total, moneda, valorUf) : null;
@@ -71,7 +74,8 @@ export function TotalesCotizacion({
             'Indica el valor de la UF para ver el equivalente en pesos'
           ) : (
             <>
-              ≈ <Monto valor={enPesos} className="text-tinta-2" /> al valor UF indicado
+              ≈ <Monto valor={enPesos} className="text-tinta-2" /> al valor UF{' '}
+              {procedencia ?? 'indicado'}
             </>
           )}
         </p>

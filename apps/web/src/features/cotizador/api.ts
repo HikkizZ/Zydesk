@@ -4,6 +4,7 @@ import type {
   CotizacionResumenDatos,
   CotizacionSalidaDatos,
   CotizacionesQueryDatos,
+  IndicadorUfSalidaDatos,
   PlantillaCotizacionSalidaDatos,
   TarifasSalidaDatos,
 } from '@zydesk/shared';
@@ -14,6 +15,7 @@ export type {
   CotizacionEntradaDatos,
   CotizacionResumenDatos,
   CotizacionSalidaDatos,
+  IndicadorUfSalidaDatos,
   PlantillaCotizacionSalidaDatos,
   TarifasSalidaDatos,
 };
@@ -35,10 +37,12 @@ export const clavesCotizacion = {
   lista: (consulta: ConsultaCotizaciones) => ['cotizaciones', consulta] as const,
   una: (id: number) => ['cotizacion', id] as const,
   tarifas: ['tarifas'] as const,
+  uf: ['indicador-uf'] as const,
   plantillas: ['plantillas'] as const,
 };
 
 export const STALE_COTIZACIONES = 30_000;
+export const STALE_UF = 5 * 60_000;
 
 // Lectura ---------------------------------------------------------------------------------
 export const cotizaciones = (consulta: ConsultaCotizaciones) =>
@@ -47,6 +51,9 @@ export const cotizaciones = (consulta: ConsultaCotizaciones) =>
 export const cotizacion = (id: number) => obtener<CotizacionSalidaDatos>(`/api/cotizaciones/${id}`);
 
 export const tarifas = () => obtener<TarifasSalidaDatos>('/api/config/tarifas');
+
+// Valor vigente de la UF (`null` si aún no hay ninguno).
+export const indicadorUf = () => obtener<IndicadorUfSalidaDatos | null>('/api/indicadores/uf');
 
 // Solo las plantillas activas (la API las devuelve por defecto).
 export const plantillas = () =>

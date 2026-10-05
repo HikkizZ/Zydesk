@@ -1,5 +1,10 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { formatearCLP } from '@zydesk/shared';
+import {
+  convertirTarifa,
+  formatearMonto,
+  formatearValorUf,
+  type TarifaConMoneda,
+} from '@zydesk/shared';
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -75,21 +80,30 @@ function Contenido({
 
   const horas = ot.data?.horas;
   const horasDe = (o: Origen) => (horas ? horas[o] : null);
-  const tarifaCliente = cliente.data?.tarifas.find((t) => t.concepto === 'hora_normal')?.valor;
-  const tarifaGlobal = tarifas.data?.hora_normal?.valor ?? null;
-  const tarifaExtendida =
-    cliente.data?.tarifas.find((t) => t.concepto === 'hora_extendida')?.valor ??
-    tarifas.data?.hora_extendida?.valor ??
-    null;
-  const tarifa =
-    tarifaCliente !== undefined
-      ? { texto: `Tarifa del cliente ${formatearCLP(tarifaCliente)}/h` }
-      : tarifaGlobal !== null
-        ? { texto: `Tarifa global ${formatearCLP(tarifaGlobal)}/h` }
-        : null;
+  const tarifaDe = (concepto: 'hora_normal' | 'hora_extendida'): TarifaConMoneda | null =>
+    cliente.data?.tarifas.find((t) => t.concepto === concepto) ?? tarifas.data?.[concepto] ?? null;
+  const delCliente = cliente.data?.tarifas.some((t) => t.concepto === 'hora_normal') ?? false;
+  const normal = tarifaDe('hora_normal');
+  const extendida = tarifaDe('hora_extendida');
+  const valorUf = cotizacion.valor_uf;
+  // «UF 0,80/h», y si la tarifa está en otra moneda que la cotización, su precio convertido.
+  const describir = (t: TarifaConMoneda) => {
+    const base = `${formatearMonto(t.valor, t.moneda)}/h`;
+    const convertida = convertirTarifa(t, cotizacion.moneda, valorUf);
+    return t.moneda !== cotizacion.moneda && convertida !== null && valorUf !== null
+      ? `${base} ≈ ${formatearMonto(convertida, cotizacion.moneda)}/h al valor UF ${formatearValorUf(valorUf)}`
+      : base;
+  };
+  const tarifa = normal
+    ? { texto: `${delCliente ? 'Tarifa del cliente' : 'Tarifa global'} ${describir(normal)}` }
+    : null;
   const cargando =
     ot.isPending || tarifas.isPending || (clienteId !== undefined && cliente.isPending);
-  const enUf = cotizacion.moneda === 'UF';
+  // Hace falta convertir y la cotización guardada no tiene valor UF.
+  const sinUf =
+    valorUf === null &&
+    ((normal !== null && normal.moneda !== cotizacion.moneda) ||
+      (origen === 'registradas' && extendida !== null && extendida.moneda !== cotizacion.moneda));
   const sinHoras = horasDe(origen) === 0;
 
   return (
@@ -141,10 +155,6 @@ function Contenido({
           <p role="status" className="text-sm text-tinta-2">
             Cargando tarifa…
           </p>
-        ) : enUf ? (
-          <p role="alert" className="text-sm text-alta">
-            Las tarifas están en pesos: cambia la moneda a CLP para importar horas.
-          </p>
         ) : tarifa ? (
           <p className="text-sm text-tinta-2">{tarifa.texto}</p>
         ) : (
@@ -162,10 +172,15 @@ function Contenido({
             )}
           </p>
         )}
-        {origen === 'registradas' && !cargando && !enUf ? (
+        {sinUf && !cargando ? (
+          <p role="alert" className="text-sm text-alta">
+            Indica el valor de la UF en Datos y guarda antes de importar
+          </p>
+        ) : null}
+        {origen === 'registradas' && !cargando ? (
           <p className="text-sm text-tinta-2">
-            {tarifaExtendida !== null
-              ? `Las horas fuera de horario se cotizan a la tarifa de hora extendida (${formatearCLP(tarifaExtendida)}/h).`
+            {extendida !== null
+              ? `Las horas fuera de horario se cotizan a la tarifa de hora extendida (${describir(extendida)}).`
               : 'Las horas fuera de horario se cotizan a la tarifa de hora extendida, que no está configurada.'}
           </p>
         ) : null}
@@ -187,7 +202,7 @@ function Contenido({
           </Button>
           <Button
             type="submit"
-            disabled={cargando || enUf || tarifa === null || sinHoras || importar.isPending}
+            disabled={cargando || sinUf || tarifa === null || sinHoras || importar.isPending}
           >
             {importar.isPending ? 'Importando…' : 'Importar'}
           </Button>

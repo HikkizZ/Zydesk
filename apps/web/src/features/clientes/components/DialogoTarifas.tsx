@@ -4,6 +4,7 @@ import {
   ETIQUETA_CONCEPTO_TARIFA,
   TarifaClienteEntrada,
   type ConceptoTarifa,
+  type Moneda,
 } from '@zydesk/shared';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
@@ -17,19 +18,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { EntradaTarifa } from '@/features/configuracion/EntradaTarifa';
 import { ErrorApi } from '@/lib/api';
 import { guardarTarifas, type TarifaClienteSalidaDatos } from '../api';
 
-type Fila = { global: boolean; valor: string };
+type Fila = { global: boolean; moneda: Moneda; valor: string };
 type Filas = Record<ConceptoTarifa, Fila>;
 
 function filasIniciales(tarifas: TarifaClienteSalidaDatos[]): Filas {
   const filas = {} as Filas;
   for (const concepto of CONCEPTOS_TARIFA) {
     const t = tarifas.find((x) => x.concepto === concepto);
-    filas[concepto] = t ? { global: false, valor: String(t.valor) } : { global: true, valor: '' };
+    filas[concepto] = t
+      ? { global: false, moneda: t.moneda, valor: String(t.valor) }
+      : { global: true, moneda: 'CLP', valor: '' };
   }
   return filas;
 }
@@ -68,11 +71,14 @@ function FormularioTarifas({
     // "Usar tarifa global" = no enviar el concepto.
     const entrada = CONCEPTOS_TARIFA.filter((c) => !filas[c].global).map((concepto) => ({
       concepto,
+      moneda: filas[concepto].moneda,
       valor: filas[concepto].valor.trim() === '' ? NaN : Number(filas[concepto].valor),
     }));
     const resultado = TarifaClienteEntrada.safeParse(entrada);
     if (!resultado.success) {
-      setError('Escribe un valor válido (número, 0 o mayor) en cada tarifa propia.');
+      setError(
+        'Escribe un valor válido en cada tarifa propia (en pesos sin decimales; en UF, hasta 2 decimales).',
+      );
       return;
     }
     guardar.mutate(resultado.data);
@@ -85,18 +91,22 @@ function FormularioTarifas({
     <>
       <DialogHeader>
         <DialogTitle>Editar tarifas</DialogTitle>
-        <DialogDescription>Valores netos en pesos, más IVA.</DialogDescription>
+        <DialogDescription>
+          Valores netos, más IVA. En UF se convierten con el valor UF de cada cotización.
+        </DialogDescription>
       </DialogHeader>
       <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
         {CONCEPTOS_TARIFA.map((concepto) => (
           <div key={concepto} className="flex flex-col gap-1.5">
             <Label htmlFor={`tarifa-${concepto}`}>{ETIQUETA_CONCEPTO_TARIFA[concepto]}</Label>
-            <Input
+            <EntradaTarifa
               id={`tarifa-${concepto}`}
-              inputMode="numeric"
+              etiqueta={ETIQUETA_CONCEPTO_TARIFA[concepto]}
+              moneda={filas[concepto].moneda}
+              texto={filas[concepto].valor}
+              alCambiarMoneda={(moneda) => cambiar(concepto, { moneda })}
+              alCambiarTexto={(valor) => cambiar(concepto, { valor })}
               disabled={filas[concepto].global}
-              value={filas[concepto].valor}
-              onChange={(e) => cambiar(concepto, { valor: e.target.value })}
             />
             <div className="flex items-center gap-2">
               <Checkbox
