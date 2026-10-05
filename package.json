@@ -1,5 +1,6 @@
 {
   "name": "zydesk",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -30,7 +31,9 @@
     "db:test:crear": "npm run db:test:crear -w @zydesk/api --",
     "api:openapi": "npm run openapi -w @zydesk/api",
     "test:movil": "npm run test:movil -w @zydesk/web",
-    "docs:capturas": "npm run docs:capturas -w @zydesk/web"
+    "docs:capturas": "npm run docs:capturas -w @zydesk/web",
+    "version:fijar": "node scripts/version-fijar.mjs",
+    "test:scripts": "node --test scripts/version-fijar.test.mjs"
   },
   "devDependencies": {
     "@axe-core/playwright": "4.13.0",

@@ -4,8 +4,13 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-10-05 (al cerrar)
+
+Fecha provisional: se fija al cerrar la Fase 9 y etiquetar `v1.0.0` sobre `main` (ADR 0032).
+
 ### Añadido
 
+- Versionado (Fase 9, bloque 9A): una sola versión SemVer para la raíz y los cuatro workspaces (`1.0.0`; antes `0.1.0` y la raíz sin versión); `npm run version:fijar -- X.Y.Z` (o `X.Y.Z-rc.N`) la fija en los cinco `package.json` y en `package-lock.json` sin regenerarlo, y rechaza versiones inválidas (`npm run test:scripts`); `/api/salud` y los logs la exponen desde `apps/api/package.json`. Sin dependencias nuevas.
 - Fase 8b (tarifas en UF e indicador diario): las **tarifas** globales (hora normal, horario extendido, fin de semana/urgencia y traslado por km; el costo interno sigue en pesos) y las **tarifas por cliente** pueden estar en **pesos o en UF**, con un selector de moneda por concepto en **Configuración → Tarifas** y en **Editar tarifas** del cliente (la ficha muestra «UF 0,80 + IVA»); **indicador diario de la UF**: tabla `indicador_uf` alimentada por la tarea programada `indicadores.uf` (cada hora, en segundo plano; consulta Boostr y, si falla, mindicador.cl; si ya tiene el valor de hoy no sale a internet) y `GET /api/indicadores/uf` (valor, fecha, fuente y si está desactualizado); la pestaña Tarifas muestra «UF del día: $41.098,15 · 5 oct 2026 · Boostr» o avisa que puede estar desactualizada; **cada cotización guarda su valor UF** al crearse y al duplicarse (también en pesos), con su fecha y procedencia (Boostr, mindicador.cl, semilla o ingresado a mano), de modo que una cotización enviada nunca cambia de monto aunque cambien las tarifas o la UF; en el Cotizador el campo **Valor UF** está siempre visible con su procedencia y el botón **Usar UF del día**; **conversión automática** de las tarifas a la moneda de la cotización al **importar horas** (estimadas, reales y registradas), **aplicar plantillas** (los precios fijos de la plantilla son pesos y también se convierten) y **Agregar línea** (0,80 UF → $32.879/h; 38 000 CLP → UF 0,92/h al valor 41 098,15); «Importar horas» muestra el precio convertido y pide el valor UF si falta; la planilla `.xlsx` lleva «Valor UF del <fecha> (<fuente>): $41.098,15» siempre que haya valor y el PDF la equivalencia en pesos en las cotizaciones en UF; variable `UF_ACTUALIZAR` (`false` apaga las llamadas salientes: CI, entornos sin internet); migración 15 (`indicador_uf`, `tarifa_cliente.moneda`, `cotizacion.valor_uf_fecha` y `valor_uf_fuente`, conversión de la clave `tarifas`); semillas con la UF de hoy (fuente «semilla») y tarifas en UF para Transportes Austral; ADR 0030; manuales, guía de la API, `openapi.json`, `.env.example`, README y `CLAUDE.md` actualizados; capturas de Tarifas, ficha de cliente y cotizador regeneradas. Sin dependencias nuevas. Revisión de seguridad sin hallazgos HIGH (una observación MEDIUM corregida con test).
 - Fase 8 (móvil; solo `apps/web` y `docs/`): las cuatro pantallas de terreno **usables en el celular**. **Detalle del ticket** bajo 1024 px: fila de **atajos** a las secciones, **Datos del ticket** arriba y plegado (estado, responsables, cliente, fechas y OT vinculadas a un toque), Descripción → Tareas → Actividad, y el redactor **plegado en una barra** al pie con **Escribir seguimiento** y un botón de **cámara** (se abre centrado con foco; Cancelar pide confirmación si hay algo escrito). **OT** bajo 1024 px: atajos, etapas con la etapa actual a la vista, Tareas, Fotos y archivos, Actividad, redactor plegable, panel y **Tipo y datos** al final plegado (abierto en Borrador). **Fotos desde el celular**: vista previa inmediata de cada foto mientras sube, estado por archivo (subiendo · error con **Reintentar**), contador «2 de 3 fotos subidas», **Quitar** antes de enviar y las HEIC que el navegador no muestra aparecen como documento (sin cambiar límites ni compresión). **Base móvil**: casillas con área táctil de 44 px (`CasillaTactil`), enlaces y botones de 44 px en Mi día, el panel, el pie y las tareas, letra mínima de 12 px, área segura de iPhone en la barra inferior y diálogos que caben en la pantalla con scroll interno. **Auditoría automatizada** `npm run test:movil` (Playwright + axe, solo Chromium, 320 / 375 / 1440 px: desbordes, objetivos táctiles, letra, posiciones, diálogos, flujo de fotos y accesibilidad; 60 tests, 2 omitidos) como paso bloqueante del CI con informe adjunto si falla; **capturas de los manuales** (38 PNG en `docs/manuales/img/`, 4 de celular) generadas con `npm run docs:capturas` sobre semillas y mostradas en la **Ayuda** dentro de la app desde el bundle; ADR 0029; manuales, README y `CLAUDE.md` actualizados. Dependencias nuevas, solo de desarrollo, en la raíz: `@playwright/test 1.63.0` (Apache-2.0) y `@axe-core/playwright 4.13.0` (MPL-2.0). Sin cambios en la API, `shared`, el bot ni `openapi.json`.
 - Fase 7 (reportes): pantalla **Reportes** (`/reportes`, permiso "Ver reportes y montos": Administración, Coordinación y Solo lectura; el técnico no la ve en el menú ni en «Más») con filtros de **período** (Este mes por defecto, Mes anterior, Últimos 30 y 90 días, Personalizado; hasta un año), **departamento**, **cliente** y **persona**, todos en la URL; cuatro **indicadores**: tickets cerrados (resueltos · descartados · duplicados), resolución promedio en **días hábiles** del departamento del responsable (fracción de jornada por día; feriados y viernes cortos incluidos), % de resueltos cerrados dentro de su fecha límite y % de horas facturables; **gráficos**: horas por semana (facturables vs internas, apilado con totales), carga por persona vs capacidad (tickets abiertos y horas estimadas de tickets y tareas de OT abiertas contra la jornada semanal × % disponible para tickets; barra en rojo sobre el 100 %) y resolución por prioridad vs objetivo (promedio de los plazos de las categorías; «sobre plazo» en rojo); **tabla por cliente** con abiertos, cerrados, horas, facturado en el período y por facturar hoy (fila «Interno» agrupada y «Sin cliente», sin montos); **Exportar (.xlsx)** con cinco hojas (Resumen, Horas por semana, Carga vs capacidad, Resolución por prioridad, Por cliente) y los filtros vigentes, auditado como `exportacion` con los nombres de los filtros; `GET /api/reportes` y `GET /api/reportes/exportar.xlsx`; `diasHabilesEntre` y `jornadaDiariaPromedio` en `shared`; migración 14 (cuatro índices, sin tablas ni columnas nuevas); ADR 0028; manuales, guía de la API y `openapi.json` actualizados. Dependencia nueva en `apps/web`: `recharts ^3.10.1` (MIT).
@@ -47,7 +52,9 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Seguridad: una OT cerrada o cancelada rechaza mensajes con horas (`409 OT_CERRADA`, `detalles.horas`); sin horas siguen permitidos. El redactor de la OT oculta el campo de horas.
 - Seguridad: en una OT facturable `aprobada` o `en_ejecucion`, cambiar `oc_cliente`, `condicion_pago` o `descuenta_bolsa` exige `ots.aprobar` (`403 SIN_PERMISO` con `detalles.campos`); reenviar el mismo valor no cuenta. La ficha los muestra de solo lectura a quien no puede aprobar.
 
-### Pendientes para la guía de despliegue (Fase 9)
+### Pendientes conocidos
+
+#### Pendientes para la guía de despliegue (Fase 9)
 
 - El rol `zydesk_app` necesita `GRANT CREATE ON DATABASE <base> TO zydesk_app` para que pg-boss pueda crear su esquema al arrancar (en desarrollo lo hace `docker/postgres-init/01-roles.sql`).
 - `ua-parser-js` está fijado en la serie 1.x (`^1.0.41`, en `apps/web`) por licencia: la 2.x es AGPL. No actualizar a 2.x sin decidirlo.
@@ -59,40 +66,43 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 - Las acciones `actions/checkout` y `actions/setup-node` fijadas en el CI (v4.4.0) corren sobre Node 20, que GitHub retira: actualizar sus SHA a versiones con Node 24 en la Fase 9, junto con `upload-artifact`.
 - Esquema de versiones: SemVer con **v1.0.0 al cerrar la Fase 9**, en una ADR de esa fase (propuesto en ADR 0029).
 
-### Pendientes de la Fase 2
+#### Pendientes de la Fase 2
 
 - Falta el fixture `apps/api/test/fixtures/correo.msg` (no se puede generar un `.msg` sin Outlook): los tests de lectura de `.msg` (`correo.test.ts` y `fabricas-fase2.test.ts`) están como `it.skip` hasta aportar un archivo real sin datos personales.
 
-### Pendientes de la Fase 4
+#### Pendientes de la Fase 4
 
 - El PDF de la cotización lleva nombre y logo de la marca, pero no los datos de la empresa (RUT, razón social, dirección): configuración de la Fase 9.
 - La cotización no se envía por correo: "Marcar como enviada" registra que el documento descargado se envió fuera de la app.
 - El prefijo `COT-` es fijo.
 
-### Pendientes de la Fase 5
+#### Pendientes de la Fase 5
 
 - Sin exportación de la planilla de horas en bruto (la hoja «Horas por semana» de Reportes es agregada; la exportación de OT para facturación llegó en la Fase 6a); sin cierre de mes ni bloqueo por período; "fuera de horario" es una marca manual por celda; las horas de otra persona solo se ven, no se editan.
 
-### Pendientes de la Fase 6
+#### Pendientes de la Fase 6
 
 - Canal correo: previsto en el enum y en las tablas, sin implementar (ADR 0013).
 - El bot crea tickets solo desde mensajes de texto reenviados (sin fotos ni archivos), no atiende grupos ni canales y no registra la aprobación del cliente (exige respaldo adjunto). Un aviso de "el cliente aún no responde la cotización" no existe.
 - Dockerfile del bot, servicio en producción y alertas a Telegram desde Grafana: Fase 9.
 
-### Pendientes de la Fase 7
+#### Pendientes de la Fase 7
 
 - Sin indicador de tiempo de primera respuesta ni columnas de horas de bolsa / a cotizar por cliente (anotados como mejoras en ADR 0028); sin reportes al cliente, comparación con el mes anterior ni cierre de mes.
 
-### Pendientes de la Fase 8
+#### Pendientes de la Fase 8
 
 - Sin PWA, modo sin conexión, notificaciones push ni recorte de fotos (cada uno es una ADR y una fase aparte); sin progreso de subida en bytes ni cancelar una subida en curso.
 - **Crear tickets reenviando correos a una casilla (IMAP)**: decidido para la **v1.1.0**, con su propia ADR. Hoy los correos entran como `.eml`/`.msg` o texto pegado.
 - iOS Safari real y el teclado virtual sobre el redactor abierto se verifican a mano en un teléfono (spec fase 8 §14.3); el resultado se anota en el estado de avance de la spec.
 - `telegram.png` del manual de administración no se generó (la pestaña exige el bot configurado); la auditoría corre solo en Chromium.
 
-### Pendientes de la Fase 8b
+#### Pendientes de la Fase 8b
 
 - Solo CLP y UF (sin UTM ni dólar); el costo interno de las OT internas sigue en pesos; los precios fijos de las plantillas son pesos (sin moneda por línea).
 - Administración no puede registrar la UF a mano desde Configuración cuando Boostr y mindicador.cl fallan varios días: el valor se escribe en cada cotización («Valor UF»), y la app avisa «puede estar desactualizada» en Tarifas y en el cotizador. No hay aviso en la app cuando la UF no se actualiza: queda como `error` en el log de la API (alertas desde Grafana en la Fase 9).
 - Las cotizaciones creadas antes de esta fase quedan sin valor UF (se completa con «Usar UF del día»); sin historial de la UF en pantalla ni en Reportes.
 - En producción `UF_ACTUALIZAR=true` (se documenta en la guía de despliegue de la Fase 9).
+
+[Unreleased]: https://github.com/HikkizZ/Zydesk/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/HikkizZ/Zydesk/releases/tag/v1.0.0
