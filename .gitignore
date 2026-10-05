@@ -11,3 +11,7 @@ datos/
 # Configuración local de Claude Code (no versionar)
 .claude/settings.local.json
 .claude/launch.json
+
+# Playwright (Fase 8)
+apps/web/e2e/informe/
+apps/web/test-results/
