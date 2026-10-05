@@ -123,3 +123,27 @@ it('un error de la API muestra el estado de error', async () => {
   );
   expect(await screen.findByText(/Falló/)).toBeTruthy();
 });
+
+it('la casilla de «Tus tareas» va en un label y pulsarlo marca la tarea', async () => {
+  const usuario = userEvent.setup();
+  const llamadas = montar(miDiaDePrueba());
+  const casilla = await screen.findByRole('checkbox', {
+    name: 'Tarea hecha: Responder a Camila sobre la bolsa de horas',
+  });
+  const etiqueta = casilla.closest('label');
+  expect(etiqueta?.getAttribute('for')).toBe(casilla.id);
+  await usuario.click(etiqueta as HTMLElement);
+  await waitFor(() =>
+    expect(llamadas.find((l) => l.metodo === 'PATCH')).toMatchObject({
+      ruta: '/api/tareas/1',
+      cuerpo: { hecha: true },
+    }),
+  );
+});
+
+it('el enlace del asunto cubre la tarjeta y «Ver todos» no es excepción', async () => {
+  montar(miDiaDePrueba());
+  const enlace = await screen.findByRole('link', { name: 'Servidor de archivos no responde' });
+  expect(enlace.getAttribute('data-objetivo')).toBe('cubre-tarjeta');
+  expect(screen.getByRole('link', { name: 'Ver todos' }).hasAttribute('data-objetivo')).toBe(false);
+});

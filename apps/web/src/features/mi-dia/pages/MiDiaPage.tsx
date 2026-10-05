@@ -165,12 +165,9 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
               titulo="Te mencionaron"
               total={conteos.menciones}
               pie={
-                <Link
-                  to="/avisos?filtro=menciones"
-                  className="text-sm text-acento underline underline-offset-2"
-                >
-                  Ver todos
-                </Link>
+                <Button asChild variant="link" className="min-h-11 px-0 lg:min-h-0">
+                  <Link to="/avisos?filtro=menciones">Ver todos</Link>
+                </Button>
               }
             >
               <ul className="flex flex-col gap-2">

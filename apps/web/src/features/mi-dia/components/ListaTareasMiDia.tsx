@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { CasillaTactil } from '@/components/dominio/CasillaTactil';
 import { Codigo } from '@/components/dominio/Codigo';
 import { diaMesDeFecha } from '@/components/dominio/formato-fecha';
-import { Checkbox } from '@/components/ui/checkbox';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { editarTarea } from '@/features/tickets/api';
 import { ErrorApi } from '@/lib/api';
@@ -45,13 +45,16 @@ export function ListaTareasMiDia({ tareas }: { tareas: TareaMiDiaDatos[] }) {
   return (
     <ul className="flex flex-col">
       {tareas.map((t) => (
-        <li key={t.id} className="flex min-h-11 items-center gap-3 border-b py-1.5 last:border-b-0">
-          <Checkbox
+        <li
+          key={t.id}
+          className="flex min-h-14 items-center gap-1 border-b py-1.5 last:border-b-0 lg:min-h-11"
+        >
+          <CasillaTactil
+            id={`tarea-mi-dia-${t.id}`}
             checked={t.hecha}
             disabled={!puedeEditar || t.hecha}
             aria-label={`Tarea hecha: ${t.titulo}`}
             onCheckedChange={() => marcar.mutate(t)}
-            className="size-5"
           />
           <span className={cn('min-w-0 flex-1 text-sm', t.hecha && 'text-tinta-3 line-through')}>
             {t.titulo}

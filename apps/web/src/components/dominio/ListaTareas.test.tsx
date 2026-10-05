@@ -187,3 +187,13 @@ it('con la OT cerrada las horas quedan deshabilitadas pero se puede marcar', () 
       .disabled,
   ).toBe(false);
 });
+
+it('la casilla está dentro de un label con for y el input de horas tiene alto táctil', () => {
+  montar(false);
+  const etiqueta = casilla().closest('label');
+  expect(etiqueta?.getAttribute('for')).toBe(casilla().id);
+  expect(etiqueta?.className).toContain('size-11');
+  montarOt();
+  const campo = screen.getAllByRole('spinbutton').find((e) => e.className.includes('h-11'));
+  expect(campo?.className).toContain('lg:h-9');
+});
