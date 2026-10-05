@@ -15,6 +15,8 @@ Al crear o editar la OT se indica **quién aprueba**: es a quien se le pide, per
 
 Una OT facturable en **Cotizada** espera la aprobación del cliente. Cuando el cliente responde:
 
+![Diálogo Registrar aprobación del cliente con contacto, fecha, forma y respaldo](../img/coordinacion/aprobacion-cliente.png)
+
 1. Pulsa **Registrar aprobación del cliente…**.
 2. Elige el **contacto** del cliente que aprobó (debe ser un contacto activo de ese cliente), la **fecha** y la **forma**: orden de compra, correo de aprobación o cotización firmada.
 3. Sube el **respaldo** (la orden de compra, el correo o el documento firmado). **Es obligatorio**: sin respaldo no se puede registrar. El archivo queda en **Fotos y archivos** de la OT ("respaldo de aprobación").
@@ -37,6 +39,8 @@ Cualquier persona con sesión puede descargar la cotización en `.xlsx` o PDF de
 ## Cerrar una OT
 
 Una OT en **En ejecución** muestra **Cerrar OT…**. El diálogo pregunta:
+
+![Diálogo Cerrar OT con el resumen y las opciones de cierre](../img/coordinacion/cerrar-ot.png)
 
 1. **¿Esta OT resolvió el ticket?**
    - **Sí**: el ticket pasa a **Resuelto**. No está disponible si el ticket tiene otras OT abiertas: el diálogo las nombra; ciérralas o cancélalas primero.
@@ -80,6 +84,8 @@ Mientras una OT no esté cerrada ni cancelada, **Cancelar OT…** pide un **moti
 
 Una OT facturable cerrada aparece como **Por facturar** (en la lista, el filtro **Por facturar** las reúne). Cuando emites la factura, abre la OT, pulsa **Marcar facturada…** e ingresa el **N° de factura**. Pasa a **Facturada**, con número, fecha y quién la marcó; el stepper muestra "Facturada" como último paso. Solo se puede marcar una OT que esté por facturar, y solo una vez.
 
+![Diálogo Marcar facturada con el número de factura](../img/coordinacion/facturar.png)
+
 ## Por aprobar en Mi día
 
 En **Mi día**, el cuadro y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan; si tienes Telegram vinculado, ese aviso llega con el botón **Aprobar OT**, que la aprueba sin iniciar la ejecución (ver el [manual del bot](04-bot-telegram.md#aprobar-una-ot-desde-el-botón)). La aprobación del cliente sigue siendo solo desde la web, porque exige el respaldo adjunto.
@@ -97,6 +103,8 @@ Uso típico a fin de mes: chip **Por facturar** y exportar. Exige permiso de fac
 ## Reportes
 
 **Reportes** (menú lateral; en el celular, **Más → Reportes**) reúne las cifras del equipo. Lo ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos no tienen la entrada en el menú.
+
+![Reportes con los filtros, las cifras del período, las horas por semana y la carga por persona](../img/coordinacion/reportes.png)
 
 Arriba, los **filtros**: **Período** (Este mes por defecto; Mes anterior; Últimos 30 o 90 días; Personalizado con dos fechas, hasta un año), **Departamento**, **Cliente** y **Persona**. Un texto bajo los filtros resume lo que estás viendo ("Período del 1 al 4 de octubre de 2026 · Soporte TI") y la URL guarda los filtros, así que puedes compartirla.
 

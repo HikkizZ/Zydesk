@@ -28,9 +28,13 @@
     "db:sembrar": "npm run db:sembrar -w @zydesk/api",
     "db:reiniciar": "npm run db:reiniciar -w @zydesk/api",
     "db:test:crear": "npm run db:test:crear -w @zydesk/api --",
-    "api:openapi": "npm run openapi -w @zydesk/api"
+    "api:openapi": "npm run openapi -w @zydesk/api",
+    "test:movil": "npm run test:movil -w @zydesk/web",
+    "docs:capturas": "npm run docs:capturas -w @zydesk/web"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
     "concurrently": "^9.2.4",
     "cross-env": "^10.1.0",
     "eslint": "^9.39.5",

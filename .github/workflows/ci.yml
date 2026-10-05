@@ -73,6 +73,22 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Navegador para Playwright
+        run: npx playwright install --with-deps chromium
+
+      - name: Semillas para las pruebas móviles
+        run: npm run db:migrar && npm run db:sembrar
+
+      - name: Pruebas móviles (Playwright)
+        run: npm run test:movil
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: failure()
+        with:
+          name: informe-playwright
+          path: apps/web/e2e/informe
+          retention-days: 7
+
       - name: OpenAPI sin cambios
         run: |
           npm run api:openapi

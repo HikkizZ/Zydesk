@@ -187,3 +187,16 @@ it('con la OT cerrada las horas quedan deshabilitadas pero se puede marcar', () 
       .disabled,
   ).toBe(false);
 });
+
+it('la casilla está dentro de un label con for y el input de horas tiene alto táctil', () => {
+  montar(false);
+  const etiqueta = casilla().closest('label');
+  expect(etiqueta?.getAttribute('for')).toBe(casilla().id);
+  expect(etiqueta?.className).toContain('size-11');
+  montarOt();
+  const campo = screen.getAllByRole('spinbutton').find((e) => e.className.includes('h-11'));
+  expect(campo?.className).toContain('lg:h-9');
+  // A 320–375 px los dos campos y «Reg.» caben en la fila: 72 px en celular, 80 px solo en sm–lg.
+  expect(campo?.className).toContain('w-[72px]');
+  expect(campo?.className).toContain('sm:w-20');
+});

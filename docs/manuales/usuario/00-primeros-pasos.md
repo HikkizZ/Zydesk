@@ -8,6 +8,8 @@ Esta guía es para todas las personas que usan Zydesk.
 2. Escribe tu **correo** y tu **contraseña** y pulsa **Ingresar**.
 3. Si marcas **Mantener sesión iniciada en este equipo**, no tendrás que ingresar de nuevo durante varias semanas. Márcalo solo en tu propio equipo, nunca en uno compartido.
 
+![Pantalla de ingreso de Zydesk con los campos de correo y contraseña](../img/primeros-pasos/ingresar.png)
+
 Por seguridad, si te equivocas varias veces seguidas la cuenta se bloquea un rato. Espera el tiempo que indica el mensaje e inténtalo otra vez.
 
 ## Tu primera contraseña (temporal)
@@ -28,6 +30,8 @@ La primera vez (y cada vez que cambien los textos) verás una ventana con los **
 
 Abre **Perfil** (al pie del menú; en el celular, **Más → Perfil**). Ahí ves tus datos y tus **sesiones activas**: cada navegador o equipo donde has ingresado, con su nombre, desde cuándo y hasta cuándo vale.
 
+![Tarjeta «Tus datos» del perfil con nombre, correo, rol y departamento](../img/primeros-pasos/perfil.png)
+
 - Si ves un dispositivo que no reconoces, o dejaste la sesión abierta en un equipo ajeno, cierra esa sesión desde su fila. La sesión **Bot de Telegram** es la que usa el bot en tu nombre: cerrarla detiene los comandos del bot, pero sigues recibiendo avisos (ver el [manual del bot](04-bot-telegram.md#desvincular)).
 - **Cerrar las demás** deja abierta solo la sesión en la que estás.
 
@@ -47,6 +51,8 @@ La aplicación no envía correos, así que no hay un enlace de recuperación. **
 
 **Mi día** es la pantalla con la que abre la app (también en el menú y en la barra inferior). Reúne lo tuyo para hoy:
 
+![Mi día en el computador, con los cuadros Vencen hoy, Por aprobar, Te mencionaron y Tus tareas](../img/primeros-pasos/mi-dia.png)
+
 - **Vencen hoy** y **Vencidos**: tickets abiertos donde eres responsable (principal o colaborador; seguir un ticket no basta) cuya fecha límite es hoy o ya pasó. Los vencidos no repiten los de hoy.
 - **Por aprobar**: solo para quien puede aprobar OT internas; se explica en el [manual de coordinación](02-coordinacion.md#por-aprobar-en-mi-día).
 - **Te mencionaron**: tus menciones sin leer (hasta 10); **Ver todos** abre Avisos con el filtro Menciones.
@@ -58,6 +64,10 @@ Los cuadros de arriba muestran los totales y llevan a cada lista. La pantalla se
 ## Avisos
 
 **Avisos** (menú o barra inferior; el número rojo indica cuántos no has leído, `99+` desde 100) junta lo que te pasa a ti:
+
+![Lista de avisos con los filtros Todos, Menciones, Asignaciones y Vencimientos](../img/primeros-pasos/avisos.png)
+
+![Pestaña Preferencias de Avisos en el celular, con un interruptor En la app y otro Telegram por cada tipo de aviso](../img/primeros-pasos/avisos-preferencias-movil.png)
 
 | Aviso                                     | Cuándo llega                                                                                              |
 | ----------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -82,11 +92,19 @@ En la tarjeta **Telegram** de Avisos, **Vincular Telegram** te da un código de 
 
 ## Ayuda
 
-**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página.
+**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página. Las capturas de pantalla de los manuales también se ven ahí.
+
+![La Ayuda dentro de la app, con las pestañas de manuales y el índice de la página](../img/primeros-pasos/ayuda.png)
 
 ## En el celular
 
 En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol), **Ayuda** y **Cerrar sesión**.
+
+![Mi día en el celular, con las tarjetas en dos columnas y la barra inferior](../img/primeros-pasos/mi-dia-movil.png)
+
+![Panel Más abierto en el celular con Perfil, Clientes, Horas, Reportes, Ayuda y Cerrar sesión](../img/primeros-pasos/menu-mas-movil.png)
+
+En el detalle de un ticket o de una OT, bajo el título hay una fila de **atajos** que lleva a cada sección (Datos, Descripción, Tareas, Actividad, Archivos…). Los **datos del ticket** (estado, responsables, cliente, fechas) van arriba, plegados: tócalos para desplegarlos. Al pie queda una barra con **Escribir seguimiento** y un botón de **cámara**: el primero abre el redactor; el segundo lo abre y dispara la cámara de una vez. Cómo se usa está en el [manual de tickets](01-tecnico.md#el-detalle-del-ticket).
 
 ## Reportes
 

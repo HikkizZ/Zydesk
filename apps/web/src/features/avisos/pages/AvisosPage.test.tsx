@@ -201,6 +201,10 @@ it('la tabla de preferencias tiene 9 filas y 17 switches, ninguno de correo', as
 it('con telegram_vinculado: false aparece «Vincula Telegram para recibirlos»; vinculado no', async () => {
   montar();
   expect(await screen.findByText('Vincula Telegram para recibirlos')).toBeTruthy();
+  // En el celular la indicación debe envolver: la celda no puede forzar el ancho de la tabla.
+  expect(screen.getByText('Vincula Telegram para recibirlos').closest('th')?.className).toContain(
+    'whitespace-normal',
+  );
 });
 
 it('con telegram_vinculado: true no aparece el texto de vincular', async () => {

@@ -177,3 +177,19 @@ it('sin neto (sin cotización) no menciona montos', async () => {
   await screen.findByText('Cerrar OT-0218');
   expect(within(seccion()).queryByText(/neto\)/)).toBeNull();
 });
+
+it('respeta el alto máximo del diálogo base: sin pantalla completa ni anular max-h', async () => {
+  montar();
+  await screen.findByText('Cerrar OT-0218');
+  const clases = screen.getByRole('dialog').className.split(/\s+/);
+  expect(clases).toContain('max-h-[calc(100dvh-2rem)]');
+  expect(clases).toContain('overflow-y-auto');
+  for (const prohibida of [
+    'max-sm:h-dvh',
+    'max-sm:max-h-none',
+    'max-sm:max-w-none',
+    'max-h-[90dvh]',
+  ]) {
+    expect(clases).not.toContain(prohibida);
+  }
+});

@@ -10,6 +10,7 @@ import type { OtDatos } from '@/features/ots/api';
 import { cotizacionDePrueba } from '@/test/cotizaciones';
 import { respuesta, simularFetch } from '@/test/fetch';
 import { otDePrueba } from '@/test/ots';
+import { simularMovil } from '@/test/pantalla';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { ticketDePrueba, USUARIOS_PRUEBA } from '@/test/tickets';
 import { OtDetallePage } from './OtDetallePage';
@@ -124,6 +125,12 @@ function montar(
 }
 
 const boton = (nombre: string | RegExp) => screen.queryByRole('button', { name: nombre });
+
+it('bajo lg el grid tiene una sola columna con minmax(0,1fr) para que el contenido no ensanche la página', async () => {
+  montar(otDePrueba());
+  const tareas = await screen.findByRole('region', { name: 'Tareas' });
+  expect(tareas.closest('.grid')?.className).toContain('grid-cols-1');
+});
 
 it('muestra el encabezado, las etapas con Cotizada actual y la cotización sin crear', async () => {
   montar(otDePrueba());
@@ -257,8 +264,11 @@ it('la galería agrupa por pestaña y suma los archivos del ticket de origen', a
     },
   );
   const galeria = await screen.findByRole('region', { name: 'Fotos y archivos' });
-  expect(await within(galeria).findByRole('tab', { name: 'Todo (4)' })).toBeTruthy();
+  const pestana = await within(galeria).findByRole('tab', { name: 'Todo (4)' });
   expect(within(galeria).getAllByText('desde TK-1048')).toHaveLength(2);
+  // La pestaña activa controla un panel que existe (axe: aria-valid-attr-value).
+  const panel = within(galeria).getByRole('tabpanel');
+  expect(pestana.getAttribute('aria-controls')).toBe(panel.id);
 
   await usuario.click(within(galeria).getByRole('tab', { name: 'Fotos (2)' }));
   expect(within(galeria).getAllByRole('img')).toHaveLength(2);
@@ -553,4 +563,118 @@ it('interna sin tarifa para un técnico: el texto sin enlace', async () => {
     within(panel).getByText('Configura la tarifa de costo interno en Configuración → Tarifas'),
   ).toBeTruthy();
   expect(within(panel).queryByRole('link')).toBeNull();
+});
+
+it('en escritorio no hay atajos, ni «details», y «Tipo y datos» es una sección plana', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion' }));
+  await screen.findByRole('heading', { level: 1 });
+  expect(screen.queryByRole('navigation', { name: 'En esta OT' })).toBeNull();
+  expect(document.querySelector('details')).toBeNull();
+  expect(screen.getByRole('region', { name: 'Tipo y datos' })).toBeTruthy();
+});
+
+it('en celular hay atajos a las secciones y «Tipo y datos» queda plegado al final', async () => {
+  simularMovil();
+  montar(otDePrueba({ etapa: 'en_ejecucion' }));
+  await screen.findByRole('heading', { level: 1 });
+  const atajos = within(screen.getByRole('navigation', { name: 'En esta OT' })).getAllByRole(
+    'link',
+  );
+  expect(atajos.map((a) => a.textContent)).toEqual([
+    'Etapas',
+    'Tareas',
+    'Fotos',
+    'Actividad',
+    'Cotización',
+    'Aprobación',
+    'Horas',
+    'Datos',
+  ]);
+  // Cada atajo apunta a un elemento que existe.
+  for (const a of atajos) {
+    expect(document.querySelector(a.getAttribute('href') as string)).not.toBeNull();
+  }
+  const detalles = document.querySelector('details') as HTMLDetailsElement;
+  expect(detalles.open).toBe(false);
+  expect(detalles.querySelector('summary')?.textContent).toBe(
+    'Tipo y datos · Facturable · Viña Santa Clara',
+  );
+});
+
+it('en celular el orden visual es Etapas, Tareas, Fotos, Actividad, panel y «Tipo y datos» al final', async () => {
+  simularMovil();
+  montar(otDePrueba({ etapa: 'en_ejecucion' }));
+  await screen.findByRole('heading', { level: 1 });
+  const orden = (el: Element | null) =>
+    Number(/(?:^|\s)order-(\d+)(?:\s|$)/.exec(el?.className ?? '')?.[1]);
+  expect(orden(document.getElementById('etapas'))).toBe(1);
+  expect(orden(document.getElementById('tareas'))).toBe(2);
+  expect(orden(document.getElementById('fotos'))).toBe(3);
+  expect(orden(document.getElementById('actividad'))).toBe(4);
+  expect(orden(screen.getByRole('complementary', { name: 'Datos de la OT' }))).toBe(6);
+  expect(document.querySelector('details')?.className).toContain('order-last');
+});
+
+it('el panel conserva las tarjetas con id para los atajos', async () => {
+  montar(otDePrueba({ etapa: 'en_ejecucion' }));
+  await screen.findByRole('heading', { level: 1 });
+  const panel = screen.getByRole('complementary', { name: 'Datos de la OT' });
+  for (const id of [
+    'cotizacion',
+    'aprobacion',
+    'facturacion',
+    'ticket-origen',
+    'horas',
+    'datos',
+    'historial',
+  ]) {
+    expect(panel.querySelector(`#${id}`)?.className).toContain('scroll-mt-4');
+  }
+});
+
+it('en el panel todo dt y dd cuelga directo de un dl (axe definition-list y dlitem)', async () => {
+  montar(
+    otDePrueba({ etapa: 'cerrada', estado_facturacion: 'por_facturar', resumen_cierre: 'Listo' }),
+  );
+  await screen.findByRole('heading', { level: 1 });
+  const panel = screen.getByRole('complementary', { name: 'Datos de la OT' });
+  const items = panel.querySelectorAll('dt, dd');
+  expect(items.length).toBeGreaterThan(0);
+  for (const item of items) expect(item.parentElement?.tagName).toBe('DL');
+  for (const dl of panel.querySelectorAll('dl')) {
+    expect(Array.from(dl.children).every((h) => h.tagName === 'DT' || h.tagName === 'DD')).toBe(
+      true,
+    );
+  }
+});
+
+it('los enlaces del panel y del encabezado miden 44 px en celular y se relajan en escritorio', async () => {
+  montar(otDePrueba());
+  await screen.findByRole('heading', { level: 1 });
+  const panel = screen.getByRole('complementary', { name: 'Datos de la OT' });
+  const origen = within(panel.querySelector('#ticket-origen') as HTMLElement).getByRole('link', {
+    name: 'TK-1048',
+  });
+  expect(origen.className).toContain('min-h-11');
+  expect(origen.className).toContain('lg:min-h-0');
+  const planilla = within(panel).getByRole('link', { name: 'Ver en la planilla' });
+  expect(planilla.className).toContain('min-h-11');
+  const cabecera = screen
+    .getAllByRole('link', { name: 'TK-1048' })
+    .find((a) => !panel.contains(a)) as HTMLElement;
+  expect(cabecera.className).toContain('min-h-11');
+});
+
+it('en celular «Tipo y datos» arranca abierto solo en Borrador', async () => {
+  simularMovil();
+  montar(otDePrueba({ etapa: 'borrador' }));
+  await screen.findByRole('heading', { level: 1 });
+  expect((document.querySelector('details') as HTMLDetailsElement).open).toBe(true);
+});
+
+it('«Descuenta de la bolsa» usa la casilla táctil de 44 px', async () => {
+  montar(otDePrueba({ etapa: 'borrador' }), 'coordinacion', { bolsaVigente: true });
+  const casilla = await screen.findByRole('checkbox', { name: 'Descuenta de la bolsa' });
+  const etiqueta = casilla.closest('label');
+  expect(etiqueta?.className).toContain('size-11');
 });

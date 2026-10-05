@@ -24,6 +24,8 @@ Desde entonces, las demás cuentas se crean desde la pantalla (sección 2).
 
 En **Configuración → Equipo y permisos**:
 
+![Pestaña Equipo y permisos con las personas, su departamento, su rol y su estado](img/administracion/equipo.png)
+
 1. Pulsa **+ Agregar persona**.
 2. Escribe nombre, correo (es el identificador para ingresar; la app **no envía correos**), rol y departamento.
 3. La app genera una **contraseña temporal** y la muestra **una sola vez**. Pulsa **Copiar** y entrégasela a la persona por un medio seguro (en persona o por mensaje directo). Si la pierdes, deberás restablecerla (sección 3).
@@ -69,6 +71,8 @@ La app no deja desactivar tu propia cuenta ni a la última persona con rol Admin
 
 En **Configuración → Departamentos y horarios**. Cada departamento tiene:
 
+![Pestaña Departamentos y horarios con la jornada de cada departamento](img/administracion/departamentos.png)
+
 - **Horario por día**: entrada, salida, colación (hora de inicio y minutos) y un interruptor para marcar el día como trabajado o libre. La app calcula las horas de cada día y la **jornada semanal**.
 - **Horario extendido desde**: desde esa hora se consideran "extendidas" las horas registradas (se cobra tarifa de horario extendido).
 - **Tiempo disponible para tickets (%)**: el resto se reserva para reuniones y trabajo interno. Es la **capacidad semanal** del gráfico **Carga vs capacidad** de Reportes: jornada semanal del departamento × este porcentaje (por ejemplo, 41 h × 80 % = 32,8 h). Una persona sin departamento aparece "Sin jornada".
@@ -102,6 +106,8 @@ En el menú **Clientes**. Los clientes y las **áreas internas** (por ejemplo, M
 
 En **Configuración → Categorías y plazos**. Cada categoría (por ejemplo "Correo" o "Redes") tiene:
 
+![Pestaña Categorías y plazos con los plazos de resolución por categoría](img/administracion/categorias.png)
+
 - **Responsable por defecto**: quién recibe por defecto los tickets de esa categoría (una persona activa).
 - **Plazo de primera respuesta**: un solo plazo, en horas o días.
 - **Plazo de resolución** para cada prioridad: Urgente, Alta, Media y Baja.
@@ -113,6 +119,8 @@ Al crear o editar una categoría, la **vista previa** dice cuándo vencería un 
 ## 9. Numeración y marca
 
 En **Configuración → Numeración y marca**.
+
+![Pestaña Numeración y marca con los contadores y la marca de la organización](img/administracion/numeracion-y-marca.png)
 
 **Marca**: el nombre visible de la aplicación (aparece en la pantalla de ingreso) y un logo opcional (PNG, JPEG o SVG de hasta 200 KB).
 
@@ -149,7 +157,7 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Archivos huérfanos.** Un archivo subido que nunca se usó en un ticket, seguimiento o nota (por ejemplo, alguien abandonó el formulario) se elimina automáticamente a las 24 horas; la tarea corre cada noche a las 04:00 (hora de Santiago).
 
-**Espacio en disco.** Los archivos de tickets no se borran solos. Revisa de vez en cuando el tamaño de `ARCHIVOS_DIR` y el espacio libre del disco.
+**Espacio en disco.** Los archivos de tickets no se borran solos. Revisa de vez en cuando el tamaño de `ARCHIVOS_DIR` y el espacio libre del disco. Las fotos tomadas desde el celular se comprimen antes de subir y pesan alrededor de 0,5 MB cada una.
 
 **Descargas.** Cualquier persona con sesión puede ver y descargar los archivos de los tickets. Las descargas de documentos y correos (no las fotos ni los PDF que se abren en pantalla) quedan en el registro de seguridad.
 
@@ -189,6 +197,8 @@ Los manuales de uso son el [manual de tickets](usuario/01-tecnico.md) y el [manu
 
 En **Configuración → Tarifas**. Dos tarjetas y un solo botón **Guardar**:
 
+![Pestaña Tarifas con las tarifas globales, el IVA y la validez de las cotizaciones](img/administracion/tarifas.png)
+
 - **Tarifas** globales: hora normal, horario extendido, fin de semana/urgencia, traslado por km y **costo interno (OT internas)**, en pesos enteros más IVA. Un campo vacío es una tarifa **sin definir**: se muestra como `[TARIFA]`. Las tarifas por cliente (sección 7) tienen prioridad sobre estas.
 - **Cotizaciones**: **IVA %** (por defecto 19), **validez por defecto** (15 o 30 días) y **condiciones comerciales por defecto**, que cada cotización nueva copia al crearse.
 
@@ -203,6 +213,8 @@ Cada guardado queda en el registro de seguridad (sección 10) con los campos que
 ## 15. Plantillas de cotización
 
 En **Configuración → Plantillas**. Una plantilla tiene nombre (único), descripción, condiciones comerciales opcionales y hasta 50 líneas (tipo, descripción, cantidad, unidad, precio unitario opcional y descuento %). **Nueva plantilla** las crea; **Editar** las cambia (las cotizaciones que ya la aplicaron no se tocan).
+
+![Pestaña Plantillas con las plantillas de cotización](img/administracion/plantillas.png)
 
 - **Precio vacío = tarifa vigente al aplicar**: así una subida de tarifas no obliga a editar las plantillas. Las líneas de materiales y gastos sin precio quedan en 0 para completarlas en la cotización.
 - Las plantillas no se borran: **Desactivar…** (con confirmación) las saca de la lista del Cotizador; **Ver inactivas** las muestra y **Reactivar** las devuelve.

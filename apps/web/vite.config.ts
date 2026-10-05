@@ -15,6 +15,12 @@ export default defineConfig(({ mode }) => {
       port: Number(env.WEB_PUERTO ?? 5173),
       proxy: { '/api': `http://localhost:${env.API_PUERTO ?? 3010}` },
     },
+    preview: {
+      port: 4173,
+      proxy: { '/api': `http://localhost:${env.API_PUERTO ?? 3010}` },
+    },
+    // Ningún asset se inlinea en base64 (los PNG de los manuales pesan cientos de KB; Fase 8).
+    build: { assetsInlineLimit: 0 },
     test: {
       environment: 'jsdom',
       include: ['src/**/*.test.tsx', 'src/**/*.test.ts'],

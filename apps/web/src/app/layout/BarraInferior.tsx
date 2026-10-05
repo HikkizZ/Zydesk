@@ -34,7 +34,7 @@ export function BarraInferior() {
   return (
     <nav
       aria-label="Principal (móvil)"
-      className="fixed inset-x-0 bottom-0 z-10 flex bg-tinta lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 flex bg-tinta pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       {ACCESOS.map(({ ruta, etiqueta, icono: Icono }) => {
         const activo = esActivo(ruta, pathname);

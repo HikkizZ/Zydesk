@@ -12,8 +12,9 @@ import { ListaTareas } from '@/components/dominio/ListaTareas';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { PillTipoOt } from '@/components/dominio/PillTipoOt';
-import { Redactor } from '@/components/dominio/Redactor';
+import { RedactorPlegable } from '@/components/dominio/RedactorPlegable';
 import { Etapas } from '@/components/dominio/Etapas';
+import { AtajosSecciones } from '@/components/dominio/AtajosSecciones';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermiso } from '@/features/auth/SesionProvider';
@@ -25,6 +26,7 @@ import {
   type TipoActividad,
 } from '@/features/tickets/api';
 import { cn } from '@/lib/utils';
+import { useEsMovil } from '@/lib/useMediaQuery';
 import { ErrorApi } from '@/lib/api';
 import { AccionesOt } from '../components/AccionesOt';
 import { ActividadOt } from '../components/ActividadOt';
@@ -40,11 +42,28 @@ const ETIQUETA_TIPO: Record<TipoActividad, string> = {
   historial: 'Historial',
 };
 
-function Tarjeta({ titulo, children }: { titulo: string; children: ReactNode }) {
+// Bajo `lg` el orden es solo visual (`order-N`): el DOM y los lectores de pantalla siguen el orden de escritorio.
+const COLUMNA = 'min-w-0 lg:order-none lg:col-start-1';
+
+function Tarjeta({
+  id,
+  titulo,
+  className,
+  children,
+}: {
+  id: string;
+  titulo: string;
+  className?: string;
+  children: ReactNode;
+}) {
   return (
     <section
+      id={id}
       aria-label={titulo}
-      className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
+      className={cn(
+        'scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+        className,
+      )}
     >
       <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
       {children}
@@ -75,6 +94,7 @@ export function OtDetallePage() {
   const pedido = params.get('actividad');
   const tipo: TipoActividad = TIPOS.find((t) => t === pedido) ?? 'todo';
   const ultimo = useRef<HTMLDivElement>(null);
+  const esMovil = useEsMovil();
 
   const consulta = useQuery({
     queryKey: clavesOt.ot(id),
@@ -160,7 +180,7 @@ export function OtDetallePage() {
             Ticket{' '}
             <Link
               to={`/tickets/${ot.ticket.id}`}
-              className="font-mono text-acento underline underline-offset-2"
+              className="inline-flex min-h-11 items-center font-mono text-acento underline underline-offset-2 lg:min-h-0"
             >
               {ot.ticket.codigo}
             </Link>
@@ -182,76 +202,109 @@ export function OtDetallePage() {
         <AccionesOt ot={ot} />
       </header>
 
-      <div className="mt-4 grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <div className="flex min-w-0 flex-col gap-4">
-          <section
-            aria-label="Etapas"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
-          >
-            <Etapas ot={ot} />
-          </section>
+      <AtajosSecciones
+        etiqueta="En esta OT"
+        secciones={[
+          { id: 'etapas', etiqueta: 'Etapas' },
+          { id: 'tareas', etiqueta: 'Tareas' },
+          { id: 'fotos', etiqueta: 'Fotos' },
+          { id: 'actividad', etiqueta: 'Actividad' },
+          { id: 'cotizacion', etiqueta: ot.tipo === 'facturable' ? 'Cotización' : 'Costo' },
+          { id: 'aprobacion', etiqueta: 'Aprobación' },
+          { id: 'horas', etiqueta: 'Horas' },
+          { id: 'datos', etiqueta: 'Datos' },
+        ]}
+      />
 
-          <DatosOt ot={ot} puedeEditar={puedeEditar} />
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_340px] lg:items-start lg:gap-x-6">
+        <section
+          id="etapas"
+          aria-label="Etapas"
+          className={cn(
+            COLUMNA,
+            'order-1 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+          )}
+        >
+          <Etapas ot={ot} />
+        </section>
 
-          <section
-            aria-label="Tareas"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
-          >
-            <ListaTareas
-              destino={{ tipo: 'ot', id: ot.id }}
-              tareas={ot.tareas}
-              cerrado={final}
-              conHoras
-            />
-          </section>
+        <DatosOt
+          ot={ot}
+          puedeEditar={puedeEditar}
+          plegable={esMovil}
+          className={cn(COLUMNA, 'order-last')}
+        />
 
-          <Tarjeta titulo="Fotos y archivos">
-            <GaleriaOt ot={ot} archivos={archivos} />
-          </Tarjeta>
+        <section
+          id="tareas"
+          aria-label="Tareas"
+          className={cn(
+            COLUMNA,
+            'order-2 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+          )}
+        >
+          <ListaTareas
+            destino={{ tipo: 'ot', id: ot.id }}
+            tareas={ot.tareas}
+            cerrado={final}
+            conHoras
+          />
+        </section>
 
-          <section
-            aria-label="Actividad"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
-          >
-            <Tabs value={tipo} onValueChange={cambiarTipo}>
-              <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">
-                {TIPOS.map((x) => (
-                  <TabsTrigger key={x} value={x} className="min-h-11 flex-none px-3">
-                    {ETIQUETA_TIPO[x]}
-                    {conteos ? ` (${conteos[x]})` : ''}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-              <TabsContent value={tipo} className="mt-2">
-                {visible.isPending ? (
-                  <Cargando />
-                ) : visible.isError ? (
-                  <EstadoError error={visible.error} reintentar={() => void visible.refetch()} />
-                ) : (
-                  <ActividadOt
-                    items={visible.data.items}
-                    otId={ot.id}
-                    ticketId={ot.ticket.id}
-                    ultimoRef={ultimo}
-                  />
-                )}
-              </TabsContent>
-            </Tabs>
-          </section>
+        <Tarjeta id="fotos" titulo="Fotos y archivos" className={cn(COLUMNA, 'order-3')}>
+          <GaleriaOt ot={ot} archivos={archivos} />
+        </Tarjeta>
 
-          {puedeEditar ? (
-            <div className="sticky bottom-14 z-[5] -mx-6 border-t bg-fondo px-6 py-3 shadow-[0_-6px_12px_-8px_rgba(0,0,0,0.25)] lg:static lg:mx-0 lg:border-t-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-              <Redactor
-                destino={{ tipo: 'ot', id: ot.id }}
-                copiaAlTicket
-                codigoTicket={ot.ticket.codigo}
-                sinHoras={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
-              />
-            </div>
-          ) : null}
-        </div>
+        <section
+          id="actividad"
+          aria-label="Actividad"
+          className={cn(
+            COLUMNA,
+            'order-4 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+          )}
+        >
+          <Tabs value={tipo} onValueChange={cambiarTipo}>
+            <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">
+              {TIPOS.map((x) => (
+                <TabsTrigger key={x} value={x} className="min-h-11 flex-none px-3">
+                  {ETIQUETA_TIPO[x]}
+                  {conteos ? ` (${conteos[x]})` : ''}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+            <TabsContent value={tipo} className="mt-2">
+              {visible.isPending ? (
+                <Cargando />
+              ) : visible.isError ? (
+                <EstadoError error={visible.error} reintentar={() => void visible.refetch()} />
+              ) : (
+                <ActividadOt
+                  items={visible.data.items}
+                  otId={ot.id}
+                  ticketId={ot.ticket.id}
+                  ultimoRef={ultimo}
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </section>
 
-        <PanelOt ot={ot} eventos={eventos} onVerHistorial={() => cambiarTipo('historial')} />
+        {puedeEditar ? (
+          <RedactorPlegable
+            className={cn(COLUMNA, 'order-5')}
+            destino={{ tipo: 'ot', id: ot.id }}
+            copiaAlTicket
+            codigoTicket={ot.ticket.codigo}
+            sinHoras={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
+          />
+        ) : null}
+
+        <PanelOt
+          ot={ot}
+          eventos={eventos}
+          onVerHistorial={() => cambiarTipo('historial')}
+          className="order-6 lg:order-none lg:col-start-2 lg:row-span-12 lg:row-start-1"
+        />
       </div>
     </>
   );

@@ -177,3 +177,9 @@ it('el panel Más muestra Ayuda hacia /ayuda para todos los roles y pulsarlo lo 
     unmount();
   }
 });
+
+it('(área segura) la barra deja el área segura de iOS bajo los accesos', () => {
+  montar();
+  const nav = screen.getByRole('navigation', { name: 'Principal (móvil)', hidden: true });
+  expect(nav.className).toContain('pb-[env(safe-area-inset-bottom)]');
+});

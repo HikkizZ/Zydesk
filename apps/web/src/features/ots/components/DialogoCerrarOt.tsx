@@ -405,7 +405,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
   );
 }
 
-// Pantalla 6b: cierre de la OT con la regla 4.6 (¿resolvió el ticket?). Pantalla completa bajo 640 px.
+// Pantalla 6b: cierre de la OT con la regla 4.6 (¿resolvió el ticket?). Respeta el alto máximo del diálogo base.
 export function DialogoCerrarOt({
   ot,
   abierto,
@@ -417,7 +417,7 @@ export function DialogoCerrarOt({
 }) {
   return (
     <Dialog open={abierto} onOpenChange={(a) => !a && onCerrar()}>
-      <DialogContent className="max-h-[90dvh] overflow-y-auto max-sm:top-0 max-sm:left-0 max-sm:h-dvh max-sm:max-h-none max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-none sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl">
         {abierto ? <Contenido ot={ot} onCerrar={onCerrar} /> : null}
       </DialogContent>
     </Dialog>

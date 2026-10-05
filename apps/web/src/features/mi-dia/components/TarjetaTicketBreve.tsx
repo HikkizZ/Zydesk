@@ -25,6 +25,7 @@ export function TarjetaTicketBreve({
       </div>
       <Link
         to={`/tickets/${ticket.id}`}
+        data-objetivo="cubre-tarjeta"
         className="line-clamp-2 font-medium after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
       >
         {ticket.asunto}

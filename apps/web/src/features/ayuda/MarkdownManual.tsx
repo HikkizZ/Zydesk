@@ -4,6 +4,8 @@ import { Link } from 'react-router';
 import remarkGfm from 'remark-gfm';
 import { COMPONENTES } from '@/features/legal/Markdown';
 import { resolverEnlace } from './enlaces';
+import { resolverImagen } from './imagenes';
+import type { Manual } from './manuales';
 import { crearGeneradorIds } from './slug';
 
 // Concatena el texto de los nodos hijos (conserva el de `code`, `strong`, etc.).
@@ -57,7 +59,13 @@ function Enlace({ href, children }: { href: string | undefined; children: ReactN
   }
 }
 
-export function MarkdownManual({ texto }: { texto: string }) {
+export function MarkdownManual({
+  texto,
+  carpeta = '',
+}: {
+  texto: string;
+  carpeta?: Manual['carpeta'];
+}) {
   const idDe = crearGeneradorIds();
   // El id se fija por posición en el texto: un segundo render del mismo encabezado no lo duplica.
   const asignados = new Map<number, string>();
@@ -82,6 +90,30 @@ export function MarkdownManual({ texto }: { texto: string }) {
     h3: encabezado('h3'),
     h4: encabezado('h4'),
     a: (p) => <Enlace href={p.href}>{p.children}</Enlace>,
+    // Solo imágenes del bundle (spec fase 8 §10.4): una ruta absoluta, externa o inexistente no se pide a la red.
+    img: (p) => {
+      const alt = (p.alt ?? '').trim();
+      const src = alt ? resolverImagen({ carpeta }, p.src) : null;
+      if (src === null) {
+        return (
+          <span
+            role="img"
+            aria-label={alt || 'Imagen sin descripción'}
+            className="my-3 block rounded-md border border-dashed border-borde px-3 py-2 text-sm text-tinta-2"
+          >
+            Imagen no disponible{alt ? `: ${alt}` : ''}
+          </span>
+        );
+      }
+      return (
+        <img
+          src={src}
+          alt={alt}
+          loading="lazy"
+          className="my-3 max-w-full rounded-md border border-borde"
+        />
+      );
+    },
     table: (p) => (
       <div className="mb-3 overflow-x-auto">
         <table className="w-full border-collapse text-sm" {...sinNodo(p)} />

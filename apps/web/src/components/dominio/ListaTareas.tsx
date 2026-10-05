@@ -3,6 +3,7 @@ import { Trash2 } from 'lucide-react';
 import { useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { Avatar } from '@/components/dominio/Avatar';
+import { CasillaTactil } from '@/components/dominio/CasillaTactil';
 import { diaMesDeFecha } from '@/components/dominio/formato-fecha';
 import { SelectorPersonas } from '@/components/dominio/SelectorPersonas';
 import {
@@ -16,7 +17,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
 import { usePermiso } from '@/features/auth/SesionProvider';
@@ -88,7 +88,7 @@ function CampoHoras({
         const nuevo = texto.trim() === '' ? null : Number(texto);
         if (nuevo !== valor) onGuardar(nuevo);
       }}
-      className="h-9 w-16 px-2 text-right font-mono sm:w-[72px]"
+      className="h-11 w-[72px] px-2 text-right font-mono sm:w-20 lg:h-9 lg:w-[72px]"
     />
   );
 }
@@ -211,8 +211,8 @@ export function ListaTareas({
           aria-hidden="true"
           className="hidden justify-end gap-1.5 pr-11 text-xs font-semibold text-tinta-2 uppercase sm:flex"
         >
-          <span className="w-[72px] text-right">Est.</span>
-          <span className="w-[72px] text-right">Real</span>
+          <span className="w-20 text-right lg:w-[72px]">Est.</span>
+          <span className="w-20 text-right lg:w-[72px]">Real</span>
           <span className="w-12 text-right">Reg.</span>
         </p>
       ) : null}
@@ -225,12 +225,12 @@ export function ListaTareas({
               conHoras && 'flex-wrap sm:flex-nowrap',
             )}
           >
-            <Checkbox
+            <CasillaTactil
+              id={`tarea-${t.id}`}
               checked={t.hecha}
               disabled={!puedeEditar || marcar.isPending}
               aria-label={`Tarea hecha: ${t.titulo}`}
               onCheckedChange={() => marcar.mutate(t)}
-              className="size-5"
             />
             <span
               className={cn(
@@ -259,7 +259,7 @@ export function ListaTareas({
               </span>
             ) : null}
             {conHoras ? (
-              <span className="flex items-center gap-1 sm:gap-1.5">
+              <span className="flex flex-wrap items-center gap-1 sm:flex-nowrap sm:gap-1.5">
                 <span aria-hidden="true" className="text-xs text-tinta-2 sm:hidden">
                   Est.
                 </span>
@@ -317,9 +317,9 @@ export function ListaTareas({
             value={titulo}
             maxLength={200}
             onChange={(e) => setTitulo(e.target.value)}
-            className="min-w-48 flex-1"
+            className="w-full min-w-48 flex-1"
           />
-          <div className="w-44">
+          <div className="w-full sm:w-44">
             <SelectorPersonas
               etiqueta="Responsable de la tarea"
               placeholder="Responsable"
@@ -332,7 +332,7 @@ export function ListaTareas({
             aria-label="Fecha de la tarea"
             value={fecha}
             onChange={(e) => setFecha(e.target.value)}
-            className="w-40"
+            className="w-full sm:w-40"
           />
           {conHoras ? (
             <Input
@@ -346,12 +346,13 @@ export function ListaTareas({
               aria-invalid={!horasValidas(horasAlta)}
               value={horasAlta}
               onChange={(e) => setHorasAlta(e.target.value)}
-              className="w-28 font-mono"
+              className="w-full font-mono sm:w-28"
             />
           ) : null}
           <Button
             type="submit"
             variant="outline"
+            className="w-full sm:w-auto"
             disabled={titulo.trim() === '' || !horasValidas(horasAlta) || agregar.isPending}
           >
             Agregar

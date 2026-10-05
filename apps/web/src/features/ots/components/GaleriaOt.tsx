@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { SubidaArchivos } from '@/components/dominio/SubidaArchivos';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { agregarArchivos, invalidarOt, type OtDatos } from '@/features/ots/api';
 import { avisarErrorOt } from '@/features/ots/errores';
@@ -90,8 +90,11 @@ export function GaleriaOt({ ot, archivos }: { ot: OtDatos; archivos: ArchivoConO
             </TabsTrigger>
           ))}
         </TabsList>
+        {/* Cada pestaña controla el panel con los archivos filtrados (aria-controls válido). */}
+        <TabsContent value={pestana} className="mt-1">
+          <GaleriaArchivos archivos={visibles} />
+        </TabsContent>
       </Tabs>
-      <GaleriaArchivos archivos={visibles} />
       {puedeEditar && !final ? (
         <div className="flex flex-col gap-2 border-t pt-3">
           {/* Cada archivo se sube (paso 1) y se asocia a la OT (paso 2) apenas está listo. */}

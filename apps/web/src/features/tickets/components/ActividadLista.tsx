@@ -1,11 +1,16 @@
 import { iniciales } from '@zydesk/shared';
 import { FileText, History, Lock } from 'lucide-react';
-import { Fragment, type ReactNode, type Ref } from 'react';
+import { Fragment, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { formatearTamano } from '@/components/dominio/formato-fecha';
 import { Pill } from '@/components/dominio/Pill';
-import type { ActividadDatos, MensajeDatos, UsuarioBreveDatos } from '@/features/tickets/api';
+import type {
+  ActividadDatos,
+  ArchivoDatos,
+  MensajeDatos,
+  UsuarioBreveDatos,
+} from '@/features/tickets/api';
 import {
   describirEvento,
   type DescripcionEvento,
@@ -39,6 +44,37 @@ function TextoConMenciones({
 }
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
+
+function ArchivoAdjunto({ archivo: a }: { archivo: ArchivoDatos }) {
+  // Una imagen que el navegador no decodifica (HEIC) se muestra como documento.
+  const [fallo, setFallo] = useState(false);
+  return (
+    <li>
+      <a
+        href={a.url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center gap-2 rounded-md border bg-superficie p-1 text-sm hover:bg-superficie-suave"
+      >
+        {a.es_imagen && !fallo ? (
+          <img
+            src={a.url}
+            alt={a.nombre_original}
+            loading="lazy"
+            onError={() => setFallo(true)}
+            className="size-20 rounded object-cover lg:size-16"
+          />
+        ) : (
+          <>
+            <FileText aria-hidden="true" className="ml-1 size-4 text-tinta-2" />
+            <span className="max-w-48 truncate">{a.nombre_original}</span>
+            <span className="mr-1 text-xs text-tinta-2">{formatearTamano(a.tamano)}</span>
+          </>
+        )}
+      </a>
+    </li>
+  );
+}
 
 export function TarjetaMensaje({
   mensaje,
@@ -100,29 +136,7 @@ export function TarjetaMensaje({
       {mensaje.archivos.length > 0 ? (
         <ul className="flex flex-wrap gap-2">
           {mensaje.archivos.map((a) => (
-            <li key={a.id}>
-              <a
-                href={a.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 rounded-md border bg-superficie p-1 text-sm hover:bg-superficie-suave"
-              >
-                {a.es_imagen ? (
-                  <img
-                    src={a.url}
-                    alt={a.nombre_original}
-                    loading="lazy"
-                    className="size-16 rounded object-cover"
-                  />
-                ) : (
-                  <>
-                    <FileText aria-hidden="true" className="ml-1 size-4 text-tinta-2" />
-                    <span className="max-w-48 truncate">{a.nombre_original}</span>
-                    <span className="mr-1 text-xs text-tinta-2">{formatearTamano(a.tamano)}</span>
-                  </>
-                )}
-              </a>
-            </li>
+            <ArchivoAdjunto key={a.id} archivo={a} />
           ))}
         </ul>
       ) : null}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { toast } from 'sonner';
 import { Campo } from '@/components/dominio/Campo';
+import { CasillaTactil } from '@/components/dominio/CasillaTactil';
 import { SelectorPersonas, useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
 import { SelectorTipoOt } from '@/components/dominio/SelectorTipoOt';
 import {
@@ -17,7 +18,6 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -33,6 +33,7 @@ import {
 import { SelectorCliente } from '@/features/tickets/components/SelectorCliente';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { ErrorApi } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface Valores {
   titulo: string;
@@ -278,15 +279,14 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
             </p>
           ) : null}
           {bolsaVigente ? (
-            <div className="flex items-start gap-2">
-              <Checkbox
+            <div className="flex items-center gap-1">
+              <CasillaTactil
                 id="descuenta-bolsa"
                 checked={valores.descuenta_bolsa}
                 disabled={soloLectura || comercialBloqueado || valores.cliente_id !== ot.cliente_id}
                 onCheckedChange={(v) =>
                   setValue('descuenta_bolsa', v === true, { shouldDirty: true })
                 }
-                className="mt-0.5 size-5"
               />
               <div className="flex flex-col">
                 <Label htmlFor="descuenta-bolsa">Descuenta de la bolsa</Label>
@@ -351,7 +351,18 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
 }
 
 // Tarjeta "Tipo y datos": tipo (solo en Borrador) y los campos editables de la OT (spec §10.4 punto 3).
-export function DatosOt({ ot, puedeEditar }: { ot: OtDatos; puedeEditar: boolean }) {
+// Con `plegable` (celular) la tarjeta es un `details`: abierto de entrada solo en Borrador, después manda la persona.
+export function DatosOt({
+  ot,
+  puedeEditar,
+  plegable = false,
+  className,
+}: {
+  ot: OtDatos;
+  puedeEditar: boolean;
+  plegable?: boolean;
+  className?: string;
+}) {
   const queryClient = useQueryClient();
   const [nuevoTipo, setNuevoTipo] = useState<TipoOt | null>(null);
   const final = ot.etapa === 'cerrada' || ot.etapa === 'cancelada';
@@ -371,12 +382,8 @@ export function DatosOt({ ot, puedeEditar }: { ot: OtDatos; puedeEditar: boolean
     },
   });
 
-  return (
-    <section
-      aria-label="Tipo y datos"
-      className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5"
-    >
-      <h2 className="font-titulo text-base font-semibold">Tipo y datos</h2>
+  const contenido = (
+    <>
       <SelectorTipoOt
         valor={ot.tipo}
         disabled={soloLectura || !ot.tipo_cambiable}
@@ -407,6 +414,31 @@ export function DatosOt({ ot, puedeEditar }: { ot: OtDatos; puedeEditar: boolean
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </>
+  );
+  const clases = cn(
+    'rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+    !plegable && 'flex flex-col gap-4',
+    className,
+  );
+  if (plegable) {
+    const quien =
+      ot.tipo === 'facturable' ? ot.cliente?.nombre : (ot.area_solicitante ?? ot.cliente?.nombre);
+    return (
+      <details open={ot.etapa === 'borrador'} className={clases}>
+        <summary className="flex min-h-11 cursor-pointer items-center font-titulo text-base font-semibold">
+          {['Tipo y datos', ot.tipo === 'facturable' ? 'Facturable' : 'Interna', quien]
+            .filter(Boolean)
+            .join(' · ')}
+        </summary>
+        <div className="mt-3 flex flex-col gap-4">{contenido}</div>
+      </details>
+    );
+  }
+  return (
+    <section aria-label="Tipo y datos" className={clases}>
+      <h2 className="font-titulo text-base font-semibold">Tipo y datos</h2>
+      {contenido}
     </section>
   );
 }

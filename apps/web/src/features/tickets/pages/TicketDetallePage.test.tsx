@@ -5,6 +5,7 @@ import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import type { ActividadDatos, TicketDatos } from '@/features/tickets/api';
 import { respuesta, simularFetch } from '@/test/fetch';
+import { simularMovil } from '@/test/pantalla';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { ticketDePrueba, USUARIOS_PRUEBA } from '@/test/tickets';
 import { TicketDetallePage } from './TicketDetallePage';
@@ -121,6 +122,12 @@ function montar(
   return llamadas;
 }
 
+it('bajo lg el grid tiene una sola columna con minmax(0,1fr) para que el contenido no ensanche la página', async () => {
+  montar();
+  const tareas = await screen.findByRole('region', { name: 'Tareas' });
+  expect(tareas.closest('.grid')?.className).toContain('grid-cols-1');
+});
+
 it('muestra las pestañas con sus conteos y filtra al cambiar', async () => {
   const usuario = userEvent.setup();
   montar();
@@ -193,6 +200,57 @@ it('el correo original se muestra como texto y se puede descargar', async () => 
   const descargar = within(tarjeta).getByRole('link', { name: /Descargar original/ });
   expect(descargar.getAttribute('href')).toBe('/api/archivos/50');
   expect(screen.getByText('Correo adjunto')).toBeTruthy();
+});
+
+describe('en móvil', () => {
+  it('el panel va en un details plegado con el cliente en el resumen', async () => {
+    simularMovil();
+    montar();
+    const resumen = await screen.findByText('Datos del ticket', { selector: 'summary span' });
+    const summary = resumen.closest('summary')!;
+    expect(summary.textContent).toContain('Viña Santa Clara');
+    const detalle = summary.closest('details')!;
+    expect(detalle.hasAttribute('open')).toBe(false);
+    expect(within(detalle).getByRole('button', { name: 'Cambiar' })).toBeTruthy();
+    expect(within(detalle).getByRole('region', { name: 'OT vinculadas' })).toBeTruthy();
+  });
+
+  it('los atajos listan las secciones y Correo solo si hay correo', async () => {
+    simularMovil();
+    montar();
+    const nav = await screen.findByRole('navigation', { name: 'En este ticket' });
+    const enlaces = within(nav).getAllByRole('link');
+    expect(enlaces.map((e) => e.textContent)).toEqual([
+      'Datos',
+      'Descripción',
+      'Tareas',
+      'Actividad',
+      'Archivos',
+    ]);
+    expect(enlaces[2]?.getAttribute('href')).toBe('#tareas');
+    for (const id of ['datos', 'descripcion', 'tareas', 'actividad', 'archivos']) {
+      expect(document.getElementById(id)).not.toBeNull();
+    }
+  });
+
+  it('sin móvil no hay details ni atajos, y el redactor completo sigue', async () => {
+    montar();
+    await screen.findByRole('region', { name: 'OT vinculadas' });
+    expect(document.querySelector('details')).toBeNull();
+    expect(screen.queryByRole('navigation', { name: 'En este ticket' })).toBeNull();
+    expect(screen.getByRole('region', { name: 'Redactor' })).toBeTruthy();
+  });
+});
+
+it('la lista de datos del panel solo tiene dt y dd dentro de div (estructura válida de dl)', async () => {
+  montar();
+  await screen.findByRole('region', { name: 'OT vinculadas' });
+  const dl = document.querySelector('aside dl')!;
+  expect(dl.children.length).toBeGreaterThan(0);
+  for (const grupo of Array.from(dl.children)) {
+    expect(grupo.tagName).toBe('DIV');
+    expect(Array.from(grupo.children).map((h) => h.tagName)).toEqual(['DT', 'DD']);
+  }
 });
 
 it('quien solo lee ve las notas pero no el redactor ni los botones de escritura', async () => {
