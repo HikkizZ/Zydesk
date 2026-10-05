@@ -26,7 +26,7 @@ export function TablaPreferencias({
         <TableRow>
           <TableHead>Avisarme cuando</TableHead>
           <TableHead className="text-center">En la app</TableHead>
-          <TableHead className="text-center">
+          <TableHead className="w-28 text-center whitespace-normal">
             Telegram
             {sinVinculo ? (
               <span className="block text-xs font-normal text-tinta-3">
