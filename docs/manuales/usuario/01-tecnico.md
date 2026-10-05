@@ -10,11 +10,15 @@ Esta guía es para quienes crean y atienden tickets (Administración, Coordinaci
 4. Si dejas la **fecha límite** vacía y hay categoría y responsable principal con departamento, se calcula sola según los plazos de la categoría (en horas hábiles). Bajo el campo verás "Se calculará: vence el …". Si escribes una fecha, se respeta.
 5. Pulsa **Crear ticket**. Te lleva al detalle del ticket nuevo.
 
+![Formulario Nuevo ticket con asunto, descripción, cliente, prioridad y responsables](../img/tecnico/nuevo-ticket.png)
+
 Desde la ficha de un cliente, **Nuevo ticket para este cliente** abre el formulario con el cliente ya elegido.
 
 ### Crear un ticket desde un correo
 
 En el panel **Adjuntar correo** (a la derecha; en el celular, arriba y plegable):
+
+![Panel Adjuntar correo con el correo leído y el botón Usar en el formulario](../img/tecnico/adjuntar-correo.png)
 
 - **Archivo**: arrastra un `.eml` o un `.msg` (correo guardado desde el programa de correo).
 - **Texto pegado**: pega el correo completo, con las líneas De/Para/Asunto, y pulsa **Leer correo**.
@@ -27,9 +31,19 @@ En el detalle queda la tarjeta **Correo original**, con botón **Descargar origi
 
 Puedes adjuntar fotos y documentos al crear el ticket y en cada seguimiento o nota (en el celular, el botón de cámara abre la cámara). Se aceptan imágenes (JPG, PNG, WebP, HEIC), PDF, Word, Excel, PowerPoint, ZIP, `.eml`, `.msg`, `.txt` y `.csv`; hasta 10 archivos por vez y 20 MB cada uno. Un archivo de otro tipo, o que no es lo que dice su extensión, se rechaza.
 
+![Redactor del seguimiento en el celular con dos fotos adjuntas y vista previa de cada una](../img/tecnico/redactor-fotos-movil.png)
+
+![Tarjeta Fotos y archivos de una OT con las miniaturas y los botones Subir fotos y Subir archivo](../img/tecnico/fotos-y-archivos.png)
+
 ## El detalle del ticket
 
 Arriba ves el código, el asunto, el estado, la prioridad, la fecha límite y los botones **Cambiar estado** y **Editar**. Debajo: descripción, correo original, archivos, tareas y la **actividad**. A la derecha (en el celular, debajo) están los datos del ticket: responsables, seguidores, solicitante, cliente, categoría, fechas y primera respuesta. **Seguir** te agrega como seguidor; **Dejar de seguir** te quita.
+
+![Detalle de un ticket en el computador, con el panel de datos a la derecha](../img/tecnico/detalle-ticket.png)
+
+![Detalle de un ticket en el celular, con los atajos, los datos plegados y la barra Escribir seguimiento](../img/tecnico/detalle-ticket-movil.png)
+
+![Detalle de un ticket en el celular con el panel Datos del ticket desplegado](../img/tecnico/datos-ticket-movil.png)
 
 ## Seguimiento o nota interna
 
@@ -54,6 +68,10 @@ En el redactor puedes indicar las **horas** trabajadas (por ejemplo 1,5). Al gua
 
 **Horas** (menú, grupo Trabajo; en el celular, en **Más**) es tu planilla semanal. Una fila por ticket, OT (con una tarea de la OT, si quieres) o trabajo **Sin ticket** (reuniones, trabajo interno: con una descripción obligatoria), y una columna por día, de lunes a domingo. Puedes registrar horas en Administración, Coordinación y Técnico; **Solo lectura** ve su planilla vacía con el aviso "Tu rol no registra horas".
 
+![Planilla de horas de la semana con una fila por tarea](../img/tecnico/horas.png)
+
+![Planilla de horas en el celular, organizada por día](../img/tecnico/horas-movil.png)
+
 - **Semana**: con las flechas cambias de semana y **Hoy** vuelve a la actual. No se registran horas en días futuros: esas columnas quedan deshabilitadas.
 - **Agregar fila**: elige Ticket, OT o Sin ticket; busca por código o título. En una OT puedes elegir una **tarea**: las horas se suman a esa tarea (columna **Reg.** en la OT). La fila nueva aparece vacía y solo se guarda cuando escribes horas; si cambias de semana sin horas, desaparece.
 - **Celdas**: escribe las horas (coma o punto; en pasos de 0,25, hasta 24) y sal del campo o pulsa Enter: se guarda al momento, sin botón "Guardar". Vaciar la celda borra esas horas. El botón de luna marca la celda como **Fuera de horario** (trabajo fuera de tu jornada; se cobra a tarifa extendida en las OT facturables).
@@ -70,9 +88,13 @@ En el redactor puedes indicar las **horas** trabajadas (por ejemplo 1,5). Al gua
 
 La tarjeta **Tareas** es la lista de pasos del ticket, con barra de progreso ("2 de 5"). Cada tarea tiene título, responsable opcional y fecha opcional. Puedes agregar, editar y quitar tareas, y marcarlas como hechas. Una tarea pendiente con fecha pasada se ve en rojo. En un ticket cerrado solo se pueden marcar o desmarcar; para agregar, editar o quitar hay que reabrirlo.
 
+![Lista de tareas de un ticket con casillas, responsables y barra de avance](../img/tecnico/tareas.png)
+
 ## Estados y qué exige cada uno
 
 Desde el detalle, **Cambiar estado** abre un diálogo. **Es el único lugar donde se cambia el estado**: ni el Tablero ni la Tabla permiten arrastrar o cambiar estados.
+
+![Diálogo Cambiar estado con la lista de estados posibles](../img/tecnico/cambiar-estado.png)
 
 | Estado        | Qué pide                                                                               |
 | ------------- | -------------------------------------------------------------------------------------- |
@@ -89,6 +111,8 @@ Desde el detalle, **Cambiar estado** abre un diálogo. **Es el único lugar dond
 
 Una **orden de trabajo (OT)** es el trabajo formal que sale de un ticket: con alcance, responsable técnico, tareas con horas, fotos y, si se cobra, aprobación del cliente y facturación. Un ticket puede tener varias OT.
 
+![Diálogo Convertir en OT con el tipo, el título y el responsable técnico](../img/tecnico/convertir-en-ot.png)
+
 1. En el detalle del ticket pulsa **Convertir en OT** (si ya tiene una OT que no está cancelada, el botón dice **Crear otra OT**; también está en la tarjeta **OT vinculadas** del panel). En un ticket cerrado el botón está deshabilitado: reábrelo primero.
 2. Elige el **tipo**: **Facturable · externa** (se cobra al cliente) o **Interna · no facturable**.
 3. Revisa el **título** (viene del asunto), el **responsable técnico** (viene del responsable principal del ticket) y, si quieres, el **alcance**. Si el cliente tiene una bolsa de horas vigente y la OT es facturable, aparece la casilla **Descuenta de la bolsa**.
@@ -101,6 +125,12 @@ Al convertir, las **tareas pendientes** del ticket **pasan a la OT** (dejan de v
 ## La orden de trabajo
 
 Arriba ves el código (`OT-0218`), el título, el tipo, la etapa, el ticket de origen, el responsable y el término (en rojo si ya pasó). Debajo, el avance por **etapas** y las tarjetas de la OT. A la derecha (en el celular, debajo) están la cotización, la aprobación, la facturación, el ticket de origen, las horas, los datos y el historial resumido.
+
+![Detalle de una OT en el computador, con el tipo y datos, las tareas, las fotos y el panel lateral](../img/tecnico/ot.png)
+
+![Detalle de una OT en el celular, con las etapas, los atajos y las tareas](../img/tecnico/ot-movil.png)
+
+![OT en el celular después de pulsar el atajo Fotos, con la sección de fotos a la vista](../img/tecnico/ot-atajos-movil.png)
 
 **Etapas.** Una OT facturable pasa por Borrador, Cotizada, Aprobada, En ejecución y Cerrada (y, si se cobra, **Facturada**, que se muestra como último paso). Una interna pasa por Borrador, Aprobada, En ejecución y Cerrada. Desde los botones de la OT puedes:
 
@@ -126,6 +156,8 @@ Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordina
 
 **Órdenes de trabajo** (`/ots`) es una vista de solo lectura de todas las OT, con filtros **Todas**, **Abiertas**, **Por facturar**, **Facturadas** e **Internas** (cada uno con su contador), búsqueda por código, título, cliente o ticket, y paginación. Cada fila abre la OT. La columna **Neto / horas** muestra el neto en pesos de la cotización vigente en las facturables y las horas en las internas. Los cambios se hacen desde la OT, no desde la lista. La ficha de cada cliente tiene además una tarjeta con sus OT.
 
+![Lista de órdenes de trabajo con sus etapas y estados de facturación](../img/coordinacion/lista-ot.png)
+
 Arriba hay cuatro **indicadores**: **Por facturar** (OT cerradas pendientes de factura), **Esperando al cliente** (OT con cotización enviada y sin respuesta), **En ejecución** y **Horas internas del mes** (horas registradas en OT internas este mes). Cada uno es un enlace que deja la lista filtrada; "Esperando al cliente" filtra por la etapa Cotizada. Los montos en pesos solo los ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos ven «—».
 
 En la columna **Etapa**, una OT facturable Cotizada con cotización enviada se muestra como **Esperando aprobación**, y una interna en Borrador con aprobador asignado como **Borrador · por aprobar**. El botón **Exportar para facturación (.xlsx)** es de Coordinación y Administración ([manual de coordinación](02-coordinacion.md#exportar-para-facturación-xlsx)).
@@ -133,6 +165,8 @@ En la columna **Etapa**, una OT facturable Cotizada con cotización enviada se m
 ## Línea de tiempo
 
 **Línea de tiempo** (menú, grupo Tickets; `/tickets/linea-de-tiempo`) responde "¿en qué está cada uno?": una columna por **día hábil** según el horario y los feriados de tu departamento (sin departamento, lunes a viernes) y una barra por ticket desde su inicio (inicio planificado o creación) hasta su fecha límite. La columna de hoy va destacada.
+
+![Línea de tiempo con los tickets abiertos ordenados por fecha límite](../img/tecnico/linea-de-tiempo.png)
 
 - **Escala**: **Día** (una columna), **2 semanas** (10 días hábiles desde el lunes) o **Mes**. Las flechas mueven el rango y **Hoy** vuelve al actual. El rango va en la dirección de la página, así que se puede compartir.
 - **Agrupar por**: **Persona** (una fila por persona activa, tú primero; a la izquierda, su ticket En curso más reciente como "lo que hace ahora", o "Sin ticket en curso"; al final, "Sin asignar") o **Cliente** (una fila por cliente o área interna, y "Sin cliente").
@@ -155,6 +189,8 @@ En la OT pulsa **Crear cotización** (en el encabezado o en la tarjeta **Cotizac
 - **Líneas**: tipo (Mano de obra, Material, Servicio, Traslado), descripción, cantidad, unidad (h, un, km, gl), precio unitario, descuento % y total. **Agregar línea** crea una de mano de obra a la tarifa de hora normal. Hasta 100 líneas.
 - **Totales**: subtotal, descuentos, **neto**, IVA (o "Exento") y **total**, al vuelo mientras editas. En pesos se redondea a enteros y en UF a dos decimales, línea por línea. Al **Guardar**, la API vuelve a calcular y lo que ves es lo que queda. En pantallas angostas los totales quedan fijos al pie y cada línea es una tarjeta.
 - **Versiones**: a la derecha, todas las versiones de la OT con su estado y total; cada una se abre.
+
+![Cotizador con las líneas de una cotización y sus totales](../img/tecnico/cotizador.png)
 
 Con cambios sin guardar, **Importar horas**, **Aplicar plantilla** y **Marcar como enviada** piden guardar primero.
 
@@ -194,11 +230,15 @@ Una cotización enviada o rechazada no se edita: pulsa **Duplicar como v2** (o v
 
 **Tickets** abre el **Tablero**, una vista de solo lectura con cuatro columnas: **Nuevo**, **En curso**, **En espera** y **Cerrados**. No se arrastra nada: cada tarjeta es un enlace al detalle del ticket, donde se cambia el estado. La tarjeta muestra código, prioridad, asunto, cliente, si tiene correo, de quién se espera (En espera), responsables, fecha límite y cantidad de mensajes. En **Cerrados** cada tarjeta indica el tipo de cierre: Resuelto, Descartado con su motivo, o Duplicado de otro ticket.
 
+![Tablero de tickets con una columna por estado](../img/tecnico/tablero.png)
+
 Puedes buscar por texto, filtrar por responsable, prioridad y **Tipo** (Ticket, OT facturable, OT interna), y activar **Solo míos** (tickets donde eres responsable o seguidor). Los filtros quedan en la dirección de la página, así que puedes compartirla. En pantallas angostas las columnas se desplazan hacia el lado.
 
 ## Tabla
 
 **Tabla** muestra los mismos tickets en filas. Arriba hay filtros rápidos con contador: **Todos**, **Míos**, **Sin asignar**, **Vencen hoy**, **Vencidos**, **Con OT** y **Archivados**. Puedes buscar por código (`1048` o `TK-1048`) o por texto, **agrupar** por prioridad, estado, responsable, cliente, tipo o sin agrupar, y ordenar por **Vence**, **Prioridad** o **Actualizado**. También es de solo lectura: cada fila abre el ticket.
+
+![Tabla de tickets con sus columnas y filtros](../img/tecnico/tabla.png)
 
 ## Archivado a los 7 días
 

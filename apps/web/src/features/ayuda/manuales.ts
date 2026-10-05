@@ -12,6 +12,8 @@ export interface Manual {
   clave: ClaveManual;
   titulo: string;
   archivo: string;
+  // Carpeta del .md dentro de docs/manuales/ (resuelve las rutas relativas de las imágenes).
+  carpeta: 'usuario' | '';
   texto: string;
   roles: readonly Rol[];
 }
@@ -21,27 +23,33 @@ function tituloDe(texto: string): string {
   return /^# (.+)$/m.exec(texto)![1]!.trim();
 }
 
-function manual(clave: ClaveManual, archivo: string, texto: string, roles: readonly Rol[]): Manual {
-  return { clave, titulo: tituloDe(texto), archivo, texto, roles };
+function manual(
+  clave: ClaveManual,
+  carpeta: Manual['carpeta'],
+  archivo: string,
+  texto: string,
+  roles: readonly Rol[],
+): Manual {
+  return { clave, titulo: tituloDe(texto), archivo, carpeta, texto, roles };
 }
 
 // Orden fijo: es el de las pestañas.
 export const MANUALES: readonly Manual[] = [
-  manual('primeros-pasos', '00-primeros-pasos.md', primerosPasos, [
+  manual('primeros-pasos', 'usuario', '00-primeros-pasos.md', primerosPasos, [
     'lectura',
     'tecnico',
     'coordinacion',
     'admin',
   ]),
-  manual('tecnico', '01-tecnico.md', tecnico, ['tecnico', 'coordinacion', 'admin']),
-  manual('coordinacion', '02-coordinacion.md', coordinacion, ['coordinacion', 'admin']),
-  manual('bot-telegram', '04-bot-telegram.md', botTelegram, [
+  manual('tecnico', 'usuario', '01-tecnico.md', tecnico, ['tecnico', 'coordinacion', 'admin']),
+  manual('coordinacion', 'usuario', '02-coordinacion.md', coordinacion, ['coordinacion', 'admin']),
+  manual('bot-telegram', 'usuario', '04-bot-telegram.md', botTelegram, [
     'lectura',
     'tecnico',
     'coordinacion',
     'admin',
   ]),
-  manual('administracion', 'administracion.md', administracion, ['admin']),
+  manual('administracion', '', 'administracion.md', administracion, ['admin']),
 ];
 
 export const manualesDe = (rol: Rol): Manual[] => MANUALES.filter((m) => m.roles.includes(rol));

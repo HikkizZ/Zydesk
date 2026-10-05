@@ -81,7 +81,7 @@ export function AyudaPage() {
       </details>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_16rem] lg:items-start">
         <article className="max-w-3xl rounded-lg border border-borde bg-superficie p-6">
-          <MarkdownManual texto={manual.texto} />
+          <MarkdownManual texto={manual.texto} carpeta={manual.carpeta} />
         </article>
         <aside
           aria-label="Índice del manual"

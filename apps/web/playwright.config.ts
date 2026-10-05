@@ -36,7 +36,7 @@ export default defineConfig({
     },
     {
       name: 'escritorio',
-      grep: /@desborde|@escritorio|@axe/,
+      ...(capturas ? {} : { grep: /@desborde|@escritorio|@axe/ }),
       use: { browserName: 'chromium', viewport: { width: 1440, height: 900 } },
     },
   ],
