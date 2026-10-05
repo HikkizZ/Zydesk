@@ -329,20 +329,20 @@ describe('tarifas', () => {
     const admin = await como('admin');
     const c = await crearCliente();
     const r1 = await admin.put(`/api/clientes/${c.id}/tarifas`).send([
-      { concepto: 'hora_extendida', valor: 45000 },
-      { concepto: 'hora_normal', valor: 38000.5 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
     ]);
     expect(r1.status).toBe(200);
     expect(r1.body).toEqual([
-      { concepto: 'hora_normal', valor: 38000.5 },
-      { concepto: 'hora_extendida', valor: 45000 },
+      { concepto: 'hora_normal', moneda: 'UF', valor: 0.8 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
     ]);
     const r2 = await admin
       .put(`/api/clientes/${c.id}/tarifas`)
-      .send([{ concepto: 'traslado_km', valor: 500 }]);
-    expect(r2.body).toEqual([{ concepto: 'traslado_km', valor: 500 }]);
+      .send([{ concepto: 'traslado_km', moneda: 'CLP', valor: 500 }]);
+    expect(r2.body).toEqual([{ concepto: 'traslado_km', moneda: 'CLP', valor: 500 }]);
     expect((await admin.get(`/api/clientes/${c.id}`)).body.tarifas).toEqual([
-      { concepto: 'traslado_km', valor: 500 },
+      { concepto: 'traslado_km', moneda: 'CLP', valor: 500 },
     ]);
     expect((await admin.put(`/api/clientes/${c.id}/tarifas`).send([])).body).toEqual([]);
   });
@@ -351,15 +351,15 @@ describe('tarifas', () => {
     const admin = await como('admin');
     const c = await crearCliente();
     const rep = [
-      { concepto: 'hora_normal', valor: 1 },
-      { concepto: 'hora_normal', valor: 2 },
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 1 },
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 2 },
     ];
     expect((await admin.put(`/api/clientes/${c.id}/tarifas`).send(rep)).status).toBe(400);
     expect(
       (
         await admin
           .put(`/api/clientes/${c.id}/tarifas`)
-          .send([{ concepto: 'hora_normal', valor: -1 }])
+          .send([{ concepto: 'hora_normal', moneda: 'CLP', valor: -1 }])
       ).status,
     ).toBe(400);
     expect((await admin.put('/api/clientes/99999/tarifas').send([])).status).toBe(404);

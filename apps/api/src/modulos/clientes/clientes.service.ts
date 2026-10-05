@@ -186,7 +186,7 @@ export async function obtenerCliente(
   const historial: ContratoBolsaSalidaDatos[] = [];
   for (const f of contratos) historial.push(await bolsaSalida(m, f, fechaHoy));
   const tarifas: TarifaClienteSalidaDatos[] = await m.query(
-    `SELECT concepto, valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1`,
+    `SELECT concepto, moneda, valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1`,
     [id],
   );
   tarifas.sort(
@@ -376,8 +376,8 @@ export async function reemplazarTarifas(
     await tx.query(`DELETE FROM tarifa_cliente WHERE cliente_id = $1`, [clienteId]);
     for (const t of tarifas) {
       await tx.query(
-        `INSERT INTO tarifa_cliente (cliente_id, concepto, valor) VALUES ($1, $2, $3)`,
-        [clienteId, t.concepto, t.valor],
+        `INSERT INTO tarifa_cliente (cliente_id, concepto, moneda, valor) VALUES ($1, $2, $3, $4)`,
+        [clienteId, t.concepto, t.moneda, t.valor],
       );
     }
     return (await obtenerCliente(clienteId, tx)).tarifas;

@@ -13,7 +13,7 @@ function respuesta(status: number, cuerpo?: unknown) {
 }
 
 const TARIFAS: TarifasSalidaDatos = {
-  hora_normal: 38000,
+  hora_normal: { moneda: 'CLP', valor: 38000 },
   hora_extendida: null,
   hora_urgencia: null,
   traslado_km: null,

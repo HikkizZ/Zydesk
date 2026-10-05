@@ -76,10 +76,10 @@ function Contenido({
   const horas = ot.data?.horas;
   const horasDe = (o: Origen) => (horas ? horas[o] : null);
   const tarifaCliente = cliente.data?.tarifas.find((t) => t.concepto === 'hora_normal')?.valor;
-  const tarifaGlobal = tarifas.data?.hora_normal ?? null;
+  const tarifaGlobal = tarifas.data?.hora_normal?.valor ?? null;
   const tarifaExtendida =
     cliente.data?.tarifas.find((t) => t.concepto === 'hora_extendida')?.valor ??
-    tarifas.data?.hora_extendida ??
+    tarifas.data?.hora_extendida?.valor ??
     null;
   const tarifa =
     tarifaCliente !== undefined

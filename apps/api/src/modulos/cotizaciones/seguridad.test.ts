@@ -317,7 +317,7 @@ describe('prueba 2: roles', () => {
   type Datos = Awaited<ReturnType<typeof preparar>>;
 
   const TARIFAS = {
-    hora_normal: 38000,
+    hora_normal: { moneda: 'CLP', valor: 38000 },
     hora_extendida: null,
     hora_urgencia: null,
     traslado_km: null,
@@ -431,7 +431,7 @@ describe('prueba 2: roles', () => {
     ['coordinacion', ['editar', 'aprobar']],
     ['admin', ['editar', 'aprobar', 'config']],
   ] as const)('%s: permitido en lo suyo y 403 en lo demás', async (rol, permitidos) => {
-    await fijarTarifas({ hora_normal: 38000 });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const { agente, usuario } = await como(rol);
     const datos = await preparar();
     for (const m of MUTACIONES) {
@@ -471,7 +471,7 @@ describe('prueba 2: roles', () => {
 // Prueba 6 (la parte de la configuración)
 describe('prueba 6: el IVA de la configuración es un snapshot', () => {
   it('PUT /api/config/tarifas con iva_pct 0 no cambia la cotización existente; una nueva nace con 0', async () => {
-    await fijarTarifas({ hora_normal: 38000 });
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 38000 } });
     const admin = await como('admin');
     const a = await otFacturable();
     const b = await otFacturable();

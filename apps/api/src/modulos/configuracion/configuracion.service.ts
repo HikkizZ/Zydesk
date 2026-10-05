@@ -74,7 +74,7 @@ export async function guardarTarifas(
   return enTransaccion(async (tx) => {
     const actual = await leerTarifas(tx);
     const campos = (Object.keys(e) as (keyof TarifasEntradaDatos)[]).filter(
-      (k) => e[k] !== actual[k],
+      (k) => JSON.stringify(e[k]) !== JSON.stringify(actual[k]),
     );
     await guardarClave(tx, 'tarifas', e);
     await registrarAuditoria(tx, {

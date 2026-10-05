@@ -211,7 +211,7 @@ function Editor({
               moneda={moneda}
               totalesLinea={calculo.lineas}
               editable={editable}
-              precioNuevaLinea={moneda === 'CLP' ? (tarifas?.hora_normal ?? 0) : 0}
+              precioNuevaLinea={moneda === 'CLP' ? (tarifas?.hora_normal?.valor ?? 0) : 0}
               vistaTarjetas={vistaTarjetas}
               pistaBloqueo={pistaBloqueo}
               alImportar={() => setDialogo('horas')}

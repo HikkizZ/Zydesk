@@ -94,6 +94,8 @@ export function cotizacionDePrueba(
     validez_dias: 30,
     vence_el: '2026-10-30',
     valor_uf: null,
+    valor_uf_fecha: null,
+    valor_uf_fuente: null,
     aplica_iva: true,
     iva_pct: 19,
     condiciones: 'Forma de pago: 30 días desde la factura.',
@@ -177,8 +179,8 @@ export function resumenDeCotizacionDePrueba(
 
 export function tarifasDePrueba(cambios: Partial<TarifasSalidaDatos> = {}): TarifasSalidaDatos {
   return {
-    hora_normal: 38000,
-    hora_extendida: 45000,
+    hora_normal: { moneda: 'CLP', valor: 38000 },
+    hora_extendida: { moneda: 'CLP', valor: 45000 },
     hora_urgencia: null,
     traslado_km: null,
     costo_interno: 18000,

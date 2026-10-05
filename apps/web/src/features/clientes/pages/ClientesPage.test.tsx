@@ -90,7 +90,7 @@ const FICHA: ClienteSalidaDatos = {
       },
     ],
   },
-  tarifas: [{ concepto: 'hora_normal', valor: 38000 }],
+  tarifas: [{ concepto: 'hora_normal', moneda: 'CLP', valor: 38000 }],
   creado_en: '2026-01-01T12:00:00.000Z',
   actualizado_en: '2026-01-01T12:00:00.000Z',
 };

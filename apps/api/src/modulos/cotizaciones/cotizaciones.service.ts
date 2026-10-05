@@ -298,6 +298,7 @@ async function escribirCotizacion(
   }
   await tx.query(
     `UPDATE cotizacion SET contacto_id = $2, fecha_emision = $3, validez_dias = $4, moneda = $5, valor_uf = $6,
+                           valor_uf_fecha = NULL, valor_uf_fuente = $15,
                            aplica_iva = $7, condiciones = $8, nota_interna = $9, subtotal = $10, descuentos = $11,
                            neto = $12, iva = $13, total = $14, actualizado_en = now()
       WHERE id = $1`,
@@ -316,6 +317,7 @@ async function escribirCotizacion(
       r.neto,
       r.iva,
       r.total,
+      e.moneda === 'UF' ? 'manual' : null,
     ],
   );
   await tx.query(`DELETE FROM linea_cotizacion WHERE cotizacion_id = $1`, [cot.id]);
@@ -379,19 +381,24 @@ async function lineasActuales(tx: EntityManager, id: number): Promise<LineaGuard
 }
 
 // Tarifa del cliente si existe y si no la global (B12); `null` si ninguna está definida.
+// Transitorio (8bA): la conversión de tarifas en UF llega con 8bD; mientras tanto una tarifa en UF se rechaza.
 async function tarifaDe(
   tx: EntityManager,
   cliente_id: number | null,
   concepto: 'hora_normal' | 'hora_extendida' | 'traslado_km',
 ): Promise<number | null> {
+  let tarifa: { moneda: 'CLP' | 'UF'; valor: number } | null = null;
   if (cliente_id !== null) {
-    const [t]: { valor: number }[] = await tx.query(
-      `SELECT valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1 AND concepto = $2`,
+    const [t]: { moneda: 'CLP' | 'UF'; valor: number }[] = await tx.query(
+      `SELECT moneda, valor::float8 AS valor FROM tarifa_cliente WHERE cliente_id = $1 AND concepto = $2`,
       [cliente_id, concepto],
     );
-    if (t) return t.valor;
+    if (t) tarifa = t;
   }
-  return (await leerTarifas(tx))[concepto];
+  tarifa ??= (await leerTarifas(tx))[concepto];
+  if (tarifa === null) return null;
+  if (tarifa.moneda === 'UF') throw tarifaEnPesos();
+  return tarifa.valor;
 }
 
 const tarifaFaltante = (concepto: string): ErrorApp =>
@@ -710,10 +717,10 @@ export async function duplicarCotizacion(
     // El `iva_pct` es el de la original (snapshot fiscal); la fecha de emisión es hoy.
     const [nueva]: { id: number; version: number }[] = await tx.query(
       `INSERT INTO cotizacion (ot_id, version, codigo, estado, contacto_id, fecha_emision, validez_dias, moneda,
-                               valor_uf, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos,
+                               valor_uf, valor_uf_fecha, valor_uf_fuente, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos,
                                neto, iva, total, creado_por)
        SELECT ot_id, version + 1, codigo, 'borrador', contacto_id, $2::date, validez_dias, moneda, valor_uf,
-              aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos, neto, iva, total, $3
+              valor_uf_fecha, valor_uf_fuente, aplica_iva, iva_pct, condiciones, nota_interna, subtotal, descuentos, neto, iva, total, $3
          FROM cotizacion WHERE id = $1
        RETURNING id, version`,
       [id, hoyEnSantiago(), actor.id],

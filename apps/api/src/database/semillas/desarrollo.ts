@@ -225,8 +225,8 @@ async function sembrarClientes(): Promise<void> {
       notas: null,
     });
     await reemplazarTarifas(id, [
-      { concepto: 'hora_normal', valor: 38000 },
-      { concepto: 'hora_extendida', valor: 45000 },
+      { concepto: 'hora_normal', moneda: 'CLP', valor: 38000 },
+      { concepto: 'hora_extendida', moneda: 'CLP', valor: 45000 },
     ]);
   }
   for (const nombre of CLIENTES_EXTERNOS) {
@@ -259,8 +259,8 @@ const TARIFAS_BASE = {
 };
 const TARIFAS_DESARROLLO = {
   ...TARIFAS_BASE,
-  hora_normal: 38000,
-  hora_extendida: 45000,
+  hora_normal: { moneda: 'CLP', valor: 38000 },
+  hora_extendida: { moneda: 'CLP', valor: 45000 },
   costo_interno: 18000, // ficticio, para que OT-0215 muestre costo interno
   condiciones_defecto:
     'Precios en pesos chilenos. Validez según fecha indicada. Forma de pago: 30 días desde la factura. No incluye repuestos ni licencias salvo indicación expresa.',

@@ -20,10 +20,10 @@ async function como(rol: 'admin' | 'coordinacion' | 'tecnico' | 'lectura') {
 }
 
 const entrada = (extra: object = {}) => ({
-  hora_normal: 38000,
-  hora_extendida: 45000,
+  hora_normal: { moneda: 'CLP', valor: 38000 },
+  hora_extendida: { moneda: 'CLP', valor: 45000 },
   hora_urgencia: null,
-  traslado_km: 500,
+  traslado_km: { moneda: 'CLP', valor: 500 },
   costo_interno: 12000,
   iva_pct: 19,
   validez_dias_defecto: 30,
@@ -55,8 +55,8 @@ describe('leerTarifas', () => {
   });
 
   it('lee lo guardado', async () => {
-    await fijarTarifas({ hora_normal: 40000 });
-    expect((await leerTarifas()).hora_normal).toBe(40000);
+    await fijarTarifas({ hora_normal: { moneda: 'CLP', valor: 40000 } });
+    expect((await leerTarifas()).hora_normal).toEqual({ moneda: 'CLP', valor: 40000 });
   });
 });
 
