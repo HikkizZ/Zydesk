@@ -47,6 +47,13 @@ it('la ayuda de las horas explica la planilla y enlaza a /horas', async () => {
   expect(screen.getByRole('link', { name: 'Horas' }).getAttribute('href')).toBe('/horas');
 });
 
+it('el enlace «Horas» es un enlace en línea declarado', () => {
+  montar();
+  expect(screen.getByRole('link', { name: 'Horas' }).getAttribute('data-objetivo')).toBe(
+    'en-linea',
+  );
+});
+
 it('al teclear @ abre la lista, inserta el nombre y envía el id mencionado con las horas', async () => {
   const usuario = userEvent.setup();
   const onEnviado = vi.fn();

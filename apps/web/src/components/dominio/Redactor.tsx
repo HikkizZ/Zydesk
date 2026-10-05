@@ -1,13 +1,23 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Lock } from 'lucide-react';
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { SubidaArchivos } from '@/components/dominio/SubidaArchivos';
 import { useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
 import { Avatar } from '@/components/dominio/Avatar';
+import { CasillaTactil } from '@/components/dominio/CasillaTactil';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Popover, PopoverAnchor, PopoverContent } from '@/components/ui/popover';
@@ -16,10 +26,12 @@ import { crearMensajeOt, invalidarOt } from '@/features/ots/api';
 import {
   crearMensaje,
   invalidarTicket,
+  quitarArchivoPendiente,
   type ArchivoDatos,
   type MensajeEntradaDatos,
 } from '@/features/tickets/api';
 import { ErrorApi } from '@/lib/api';
+import { useEsMovil } from '@/lib/useMediaQuery';
 import { cn } from '@/lib/utils';
 import type { TipoMensaje } from '@zydesk/shared';
 
@@ -74,6 +86,9 @@ export function Redactor({
   copiaAlTicket = false,
   codigoTicket,
   sinHoras = false,
+  autoEnfocar = false,
+  abrirCamaraAlMontar = false,
+  onCancelar,
 }: {
   destino?: DestinoMensajes;
   ticketId?: number;
@@ -82,7 +97,14 @@ export function Redactor({
   codigoTicket?: string;
   // OT cerrada o cancelada: el mensaje se permite pero no las horas.
   sinHoras?: boolean;
+  /** Enfoca el texto y lo centra en pantalla al montar. */
+  autoEnfocar?: boolean;
+  /** Abre la cámara al montar (botón de cámara de la barra plegada). */
+  abrirCamaraAlMontar?: boolean;
+  /** Muestra «Cancelar»; con texto o archivos pendientes pide confirmar el descarte. */
+  onCancelar?: () => void;
 }) {
+  const esMovil = useEsMovil();
   const destino: DestinoMensajes = destinoProp ?? { tipo: 'ticket', id: ticketId ?? 0 };
   const queryClient = useQueryClient();
   const usuarios = useUsuariosActivos();
@@ -96,6 +118,13 @@ export function Redactor({
   const [mencion, setMencion] = useState<Mencion | null>(null);
   const [activo, setActivo] = useState(0);
   const [errorGeneral, setErrorGeneral] = useState<string | null>(null);
+  const [confirmaDescarte, setConfirmaDescarte] = useState(false);
+
+  useEffect(() => {
+    if (!autoEnfocar) return;
+    areaTexto.current?.focus();
+    areaTexto.current?.scrollIntoView?.({ block: 'center' });
+  }, [autoEnfocar]);
 
   const opciones = mencion
     ? (usuarios.data ?? [])
@@ -200,6 +229,18 @@ export function Redactor({
     }
   }
 
+  function cancelar() {
+    if (texto.trim() === '' && archivos.length === 0) onCancelar?.();
+    else setConfirmaDescarte(true);
+  }
+
+  function descartar() {
+    // Mejor esfuerzo: los archivos pendientes también los limpia el job diario (ADR 0009).
+    for (const a of archivos) void quitarArchivoPendiente(a.id).catch(() => undefined);
+    setConfirmaDescarte(false);
+    onCancelar?.();
+  }
+
   const esNota = modo === 'nota_interna';
   return (
     <section
@@ -240,7 +281,7 @@ export function Redactor({
               aria-label="Texto del mensaje"
               placeholder={textos.placeholder}
               value={texto}
-              rows={3}
+              rows={esMovil ? 4 : 3}
               onChange={alCambiarTexto}
               onKeyDown={alTeclear}
               className="min-h-20 bg-white"
@@ -279,17 +320,21 @@ export function Redactor({
         </PopoverContent>
       </Popover>
 
-      <SubidaArchivos compacto archivos={archivos} onChange={setArchivos} />
+      <SubidaArchivos
+        compacto
+        archivos={archivos}
+        onChange={setArchivos}
+        abrirCamaraAlMontar={abrirCamaraAlMontar}
+      />
 
       {copiaAlTicket ? (
         <div className="flex items-start gap-2">
-          <Checkbox
+          <CasillaTactil
             id={`copiar-${destino.id}`}
             checked={copiar}
             onCheckedChange={(v) => setCopiar(v === true)}
-            className="mt-0.5 size-5"
           />
-          <div className="flex flex-col">
+          <div className="flex min-h-11 flex-col justify-center lg:min-h-0">
             <Label htmlFor={`copiar-${destino.id}`}>Copiar al ticket</Label>
             <p className="text-sm text-tinta-2">
               El avance también queda en {codigoTicket ?? 'el ticket'}
@@ -327,7 +372,11 @@ export function Redactor({
               {horasOk ? (
                 <>
                   Se suman a tu planilla de hoy; corrígelas en{' '}
-                  <Link to="/horas" className="text-acento underline underline-offset-2">
+                  <Link
+                    to="/horas"
+                    data-objetivo="en-linea"
+                    className="relative -my-1 inline-block py-1 text-acento underline underline-offset-2"
+                  >
                     Horas
                   </Link>
                 </>
@@ -337,6 +386,11 @@ export function Redactor({
             </p>
           </>
         )}
+        {onCancelar ? (
+          <Button type="button" variant="ghost" onClick={cancelar}>
+            Cancelar
+          </Button>
+        ) : null}
         <Button type="button" disabled={!puedeEnviar || enviarMensaje.isPending} onClick={enviar}>
           {enviarMensaje.isPending ? 'Enviando…' : textos.boton}
         </Button>
@@ -346,6 +400,20 @@ export function Redactor({
           {errorGeneral}
         </p>
       ) : null}
+      <AlertDialog open={confirmaDescarte} onOpenChange={setConfirmaDescarte}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Descartar el seguimiento?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Se pierde lo escrito y se quitan las fotos o archivos ya subidos.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Seguir escribiendo</AlertDialogCancel>
+            <AlertDialogAction onClick={descartar}>Descartar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </section>
   );
 }
