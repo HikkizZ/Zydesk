@@ -24,10 +24,11 @@ const carpetaSesiones = path.join(os.tmpdir(), 'zydesk-e2e');
 const archivoSesion = (usuario: UsuarioSemilla) => path.join(carpetaSesiones, `${usuario}.json`);
 
 // La API limita a 20 ingresos por IP cada 15 min (ADR 0013): se ingresa una sola vez por persona y por
-// ejecución (globalSetup) y cada test reutiliza la cookie. Las cookies quedan en el directorio temporal.
+// ejecución (globalSetup) y cada test reutiliza la cookie. Las cookies quedan en una carpeta temporal solo
+// para el usuario (0700) que globalTeardown borra al terminar.
 export async function iniciarSesiones(baseURL: string): Promise<void> {
   const contrasena = contrasenaSemilla();
-  fs.mkdirSync(carpetaSesiones, { recursive: true });
+  fs.mkdirSync(carpetaSesiones, { recursive: true, mode: 0o700 });
   for (const usuario of USUARIOS_SEMILLA) {
     const contexto = await request.newContext({ baseURL });
     const respuesta = await contexto.post('/api/auth/ingresar', {
@@ -40,6 +41,10 @@ export async function iniciarSesiones(baseURL: string): Promise<void> {
     await contexto.storageState({ path: archivoSesion(usuario) });
     await contexto.dispose();
   }
+}
+
+export function borrarSesiones(): void {
+  fs.rmSync(carpetaSesiones, { recursive: true, force: true });
 }
 
 export async function ingresar(page: Page, usuario: UsuarioSemilla): Promise<void> {

@@ -139,6 +139,8 @@ it('una imagen que el navegador no decodifica (HEIC) se muestra como documento',
   img.dispatchEvent(new Event('error'));
   await waitFor(() => expect(container.querySelector('img')).toBeNull());
   expect(screen.getByText('foto-1.jpg')).toBeTruthy();
+  // El blob de la vista previa que no se pudo mostrar se libera de inmediato.
+  expect(revocar).toHaveBeenCalledWith('blob:prueba-1');
 });
 
 it('abrirCamaraAlMontar hace clic una vez en el input de cámara', () => {

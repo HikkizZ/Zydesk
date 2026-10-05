@@ -53,7 +53,11 @@ function Miniatura({ src, categoria }: { src?: string | undefined; categoria?: s
         alt=""
         className="size-16 shrink-0 rounded-md border object-cover"
         loading="lazy"
-        onError={() => setFallo(true)}
+        onError={() => {
+          // El navegador no decodifica la imagen (p. ej. HEIC): se muestra como documento y se libera el blob.
+          if (src.startsWith('blob:')) URL.revokeObjectURL(src);
+          setFallo(true);
+        }}
       />
     );
   }
