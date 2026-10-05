@@ -490,7 +490,7 @@ Reglas: ninguna acción de terceros fuera de `actions/*` y `docker/*`, todas por
 ### 11.1 Comando y guardas
 
 - `npm run db:demo` → `cli.ts demo [--reiniciar]` → `semillas/demo/cargar.ts`: `sembrarDemo(password)`. Idempotente por correo/código como la de desarrollo. `--reiniciar` hace `TRUNCATE … RESTART IDENTITY CASCADE` de todas las tablas salvo `migracion` (como `reiniciarDesarrollo`) **y** borra los archivos de `ARCHIVOS_DIR` que la semilla haya creado antes (los suyos están bajo `ARCHIVOS_DIR/demo/`, §11.2), y vuelve a sembrar.
-- **Guardas** (todas con test): (1) exige `ZYDESK_DEMO=true` en el entorno; si no, `logger.error('db:demo solo corre con ZYDESK_DEMO=true')` y `exit 1` **antes de conectar**; (2) exige `DEMO_PASSWORD` (política de contraseñas de `shared`); (3) **se niega si la base tiene algún usuario cuyo correo no termine en `@demo.zydesk.cl`** ni esté vacía (una instalación real nunca tiene esos correos; igual que `soloSemillas` de ADR 0029.23); (4) `--reiniciar` exige además la variable de entorno `ZYDESK_DEMO_CONFIRMAR=<nombre de la base>` (el operador escribe `zydesk`) para que un `reiniciar` por error no borre nada; (5) `sembrar`/`reiniciar` (desarrollo) **no corren con `NODE_ENV=production`**: `reiniciarDesarrollo` ya lo rechaza; `sembrarTodo` gana el mismo rechazo.
+- **Guardas** (todas con test): (1) exige `ZYDESK_DEMO=true` en el entorno; si no, `logger.error('db:demo solo corre con ZYDESK_DEMO=true')` y `exit 1` **antes de conectar**; (2) exige `DEMO_PASSWORD` (política de contraseñas de `shared`); (3) **se niega si la base tiene algún usuario cuyo correo no termine en `@demo.zytech.dev`** ni esté vacía (una instalación real nunca tiene esos correos; igual que `soloSemillas` de ADR 0029.23); (4) `--reiniciar` exige además la variable de entorno `ZYDESK_DEMO_CONFIRMAR=<nombre de la base>` (el operador escribe `zydesk`) para que un `reiniciar` por error no borre nada; (5) `sembrar`/`reiniciar` (desarrollo) **no corren con `NODE_ENV=production`**: `reiniciarDesarrollo` ya lo rechaza; `sembrarTodo` gana el mismo rechazo.
 - En la demo se ejecuta desde el VPS: `docker compose --env-file ../.env run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-api demo --reiniciar` (el `.env` ya trae `ZYDESK_DEMO=true` y `DEMO_PASSWORD`; en la instalación definitiva ambas están vacías y la guía dice que así deben quedar).
 - Las cuentas de la demo nacen con `debe_cambiar_contrasena = false` y `terminos_aceptados_version` = la vigente (para que el equipo entre y use la app sin trámites); una sola `DEMO_PASSWORD` común que el usuario comunica fuera de la app. La semilla **no** crea vínculos de Telegram, códigos ni `aviso_envio`; sí avisos en la app (`en_app = true`) construidos con `construirAviso` (ADR 0027.23).
 - Separación: `semillas/demo/` no importa nada de `semillas/desarrollo*.ts` salvo utilidades puras si las hay (p. ej. `jornada`); comparte `sembrarBase` (ya corre al arrancar). La semilla de desarrollo **no cambia**.
@@ -499,19 +499,19 @@ Reglas: ninguna acción de terceros fuera de `actions/*` y `docker/*`, todas por
 
 La demo necesita archivos reales en disco para que fotos, correos y respaldos de aprobación se abran: `semillas/demo/archivos/` trae **un puñado de archivos pequeños y libres**, generados en el repo (sin datos personales ni EXIF): 6 fotos JPG sintéticas (gradientes/formas con el código del ticket superpuesto, ≤ 150 KB cada una, generadas con un script `tsx` que usa `pngjs`… **no**: sin dependencias nuevas; se generan **una vez** a mano con cualquier herramienta y se versionan como binarios, ≤ 1 MB en total), 2 `.eml` ficticios (de `contacto@<cliente ficticio>.cl`), 2 PDF de una página («Orden de compra OC-2026-…», «Aprobación cotización COT-…», generados con pdfmake en el propio script de semilla, no versionados), 1 `.xlsx` (generado con exceljs en la semilla). La semilla los copia a `ARCHIVOS_DIR/demo/aaaa/mm/<uuid>.<ext>` a través de `StorageLocal` y crea las filas `archivo` con `categoria`, `tipo_mime` y `tamano` reales. Si el usuario prefiere no versionar binarios, las fotos también se generan en la semilla como PNG planos de un color con `Buffer` a mano (sin librería): §18.16.
 
-### 11.3 Historia de la demo — **BORRADOR, pendiente del visto bueno del usuario (F9-T9)**
+### 11.3 Historia de la demo — **APROBADA por el usuario el 2026-10-05 (F9-T9)**
 
-> El usuario pidió que se le avise antes de crear estos datos. Lo de abajo es la **propuesta** del arquitecto; F9-T9 la presenta (puede ajustarse en la conversación) y **nada de §11 se implementa hasta que el usuario la apruebe**. Todo es ficticio: empresa, personas, clientes, RUT (válidos por dígito verificador pero inventados), correos (`@demo.zydesk.cl` y dominios `.cl` inexistentes bajo `ejemplo`), teléfonos (`+56 9 0000 …`). Ningún nombre coincide con los de las semillas de desarrollo ni con personas reales del equipo del usuario.
+> El usuario pidió que se le avise antes de crear estos datos. El usuario aprobó esta historia tal cual el 2026-10-05, con un solo cambio: las cuentas usan `@demo.zytech.dev` (subdominio suyo; el dominio no envía correo) y los contactos de clientes, dominios reservados `.test`. Todo es ficticio: empresa, personas, clientes, RUT (válidos por dígito verificador pero inventados), correos (`@demo.zytech.dev` y dominios reservados `.test`), teléfonos (`+56 9 0000 …`). Ningún nombre coincide con los de las semillas de desarrollo ni con personas reales del equipo del usuario.
 
 **La organización**: **Servicios Técnicos Patagua** («Patagua»), empresa chilena de soporte TI y mantención electromecánica para pymes, 12 personas, oficina central en Santiago y una base en Rancagua. `nombre_app` = «Zydesk · Demo Patagua»; logo: un SVG simple generado (círculo + «P»), ≤ 20 KB, en `configuracion.logo`.
 
 **Departamentos**: Mesa de ayuda (L–V 08:30–18:00, viernes hasta 16:30, colación 13:00 60 min, extendido desde 19:00, 80 % para tickets), Terreno (L–V 08:00–17:00, 90 %), Coordinación (L–V 09:00–18:00, 50 %). Feriados: los de `feriados-cl.json` más uno propio de Terreno («Aniversario base Rancagua»).
 
-**Personas (12; correos `<usuario>@demo.zydesk.cl`)**: Administración: Paula Hidalgo (`phidalgo`, Coordinación). Coordinación: Rodrigo Álamos (`ralamos`, Mesa de ayuda) y Carolina Bustos (`cbustos`, Coordinación). Técnicos: Andrés Loyola (`aloyola`, Mesa), Daniela Pizarro (`dpizarro`, Mesa), Felipe Carrasco (`fcarrasco`, Terreno), Marcela Núñez (`mnunez`, Terreno), Joaquín Riquelme (`jriquelme`, Terreno), Antonia Sepúlveda (`asepulveda`, Mesa), Gonzalo Tapia (`gtapia`, Mesa). Solo lectura: Ximena Arrau (`xarrau`, Coordinación; gerencia) e Ignacio Vera (`ivera`, Coordinación; finanzas, **desactivado** para mostrar el estado). Colores de avatar distintos entre sí.
+**Personas (12; correos `<usuario>@demo.zytech.dev`)**: Administración: Paula Hidalgo (`phidalgo`, Coordinación). Coordinación: Rodrigo Álamos (`ralamos`, Mesa de ayuda) y Carolina Bustos (`cbustos`, Coordinación). Técnicos: Andrés Loyola (`aloyola`, Mesa), Daniela Pizarro (`dpizarro`, Mesa), Felipe Carrasco (`fcarrasco`, Terreno), Marcela Núñez (`mnunez`, Terreno), Joaquín Riquelme (`jriquelme`, Terreno), Antonia Sepúlveda (`asepulveda`, Mesa), Gonzalo Tapia (`gtapia`, Mesa). Solo lectura: Ximena Arrau (`xarrau`, Coordinación; gerencia) e Ignacio Vera (`ivera`, Coordinación; finanzas, **desactivado** para mostrar el estado). Colores de avatar distintos entre sí.
 
 **Categorías (7)** con responsable propuesto y plazos (respuesta h / resolución alta en días): ERP y facturación (Loyola, 2 h/1 d), Redes y conectividad (Carrasco, 1 h/1 d), Correo y colaboración (Pizarro, 2 h/2 d), Equipos y periféricos (Núñez, 4 h/3 d), Accesos y cuentas (Sepúlveda, 4 h/1 d), Climatización y energía (Riquelme, 4 h/3 d), Proyectos y mejoras (Álamos, 8 h/10 d).
 
-**Clientes (7 externos + 3 áreas internas)**: Frutícola Valle de Aconcagua SpA (bolsa de 20 h/mes, tarifas por cliente en CLP: 36 000 / 44 000), Clínica Dental Sonrisa Austral Ltda. (tarifas en **UF**: 0,85 / 1,05), Transportes Río Claro S.A., Colegio Bicentenario Los Aromos (sin fines de lucro; OT internas frecuentes), Inmobiliaria Cumbres del Maipo, Panadería y Pastelería Doña Rosa EIRL (cliente chico, 1 ticket), Constructora Puente Alto Norte Ltda. (cliente con cotización rechazada). Cada uno con 1–3 contactos (nombre, cargo, correo `@ejemplo-<cliente>.cl`, teléfono ficticio) y RUT válido inventado. Áreas internas: Administración y Finanzas, Operaciones, Base Rancagua. Tarifas globales: hora normal $38 000, extendida $45 000, urgencia $60 000, traslado $450/km, costo interno $18 000, IVA 19 %, validez 30 días, condiciones por defecto («Precios netos… pago a 30 días…»).
+**Clientes (7 externos + 3 áreas internas)**: Frutícola Valle de Aconcagua SpA (bolsa de 20 h/mes, tarifas por cliente en CLP: 36 000 / 44 000), Clínica Dental Sonrisa Austral Ltda. (tarifas en **UF**: 0,85 / 1,05), Transportes Río Claro S.A., Colegio Bicentenario Los Aromos (sin fines de lucro; OT internas frecuentes), Inmobiliaria Cumbres del Maipo, Panadería y Pastelería Doña Rosa EIRL (cliente chico, 1 ticket), Constructora Puente Alto Norte Ltda. (cliente con cotización rechazada). Cada uno con 1–3 contactos (nombre, cargo, correo `@<cliente>.test`, teléfono ficticio) y RUT válido inventado. Áreas internas: Administración y Finanzas, Operaciones, Base Rancagua. Tarifas globales: hora normal $38 000, extendida $45 000, urgencia $60 000, traslado $450/km, costo interno $18 000, IVA 19 %, validez 30 días, condiciones por defecto («Precios netos… pago a 30 días…»).
 
 **Numeración**: `TK-` correlativo desde 2000 (dígitos 4), `OT-` desde 300.
 
@@ -531,7 +531,7 @@ La demo necesita archivos reales en disco para que fotos, correos y respaldos de
 
 ### 11.4 Cifras verificables (`demo.test.ts`, BD real, `ZYDESK_DEMO=true` solo en el test)
 
-Tras `sembrarDemo` dos veces: 12 usuarios (1 inactivo), 3 departamentos, 7 categorías, 10 clientes (7 externos), 1 bolsa, 2 clientes con `tarifa_cliente` (uno en UF), 36 tickets (6 archivados), 11 OT, 8 cotizaciones, 3 plantillas, 10 `indicador_uf`, ≥ 14 archivos con su archivo en disco (`fs.stat` de cada `clave`), `registro_horas` sin fechas futuras ni en OT finales, avisos ≥ 60, `GET /api/mi-dia` como Álamos con las 5 listas no vacías, `GET /api/reportes` del mes con `tickets_cerrados > 0` y `horas_facturables_pct` entre 40 y 80, todos los `evento` con `req_id` nulo (semilla), ninguna fila con correo que no termine en `@demo.zydesk.cl` o `@ejemplo-`. Guardas: sin `ZYDESK_DEMO` → sale 1 sin conectar; con un usuario `real@empresa.cl` en la base → sale 1 y la base no cambia; `--reiniciar` sin `ZYDESK_DEMO_CONFIRMAR` → sale 1. El test de permisos genérico no cambia (no hay rutas nuevas). Las cifras exactas se fijan al aprobar la historia; si el usuario cambia la historia, cambian aquí.
+Tras `sembrarDemo` dos veces: 12 usuarios (1 inactivo), 3 departamentos, 7 categorías, 10 clientes (7 externos), 1 bolsa, 2 clientes con `tarifa_cliente` (uno en UF), 36 tickets (6 archivados), 11 OT, 8 cotizaciones, 3 plantillas, 10 `indicador_uf`, ≥ 14 archivos con su archivo en disco (`fs.stat` de cada `clave`), `registro_horas` sin fechas futuras ni en OT finales, avisos ≥ 60, `GET /api/mi-dia` como Álamos con las 5 listas no vacías, `GET /api/reportes` del mes con `tickets_cerrados > 0` y `horas_facturables_pct` entre 40 y 80, todos los `evento` con `req_id` nulo (semilla), ninguna fila con correo que no termine en `@demo.zytech.dev` o `.test`. Guardas: sin `ZYDESK_DEMO` → sale 1 sin conectar; con un usuario `real@empresa.cl` en la base → sale 1 y la base no cambia; `--reiniciar` sin `ZYDESK_DEMO_CONFIRMAR` → sale 1. El test de permisos genérico no cambia (no hay rutas nuevas). Las cifras exactas se fijan al aprobar la historia; si el usuario cambia la historia, cambian aquí.
 
 ## 12. Versionado SemVer y publicación (bloque 9A; ADR 0032)
 
@@ -597,7 +597,7 @@ Qué es y qué no es (§3.1), el checklist exacto que ejecutó el usuario en Nex
 
 ### 15.3 Lo demás
 
-`docs/legal/README.md`: sección «Antes de datos reales» (marcadores, `borrador: false`, versión, quién revisa; E3). `README.md`: sección «Producción» corta que enlaza a las dos guías, scripts nuevos (`db:demo`, `version:fijar`), nota de que `docker-compose.yml` es producción y `docker-compose.dev.yml` desarrollo. `CLAUDE.md` §2 (fila de la tabla; regla de migraciones compatibles con la versión anterior; «`db:demo` solo con `ZYDESK_DEMO=true` y correos `@demo.zydesk.cl`»), §6 (comandos nuevos), §7 (los `.sh` de `docker/` son para Linux: probarlos con Git Bash o WSL; `shellcheck`). `docs/manuales/administracion.md` §1 (enlace a la guía de despliegue para el `admin`), §12 (el respaldo lo hace `respaldar.sh`; enlace), §16 (`ZYDESK_DEMO`, `DEMO_PASSWORD` como variables «solo demo»). `docs/api/README.md`: una frase sobre `https://desk.zytech.dev/api` y Access (si aplica). `docs/CHANGELOG.md` (§12.4). ADR 0031 y 0032 con sus filas en `docs/decisiones/README.md`; la línea **Estado** de ADR 0020 gana «precisada por ADR 0031 (puerto 8080 de `web`, respaldo previo local, imágenes por digest, Dependabot para acciones)», la de 0017 «precisada por ADR 0031 (rotación de logs y alternativa con cron en la Fase 9)» y la de 0029 «precisada por ADR 0032 (versiones)». `preguntas-abiertas.md` **no se edita** (E2 y E3 se resuelven o se anotan en ADR 0031 según las respuestas de §19).
+`docs/legal/README.md`: sección «Antes de datos reales» (marcadores, `borrador: false`, versión, quién revisa; E3). `README.md`: sección «Producción» corta que enlaza a las dos guías, scripts nuevos (`db:demo`, `version:fijar`), nota de que `docker-compose.yml` es producción y `docker-compose.dev.yml` desarrollo. `CLAUDE.md` §2 (fila de la tabla; regla de migraciones compatibles con la versión anterior; «`db:demo` solo con `ZYDESK_DEMO=true` y correos `@demo.zytech.dev`»), §6 (comandos nuevos), §7 (los `.sh` de `docker/` son para Linux: probarlos con Git Bash o WSL; `shellcheck`). `docs/manuales/administracion.md` §1 (enlace a la guía de despliegue para el `admin`), §12 (el respaldo lo hace `respaldar.sh`; enlace), §16 (`ZYDESK_DEMO`, `DEMO_PASSWORD` como variables «solo demo»). `docs/api/README.md`: una frase sobre `https://desk.zytech.dev/api` y Access (si aplica). `docs/CHANGELOG.md` (§12.4). ADR 0031 y 0032 con sus filas en `docs/decisiones/README.md`; la línea **Estado** de ADR 0020 gana «precisada por ADR 0031 (puerto 8080 de `web`, respaldo previo local, imágenes por digest, Dependabot para acciones)», la de 0017 «precisada por ADR 0031 (rotación de logs y alternativa con cron en la Fase 9)» y la de 0029 «precisada por ADR 0032 (versiones)». `preguntas-abiertas.md` **no se edita** (E2 y E3 se resuelven o se anotan en ADR 0031 según las respuestas de §19).
 
 ## 16. Tareas (en orden; cada una termina con `typecheck`, `lint`, `format:check`, los tests que le correspondan verdes y un commit convencional en español, sin `Co-Authored-By`)
 
@@ -676,7 +676,7 @@ Detener los procesos locales de desarrollo con `taskkill /PID <pid> /T /F` (CLAU
 9. **Respaldo previo al despliegue local y sin cifrar**: ADR 0020 pedía `pg_dump` antes de desplegar; hacerlo con el script de root exigiría `sudo` para `zydesk-deploy` (más superficie) y el cifrado no aporta nada en un dump que vive 5 despliegues en el propio VPS (si el VPS está comprometido, la base también). Los dumps `pre-despliegue/` son 700 de `zydesk-deploy`.
 10. **Loki + Grafana + Alloy no entran por defecto**: para 12 personas y una demo, la alternativa con cron de ADR 0017 (logs gzip 30 días, `zgrep`) y el aviso de errores por Telegram cubren el diagnóstico; el stack de observabilidad son tres contenedores más que mantener, un subdominio más detrás de Access y ≈ 1 GB de RAM. ADR 0017 lo preveía como opción; la decisión queda en el usuario (§19.10) y, si dice que sí, es un bloque aparte con su propia tarea (no bloquea la v1.0.0).
 11. **Salud externa**: con Access delante, un monitor externo necesita Service Token; recomendación: monitorear desde dentro (healthchecks + `errores-ayer.sh`) y, si el usuario quiere un monitor externo gratuito (UptimeRobot, Better Stack), crear la Service Token solo para `/api/salud` con una política «Service Auth». Pregunta §19.11.
-12. **Semilla de demo con guardas duras**: la decisión 2 del usuario exige que la demo tenga datos ficticios, pero el riesgo real es que `db:demo` corra alguna vez sobre la instalación definitiva. Tres candados independientes (`ZYDESK_DEMO=true`, correos `@demo.zydesk.cl` exclusivos, `ZYDESK_DEMO_CONFIRMAR` para borrar) hacen que un error de operación no baste; `sembrar`/`reiniciar` de desarrollo quedan además prohibidos con `NODE_ENV=production`.
+12. **Semilla de demo con guardas duras**: la decisión 2 del usuario exige que la demo tenga datos ficticios, pero el riesgo real es que `db:demo` corra alguna vez sobre la instalación definitiva. Tres candados independientes (`ZYDESK_DEMO=true`, correos `@demo.zytech.dev` exclusivos, `ZYDESK_DEMO_CONFIRMAR` para borrar) hacen que un error de operación no baste; `sembrar`/`reiniciar` de desarrollo quedan además prohibidos con `NODE_ENV=production`.
 13. **Versión visible en el pie de la web**: es el único cambio de interfaz y rompe la regla «ningún cambio funcional», pero sin él el equipo de la demo no puede decir «vi la v1.0.0-rc.2» y el ensayo de rollback no se ve desde la web; 15 líneas y un test. Pregunta §19.15.
 14. **Datos de la empresa en el PDF (RUT, razón social, dirección) no entran**: pendiente de la Fase 4, pero es una funcionalidad nueva (pantalla de Configuración, columna o clave nueva, cambio del PDF); la demo usa el nombre y el logo de la marca que ya existen. Va a la v1.1.0 con el correo entrante salvo que el usuario lo adelante (§19.16).
 15. **Una instancia de la API** (§7.2): nada en el código fue diseñado para dos despachadores; la escala no lo pide.
@@ -714,6 +714,112 @@ Detener los procesos locales de desarrollo con `taskkill /PID <pid> /T /F` (CLAU
 21. **B21 · Textos legales en la demo**: siguen `borrador: true` con los marcadores (el equipo verá el aviso de borrador al aceptar). ¿Rellenar los marcadores con la empresa ficticia «Patagua» solo para la demo (en la imagen `rc`, no en `main`)? **Recomendación**: no; dejar el borrador visible evita que alguien crea que ya están revisados, y E3 sigue pendiente de tu decisión antes de la instalación definitiva.
 22. **B22 · Qué hacer con la demo al terminar la fase**: ¿se mantiene encendida hasta la decisión del equipo (respaldos y actualizaciones incluidas) o se apaga al cerrar la fase? **Recomendación**: encendida con `v1.0.0` hasta que decidan; `docs/despliegue.md` §10 describe el apagado.
 
+### Respuestas del usuario (2026-10-05)
+
+**B1 · Estado real de Nexus.** El usuario corrió los comandos de solo lectura en el VPS. Se cruzaron con `knowledge-vault/06_nexus_server/`. Mandan sobre lo que suponían ADR 0020 y esta spec:
+
+- **Sistema y Docker:**
+  - Ubuntu 26.04.1 LTS, Docker 29.8.1, Compose v5.5.1, systemd 259.
+  - 11 GiB de RAM, 6 CPU, 92 GB libres en `/`.
+  - Host en `Etc/UTC`; cron vixie (`cron 3.0pl1`).
+- **Redes externas:**
+  - `web` (`cloudflared`, `nginx-proxy`, `portfolio`).
+  - `db`, con el Postgres 18 compartido de Nexus. Zydesk **no** lo usa: ver B23.
+- **`nexus-infra` vive en `/srv/nexus-infra/`, no en `/srv/apps/nexus-infra/`.** Es el repo privado `HikkizZ/nexus-infra`, con dueño `hikki`.
+  - La configuración del proxy está en `/srv/nexus-infra/proxy/conf.d/`, montada en `nginx-proxy` como `/etc/nginx/conf.d:ro`.
+  - Los archivos actuales son `00-default.conf`, `zytech.conf` y `portfolio.conf`.
+  - `nginx-proxy` es `nginx:alpine` y no tiene `real_ip` ni `client_max_body_size` (rige 1 MB).
+  - Recarga: `docker exec nginx-proxy nginx -t && docker exec nginx-proxy nginx -s reload`. Después se hace commit en `nexus-infra`.
+  - Todas las rutas de §5.4, ADR 0020 y los scripts usan `/srv/nexus-infra/proxy/conf.d/`.
+- **`zydesk.conf` (`docker/vps/zydesk.nginx-proxy.conf`)** sigue la convención de `portfolio.conf`, con estos ajustes:
+  - `listen 80` y `server_name desk.zytech.dev`.
+  - `set $up_zydesk zydesk-web:8080; proxy_pass http://$up_zydesk;`.
+  - `proxy_set_header X-Forwarded-Proto $http_x_forwarded_proto;`: **no** `$scheme`, porque el túnel llega por HTTP y `$scheme` reescribiría `https` como `http`.
+  - `client_max_body_size 25m`.
+  - `Host`, `X-Real-IP` y `X-Forwarded-For $proxy_add_x_forwarded_for` como en `portfolio.conf`.
+- **Cloudflare Tunnel** está en modo token, sin `config.yml`. El usuario crea la ruta en Zero Trust → Conectores → Nexus → Rutas de aplicaciones publicadas: `desk` · `zytech.dev` · HTTP · `nginx-proxy:80`.
+- **Cadena de proxies:** `cloudflared` → `nginx-proxy` → `zydesk-web` → API. Son tres saltos que escriben `X-Forwarded-For`, así que **`PROXY_SALTOS=3`** (no 2). Se verifica en F9-T13: `auditoria.ip` de un `ingreso_ok` real debe ser la IP pública del usuario, no una `172.x`.
+- **Herramientas:**
+  - Están `zstd` y `flock`.
+  - Faltan `age`, `rclone` y `shellcheck`: `instalar-vps.sh` las instala con `apt`. `rclone` queda instalado aunque no se use todavía (B4).
+- **SSH:**
+  - `Include /etc/ssh/sshd_config.d/*.conf` está activo.
+  - `PasswordAuthentication yes` viene de `50-cloud-init.conf`. sshd toma el primer valor y lee los archivos en orden alfabético.
+  - Por eso la desactivación global va en `05-sin-contrasena.conf` y la regla de `zydesk-deploy` en `60-zydesk-deploy.conf`. El script valida con `sshd -t` y muestra `sshd -T` antes de recargar.
+  - `PermitRootLogin prohibit-password`.
+  - ufw permite solo el 22 y fail2ban está activo.
+- **Logs:** `/etc/docker/daemon.json` limita todo a `json-file` 10m×3. El Compose de Zydesk lo sobrescribe por servicio (§10).
+- **Convenciones de Nexus que se respetan:**
+  - Un stack, una carpeta, un `docker-compose.yml` y un `.env`.
+  - `chmod 750` en la carpeta de la app.
+  - Sin puertos publicados.
+  - Datos en `/srv/data/<app>/` (hoy `root:root`).
+  - Respaldo del `.env` como nota segura en Bitwarden.
+- **Excepción a las convenciones:** `/srv/apps/zydesk/` y su `.env` son de `zydesk-deploy` y no de `hikki`, porque `desplegar.sh` corre como ese usuario (ADR 0020).
+- **Respaldos:** hoy Nexus no tiene más respaldo que el backup diario de OVH (1 día); Zydesk es el primero con `pg_dump`.
+- **Web Analytics:** no se activa para `desk.zytech.dev`. Su beacon choca con la CSP (`pendientes.md` del vault) y una herramienta interna no lo necesita.
+
+**B2 · Pasos de root.**
+- Sí a `instalar-vps.sh`, que el usuario revisa y ejecuta como root.
+- Sí a `PasswordAuthentication no` **global**.
+- `sudo` sigue igual: pide la contraseña local de `hikki`, porque solo cambia el login SSH. Hay que conservarla en Bitwarden.
+- La consola KVM o el modo rescate de OVH siguen siendo la vía de recuperación si se pierden todas las llaves.
+- Antes de recargar `sshd`, el usuario confirma que entra con su llave y deja abierta una sesión.
+- `zydesk-deploy`: sin contraseña, sin `sudo`, en el grupo `docker` y con su llave restringida a `desplegar.sh`.
+- El usuario preguntó por qué no usar su propio usuario y aceptó la explicación: la llave vive en GitHub, el usuario de servicio se revoca sin tocar su cuenta y la instalación es portátil.
+
+**B3 · Cloudflare Access: no en la demo.**
+- La demo va solo con el login de Zydesk y sus límites de intentos (ADR 0013).
+- Riesgo aceptado: es pública en internet, pero con datos 100 % ficticios.
+- `DEMO_PASSWORD` debe ser fuerte (la política de `shared`; recomendado `openssl rand -base64 18`), porque abre las 12 cuentas, incluida Administración.
+- `docs/demo.md` lo dice explícitamente. Access sigue recomendado para la instalación definitiva (`docs/despliegue.md`).
+- Sin Service Token. Playwright contra la demo (F9-T17) entra directo.
+
+**B4 · Respaldos solo locales por ahora (E2 sigue abierta).**
+- `respaldar.sh` cifra con `age` y deja `respaldo-<marca>.tar.age` en `/srv/data/zydesk/respaldos/`, con retención local de 14 días.
+- La copia remota con `rclone` queda implementada pero desactivada: solo corre si `RCLONE_DESTINO` no está vacío.
+- **Riesgo abierto**, anotado en `docs/demo.md` y en el CHANGELOG: si se pierde el VPS, se pierde la demo. Lo mismo vale hoy para el resto de Nexus.
+- La instalación definitiva debe resolver E2 antes de tener datos reales.
+
+**B5 · Telegram en la demo.**
+- El usuario crea un bot nuevo en BotFather solo para la demo, distinto del de desarrollo.
+- También crea un chat para `TELEGRAM_CHAT_ADMIN`, donde llegan los avisos de despliegue, respaldo y errores.
+- Los tokens van solo en el `.env` del VPS, nunca en el chat ni en el repo.
+- Vincular Telegram de personas reales es opcional.
+
+**B6 · GHCR.**
+- Imágenes en `ghcr.io/hikkizz/zydesk-{api,web,bot}`, en minúsculas.
+- El usuario es el único revisor del environment `produccion`.
+- Los paquetes se hacen públicos a mano una vez y el VPS hace `pull` sin credenciales.
+
+**B7 · Historia de la demo (§11.3): aprobada tal cual.**
+- Cambio en las cuentas: correos `<usuario>@demo.zytech.dev`, no `@demo.zydesk.cl` (dominio ajeno).
+- Cambio en los contactos de clientes: dominios reservados `@<cliente>.test`.
+- §11.1 (guarda 3), §11.3 y §11.4 quedaron actualizados con esos dominios.
+
+**B8 · Cuentas.**
+- Una `DEMO_PASSWORD` común para las 12 cuentas ficticias.
+- Además, el usuario crea desde Configuración una cuenta por persona real del equipo, con su correo real como identificador y contraseña temporal.
+- La semilla no crea esas cuentas.
+- **Precisión de la guarda 3 de §11.1** (si no, chocaría con B8):
+  - Sin `--reiniciar`, `db:demo` se niega si existe un usuario cuyo correo no termine en `@demo.zytech.dev`.
+  - Con `--reiniciar`, que ya exige `ZYDESK_DEMO=true` y `ZYDESK_DEMO_CONFIRMAR=<base>`, la guarda no aplica: vacía todo, incluidas las cuentas del equipo, y vuelve a sembrar.
+  - `docs/demo.md` avisa que `--reiniciar` borra las cuentas del equipo y sus observaciones.
+  - Test: con una cuenta `persona@empresa.cl`, `demo` sin `--reiniciar` sale con 1 y no cambia nada; `demo --reiniciar` con las dos variables deja solo las 12 ficticias.
+
+**B23 · Postgres propio o el compartido de Nexus (nueva, bloqueaba F9-T4): propio.**
+- Contenedor `zydesk-db` con `postgres:16-alpine`, en la red interna `zydesk`, sin unirse a `db`. Es lo que ya decía §5.1.
+- Razones:
+  - La demo ensaya exactamente el `docker-compose.yml` portátil, los respaldos y la restauración de la instalación definitiva.
+  - Misma versión mayor en dev, CI y producción.
+  - `restaurar.sh` reemplaza la base sin tocar otros proyectos.
+  - Usa roles propios (`zydesk_owner`, `zydesk_app`) y `GRANT CREATE` para pg-boss.
+- El Postgres 18 de Nexus no se toca.
+
+**No bloqueantes (B9–B22):**
+- Se implementan con su recomendación (regla de la Fase 7).
+- B16 queda resuelta por B1: **timer de systemd** con `OnCalendar=*-*-* 02:30:00 America/Santiago` (systemd 259 admite zona horaria y respeta el horario de verano). `CRON_TZ` no se usa. `instalar-vps.sh` instala `zydesk-respaldo.service` y `zydesk-respaldo.timer`, y el resto de §8.1 no cambia.
+
 ## 20. Cambios de ADR propuestos (no se editan las ADR; ADR 0032 nace en F9-T1 con §12; ADR 0031 «Precisiones de la Fase 9» se escribe al cerrar con §18, las respuestas de §19 y las desviaciones; solo cambia la línea **Estado** de 0017, 0020 y 0029)
 
 - **ADR 0001**: el Compose de producción vive en la raíz como `docker-compose.yml` con cuatro servicios (`zydesk-db`, `zydesk-api`, `zydesk-web`, `zydesk-bot` con perfil); `web` es `nginx-unprivileged` en 8080; datos en `/srv/data/zydesk/`; imágenes por digest; portabilidad: la red externa `web` es el único supuesto del entorno.
@@ -735,8 +841,8 @@ _(Se completa durante la fase: commits por bloque, respuestas a §19, desviacion
 ### Estado al 2026-10-05 (para retomar en otro equipo)
 
 - **Nada implementado todavía.** Solo existe esta spec (rama `feat/fase-9-puesta-en-marcha`, desde `main` con las Fases 0–8b integradas en `52df530`).
-- **Antes de programar hay que resolver las preguntas bloqueantes B1–B8 de §19** con el usuario. Para B1, el usuario corre en el VPS: `docker --version && docker compose version && docker network ls && ls /srv/apps /srv/apps/nexus-infra/proxy/conf.d && which age rclone zstd flock` y pega la salida; los scripts de `docker/vps/` se ajustan a eso. El agente nunca entra al VPS ni ejecuta pasos de root.
-- **B7 (historia de la demo, §11.3) requiere el visto bueno explícito del usuario antes de F9-T10**: el usuario pidió que se le avise antes de crear los datos de la demo. Ajuste propuesto por Opus y pendiente de confirmar: los correos de la demo no usan `@demo.zydesk.cl` (dominio que no es del usuario) sino un subdominio suyo, p. ej. `@demo.zytech.dev`, o uno reservado (`.test`).
+- **Preguntas bloqueantes resueltas (2026-10-05)**: B1–B8 y la nueva B23, registradas en §19 «Respuestas del usuario». El agente nunca entra al VPS ni ejecuta pasos de root: el usuario corre los comandos y pega la salida.
+- **B7 aprobada**: la historia de §11.3 está aprobada tal cual, con cuentas `@demo.zytech.dev` y contactos `.test`. F9-T10 ya puede implementarse.
 - Las preguntas no bloqueantes (B9–B22) se implementan con la recomendación si el usuario no dice otra cosa (regla acordada desde la Fase 7).
-- Lo único que puede avanzar sin las respuestas es el bloque 9A (versionado, ADR 0032).
+- **Siguiente**: implementar por bloques según el plan aprobado por el usuario (§16, con los ajustes de §19).
 - Reglas de trabajo vigentes: responder al usuario siempre en español; commits con `/conventional-commit` en español, sin `Co-Authored-By`; push y PR solo con confirmación explícita; revisión de seguridad de cierre (Fable + `/security-review`) antes del PR.
