@@ -157,7 +157,7 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 **Archivos huérfanos.** Un archivo subido que nunca se usó en un ticket, seguimiento o nota (por ejemplo, alguien abandonó el formulario) se elimina automáticamente a las 24 horas; la tarea corre cada noche a las 04:00 (hora de Santiago).
 
-**Espacio en disco.** Los archivos de tickets no se borran solos. Revisa de vez en cuando el tamaño de `ARCHIVOS_DIR` y el espacio libre del disco.
+**Espacio en disco.** Los archivos de tickets no se borran solos. Revisa de vez en cuando el tamaño de `ARCHIVOS_DIR` y el espacio libre del disco. Las fotos tomadas desde el celular se comprimen antes de subir y pesan alrededor de 0,5 MB cada una.
 
 **Descargas.** Cualquier persona con sesión puede ver y descargar los archivos de los tickets. Las descargas de documentos y correos (no las fotos ni los PDF que se abren en pantalla) quedan en el registro de seguridad.
 

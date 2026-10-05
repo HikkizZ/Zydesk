@@ -92,7 +92,7 @@ En la tarjeta **Telegram** de Avisos, **Vincular Telegram** te da un código de 
 
 ## Ayuda
 
-**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página.
+**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página. Las capturas de pantalla de los manuales también se ven ahí.
 
 ![La Ayuda dentro de la app, con las pestañas de manuales y el índice de la página](../img/primeros-pasos/ayuda.png)
 
@@ -103,6 +103,8 @@ En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tic
 ![Mi día en el celular, con las tarjetas en dos columnas y la barra inferior](../img/primeros-pasos/mi-dia-movil.png)
 
 ![Panel Más abierto en el celular con Perfil, Clientes, Horas, Reportes, Ayuda y Cerrar sesión](../img/primeros-pasos/menu-mas-movil.png)
+
+En el detalle de un ticket o de una OT, bajo el título hay una fila de **atajos** que lleva a cada sección (Datos, Descripción, Tareas, Actividad, Archivos…). Los **datos del ticket** (estado, responsables, cliente, fechas) van arriba, plegados: tócalos para desplegarlos. Al pie queda una barra con **Escribir seguimiento** y un botón de **cámara**: el primero abre el redactor; el segundo lo abre y dispara la cámara de una vez. Cómo se usa está en el [manual de tickets](01-tecnico.md#el-detalle-del-ticket).
 
 ## Reportes
 

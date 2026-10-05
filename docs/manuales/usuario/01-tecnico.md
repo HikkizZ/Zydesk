@@ -31,13 +31,17 @@ En el detalle queda la tarjeta **Correo original**, con botón **Descargar origi
 
 Puedes adjuntar fotos y documentos al crear el ticket y en cada seguimiento o nota (en el celular, el botón de cámara abre la cámara). Se aceptan imágenes (JPG, PNG, WebP, HEIC), PDF, Word, Excel, PowerPoint, ZIP, `.eml`, `.msg`, `.txt` y `.csv`; hasta 10 archivos por vez y 20 MB cada uno. Un archivo de otro tipo, o que no es lo que dice su extensión, se rechaza.
 
+Cada foto aparece al instante como **vista previa** mientras sube, con su estado: «Subiendo…», lista, o con error y un botón **Reintentar** (vuelve a subir la misma foto, sin sacarla de nuevo). Un contador indica «2 de 3 fotos subidas». Antes de enviar puedes **Quitar** cualquiera. Las fotos se comprimen en tu celular antes de subir (quedan en unos 0,5 MB). Una foto **HEIC** (formato de iPhone) se guarda, pero algunos navegadores no la muestran: en ese caso se ve como un documento con su nombre, no como imagen.
+
 ![Redactor del seguimiento en el celular con dos fotos adjuntas y vista previa de cada una](../img/tecnico/redactor-fotos-movil.png)
 
 ![Tarjeta Fotos y archivos de una OT con las miniaturas y los botones Subir fotos y Subir archivo](../img/tecnico/fotos-y-archivos.png)
 
 ## El detalle del ticket
 
-Arriba ves el código, el asunto, el estado, la prioridad, la fecha límite y los botones **Cambiar estado** y **Editar**. Debajo: descripción, correo original, archivos, tareas y la **actividad**. A la derecha (en el celular, debajo) están los datos del ticket: responsables, seguidores, solicitante, cliente, categoría, fechas y primera respuesta. **Seguir** te agrega como seguidor; **Dejar de seguir** te quita.
+Arriba ves el código, el asunto, el estado, la prioridad, la fecha límite y los botones **Cambiar estado** y **Editar**. Debajo: descripción, correo original, archivos, tareas y la **actividad**. A la derecha están los datos del ticket: responsables, seguidores, solicitante, cliente, categoría, fechas y primera respuesta. **Seguir** te agrega como seguidor; **Dejar de seguir** te quita.
+
+**En el celular** el orden cambia para que lo de terreno quede a mano: bajo el título hay una fila de **atajos** (Datos · Descripción · Tareas · Actividad · Archivos); **Datos del ticket** va arriba, **plegado**, con el cliente y los responsables en el resumen (tócalo para ver el estado con **Cambiar**, la prioridad, las fechas y las OT vinculadas); luego Descripción, Tareas y Actividad; al pie, la barra **Escribir seguimiento** con el botón de cámara; y al final, Correo original y Archivos del ticket.
 
 ![Detalle de un ticket en el computador, con el panel de datos a la derecha](../img/tecnico/detalle-ticket.png)
 
@@ -53,6 +57,8 @@ El redactor del pie tiene dos modos:
 - **Nota interna**: contexto solo para el equipo. Se ve con fondo ámbar y candado, y no debe incluirse en reportes al cliente.
 
 Ambos se pueden registrar aunque el ticket esté cerrado o archivado (no lo reabren). El texto se guarda tal cual, sin formato.
+
+En el celular el redactor está **plegado** en una barra al pie: **Escribir seguimiento** lo abre (el cuadro de texto queda a la vista, con foco) y el botón de **cámara** lo abre y dispara la cámara de una vez. El modo (Seguimiento o Nota interna) se elige dentro. **Cancelar** vuelve a plegarlo; si ya escribiste algo o adjuntaste fotos, pide confirmación antes de descartarlo. Al registrar, la barra vuelve a plegarse y el mensaje queda en Actividad.
 
 En **Actividad** hay pestañas con conteos: **Actividad** (todo), **Seguimiento**, **Notas internas** e **Historial** (cambios de estado, prioridad, responsables, fechas y tareas, con quién y cuándo).
 
@@ -125,6 +131,8 @@ Al convertir, las **tareas pendientes** del ticket **pasan a la OT** (dejan de v
 ## La orden de trabajo
 
 Arriba ves el código (`OT-0218`), el título, el tipo, la etapa, el ticket de origen, el responsable y el término (en rojo si ya pasó). Debajo, el avance por **etapas** y las tarjetas de la OT. A la derecha (en el celular, debajo) están la cotización, la aprobación, la facturación, el ticket de origen, las horas, los datos y el historial resumido.
+
+**En el celular**: bajo el título, una fila de **atajos** (Etapas · Tareas · Fotos · Actividad · Cotización · Aprobación · Horas · Datos) lleva a cada sección; las etapas muestran la actual a la vista; después vienen Tareas, Fotos y archivos y Actividad, la barra **Escribir seguimiento** con cámara, el panel y, al final, **Tipo y datos** plegado (abierto solo mientras la OT está en Borrador, que es cuando se completa).
 
 ![Detalle de una OT en el computador, con el tipo y datos, las tareas, las fotos y el panel lateral](../img/tecnico/ot.png)
 

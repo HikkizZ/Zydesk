@@ -20,6 +20,7 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 - `ruta()` acepta `previos?: RequestHandler[]` (middlewares que corren antes de validar, p. ej. `multer` en la subida multipart de `POST /api/archivos`).
 - **El Tablero (`/tickets`) y la Tabla (`/tickets/tabla`) son de solo lectura** (ADR 0022): sin arrastrar ni menú de cambio de estado; cada tarjeta y fila enlaza al detalle. El estado se cambia solo desde el detalle del ticket con `DialogoCambiarEstado`. No reinstalar `@dnd-kit`. Misma regla para el futuro tablero de OT.
 - Toda mutación va dentro de `enTransaccion` y se invoca desde un servicio.
+- **Objetivos táctiles en la web (Fase 8, ADR 0029)**: bajo 1024 px todo control de Mi día, el detalle de ticket, la OT, el panel «Más» y los diálogos mide ≥ 44 × 44 px (el control o su `label` envolvente). Casillas con `CasillaTactil`; un enlace dentro de una frase lleva `data-objetivo="en-linea"` con `relative inline-block py-1 -my-1` (≥ 24 px, máximo 3 por pantalla); cualquier otro enlace es bloque o botón de ≥ 44 px; letra ≥ 12 px salvo `aria-hidden` y `data-letra="insignia"`. Plegar o reordenar en móvil con `useEsMovil` y `order-N lg:order-none`, nunca duplicando secciones por breakpoint. Lo mide `npm run test:movil`. Las imágenes de los manuales viven en `docs/manuales/img/<manual>/`, entran al bundle por `features/ayuda/imagenes.ts` (solo rutas internas) y se generan con `npm run docs:capturas` sobre semillas.
 - **`modulos/reportes` es de solo lectura (Fase 7, ADR 0028)**: solo `SELECT` con parámetros `$n` (filtros opcionales por `$n::int IS NULL OR …`), sin `FOR UPDATE` ni `enTransaccion` salvo la fila `auditoria` de la exportación (transacción corta propia tras generar el archivo); no publica eventos de dominio ni participa del orden de bloqueo. `calcularReporte` es la única fuente del JSON y del `.xlsx`: toda métrica nueva se agrega ahí. `OtResumen.neto` va en `null` sin `reportes.ver` (`listarOts(…, verMontos = false)` por defecto); `GET /api/ots/:id` y el cotizador no lo ocultan. `hoyEnSantiago` vive en `core/fechas.ts` (única copia; `horas.tipos.ts` y `ots.comun.ts` la reexportan).
 - Qué registra cada acción (ADR 0003 y 0017):
 
@@ -61,6 +62,7 @@ Zydesk: gestión de tickets, órdenes de trabajo, cotizaciones y horas. La fuent
 - **Una base de test por bloque** cuando hay agentes o procesos en paralelo (los tests vacían la BD antes de cada test): `npm run db:test:crear -- <sufijo>` crea `zydesk_test_<sufijo>` y luego `npx cross-env TEST_BD_SUFIJO=<sufijo> npm run test -w @zydesk/api`. Sin `TEST_BD_SUFIJO` se usa `zydesk_test` (CI y uso normal).
 - `reiniciarBd` (`test/bd.ts`) limpia con `DELETE` solo las tablas con filas, en orden hijos → padres sobre las FK bloqueantes, y reinicia sus secuencias; si una migración nueva crea un ciclo de FK `RESTRICT`/`NO ACTION`, falla con los nombres de las tablas (ADR 0025).
 - Los tests de integración de la API usan `apps/api/test/fabricas.ts` (`crearUsuario`, `crearCliente`, …) e `ingresarComo` para obtener cookie y cabecera CSRF. Sin contraseña, `ingresarComo` inserta la sesión directo en BD (no deja `ingreso_ok` ni actualiza `ultimo_ingreso`); con contraseña hace el `POST /api/auth/ingresar` real: úsala así en los tests que afirman sobre el ingreso.
+- Playwright (`npm run test:movil`, Chromium, 320/375/1440 px) mide lo que jsdom no puede: desbordes, objetivos táctiles, letra, posiciones y axe; no forma parte de `npm test`, necesita `npx playwright install chromium` y Postgres con semillas, y es un paso bloqueante del CI. Ingresa una sola vez por corrida (`e2e/global-setup.ts`); la contraseña de las semillas se lee en tiempo de ejecución y nunca se escribe en informes.
 
 ## 4. Regla de oro
 
@@ -79,6 +81,7 @@ No tomar decisiones de diseño sin ADR. Si la spec de la fase no lo cubre, deten
 - `npm run test -w @zydesk/api` · `npm run test -w @zydesk/bot` (sin BD: dobles de Telegram y de la API)
 - `npm run db:migrar` · `npm run db:sembrar` · `npm run db:admin -- --correo … --nombre …` · `npm run api:openapi`
 - `npm run db:reiniciar`: úsalo **antes de probar a mano** (vacía la base de desarrollo y la siembra; lee `SEMILLA_PASSWORD`)
+- `npm run test:movil` (auditoría móvil con Playwright + axe; `npx playwright install chromium` una vez) · `npm run docs:capturas` (capturas de los manuales; solo local y sobre semillas)
 - `npm run typecheck`
 - `npm run lint`
 - `npm run format`

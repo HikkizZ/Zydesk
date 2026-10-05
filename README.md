@@ -54,13 +54,19 @@ Los tests de la API usan Postgres real, en la base `zydesk_test` (la crea el scr
 
 Para correr los tests sin pisar otra ejecución en paralelo, crea una base propia con `npm run db:test:crear -- <sufijo>` (por ejemplo `2h`) y usa `TEST_BD_SUFIJO=<sufijo>` al correr `npm run test -w @zydesk/api` (con `npx cross-env` en Windows).
 
+### Auditoría móvil (Playwright)
+
+`npm run test:movil` no forma parte de `npm test`: abre Chromium a 320, 375 y 1440 px y mide lo que jsdom no puede (desbordes, objetivos táctiles, tamaño de letra, posición de las secciones, diálogos, flujo de fotos y accesibilidad con axe) sobre Mi día, el detalle de ticket, la OT, el panel «Más» y los diálogos. Requiere, una vez, `npx playwright install chromium`, y Postgres con las **semillas** (`npm run db:reiniciar`); el script levanta la API y el `preview` de la web (puerto 4173) por su cuenta, ingresa con las cuentas de ejemplo leyendo `SEMILLA_PASSWORD` de `.env` y deja el informe HTML en `apps/web/e2e/informe/` (ignorado por git). Las pruebas de fotos dejan seguimientos en la base de desarrollo, como cualquier prueba manual.
+
+`npm run docs:capturas` regenera las capturas de los manuales (`docs/manuales/img/<manual>/`) con el mismo montaje; solo corre contra un servidor local y aborta si en la base hay algún usuario que no sea de las semillas. Se ejecuta a mano, no en CI, y sobrescribe los PNG existentes.
+
 ## Archivos de tickets y OT
 
 Las fotos, documentos y correos de los tickets y de las órdenes de trabajo se guardan en disco en `ARCHIVOS_DIR` (por defecto `./datos/archivos`, carpeta ignorada por git). Respáldala junto con la base de datos. Más detalles en la sección 12 del [manual de administración](docs/manuales/administracion.md).
 
 ## Integración continua
 
-El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `build` y `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
+El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `build`, la auditoría móvil (`npx playwright install --with-deps chromium`, migraciones y semillas, `npm run test:movil`; si falla, sube el informe HTML como artefacto `informe-playwright`) y `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
 
 ## Scripts de la raíz
 
@@ -81,6 +87,8 @@ El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada
 | `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar                                               |
 | `npm run db:test:crear` | Crea una base de test propia (`-- <sufijo>`); usarla con `TEST_BD_SUFIJO=<sufijo>`              |
 | `npm run api:openapi`   | Regenera `docs/api/openapi.json`                                                                |
+| `npm run test:movil`    | Auditoría móvil con Playwright + axe (Chromium; requiere `npx playwright install chromium`)     |
+| `npm run docs:capturas` | Regenera las capturas de los manuales en `docs/manuales/img/` (solo local, solo semillas)       |
 
 ## Estructura
 
@@ -89,7 +97,7 @@ apps/api        API Express 5 (pino, TypeORM, Zod)
 apps/web        React 19 + Vite + React Router + TanStack Query + Tailwind v4
 apps/bot        Bot de Telegram (grammY, long polling); sin BD, habla solo con la API
 packages/shared Tipos, errores, formato y utilidades compartidas (se compila a dist/)
-docs            Plan, decisiones (ADR), especificaciones por fase, manuales y API
+docs            Plan, decisiones (ADR), especificaciones por fase, manuales (con sus capturas en manuales/img/) y API
 ```
 
 ## Documentación
