@@ -1,6 +1,8 @@
 import { z } from 'zod';
+import { MONEDAS } from '../enums/cotizacion.js';
 import { CONCEPTOS_TARIFA } from '../enums/tarifa.js';
 import { correo, fechaIso, id, instante, texto } from './comunes.js';
+import { TarifaMontoBase, conReglasDeTarifa } from './configuracion.js';
 
 // "76.123.456-K" o "76123456-k" → "76123456-K"
 export function normalizarRut(valor: string): string {
@@ -101,17 +103,13 @@ export const ContratoBolsaSalida = ContratoBolsaBase.extend({
 
 export const TarifaClienteSalida = z.object({
   concepto: z.enum(CONCEPTOS_TARIFA),
+  moneda: z.enum(MONEDAS),
   valor: z.number(),
 });
 
 // Reemplaza el conjunto completo; conceptos sin repetir.
 export const TarifaClienteEntrada = z
-  .array(
-    z.object({
-      concepto: z.enum(CONCEPTOS_TARIFA),
-      valor: z.number().min(0).max(99_999_999),
-    }),
-  )
+  .array(conReglasDeTarifa(TarifaMontoBase.extend({ concepto: z.enum(CONCEPTOS_TARIFA) })))
   .refine((t) => new Set(t.map((x) => x.concepto)).size === t.length, {
     message: 'Los conceptos no pueden repetirse',
   });

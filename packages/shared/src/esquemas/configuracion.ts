@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { TIPOS_LINEA, UNIDADES } from '../enums/cotizacion.js';
+import { MONEDAS, TIPOS_LINEA, UNIDADES } from '../enums/cotizacion.js';
 import { booleanoTexto, id, instante, texto } from './comunes.js';
 
 export const MarcaEntrada = z.object({ nombre_app: texto(40) });
@@ -55,11 +55,34 @@ export type EventoSalidaDatos = z.infer<typeof EventoSalida>;
 const montoClp = z.number().int().min(0).max(999_999_999);
 const validezDefecto = z.union([z.literal(15), z.literal(30)]);
 
+// Tarifa con moneda por concepto (Fase 8b). Las reglas se aplican sobre el objeto ya extendido
+// (ADR 0023.19: cuidado con `.partial()`/`.extend()` sobre objetos con `.refine` en Zod 4).
+export const TarifaMontoBase = z.object({
+  moneda: z.enum(MONEDAS),
+  valor: z.number().min(0).max(999_999_999).multipleOf(0.01),
+});
+export const conReglasDeTarifa = <
+  T extends z.ZodObject<{ moneda: z.ZodEnum<{ CLP: 'CLP'; UF: 'UF' }>; valor: z.ZodNumber }>,
+>(
+  s: T,
+) =>
+  s
+    .refine((t) => t.moneda !== 'CLP' || Number.isInteger(t.valor), {
+      path: ['valor'],
+      message: 'En pesos, sin decimales',
+    })
+    .refine((t) => t.moneda !== 'UF' || t.valor <= 99_999, {
+      path: ['valor'],
+      message: 'Máximo 99.999 UF',
+    });
+export const TarifaMonto = conReglasDeTarifa(TarifaMontoBase);
+export type TarifaMontoDatos = z.infer<typeof TarifaMonto>;
+
 export const TarifasEntrada = z.object({
-  hora_normal: montoClp.nullable(),
-  hora_extendida: montoClp.nullable(),
-  hora_urgencia: montoClp.nullable(),
-  traslado_km: montoClp.nullable(),
+  hora_normal: TarifaMonto.nullable(),
+  hora_extendida: TarifaMonto.nullable(),
+  hora_urgencia: TarifaMonto.nullable(),
+  traslado_km: TarifaMonto.nullable(),
   costo_interno: montoClp.nullable(),
   iva_pct: z.number().min(0).max(100).multipleOf(0.01),
   validez_dias_defecto: validezDefecto,
