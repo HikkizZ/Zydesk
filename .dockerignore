@@ -1,0 +1,19 @@
+# Contexto de construcción de las imágenes (Fase 9, §4.1). Mantener mínimo: nada de secretos ni de dependencias locales.
+node_modules
+**/node_modules
+**/dist
+.env*
+datos
+.git
+.claude
+coverage
+**/coverage
+apps/web/e2e
+apps/web/test-results
+**/*.test.ts
+**/*.test.tsx
+# Documentación: solo lo que las imágenes necesitan (legal en api, manuales en web)
+docs/*
+!docs/legal
+!docs/manuales
+*.md
