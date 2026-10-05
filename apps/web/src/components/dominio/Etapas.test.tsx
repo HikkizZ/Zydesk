@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { Etapas } from './Etapas';
 
 it('facturable en cotizada marca el paso 2 como actual y muestra "Facturada" al final', () => {
@@ -46,4 +46,24 @@ it('cancelada muestra el aviso con el motivo en lugar del stepper', () => {
   );
   expect(screen.getByRole('status').textContent).toBe('Cancelada · El cliente desistió');
   expect(screen.queryByRole('list')).toBeNull();
+});
+
+it('al montar deja el paso actual a la vista, centrado en el stepper', () => {
+  const original = Element.prototype.scrollIntoView;
+  const espia = vi.fn();
+  Element.prototype.scrollIntoView = espia;
+  try {
+    render(
+      <Etapas
+        ot={{ tipo: 'facturable', etapa: 'en_ejecucion', estado_facturacion: 'pendiente' }}
+      />,
+    );
+    expect(espia).toHaveBeenCalledTimes(1);
+    expect(espia).toHaveBeenCalledWith({ inline: 'center', block: 'nearest' });
+    expect(espia.mock.contexts[0]).toBe(
+      screen.getAllByRole('listitem').find((p) => p.hasAttribute('aria-current')),
+    );
+  } finally {
+    Element.prototype.scrollIntoView = original as typeof original;
+  }
 });

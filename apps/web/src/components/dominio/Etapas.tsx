@@ -1,4 +1,5 @@
 import { pasoVisual, type EstadoFacturacion, type EtapaOt, type TipoOt } from '@zydesk/shared';
+import { useEffect, useRef } from 'react';
 import { cn } from '@/lib/utils';
 
 // Stepper de la OT (A1): las etapas de su tipo y, si es facturable, "Facturada" como paso derivado.
@@ -13,6 +14,13 @@ export function Etapas({
   };
 }) {
   const { pasos, actual } = pasoVisual(ot);
+  const lista = useRef<HTMLOListElement>(null);
+  // La etapa actual queda a la vista dentro del `ol` (en celular el stepper desborda y se desplaza).
+  useEffect(() => {
+    lista.current
+      ?.querySelector('[aria-current="step"]')
+      ?.scrollIntoView?.({ inline: 'center', block: 'nearest' });
+  }, [ot.etapa, ot.estado_facturacion]);
   if (ot.etapa === 'cancelada') {
     return (
       <p
@@ -24,7 +32,11 @@ export function Etapas({
     );
   }
   return (
-    <ol aria-label="Etapas de la OT" className="flex items-center gap-2 overflow-x-auto pb-1">
+    <ol
+      ref={lista}
+      aria-label="Etapas de la OT"
+      className="flex items-center gap-2 overflow-x-auto pb-1"
+    >
       {pasos.map((etiqueta, i) => {
         const hecho = actual !== null && i < actual;
         const esActual = i === actual;

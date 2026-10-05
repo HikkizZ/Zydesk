@@ -13,6 +13,7 @@ import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
 import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import {
   clavesCotizacion,
@@ -27,21 +28,34 @@ import type { EventoDatos } from '@/features/tickets/eventos';
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 const horas = (n: number) => `${formatoHoras.format(n)} h`;
 
-function Tarjeta({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Tarjeta({ id, titulo, children }: { id: string; titulo: string; children: ReactNode }) {
   return (
-    <section aria-label={titulo} className="rounded-lg border border-borde bg-superficie p-4">
+    <section
+      id={id}
+      aria-label={titulo}
+      className="scroll-mt-4 rounded-lg border border-borde bg-superficie p-4"
+    >
       <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
       {children}
     </section>
   );
 }
 
+// `dt` y `dd` son hijos directos del `dl` (axe `definition-list` y `dlitem`): la rejilla los alinea de a pares.
+function ListaDatos({ children }: { children: ReactNode }) {
+  return (
+    <dl className="grid grid-cols-[auto_minmax(0,1fr)] items-baseline gap-x-3 gap-y-2 text-sm">
+      {children}
+    </dl>
+  );
+}
+
 function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
   return (
-    <div className="flex items-baseline justify-between gap-3 py-1 text-sm">
+    <>
       <dt className="text-tinta-2">{etiqueta}</dt>
       <dd className="min-w-0 text-right break-words">{children}</dd>
-    </div>
+    </>
   );
 }
 
@@ -56,13 +70,13 @@ function TarjetaCotizacion({ ot }: { ot: OtDatos }) {
   });
   if (!c) {
     return (
-      <Tarjeta titulo="Cotización">
+      <Tarjeta id="cotizacion" titulo="Cotización">
         <EstadoVacio titulo="Sin cotización" accion={<BotonCrearCotizacion ot={ot} />} />
       </Tarjeta>
     );
   }
   return (
-    <Tarjeta titulo="Cotización">
+    <Tarjeta id="cotizacion" titulo="Cotización">
       <div className="flex flex-col gap-2 text-sm">
         <div className="flex flex-wrap items-center gap-2">
           <Codigo>
@@ -70,7 +84,7 @@ function TarjetaCotizacion({ ot }: { ot: OtDatos }) {
           </Codigo>
           <PillEstadoCotizacion estado={c.estado} />
         </div>
-        <dl>
+        <ListaDatos>
           <Dato etiqueta="Neto">
             <Monto valor={c.neto} moneda={c.moneda} />
           </Dato>
@@ -83,7 +97,7 @@ function TarjetaCotizacion({ ot }: { ot: OtDatos }) {
           <Dato etiqueta="Versiones">
             {c.n_versiones} {c.n_versiones === 1 ? 'versión' : 'versiones'}
           </Dato>
-        </dl>
+        </ListaDatos>
         <Button asChild variant="outline">
           <Link to={`/cotizaciones/${c.id}`}>Abrir cotizador</Link>
         </Button>
@@ -96,7 +110,7 @@ function TarjetaCostoInterno({ ot }: { ot: OtDatos }) {
   const puedeConfigurar = usePermiso('config.editar');
   const costo = ot.costo_interno;
   return (
-    <Tarjeta titulo="Costo interno">
+    <Tarjeta id="cotizacion" titulo="Costo interno">
       {costo ? (
         <p className="mb-2 text-sm">
           <span className="font-mono">{horas(costo.horas)}</span> registradas ×{' '}
@@ -109,7 +123,8 @@ function TarjetaCostoInterno({ ot }: { ot: OtDatos }) {
               Configura la tarifa de costo interno en{' '}
               <Link
                 to="/configuracion/tarifas"
-                className="text-acento underline underline-offset-2"
+                data-objetivo="en-linea"
+                className="relative -my-1 inline-block py-1 text-acento underline underline-offset-2"
               >
                 Configuración → Tarifas
               </Link>
@@ -119,7 +134,7 @@ function TarjetaCostoInterno({ ot }: { ot: OtDatos }) {
           )}
         </p>
       )}
-      <dl>
+      <ListaDatos>
         <Dato etiqueta="Horas reales">
           <span className="font-mono">{horas(ot.horas.reales)}</span>
         </Dato>
@@ -128,7 +143,7 @@ function TarjetaCostoInterno({ ot }: { ot: OtDatos }) {
             <span className="font-mono">{horas(ot.horas.registradas)}</span>
           </Dato>
         )}
-      </dl>
+      </ListaDatos>
     </Tarjeta>
   );
 }
@@ -140,7 +155,7 @@ function Aprobacion({ ot }: { ot: OtDatos }) {
       <div className="flex flex-col gap-2 text-sm">
         <Pill tono={a ? 'resuelto' : 'alta'}>{a ? 'Aprobada' : 'Pendiente'}</Pill>
         {a ? (
-          <dl>
+          <ListaDatos>
             <Dato etiqueta="Contacto">{a.contacto.nombre}</Dato>
             <Dato etiqueta="Fecha">{diaMesDeFecha(a.fecha)}</Dato>
             <Dato etiqueta="Forma">{ETIQUETA_FORMA_APROBACION[a.forma]}</Dato>
@@ -149,12 +164,12 @@ function Aprobacion({ ot }: { ot: OtDatos }) {
                 href={a.archivo.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-acento underline underline-offset-2"
+                className="inline-flex min-h-11 items-center text-acento underline underline-offset-2 lg:min-h-0"
               >
                 {a.archivo.nombre_original}
               </a>
             </Dato>
-          </dl>
+          </ListaDatos>
         ) : (
           <p className="text-tinta-2">Falta registrar la aprobación del cliente con su respaldo.</p>
         )}
@@ -166,11 +181,11 @@ function Aprobacion({ ot }: { ot: OtDatos }) {
       <Pill tono={ot.aprobada_por ? 'resuelto' : 'alta'}>
         {ot.aprobada_por ? 'Aprobada' : 'Pendiente'}
       </Pill>
-      <dl>
+      <ListaDatos>
         <Dato etiqueta="Quién aprueba">
           {ot.aprobador?.nombre ?? <span className="text-tinta-3">Sin definir</span>}
         </Dato>
-      </dl>
+      </ListaDatos>
       {ot.aprobada_por && ot.aprobada_en ? (
         <p className="text-tinta-2">
           Aprobada por {ot.aprobada_por.nombre} el {diaMesHora(ot.aprobada_en)}
@@ -185,24 +200,26 @@ export function PanelOt({
   ot,
   eventos,
   onVerHistorial,
+  className,
 }: {
   ot: OtDatos;
   eventos: EventoDatos[];
   onVerHistorial: () => void;
+  className?: string;
 }) {
   const origen = ot.ticket_origen;
   const ultimos = eventos.slice(-5).reverse();
   return (
-    <aside aria-label="Datos de la OT" className="flex flex-col gap-4">
+    <aside aria-label="Datos de la OT" className={cn('flex flex-col gap-4', className)}>
       {ot.tipo === 'facturable' ? <TarjetaCotizacion ot={ot} /> : <TarjetaCostoInterno ot={ot} />}
 
-      <Tarjeta titulo="Aprobación">
+      <Tarjeta id="aprobacion" titulo="Aprobación">
         <Aprobacion ot={ot} />
       </Tarjeta>
 
       {ot.tipo === 'facturable' ? (
-        <Tarjeta titulo="Facturación">
-          <dl>
+        <Tarjeta id="facturacion" titulo="Facturación">
+          <ListaDatos>
             <Dato etiqueta="Estado">
               <PillFacturacion estado={ot.estado_facturacion} />
             </Dato>
@@ -217,19 +234,20 @@ export function PanelOt({
                 {ot.facturada_por ? ` · ${ot.facturada_por.nombre}` : ''}
               </Dato>
             ) : null}
-          </dl>
+          </ListaDatos>
         </Tarjeta>
       ) : null}
 
-      <Tarjeta titulo="Ticket de origen">
+      <Tarjeta id="ticket-origen" titulo="Ticket de origen">
         <div className="flex flex-col gap-2 text-sm">
           <div className="flex items-start gap-2">
-            <Link
-              to={`/tickets/${origen.id}`}
-              className="font-mono text-acento underline underline-offset-2"
+            <Button
+              asChild
+              variant="link"
+              className="min-h-11 px-0 font-mono text-acento underline lg:min-h-0"
             >
-              {origen.codigo}
-            </Link>
+              <Link to={`/tickets/${origen.id}`}>{origen.codigo}</Link>
+            </Button>
             <span className="min-w-0 flex-1 break-words">{origen.asunto}</span>
           </div>
           <div>
@@ -255,7 +273,7 @@ export function PanelOt({
                   <li key={o.id} className="flex items-center gap-2">
                     <Link
                       to={`/ots/${o.id}`}
-                      className="font-mono text-acento underline underline-offset-2"
+                      className="inline-flex min-h-11 items-center font-mono text-acento underline underline-offset-2 lg:min-h-0"
                     >
                       {o.codigo}
                     </Link>
@@ -268,8 +286,8 @@ export function PanelOt({
         </div>
       </Tarjeta>
 
-      <Tarjeta titulo="Horas">
-        <dl>
+      <Tarjeta id="horas" titulo="Horas">
+        <ListaDatos>
           <Dato etiqueta="Estimadas">
             <span className="font-mono">{horas(ot.horas.estimadas)}</span>
           </Dato>
@@ -279,17 +297,18 @@ export function PanelOt({
           <Dato etiqueta="Registradas">
             <span className="font-mono">{horas(ot.horas.registradas)}</span>
           </Dato>
-        </dl>
-        <Link
-          to={`/horas?semana=${hoyIso()}`}
-          className="mt-2 inline-block text-sm text-acento underline underline-offset-2"
+        </ListaDatos>
+        <Button
+          asChild
+          variant="link"
+          className="mt-1 min-h-11 px-0 text-acento underline lg:min-h-0"
         >
-          Ver en la planilla
-        </Link>
+          <Link to={`/horas?semana=${hoyIso()}`}>Ver en la planilla</Link>
+        </Button>
       </Tarjeta>
 
-      <Tarjeta titulo="Datos">
-        <dl>
+      <Tarjeta id="datos" titulo="Datos">
+        <ListaDatos>
           <Dato etiqueta="Creada por">
             {ot.creado_por?.nombre ?? '—'} · {diaMesHora(ot.creado_en)}
           </Dato>
@@ -300,7 +319,7 @@ export function PanelOt({
           ) : null}
           {ot.cancelada_en ? <Dato etiqueta="Cancelada">{diaMesHora(ot.cancelada_en)}</Dato> : null}
           {ot.inicio ? <Dato etiqueta="Inicio">{diaMesDeFecha(ot.inicio)}</Dato> : null}
-        </dl>
+        </ListaDatos>
         {ot.resumen_cierre ? (
           <div className="mt-2 border-t pt-2">
             <p className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">
@@ -314,7 +333,7 @@ export function PanelOt({
         ) : null}
       </Tarjeta>
 
-      <Tarjeta titulo="Historial">
+      <Tarjeta id="historial" titulo="Historial">
         {ultimos.length === 0 ? (
           <p className="text-sm text-tinta-2">Sin movimientos</p>
         ) : (
