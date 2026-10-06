@@ -1,0 +1,10 @@
+[Unit]
+Description=Archivo diario de logs de Zydesk (temporizador)
+
+[Timer]
+# El host está en UTC: la zona va explícita (systemd respeta el horario de verano de Santiago)
+OnCalendar=*-*-* 00:10:00 America/Santiago
+Persistent=true
+
+[Install]
+WantedBy=timers.target
