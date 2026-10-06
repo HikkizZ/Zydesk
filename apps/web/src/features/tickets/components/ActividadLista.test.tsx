@@ -32,8 +32,34 @@ it('una miniatura que no se decodifica pasa a modo documento con el nombre visib
     </MemoryRouter>,
   );
   const img = screen.getByRole('img', { name: 'foto.heic' });
-  expect(img.className).toContain('size-20');
+  expect(img.className).toContain('max-h-60');
+  expect(img.className).toContain('sm:max-w-80');
   fireEvent.error(img);
   expect(screen.queryByRole('img', { name: 'foto.heic' })).toBeNull();
   expect(screen.getByText('foto.heic')).toBeTruthy();
+});
+
+it('varias imágenes van en una grilla con miniaturas de 160 px', () => {
+  const dos = {
+    ...mensaje,
+    archivos: [
+      ...(mensaje as unknown as { archivos: object[] }).archivos,
+      {
+        id: 6,
+        nombre_original: 'b.png',
+        mime: 'image/png',
+        tamano: 10,
+        es_imagen: true,
+        url: '/api/archivos/6',
+      },
+    ],
+  } as unknown as MensajeDatos;
+  render(
+    <MemoryRouter>
+      <TarjetaMensaje mensaje={dos} />
+    </MemoryRouter>,
+  );
+  const img = screen.getByRole('img', { name: 'b.png' });
+  expect(img.className).toContain('h-40');
+  expect(img.closest('ul')?.className).toContain('grid-cols-2');
 });
