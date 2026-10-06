@@ -4,6 +4,8 @@ name: CI
 
 on:
   push:
+    # Solo ramas: subir una etiqueta no repite el CI del mismo commit (desplegar.yml usa el run de la rama).
+    branches: ['**']
   pull_request:
     branches: [main]
 
