@@ -309,8 +309,12 @@ describe('sembrarDesarrollo', () => {
         'Te agregaron como seguidor de TK-1048 «Error al emitir facturas desde el ERP»',
       ]),
     );
+    // El aviso se crea «hace 1 h» y se redacta respecto de ese momento: entre las 00:00 y las 01:00 de
+    // Santiago ese momento cae en el día anterior y el vencimiento de hoy 23:00 es «mañana».
     expect(
-      textos.some((t) => t.texto.startsWith('TK-1051 «') && t.texto.includes(' vence hoy a las ')),
+      textos.some(
+        (t) => t.texto.startsWith('TK-1051 «') && / vence (hoy|mañana) a las /.test(t.texto),
+      ),
     ).toBe(true);
     expect(await contar('aviso', 'creado_en > now()')).toBe(0);
 
