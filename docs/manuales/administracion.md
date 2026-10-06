@@ -20,7 +20,7 @@ La primera cuenta de Administración no se crea desde la pantalla, porque todav�
 
 Desde entonces, las demás cuentas se crean desde la pantalla (sección 2).
 
-**En producción** (instalación con Docker) el mismo comando se ejecuta dentro de la imagen de la API, con `ADMIN_PASSWORD` en el `.env` del servidor: `docker compose … run --rm --no-deps zydesk-api admin --correo … --nombre …`. Los pasos completos, el orden de carga de la configuración y qué borrar después están en la [guía de instalación](../despliegue.md), sección 5. Las variables `ZYDESK_DEMO` y `DEMO_PASSWORD` son **solo de la demo** ([docs/demo.md](../demo.md)): en una instalación real se dejan vacías; sin ellas el comando `demo` se niega a correr.
+**En producción** (instalación con Docker) el mismo comando se ejecuta dentro de la imagen de la API, con `ADMIN_PASSWORD` en el `.env` del servidor: `docker compose … run --rm --no-deps zydesk-api admin --correo … --nombre …`. Los pasos completos, el orden de carga de la configuración y qué borrar después están en la guía de instalación (`docs/despliegue.md` del repositorio), sección 5. Las variables `ZYDESK_DEMO` y `DEMO_PASSWORD` son **solo de la demo** (`docs/demo.md` del repositorio): en una instalación real se dejan vacías; sin ellas el comando `demo` se niega a correr.
 
 ## 2. Crear cuentas y roles
 
@@ -153,7 +153,7 @@ Cada persona acepta una sola vez ambos documentos. Para pedir una nueva aceptaci
 
 ## 12. Tickets: archivos, correos y archivado
 
-**Dónde se guardan los archivos.** Las fotos, documentos y correos de los tickets se guardan en disco, en la carpeta indicada por `ARCHIVOS_DIR` en el archivo `.env` (por defecto `./datos/archivos`, dentro del repositorio; también puede ser una ruta absoluta). Dentro se organizan por año y mes (`aaaa/mm/`) con nombres aleatorios: el nombre original solo se guarda en la base de datos. La carpeta `datos/` no se versiona. **Respáldala junto con la base de datos**: si falta un archivo en disco, el ticket sigue existiendo pero la descarga falla. Si cambias `ARCHIVOS_DIR`, mueve antes el contenido y reinicia la API. En producción el respaldo lo hace `respaldar.sh` cada noche (base de datos, archivos y datos del bot, cifrado) y `restaurar.sh` lo repone: ver la [guía de instalación](../despliegue.md), sección 7.
+**Dónde se guardan los archivos.** Las fotos, documentos y correos de los tickets se guardan en disco, en la carpeta indicada por `ARCHIVOS_DIR` en el archivo `.env` (por defecto `./datos/archivos`, dentro del repositorio; también puede ser una ruta absoluta). Dentro se organizan por año y mes (`aaaa/mm/`) con nombres aleatorios: el nombre original solo se guarda en la base de datos. La carpeta `datos/` no se versiona. **Respáldala junto con la base de datos**: si falta un archivo en disco, el ticket sigue existiendo pero la descarga falla. Si cambias `ARCHIVOS_DIR`, mueve antes el contenido y reinicia la API. En producción el respaldo lo hace `respaldar.sh` cada noche (base de datos, archivos y datos del bot, cifrado) y `restaurar.sh` lo repone: ver la guía de instalación (`docs/despliegue.md` del repositorio), sección 7.
 
 **Límites.** Hasta 10 archivos por subida y 20 MB cada uno. Tipos permitidos: JPG, PNG, WebP, HEIC, PDF, Word, Excel, PowerPoint, ZIP, `.eml`, `.msg`, `.txt` y `.csv`. La app revisa el contenido real del archivo, no solo la extensión: un ejecutable renombrado como `.png` se rechaza.
 
