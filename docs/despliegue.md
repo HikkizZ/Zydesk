@@ -1,8 +1,8 @@
 # Guía de instalación de Zydesk (producción)
 
-> **Borrador de la Fase 9.** Esta guía describe la **instalación definitiva**: la que hará la empresa en su propia infraestructura, con datos reales. En la Fase 9 no se ejecuta en ninguna infraestructura real; se ensaya en local y en la demo (`docs/demo.md`). Lo que dependa de esa ejecución queda marcado «(se completa en la ronda 4)».
+> Esta guía describe la **instalación definitiva**: la que hará la empresa en su propia infraestructura, con datos reales. En la Fase 9 (v1.0.0) no se ejecutó en ninguna infraestructura real: se ensayó en local y en la demo (`docs/demo.md`), con tres despliegues `rc` por CD. Quedan por ensayar con datos reales de la demo la restauración de un respaldo y la vuelta atrás por CD (`docs/demo.md` §9 y §10).
 >
-> Fuentes: `docs/specs/fase-9.md` §3, §5–§10 y §15.1; ADR 0001, 0009, 0017, 0020, 0027 y 0032. Cuando esta guía y un script difieran, manda el script: `docker-compose.yml`, `.env.produccion.example`, `docker/vps/*.sh` y `docker/vps/README.md`.
+> Fuentes: `docs/specs/fase-9.md` §3, §5–§10 y §15.1; ADR 0001, 0009, 0017, 0020, 0027, 0031 y 0032. Cuando esta guía y un script difieran, manda el script: `docker-compose.yml`, `.env.produccion.example`, `docker/vps/*.sh` y `docker/vps/README.md`.
 
 La guía es **portátil**: no supone nada del servidor salvo Linux con Docker y un reverse proxy con TLS delante. Donde algo es propio del VPS de Nexus (la red externa `web`, el túnel de Cloudflare, `nexus-infra`), se dice y se explica cómo reemplazarlo.
 
@@ -52,7 +52,7 @@ Cuatro contenedores en un solo `docker-compose.yml` (raíz del repo), proyecto `
 | `zydesk-web` | `ghcr.io/<owner>/zydesk-web:<etiqueta>` | `interna`, `web` | nginx sin privilegios en el **8080**: sirve la web y reenvía `/api/` a `zydesk-api:3000`.            |
 | `zydesk-bot` | `ghcr.io/<owner>/zydesk-bot:<etiqueta>` | `interna`        | Bot de Telegram (perfil `bot`: solo se levanta con `COMPOSE_PROFILES=bot`). Datos en `bot/`.         |
 
-Reglas que el Compose ya cumple: ningún `ports:`; `api`, `web` y `bot` corren sin root, con `read_only`, `cap_drop: [ALL]` y `no-new-privileges`; logs `json-file` con rotación 20 MB × 10 por servicio; la API y el bot reciben del `.env` **solo** las variables que usan; una sola réplica de la API.
+Reglas que el Compose ya cumple: ningún `ports:`; `api`, `web` y `bot` corren sin root, con `read_only`, `cap_drop: [ALL]`, `no-new-privileges`, `tmpfs` para `/tmp` (256 MB en la API: ahí caen las subidas en curso) y `mem_limit`/`pids_limit` por servicio; logs `json-file` con rotación 20 MB × 10 por servicio; la API y el bot reciben del `.env` **solo** las variables que usan, y las credenciales del dueño de la base (`DATABASE_URL_OWNER`), `ADMIN_PASSWORD` y las variables de la demo solo las recibe `zydesk-herramientas` durante un `run --rm` (ADR 0031); una sola réplica de la API. `bash docker/vps/compose.test.sh` lo comprueba (también en CI).
 
 ### 2.1 Cadena con Cloudflare Tunnel (la de la demo)
 
@@ -164,6 +164,10 @@ El script no se conecta a GitHub ni a Docker Hub y no toca otros proyectos. Al t
    ```
 
    debe responder `etiqueta inválida` y nada más.
+
+### 3.4 Actualizar los scripts instalados
+
+Los scripts de `/srv/apps/zydesk/` son **copias** de `docker/vps/`: el despliegue cambia el clon `repo/` y los contenedores, **no** los scripts instalados. Cuando una versión nueva cambia algo de `docker/vps/` (el CHANGELOG lo dice), repite la copia **antes** de desplegarla: actualiza el clon a esa etiqueta y vuelve a correr `instalar-vps.sh` desde su `docker/vps/` (es idempotente; puedes responder que no a la recarga de `sshd` si no cambió). Si se omite, `desplegar.sh` corre con la lógica anterior; por ejemplo, un `desplegar.sh` anterior a la v1.0.0 no conoce el servicio `zydesk-herramientas`, la migración falla y el despliegue se revierte solo.
 
 ## 4. Variables y secretos
 
@@ -285,18 +289,18 @@ Todo desde **Configuración**, en este orden (manual de administración entre pa
 
 Flujo normal (ADR 0032; lo hace quien mantiene el repo):
 
-1. Mergear a `main` → `npm run version:fijar -- X.Y.Z` + CHANGELOG → commit `chore(release): vX.Y.Z` → `git tag -a vX.Y.Z -m "Zydesk vX.Y.Z"` → `git push origin main vX.Y.Z`.
-2. El workflow `Desplegar` valida la etiqueta y exige CI verde del commit, construye y publica las tres imágenes en GHCR (`<etiqueta>` y `sha-<7>`; sin `latest`) y se detiene en el job `desplegar` hasta que el revisor aprueba el environment `produccion`.
-3. Aprobado, el job abre SSH a `zydesk-deploy@<host>` con la etiqueta como único comando; el servidor ejecuta `desplegar.sh <etiqueta>`.
+1. Mergear a `main` → `npm run version:fijar -- X.Y.Z` + `npm run api:openapi` (el `openapi.json` lleva la versión) + CHANGELOG → commit `chore(release): vX.Y.Z` → esperar el **CI verde de ese commit** (corre por el `push` de la rama; no corre en los `push` de etiquetas) → `git tag -a vX.Y.Z -m "Zydesk vX.Y.Z"` sobre ese commit → `git push origin main vX.Y.Z`.
+2. El workflow `Desplegar` valida la etiqueta, exige CI verde del commit y que los cinco `package.json` del commit lleven la versión de la etiqueta (si no, falla antes de construir: fue lo que pasó con `v1.0.0-rc.1`, ADR 0031), construye y publica las tres imágenes en GHCR (`<etiqueta>` y `sha-<7>`; sin `latest`) y se detiene en el job `desplegar` hasta que el revisor aprueba el environment `produccion`.
+3. Aprobado, el job abre SSH a `zydesk-deploy@<host>` con la etiqueta como único comando; el servidor ejecuta `desplegar.sh <etiqueta>`. Si la versión cambió algo de `docker/vps/`, antes hay que actualizar los scripts instalados (3.4).
 
 Sin CD, el operador hace lo mismo a mano en el servidor: `sudo -u zydesk-deploy /srv/apps/zydesk/desplegar.sh vX.Y.Z` (las imágenes de esa etiqueta deben estar en GHCR; el workflow las publica aunque nadie apruebe el despliegue).
 
-Qué hace `desplegar.sh` en cada actualización: guarda la versión actual en `.env.anterior`, **vuelca la base** a `respaldos/pre-despliegue/<marca>-<anterior>.dump` (local, sin cifrar; conserva los últimos 5; si falla, no despliega), `git fetch --tags` + `checkout` de la etiqueta (el clon debe estar limpio), `pull`, **detiene la API y el bot**, escribe `ZYDESK_VERSION`, `up -d --wait zydesk-db`, `migrar` (rol owner), `up -d --remove-orphans`, salud con la `version` pedida (12 intentos cada 5 s), limpieza de imágenes de más de una semana y aviso por Telegram. Indisponibilidad de la API: migración + arranque (del orden de 30–90 s; la web estática sigue sirviéndose y muestra el error de red hasta que vuelve). Tiempo total medido: **(se completa en la ronda 4)**.
+Qué hace `desplegar.sh` en cada actualización: guarda la versión actual en `.env.anterior`, **vuelca la base** a `respaldos/pre-despliegue/<marca>-<anterior>.dump` (local, sin cifrar; conserva los últimos 5; si falla, no despliega), `git fetch --tags` + `checkout` de la etiqueta (el clon debe estar limpio), `pull` de las imágenes de la etiqueta nueva, **detiene la API y el bot**, escribe `ZYDESK_VERSION`, `up -d --wait zydesk-db`, `migrar` con `zydesk-herramientas` (rol owner), `up -d --remove-orphans`, salud con la `version` pedida (12 intentos cada 5 s), limpieza de imágenes de más de una semana y aviso por Telegram. Indisponibilidad de la API: migración + arranque (del orden de 30–90 s; la web estática sigue sirviéndose y muestra el error de red hasta que vuelve). En los tres despliegues de la demo no se cronometró el tiempo total.
 
 ### 6.2 Volver atrás
 
 - **Automático.** Si `pull`, `migrar`, `up` o la salud fallan, el script vuelve solo: `checkout` de la etiqueta anterior, `ZYDESK_VERSION` anterior, `up -d`, salud. Termina con código `1` y avisa por Telegram. **Las migraciones no se revierten**: la API anterior corre sobre el esquema nuevo. Por eso **toda migración debe ser compatible con la versión anterior de la API** (columnas nuevas con `DEFAULT` o `NULL`; borrar o renombrar en dos versiones): regla de `CLAUDE.md` §2.
-- **Manual.** Por CD: `Actions → Desplegar → Run workflow` con la etiqueta anterior (pasa de nuevo por la aprobación). A mano: `sudo -u zydesk-deploy /srv/apps/zydesk/desplegar.sh <anterior>`.
+- **Manual.** Por CD: `Actions → Desplegar → Run workflow` con la etiqueta anterior (pasa de nuevo por la aprobación). El botón `Run workflow` solo aparece cuando `desplegar.yml` está en la rama por defecto (`main`); si no está, se re-ejecuta desde Actions el despliegue de la etiqueta anterior. A mano: `sudo -u zydesk-deploy /srv/apps/zydesk/desplegar.sh <anterior>`. El ensayo de esta vuelta atrás en la demo está pendiente (`docs/demo.md` §10).
 - **Migración incompatible.** Si la versión a la que vuelves no puede leer el esquema nuevo, restaura el volcado previo al despliegue (como root; pide escribir el nombre de la base):
 
   ```sh
@@ -348,7 +352,7 @@ Para traer un respaldo a **otro servidor** (recuperación de desastre): instala 
 
 ### 7.4 Ensayo de restauración
 
-Criterio de la fase: el ensayo completo (`docker/vps/ensayar-restauracion.sh`, solo en local: respalda, destruye, restaura, compara conteos y hashes, verifica que `zydesk_app` no puede `UPDATE evento`) pasó en local en 39 s. En la demo con un respaldo real: **(se completa en la ronda 4)**. En la instalación definitiva se recomienda un ensayo **trimestral** sobre un servidor de prueba (nunca sobre producción): es la única forma de saber que los respaldos sirven.
+Criterio de la fase: el ensayo completo (`docker/vps/ensayar-restauracion.sh`, solo en local: respalda, destruye, restaura, compara conteos y hashes, verifica que `zydesk_app` no puede `UPDATE evento`) pasó en local en 39 s. En la demo con un respaldo real está **pendiente** (`docs/demo.md` §9; ADR 0031). En la instalación definitiva se recomienda un ensayo **trimestral** sobre un servidor de prueba (nunca sobre producción): es la única forma de saber que los respaldos sirven.
 
 ## 8. Operación diaria
 
@@ -359,7 +363,7 @@ Criterio de la fase: el ensayo completo (`docker/vps/ensayar-restauracion.sh`, s
 - **Respaldos.** `/var/log/zydesk-respaldo.log` debe tener una línea por día; en el remoto, solo `.tar.age`.
 - **Disco.** `df -h /srv/data` y `du -sh /srv/data/zydesk/*`; `docker stats` para CPU y memoria. Los archivos de tickets no se borran solos.
 - **Cada año.** Cargar los feriados del año nuevo (manual §6). Revisar `ua-parser-js` (sigue en 1.x por licencia; CHANGELOG).
-- **Dependencias e imágenes.** Dependabot mantiene los SHA de las acciones; las imágenes base van por digest y se actualizan con una versión nueva. `npm audit --omit=dev` y `trivy`/`docker scout` se corren a mano al cerrar cada fase.
+- **Dependencias e imágenes.** Dependabot mantiene los SHA de las acciones; las imágenes base van por digest y se actualizan con una versión nueva. `npm audit --omit=dev` y `trivy`/`docker scout` se corren a mano al cerrar cada fase (al cerrar la v1.0.0: 3 avisos moderados en `uuid` dentro de `exceljs`, sin arreglo que no rompa `exceljs`; vigilar).
 
 ## 9. Qué hacer si
 
@@ -369,7 +373,8 @@ Criterio de la fase: el ensayo completo (`docker/vps/ensayar-restauracion.sh`, s
 | La API no arranca: `permission denied` al crear el esquema `pgboss`      | `zydesk_app` sin `CREATE` en la base                                                                  | Aplica `docker/postgres-init-prod/permisos.sql` a la base (`restaurar.sh` lo hace; a mano con `psql` como `POSTGRES_USER` y `-v BD=<base>`). |
 | El navegador no guarda la sesión; cada clic vuelve a Ingresar            | La cookie es `Secure` y la API cree que la petición llegó por `http`                                  | El proxy debe reenviar `X-Forwarded-Proto https` (2.1/2.2) y `PROXY_SALTOS` debe coincidir con los saltos reales.                            |
 | Todo el equipo queda bloqueado al ingresar (`INGRESO_BLOQUEADO`)         | La API ve la misma IP para todos (la del proxy): límite de 20 por IP                                  | `PROXY_SALTOS` mal o falta `CF-Connecting-IP`. Comprueba que `auditoria.ingreso_ok.ip` sea la IP pública de cada persona, no una `172.x`.    |
-| La salud responde pero la `version` no coincide y el despliegue revierte | La imagen de esa etiqueta trae otro `package.json`                                                    | Error de release (ADR 0032): la versión del `package.json` debe ser la etiqueta sin `v`. Corrige y etiqueta de nuevo.                        |
+| La salud responde pero la `version` no coincide y el despliegue revierte | La imagen de esa etiqueta trae otro `package.json`                                                    | Error de release (ADR 0032): la versión del `package.json` debe ser la etiqueta sin `v`. El CD lo detecta antes de construir; a mano, `npm run version:fijar` y etiqueta nueva. |
+| `migrar` falla al desplegar con «no such service: zydesk-herramientas»    | Los scripts instalados son de una versión anterior                                                    | 3.4: repite `instalar-vps.sh` desde el clon actualizado y vuelve a desplegar.                                                                |
 | `desplegar.sh` sale con `6`                                              | La etiqueta no existe o alguien editó `repo/`                                                         | `git -C /srv/apps/zydesk/repo status`; nadie edita el clon. Con la etiqueta publicada, repite.                                               |
 | «UF del día» desactualizada                                              | Sin salida a internet, o Boostr y mindicador.cl caídos                                                | Ver `dc logs zydesk-api` (`indicadores.uf`). El valor se puede escribir a mano en cada cotización.                                           |
 | No llegan los avisos de Telegram de operación                            | Falta `TELEGRAM_CHAT_ADMIN` o el token no es del bot correcto                                         | Los scripts avisan `no se pudo enviar el aviso por Telegram`; revisa el `.env`.                                                              |

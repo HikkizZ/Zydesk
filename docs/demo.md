@@ -1,6 +1,6 @@
 # La demo de Zydesk en el VPS (`desk.zytech.dev`)
 
-> **Borrador de la Fase 9.** Las secciones con resultados reales (fechas, tiempos, comprobaciones) están marcadas «(se completa en la ronda 4)». Fuentes: `docs/specs/fase-9.md` §0.1, §3, §11, §15.2 y las respuestas B1–B8 y B23 de §19; `docker/vps/README.md` e `instalar-vps.sh` (que mandan sobre la spec en los detalles). La guía de la instalación definitiva es `docs/despliegue.md`.
+> **Estado al cierre de la Fase 9 (2026-10-06).** La demo está desplegada (`v1.0.0-rc.3`) y cargada; quedan pendientes el ensayo de restauración con un respaldo real (sección 9) y el de vuelta atrás por CD (sección 10). Fuentes: `docs/specs/fase-9.md` §0.1, §3, §11, §15.2 y las respuestas B1–B8 y B23 de §19; ADR 0031; `docker/vps/README.md` e `instalar-vps.sh` (que mandan sobre la spec en los detalles). La guía de la instalación definitiva es `docs/despliegue.md`.
 
 ## 1. Qué es y qué no es
 
@@ -11,6 +11,7 @@ No es la instalación definitiva. Si al equipo le gusta, el usuario apaga este c
 ### Riesgos aceptados en la demo (spec §19 B3 y B4)
 
 - **Sin Cloudflare Access.** La demo es pública en internet y se protege solo con el ingreso de Zydesk y sus límites de intentos (ADR 0013). Aceptable porque no hay datos reales. `DEMO_PASSWORD` abre las 12 cuentas, incluida Administración: debe ser **fuerte** (`openssl rand -base64 18`) y comunicarse fuera de la app. Access sigue recomendado para la instalación definitiva.
+- **Bloqueo de las cuentas públicas por intentos fallidos** (VULN-002 de la revisión de la fase, ADR 0031): como las 12 cuentas son conocidas, cualquiera podría dejarlas bloqueadas con intentos fallidos. Mitigación elegida: una **regla de rate limiting de Cloudflare** sobre `POST /api/auth/ingresar`. En el plan gratis la ventana es de 10 s: frena ráfagas, no un ataque lento o distribuido. Access es la opción fuerte; la regla es suficiente para una demo.
 - **Respaldos solo locales** (E2 sigue abierta). `respaldar.sh` cifra y deja el `.tar.age` en `/srv/data/zydesk/respaldos/`, con retención de 14 días; la copia remota con `rclone` está implementada pero desactivada (`RCLONE_DESTINO` vacío). Si se pierde el VPS, se pierde la demo. Igual que hoy el resto de Nexus.
 - **Textos legales en borrador.** Siguen con `borrador: true` y marcadores; el equipo verá el aviso de borrador al aceptarlos. E3 queda pendiente para la instalación definitiva.
 
@@ -54,7 +55,18 @@ El agente no entra al VPS: el usuario corre los comandos y pega la salida. Orden
 9. **Telegram** (B5): bot **nuevo** en BotFather solo para la demo (distinto del de desarrollo y del definitivo) y un chat para `TELEGRAM_CHAT_ADMIN`; `COMPOSE_PROFILES=bot`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USUARIO`, `BOT_API_KEY` y `BOT_CLAVE_CIFRADO` (`openssl rand -base64 32`) en el `.env`. Los tokens solo en el `.env` del VPS. Vincular Telegram de personas reales es opcional; los `chat_id` quedan en la base de la demo y se borran al apagarla.
 10. **Prueba del cierre**: `ssh zydesk-deploy@<host> 'ls /'` → `etiqueta inválida` y nada más. `sshd -T -C user=zydesk-deploy` debe mostrar `passwordauthentication no`, `permittty no` y `forcecommand /srv/apps/zydesk/desplegar.sh`.
 
-**Resultado de F9-T12** (fecha, salida de los comandos de verificación, tropiezos): _(se completa en la ronda 4)_.
+**Resultado de F9-T12**: completado por el usuario el 2026-10-06, antes del primer despliegue; la cadena del túnel y el cierre de `zydesk-deploy` quedaron verificados con los despliegues de la sección 4.
+
+### 3.1 Actualizar los scripts instalados (antes de cada despliegue que los cambie)
+
+Los scripts de `/srv/apps/zydesk/` son **copias**: el despliegue no los toca (`docker/vps/README.md`). Cuando un commit cambia algo de `docker/vps/`, hay que repetir la copia **antes** de desplegar la etiqueta que lo necesite. Caso concreto: desde `f41c050` `desplegar.sh` migra con el servicio `zydesk-herramientas` (ADR 0031); con la copia anterior instalada, la migración falla y el despliegue se revierte.
+
+```sh
+cd /srv/apps/zydesk/repo && sudo -u zydesk-deploy git fetch --tags && sudo -u zydesk-deploy git checkout <etiqueta>
+cd docker/vps && sudo ./instalar-vps.sh --llave /ruta/zydesk-deploy.pub
+```
+
+`instalar-vps.sh` es idempotente: vuelve a copiar los scripts, los temporizadores y la configuración, no crea nada que ya exista (la llave ya instalada no se duplica) y pide confirmación al principio y antes de recargar `sshd` (se puede responder que no a la recarga si `sshd` no cambió).
 
 ## 4. Primer despliegue: `v1.0.0-rc.1` (F9-T13)
 
@@ -70,7 +82,14 @@ Comprobaciones (spec §17):
 - Ingreso con una cuenta de la demo → `Set-Cookie: __Host-sesion=…; Path=/; HttpOnly; Secure; SameSite=Lax`; en `auditoria`, `ingreso_ok.ip` = la IP pública real del usuario, no una `172.x` (si no, `PROXY_SALTOS` está mal).
 - Aviso de Telegram «Zydesk desplegado: v1.0.0-rc.1 (antes ninguna)» en el chat de administración.
 
-**Resultado de F9-T13** (fecha, tiempo del workflow y del script, salida de las comprobaciones): _(se completa en la ronda 4)_.
+**Resultado de F9-T13 (2026-10-06).** Tres despliegues de ensayo, todos con aprobación manual del environment `produccion`:
+
+- **`v1.0.0-rc.1`**: el primer intento falló porque `desplegar.sh` hacía el `pull` antes de fijar `ZYDESK_VERSION` y, con el `.env` vacío, Compose pedía una imagen sin etiqueta (corregido en `2160168`). El segundo intento levantó la app (migraciones y salud `200`), pero `desplegar.sh` lo dio por **fallido**: la etiqueta apuntaba a un commit con `version` `1.0.0` en los `package.json` y la salud devolvía `"version":"1.0.0"`, no `"1.0.0-rc.1"` (ADR 0032.2). Desde `d32e857` el workflow compara la etiqueta con los cinco `package.json` del commit y falla antes de construir imágenes.
+- **`v1.0.0-rc.2`** y **`v1.0.0-rc.3`**: desplegados bien; salud con la `version` pedida, contenedores `healthy`, sin puertos publicados, cookie `__Host-sesion` guardada e IP pública real en `auditoria`.
+- La **base quedó vacía** tras el primer despliegue (`desplegar.sh` solo migra): la demo se cargó a mano con el comando de la sección 5.
+- Verificado en el VPS durante la revisión de seguridad: `nginx-proxy` no publica puertos al host (solo `80/tcp` interno) y nada escucha en 80/443 del host; todo entra por el túnel de Cloudflare y `CF-Connecting-IP` es confiable.
+
+**Cómo se fija una versión** (ADR 0031 y 0032): `npm run version:fijar -- X.Y.Z[-rc.N]` → `npm run api:openapi` → commit → CI verde del commit por la rama → `git tag -a vX.Y.Z[-rc.N] -m "Zydesk vX.Y.Z[-rc.N]"` sobre ese commit → `git push` de la rama y la etiqueta. El CI no corre en los `push` de etiquetas: `Desplegar` exige el CI verde que llegó por la rama.
 
 ## 5. Cargar y recargar los datos de la demo
 
@@ -111,7 +130,7 @@ Dos tipos de cuenta conviven en la demo (B8):
 
 Orden sugerido de pantallas, con los hechos de la historia que conviene mostrar:
 
-1. **Ingreso como Álamos → Mi día** (2 min): vencen hoy, vencidos, por aprobar, menciones, tareas. Versión en el pie («Zydesk v1.0.0-rc.N»).
+1. **Ingreso como Álamos → Mi día** (2 min): vencen hoy, vencidos, por aprobar, menciones, tareas. Versión en el pie («Zydesk v1.0.0-rc.N»; tras el merge, «v1.0.0»).
 2. **Tablero y Tabla** (2 min): las cuatro columnas pobladas; filtros; solo lectura (el estado se cambia en el detalle). **Línea de tiempo** con vencidos.
 3. **Detalle de un ticket de terreno** (3 min): fotos, tareas, seguimiento con mención, correo original (`.eml`) con adjunto, OT vinculadas. Cambiar estado desde el detalle.
 4. **Órdenes de trabajo** (4 min): `/ots` con los cuatro indicadores y «Exportar para facturación»; OT-0302 Transportes (en ejecución, cotización aprobada con OC); OT-0303 Constructora (v1 rechazada, v2 enviada); OT-0301 Clínica (en UF, por facturar); OT-0305 Panadería (cancelada con motivo); OT-0308 Base Rancagua (cerrada sin resolver el ticket).
@@ -132,17 +151,22 @@ Un ticket **en la propia demo**, con categoría «Proyectos y mejoras» y asunto
 - Ensayo (es una demo: se restaura sobre sí misma): anotar conteos (`usuario`, `ticket`, `ot`, `cotizacion`, `registro_horas`, `aviso`, `archivo`, `evento`, `auditoria`, `indicador_uf`) y hashes de `archivos/`; `/srv/apps/zydesk/restaurar.sh /srv/data/zydesk/respaldos/<respaldo>.tar.age` (pide escribir `zydesk`); comparar; salud 200; ingresar con una cuenta de la demo y descargar un archivo; `UPDATE evento` como `zydesk_app` → `permission denied`.
 - El usuario confirma que la clave privada `age` está **también fuera del VPS**.
 
-**Resultado de F9-T14** (fecha, tamaño del `.tar.age`, tiempo de respaldo y de restauración, conteos): _(se completa en la ronda 4)_.
+**Resultado de F9-T14: pendiente** por decisión del usuario (2026-10-06); no bloquea la v1.0.0 porque el ensayo local completo (`ensayar-restauracion.sh`, 39 s) ya pasó. Cuando se haga, anotar aquí fecha, tamaño del `.tar.age`, tiempos de respaldo y restauración y los conteos; si los conteos o los hashes difieren, es un hallazgo que se registra en una ADR antes de la instalación definitiva.
 
 ## 10. Actualización y rollback con `rc` (F9-T16)
 
-Ensayo completo: `v1.0.0-rc.1` → `v1.0.0-rc.2` (un cambio trivial si no hay otro) → `workflow_dispatch` del workflow `Desplegar` con `v1.0.0-rc.1` (rollback por CD; pasa de nuevo por la aprobación) → otra vez `v1.0.0-rc.2`. En cada paso: salud 200 con la `version` pedida, aviso de Telegram, y `respaldos/pre-despliegue/<marca>-<anterior>.dump` presente (se conservan 5). También se comprueba `ssh zydesk-deploy@host 'v9.9.9'` → falla en el `checkout` (código 6) sin tocar los contenedores.
+La **actualización** se ensayó: `rc.1` → `rc.2` → `rc.3` (sección 4), cada una con salud `200` y la `version` pedida, y con su volcado en `respaldos/pre-despliegue/<marca>-<anterior>.dump` (se conservan 5).
 
-Recordatorio: las migraciones no se revierten; con `rc.1` y `rc.2` sobre el mismo esquema (15 migraciones) el rollback no necesita el `.dump`. Si una versión futura trae migraciones y hay que volver atrás con una incompatible: `restaurar.sh <pre-despliegue/…dump> --solo-bd` (`docs/despliegue.md` §6.2).
+**La vuelta atrás por CD queda pendiente** por decisión del usuario (2026-10-06). Motivo práctico: el botón `Run workflow` (`workflow_dispatch`) solo aparece en GitHub cuando `desplegar.yml` está en `main`; mientras la fase vivía en su rama, la vuelta atrás se hacía **re-ejecutando el despliegue de la etiqueta anterior** (volver a correr el workflow de esa etiqueta desde Actions, con la misma aprobación). Procedimiento para cuando se ensaye, tras el merge:
 
-**Resultado de F9-T16** (fechas, tiempos de cada despliegue, cuatro avisos): _(se completa en la ronda 4)_.
+1. Antes: actualizar los scripts instalados si cambiaron (sección 3.1); anotar `ZYDESK_VERSION` del `.env`.
+2. `Actions → Desplegar → Run workflow` con la etiqueta **anterior** (pasa de nuevo por la aprobación). Esperar la salud `200` con esa `version`, el aviso de Telegram «Zydesk desplegado: <anterior> (antes <actual>)» y el volcado nuevo en `pre-despliegue/`.
+3. Volver a la etiqueta actual del mismo modo. Comprobar además `ssh zydesk-deploy@host 'v9.9.9'` → falla en el `checkout` (código 6) sin tocar los contenedores.
+4. Anotar aquí fechas, tiempos y los avisos recibidos.
 
-Tras el merge a `main`, el usuario etiqueta `v1.0.0` y el CD la despliega en la demo con aprobación; `/api/salud` → `"version":"1.0.0"`. Las etiquetas `rc` se conservan (historia del ensayo). _(se completa en la ronda 5)_.
+Recordatorio: las migraciones no se revierten; con las `rc` sobre el mismo esquema (15 migraciones) el rollback no necesita el `.dump`. Si una versión futura trae migraciones y hay que volver atrás con una incompatible: `restaurar.sh <pre-despliegue/…dump> --solo-bd` (`docs/despliegue.md` §6.2). Toda migración debe ser compatible con la versión anterior de la API (`CLAUDE.md` §2).
+
+Tras el merge a `main`, el usuario etiqueta `v1.0.0` (procedimiento de la sección 4) y el CD la despliega en la demo con aprobación; `/api/salud` → `"version":"1.0.0"`. Las etiquetas `rc` se conservan (historia del ensayo).
 
 ## 11. Qué se borra al terminar
 
@@ -150,4 +174,4 @@ La demo queda encendida con `v1.0.0` hasta que el equipo decida (B22), con respa
 
 ## 12. Verificación opcional: Playwright contra la demo (F9-T17)
 
-Sin Access ni Service Token, la suite de `test:movil` podría correr contra `https://desk.zytech.dev` con `E2E_URL`, `E2E_PASSWORD` (= `DEMO_PASSWORD`) y cuentas de la demo equivalentes a las de las semillas (Álamos / Loyola / Hidalgo), excluyendo los tests `@escribe` (dejan seguimientos). Hoy no existe `apps/web/playwright.demo.config.ts` ni la parametrización por `E2E_URL`: si se hace, se decide al implementar (spec §13.3); si no, se anota aquí y se omite. _(se completa en la ronda 4)_.
+Sin Access ni Service Token, la suite de `test:movil` podría correr contra `https://desk.zytech.dev` con `E2E_URL`, `E2E_PASSWORD` (= `DEMO_PASSWORD`) y cuentas de la demo equivalentes a las de las semillas (Álamos / Loyola / Hidalgo), excluyendo los tests `@escribe` (dejan seguimientos). **No se hizo en la Fase 9** (ADR 0031): no existe `apps/web/playwright.demo.config.ts` ni la parametrización por `E2E_URL`; la suite sigue corriendo contra las semillas locales en CI. Si alguna vez se implementa, se decide en ese momento (spec §13.3).

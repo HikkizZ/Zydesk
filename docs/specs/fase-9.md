@@ -885,3 +885,23 @@ _(Se completa durante la fase: commits por bloque, respuestas a §19, desviacion
 
 **Pendiente:** F9-T8 (documentación, Fable), la ronda 4 en el VPS con el usuario (F9-T12, T13, T14, T16 y T17) y la ronda 5 (F9-T15, seguridad; F9-T18, ADR 0031, PR y `v1.0.0`).
 - Reglas de trabajo vigentes: responder al usuario siempre en español; commits con `/conventional-commit` en español, sin `Co-Authored-By`; push y PR solo con confirmación explícita; revisión de seguridad de cierre (Fable + `/security-review`) antes del PR.
+
+### Estado final de la fase (2026-10-06, F9-T18)
+
+**Hecho en el segundo PC** (commits `4141ce5` a `f41c050`; ver `git log --oneline origin/main..HEAD`):
+
+| Tarea | Resultado |
+| --- | --- |
+| F9-T8, documentación | `docs/despliegue.md`, `docs/demo.md`, `docs/legal/README.md`, `docker/vps/README.md`, README, `CLAUDE.md`, manual de administración y guía de la API (`588b9c8`, `bf2a611`) |
+| F9-T12, preparación del VPS | Completada por el usuario antes del primer despliegue (sin salida registrada; verificada por los despliegues) |
+| F9-T13, despliegues `rc` | `v1.0.0-rc.1` falló dos veces: `pull` antes de fijar `ZYDESK_VERSION` (`2160168`) y versión `1.0.0` en los `package.json` con la app funcionando (desde `d32e857` `verificar-etiqueta` compara la etiqueta con los cinco `package.json`). `v1.0.0-rc.2` y `v1.0.0-rc.3` desplegados bien con aprobación manual del environment `produccion`. La base quedó vacía tras el primer despliegue y la demo se cargó a mano con el comando de `docs/demo.md` §5 |
+| F9-T15, seguridad | Fable + `/security-review`: sin HIGH. Corregidos VULN-001 (`zydesk-herramientas`, `f41c050`), HSTS, `mem_limit`/`pids_limit`; auditoría de archivos (`bfc3ef1`: CSP `sandbox`, cupo 50 / 200 MB, tmpfs 256 MB, `sanearNombre`). VULN-002 mitigada con una regla de rate limiting de Cloudflare sobre `POST /api/auth/ingresar`. `npm audit --omit=dev`: 3 moderados en `uuid` dentro de `exceljs`. Verificado en el VPS: `nginx-proxy` sin puertos al host y nada en 80/443 del host. Riesgos aceptados en ADR 0031.35–36 |
+| Cambios de UI pedidos al ver la demo (rc.3) | Favicon con el logo (`5a21632`), sin rebote al forzar el scroll (`ffc33e0`), imágenes de seguimientos más grandes (`cc3065d`) |
+| CI | No corre en push de etiquetas (`7b7e075`); `compose.test.sh` agregado (`f41c050`); `shellcheck` 0.9/0.10 (`3cb972a`) |
+| F9-T18, cierre documental | ADR 0031; fila 0031 y Estado de 0017/0020/0029 en `docs/decisiones/`; CHANGELOG `[1.0.0] - 2026-10-06` con «Pendientes conocidos» por versión; `docs/demo.md` y `docs/despliegue.md` con los resultados y el paso de actualización de scripts; `CLAUDE.md` §2 y §6 |
+
+**Pendientes de la demo (decisión del usuario, no bloquean la v1.0.0)**: F9-T14 (restauración con un respaldo real) y F9-T16 (vuelta atrás por CD; `Run workflow` solo aparece con `desplegar.yml` en `main`), con su procedimiento en `docs/demo.md` §9 y §10. F9-T17 (Playwright contra la demo) se omite.
+
+**Importante para el próximo despliegue**: el VPS ejecuta la copia instalada de `desplegar.sh`; tras `f41c050` hay que repetir `instalar-vps.sh` desde el repo actualizado **antes** de desplegar una etiqueta que use `zydesk-herramientas` (`docs/demo.md` §3.1).
+
+**Siguiente**: PR a `main` con CI verde → `npm run version:fijar -- 1.0.0` (hoy los `package.json` llevan `1.0.0-rc.3`) + `npm run api:openapi` + commit `chore(release): v1.0.0` → etiqueta anotada `v1.0.0` sobre `main` con confirmación del usuario → despliegue con aprobación. **v1.1.0** (ADR propia): correo entrante IMAP, «Ver correo completo», limpieza de GPS en el servidor; pregunta abierta archivos en BD vs disco (ADR 0031.39).
