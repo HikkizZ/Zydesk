@@ -33,6 +33,7 @@ El `.env` es lo único que no está en git: guarda una copia como nota segura en
 ## Pruebas
 
 - `bash docker/vps/desplegar.test.sh`: `desplegar.sh` con `ZYDESK_SIMULAR=1` (docker, git, curl y flock simulados; sin red ni root).
+- `bash docker/vps/compose.test.sh`: `docker compose config` del Compose de producción: `zydesk-api` sin `zydesk_owner`, `ADMIN_PASSWORD` ni variables de la demo (solo `zydesk-herramientas`), y `mem_limit`/`pids_limit` en cada servicio.
 - `bash docker/postgres-init-prod/probar-roles.sh`: `01-roles.sh` contra un `postgres:16-alpine` efímero.
 - `docker/vps/ensayar-restauracion.sh`: ensayo completo de §8.3 (Compose con `.env` de prueba y datos temporales, `demo --reiniciar`, `respaldar.sh`, destruir, `restaurar.sh`, conteos y hashes idénticos, ingreso y descarga, `permission denied` para `zydesk_app`). Necesita Linux/WSL con `docker`, `age`, `zstd`, `flock`. Corre bajo el proyecto `zydesk-ensayo` y lo baja al terminar (`ENSAYO_CONSERVAR=1` lo deja arriba para depurar). **No se corre en el VPS.**
 - `shellcheck` sobre `docker/**/*.sh` (en CI; local: `docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable …`).

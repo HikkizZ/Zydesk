@@ -54,7 +54,7 @@ docker() {
         >"$ZYDESK_RAIZ/version-pull"
       [ -z "${SIM_FALLA_PULL:-}" ] || return 1
       ;;
-    *"run --rm --no-deps zydesk-api migrar") [ -z "${SIM_FALLA_MIGRAR:-}" ] || return 1 ;;
+    *"run --rm --no-deps zydesk-herramientas migrar") [ -z "${SIM_FALLA_MIGRAR:-}" ] || return 1 ;;
     *"exec -T zydesk-web wget"*)
       actual="$(sed -n 's/^ZYDESK_VERSION=//p' "$ZYDESK_RAIZ/.env" | tail -n 1)"
       if [ "$actual" = "${SIM_SALUD_MALA:-@@@}" ]; then
@@ -158,7 +158,7 @@ git -C <raiz>/repo status --porcelain
 dc pull --quiet
 dc stop zydesk-api zydesk-bot
 dc up -d --wait zydesk-db
-dc run --rm --no-deps zydesk-api migrar
+dc run --rm --no-deps zydesk-herramientas migrar
 dc up -d --remove-orphans
 dc exec -T zydesk-web wget -qO- http://zydesk-api:3000/api/salud
 docker image prune -f --filter until=168h

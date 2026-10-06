@@ -30,6 +30,8 @@ services:
       # Solo estos dos archivos: Postgres ejecuta todo *.sql de initdb.d y permisos.sql necesita la variable BD
       - ./docker/postgres-init-prod/01-roles.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
       - ./docker/postgres-init-prod/permisos.sql:/zydesk/permisos.sql:ro
+    mem_limit: 1g
+    pids_limit: 256
     networks: [interna]
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-zydesk}']
@@ -51,7 +53,6 @@ services:
       API_PUERTO: '3000'
       ARCHIVOS_DIR: /datos/archivos
       DATABASE_URL: postgres://zydesk_app:${ZYDESK_APP_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
-      DATABASE_URL_OWNER: postgres://zydesk_owner:${ZYDESK_OWNER_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
       PROXY_SALTOS: ${PROXY_SALTOS:-3} # cloudflared → nginx-proxy → zydesk-web (ADR 0020, spec §19 B1)
       EJECUTAR_JOBS: 'true'
       UF_ACTUALIZAR: ${UF_ACTUALIZAR:-true}
@@ -60,6 +61,31 @@ services:
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
       TELEGRAM_BOT_USUARIO: ${TELEGRAM_BOT_USUARIO:-}
       BOT_API_KEY: ${BOT_API_KEY:-}
+    volumes:
+      - ${DATOS_DIR:-/srv/data/zydesk}/archivos:/datos/archivos
+    tmpfs: [/tmp:size=256m]
+    read_only: true
+    mem_limit: 768m
+    pids_limit: 256
+    networks: [interna]
+    depends_on:
+      zydesk-db: { condition: service_healthy }
+    logging: *registro
+
+  # Herramientas de una sola vez (migrar, administrador, demo) con la misma imagen que la API. Es el único servicio con
+  # las credenciales del rol dueño de la base (`zydesk_owner`) y las contraseñas de las cuentas: la API de larga vida no
+  # las lleva (ADR 0031). Solo con `docker compose run --rm --no-deps zydesk-herramientas <migrar|admin|demo> …`.
+  zydesk-herramientas:
+    image: ghcr.io/${GHCR_OWNER}/zydesk-api:${ZYDESK_VERSION}
+    <<: *endurecido
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      ARCHIVOS_DIR: /datos/archivos
+      DATABASE_URL: postgres://zydesk_app:${ZYDESK_APP_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
+      DATABASE_URL_OWNER: postgres://zydesk_owner:${ZYDESK_OWNER_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_URL: ${WEB_URL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       ZYDESK_DEMO: ${ZYDESK_DEMO:-}
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
@@ -67,9 +93,12 @@ services:
       - ${DATOS_DIR:-/srv/data/zydesk}/archivos:/datos/archivos
     tmpfs: [/tmp:size=256m]
     read_only: true
+    mem_limit: 768m
+    pids_limit: 256
     networks: [interna]
     depends_on:
       zydesk-db: { condition: service_healthy }
+    profiles: [herramientas] # nunca arranca con `up`
     logging: *registro
 
   zydesk-web:
@@ -78,6 +107,8 @@ services:
     <<: *endurecido
     read_only: true
     tmpfs: [/tmp]
+    mem_limit: 128m
+    pids_limit: 64
     networks: [interna, web]
     depends_on:
       zydesk-api: { condition: service_started }
@@ -101,6 +132,8 @@ services:
       - ${DATOS_DIR:-/srv/data/zydesk}/bot:/datos/bot
     tmpfs: [/tmp]
     read_only: true
+    mem_limit: 256m
+    pids_limit: 64
     networks: [interna]
     depends_on:
       zydesk-api: { condition: service_healthy }

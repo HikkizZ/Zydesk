@@ -64,6 +64,7 @@ for _ in $(seq 1 20); do curl -sf "localhost:$PUERTO/salud-web" >/dev/null 2>&1 
 CABECERAS="$(curl -sI "localhost:$PUERTO/")"
 grep -qi '^Content-Security-Policy:' <<<"$CABECERAS" && ok "CSP presente" || fallo "CSP presente"
 grep -qi '^X-Frame-Options: DENY' <<<"$CABECERAS" && ok "X-Frame-Options DENY" || fallo "X-Frame-Options DENY"
+grep -qi '^Strict-Transport-Security: max-age=31536000; includeSubDomains' <<<"$CABECERAS" && ok "HSTS presente" || fallo "HSTS presente"
 grep -qiE '^Server: nginx/[0-9]' <<<"$CABECERAS" && fallo "Server no debe mostrar la versión" || ok "Server sin versión"
 curl -s "localhost:$PUERTO/ayuda" | grep -qi '<div id="root"' && ok "/ayuda devuelve index.html" || fallo "/ayuda devuelve index.html"
 [ "$(curl -s "localhost:$PUERTO/salud-web")" = "ok" ] && ok "/salud-web" || fallo "/salud-web"

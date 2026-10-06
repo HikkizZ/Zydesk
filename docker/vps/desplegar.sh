@@ -196,7 +196,7 @@ dc up -d --wait zydesk-db
 
 # --- 9. Migraciones con el rol owner ---
 msg 'aplicando migraciones'
-if ! dc run --rm --no-deps zydesk-api migrar; then
+if ! dc run --rm --no-deps zydesk-herramientas migrar; then
   revertir 'las migraciones fallaron'
 fi
 

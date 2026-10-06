@@ -149,7 +149,7 @@ tiempo "$T"
 
 echo "2. Migraciones (rol owner)"
 T=$(date +%s)
-dc run --rm --no-deps zydesk-api migrar 2>&1 | grep -E 'migraciones aplicadas' || true
+dc run --rm --no-deps zydesk-herramientas migrar 2>&1 | grep -E 'migraciones aplicadas' || true
 tiempo "$T"
 
 echo "3. Servicios y salud"
@@ -161,7 +161,7 @@ tiempo "$T"
 
 echo "4. Datos de la demo"
 T=$(date +%s)
-dc run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-api demo --reiniciar 2>&1 | tail -3
+dc run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-herramientas demo --reiniciar 2>&1 | tail -3
 tiempo "$T"
 ANTES_CONTEOS="$(conteos)"
 ANTES_HASHES="$(hashes)"

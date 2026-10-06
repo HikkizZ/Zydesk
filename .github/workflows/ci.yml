@@ -102,6 +102,10 @@ jobs:
             echo "docker/vps/desplegar.test.sh aún no existe (F9-T5)"
           fi
 
+      # ADR 0031: la API de larga vida no lleva zydesk_owner ni ADMIN_PASSWORD (solo zydesk-herramientas)
+      - name: Compose de producción (compose.test.sh)
+        run: bash docker/vps/compose.test.sh
+
       # Spec fase 9 §5.2 y §9.3: 01-roles.sh contra un postgres:16-alpine efímero (docker run, sin el service del job)
       - name: Roles de producción (01-roles.sh)
         run: bash docker/postgres-init-prod/probar-roles.sh

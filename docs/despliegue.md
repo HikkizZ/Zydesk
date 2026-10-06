@@ -48,6 +48,7 @@ Cuatro contenedores en un solo `docker-compose.yml` (raíz del repo), proyecto `
 | ------------ | --------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------- |
 | `zydesk-db`  | `postgres:16-alpine` (por digest)       | `interna`        | Base de datos. Roles `zydesk_owner` (migraciones) y `zydesk_app` (la API). Datos en `postgres/`.     |
 | `zydesk-api` | `ghcr.io/<owner>/zydesk-api:<etiqueta>` | `interna`        | API Express en el puerto 3000 interno, con los jobs (`EJECUTAR_JOBS=true`). Archivos en `archivos/`. |
+| `zydesk-herramientas` | `ghcr.io/<owner>/zydesk-api:<etiqueta>` | `interna` | Misma imagen que la API, perfil `herramientas` (no arranca con `up`): `migrar`, `admin` y `demo` con el rol `zydesk_owner`. La API no lleva esas credenciales (ADR 0031). |
 | `zydesk-web` | `ghcr.io/<owner>/zydesk-web:<etiqueta>` | `interna`, `web` | nginx sin privilegios en el **8080**: sirve la web y reenvía `/api/` a `zydesk-api:3000`.            |
 | `zydesk-bot` | `ghcr.io/<owner>/zydesk-bot:<etiqueta>` | `interna`        | Bot de Telegram (perfil `bot`: solo se levanta con `COMPOSE_PROFILES=bot`). Datos en `bot/`.         |
 
@@ -174,7 +175,7 @@ El `.env` real nunca se versiona. Plantilla: `.env.produccion.example` (solo val
 | `GHCR_OWNER`                                                      | Compose                            | Dueño de las imágenes en GHCR, en minúsculas (`hikkizz`, o el fork de la empresa).                                                         |
 | `DATOS_DIR`                                                       | Compose, scripts                   | Carpeta de datos (`/srv/data/zydesk`).                                                                                                     |
 | `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`               | `zydesk-db`, scripts               | Superusuario del contenedor de Postgres (no lo usa la app; solo `pg_dump`/`pg_restore`) y nombre de la base (`zydesk`).                    |
-| `ZYDESK_OWNER_PASSWORD`, `ZYDESK_APP_PASSWORD`                    | `zydesk-db` (primer arranque), API | Contraseñas de `zydesk_owner` (migraciones) y `zydesk_app` (la API). El Compose arma `DATABASE_URL` y `DATABASE_URL_OWNER` con ellas.      |
+| `ZYDESK_OWNER_PASSWORD`, `ZYDESK_APP_PASSWORD`                    | `zydesk-db` (primer arranque), API | Contraseñas de `zydesk_owner` (migraciones) y `zydesk_app` (la API). El Compose arma `DATABASE_URL` (la API) y `DATABASE_URL_OWNER` (solo `zydesk-herramientas`) con ellas.      |
 | `PROXY_SALTOS`                                                    | API                                | Saltos de proxy que escriben `X-Forwarded-For`: `3` con Cloudflare Tunnel + proxy + `zydesk-web`; `2` con proxy propio (2.2).              |
 | `UF_ACTUALIZAR`                                                   | API                                | `true` en producción: la API consulta la UF cada hora (ADR 0030).                                                                          |
 | `LOG_LEVEL`                                                       | API, bot                           | `error`, `warn` o `info`. La API **rechaza `debug`** en producción.                                                                        |
@@ -184,8 +185,8 @@ El `.env` real nunca se versiona. Plantilla: `.env.produccion.example` (solo val
 | `BOT_API_KEY`                                                     | API, bot                           | Clave compartida API ↔ bot. Con token: **mínimo 32 caracteres** y distinta del valor de desarrollo, o la API no arranca.                   |
 | `BOT_CLAVE_CIFRADO`                                               | bot                                | 32 bytes en base64 que cifran las sesiones del bot.                                                                                        |
 | `TELEGRAM_CHAT_ADMIN`                                             | scripts                            | Chat que recibe los avisos de despliegue, respaldo fallido y errores. Opcional.                                                            |
-| `ZYDESK_DEMO`, `DEMO_PASSWORD`                                    | API (`demo`)                       | **Solo la demo.** En una instalación real quedan **vacías**: sin `ZYDESK_DEMO=true` el comando `demo` se niega a correr antes de conectar. |
-| `ADMIN_PASSWORD`                                                  | API (`admin`)                      | Contraseña de la primera cuenta de Administración. Solo durante el comando `admin`; **se borra del `.env` después** (sección 5).           |
+| `ZYDESK_DEMO`, `DEMO_PASSWORD`                                    | `zydesk-herramientas` (`demo`)     | **Solo la demo.** En una instalación real quedan **vacías**: sin `ZYDESK_DEMO=true` el comando `demo` se niega a correr antes de conectar. |
+| `ADMIN_PASSWORD`                                                  | `zydesk-herramientas` (`admin`)                      | Contraseña de la primera cuenta de Administración. Solo durante el comando `admin`; **se borra del `.env` después** (sección 5).           |
 | `RESPALDO_AGE_DESTINATARIO`                                       | `respaldar.sh`                     | Clave pública `age1…`. Sin ella el respaldo **no corre** (nunca se respalda sin cifrar).                                                   |
 | `RCLONE_DESTINO`                                                  | `respaldar.sh`                     | Remoto de `rclone`, p. ej. `b2:zydesk-respaldos`. Vacío = respaldos solo locales (la copia remota queda desactivada y el script lo avisa). |
 | `RESPALDO_RETENCION_LOCAL_DIAS`, `RESPALDO_RETENCION_REMOTA_DIAS` | `respaldar.sh`                     | 14 y 90 días.                                                                                                                              |
@@ -207,7 +208,7 @@ Con `NODE_ENV=production` la API **no arranca** («Configuración inválida») s
 
 ### 4.3 Rotar cada secreto
 
-- **`ZYDESK_APP_PASSWORD` / `ZYDESK_OWNER_PASSWORD`.** `01-roles.sh` corre solo al crear el volumen de Postgres; con el volumen ya creado se cambia a mano, en SQL, dentro del contenedor (como `POSTGRES_USER`): `ALTER ROLE zydesk_app PASSWORD '<nueva>';` (ídem `zydesk_owner`). Luego el nuevo valor en el `.env` y `up -d` para recrear la API (sección 8, comando `dc`).
+- **`ZYDESK_APP_PASSWORD` / `ZYDESK_OWNER_PASSWORD`.** `01-roles.sh` corre solo al crear el volumen de Postgres; con el volumen ya creado se cambia a mano, en SQL, dentro del contenedor (como `POSTGRES_USER`): `ALTER ROLE zydesk_app PASSWORD '<nueva>';` (ídem `zydesk_owner`). Luego el nuevo valor en el `.env` y `up -d` para recrear la API (sección 8, comando `dc`); `zydesk-herramientas` lee el `.env` en cada `run`.
 - **`POSTGRES_PASSWORD`.** Mismo `ALTER ROLE` sobre el superusuario y el `.env`.
 - **`BOT_API_KEY`, `BOT_CLAVE_CIFRADO`, `TELEGRAM_BOT_TOKEN`.** Ver el manual de administración §17 (qué pasa con las vinculaciones en cada caso). Tras cambiar el `.env`, `up -d` recrea la API y el bot.
 - **Llave de `zydesk-deploy`.** Nueva llave, `instalar-vps.sh --llave` con la pública (agrega la línea), borrar la línea vieja de `/home/zydesk-deploy/.ssh/authorized_keys`, nueva privada en `DEPLOY_SSH_KEY`.
@@ -244,14 +245,14 @@ y desde fuera, `https://<dominio>/api/salud` (detrás de Access responde `302`: 
 ### 5.2 Primera cuenta de Administración
 
 1. Escribe `ADMIN_PASSWORD=<contraseña>` en el `.env` (4.1).
-2. Crea la cuenta (el entrypoint de la imagen conoce `admin`, `migrar` y `demo`):
+2. Crea la cuenta (el servicio `zydesk-herramientas` usa la imagen de la API, cuyo entrypoint conoce `admin`, `migrar` y `demo`):
 
    ```sh
-   dc run --rm --no-deps zydesk-api admin --correo admin@empresa.cl --nombre "Nombre Apellido"
+   dc run --rm --no-deps zydesk-herramientas admin --correo admin@empresa.cl --nombre "Nombre Apellido"
    ```
 
 3. Ingresa en `https://<dominio>` con ese correo y contraseña. La app pide aceptar los Términos de uso. Cambia la contraseña desde **Perfil**.
-4. Borra el valor de `ADMIN_PASSWORD` del `.env` y recrea la API para que no lo lleve en su entorno: `dc up -d`.
+4. Borra el valor de `ADMIN_PASSWORD` del `.env`. La API no lo lleva en su entorno (solo `zydesk-herramientas`, que no queda en marcha).
 
 ### 5.3 Revisar y versionar los documentos legales (E3) — antes de datos reales
 

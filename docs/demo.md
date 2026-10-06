@@ -77,10 +77,10 @@ Comprobaciones (spec §17):
 Comando exacto (spec §11.1), desde `/srv/apps/zydesk/repo` o con `--project-directory`, con el `.env` de la demo (`ZYDESK_DEMO=true` y `DEMO_PASSWORD` ya están ahí; `ZYDESK_DEMO_CONFIRMAR` se pasa solo en la línea):
 
 ```sh
-docker compose --env-file ../.env run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-api demo --reiniciar
+docker compose --env-file ../.env run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-herramientas demo --reiniciar
 ```
 
-Lo mismo con el invocador de los scripts (`dc`, definido en `docs/despliegue.md` §5): `dc run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-api demo --reiniciar`.
+Lo mismo con el invocador de los scripts (`dc`, definido en `docs/despliegue.md` §5): `dc run --rm --no-deps -e ZYDESK_DEMO=true -e ZYDESK_DEMO_CONFIRMAR=zydesk zydesk-herramientas demo --reiniciar`.
 
 - **Sin `--reiniciar`** la semilla es idempotente (dos cargas dejan lo mismo), pero se niega si la base tiene algún usuario cuyo correo no termine en `@demo.zytech.dev` (guarda 3): con las cuentas del equipo creadas, solo sirve `--reiniciar`.
 - **`--reiniciar` borra TODO** (`TRUNCATE` de todas las tablas salvo `migracion`, también las cuentas del equipo y sus observaciones) y los archivos de la semilla bajo `ARCHIVOS_DIR/demo/`; después vuelve a sembrar. Los archivos que el equipo subió a mano quedan **huérfanos en disco** (fuera de `demo/`; no se borran solos; se limpian al apagar la demo). Avísale al equipo antes de recargar.
