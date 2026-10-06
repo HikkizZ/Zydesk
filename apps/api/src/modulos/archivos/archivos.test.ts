@@ -23,6 +23,7 @@ import {
   archivosDeMensajes,
   asociarArchivos,
   guardarBufferComoArchivo,
+  sanearNombre,
 } from './archivos.service.js';
 
 const app = () => crearApp({ comprobarBd: async () => true });
@@ -208,6 +209,118 @@ describe('POST /api/archivos', () => {
     const cd = descarga.headers['content-disposition'] as string;
     expect(cd).toContain(`filename*=UTF-8''..%2F..%2Fetc%2Fpasswd.pdf`);
     expect(cd).toContain('filename=".._.._etc_passwd.pdf"');
+  });
+});
+
+describe('Endurecimiento de subida y descarga (ADR 0031)', () => {
+  const CSP = "sandbox; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'";
+
+  it('la descarga de imagen, PDF y .txt lleva la CSP aislada, nosniff y su Content-Type; otras rutas no', async () => {
+    const a = await sesion();
+    const ticket = await crearTicket();
+    for (const [nombre, tipo_mime, contenido] of [
+      ['foto.jpg', 'image/jpeg', archivoDePrueba('foto.jpg')],
+      ['doc.pdf', 'application/pdf', archivoDePrueba('doc.pdf')],
+      ['nota.txt', 'text/plain', Buffer.from('hola')],
+    ] as const) {
+      const f = await crearArchivoPendiente(a.usuario.id, { nombre, tipo_mime, contenido });
+      await asociar(f.id, ticket.id);
+      const res = await a.agente.get(`/api/archivos/${f.id}`);
+      expect(res.status, nombre).toBe(200);
+      expect(res.headers['content-security-policy'], nombre).toBe(CSP);
+      expect(res.headers['x-content-type-options'], nombre).toBe('nosniff');
+      expect(res.headers['content-type'], nombre).toContain(tipo_mime);
+    }
+    const otra = await a.agente.get('/api/archivos/pendientes');
+    expect(otra.headers['content-security-policy']).toContain("default-src 'self'");
+    expect(otra.headers['content-security-policy']).not.toBe(CSP);
+  });
+
+  async function llenarPendientes(usuario_id: number, n: number, tamano = 10): Promise<void> {
+    await dataSource.manager.insert(
+      Archivo,
+      Array.from({ length: n }, (_, i) => ({
+        entidad: null,
+        entidad_id: null,
+        mensaje_id: null,
+        categoria: 'documento' as const,
+        nombre_original: `p${i}.txt`,
+        tipo_mime: 'text/plain',
+        tamano,
+        clave: `2000/01/relleno-${usuario_id}-${i}-${Math.random()}.txt`,
+        origen_correo_id: null,
+        subido_por: usuario_id,
+      })),
+    );
+  }
+
+  it('con 50 pendientes → 429 CUPO_ARCHIVOS_PENDIENTES sin escribir en disco; otro usuario sí sube; al asociarlos vuelve a poder', async () => {
+    const a = await sesion();
+    const b = await sesion();
+    await llenarPendientes(a.usuario.id, 50);
+    const antes = archivosEnDisco().length;
+    const subir = (agente: typeof a.agente) =>
+      agente.post('/api/archivos').attach('archivos', archivoDePrueba('foto.jpg'), 'foto.jpg');
+
+    const res = await subir(a.agente);
+    expect(res.status).toBe(429);
+    expect(res.body.error.codigo).toBe('CUPO_ARCHIVOS_PENDIENTES');
+    expect(archivosEnDisco()).toHaveLength(antes);
+    expect(await total()).toBe(50);
+
+    expect((await subir(b.agente)).status).toBe(201);
+
+    const ticket = await crearTicket();
+    await dataSource.manager.update(
+      Archivo,
+      { subido_por: a.usuario.id },
+      { entidad: 'ticket', entidad_id: ticket.id },
+    );
+    expect((await subir(a.agente)).status).toBe(201);
+  });
+
+  it('con 200 MB pendientes → 429; con 49 pendientes pequeños aún sube', async () => {
+    const a = await sesion();
+    const b = await sesion();
+    await llenarPendientes(a.usuario.id, 10, 20 * 1024 * 1024);
+    await llenarPendientes(b.usuario.id, 49);
+    const subir = (agente: typeof a.agente) =>
+      agente.post('/api/archivos').attach('archivos', archivoDePrueba('foto.jpg'), 'foto.jpg');
+    const res = await subir(a.agente);
+    expect(res.status).toBe(429);
+    expect(res.body.error.codigo).toBe('CUPO_ARCHIVOS_PENDIENTES');
+    expect((await subir(b.agente)).status).toBe(201);
+  });
+
+  it('nombre de 1 000 caracteres: se recorta a 255 conservando la extensión y la descarga responde 200', async () => {
+    const { agente } = await sesion();
+    const largo = `${'a'.repeat(1000)}.pdf`;
+    const res = await agente.post('/api/archivos').attach('archivos', archivoDePrueba('doc.pdf'), {
+      filename: largo,
+    } as unknown as { filename: string });
+    expect(res.status).toBe(201);
+    const nombre = res.body[0].nombre_original as string;
+    expect(nombre).toHaveLength(255);
+    expect(nombre.endsWith('.pdf')).toBe(true);
+    const fila = await dataSource.manager.findOneByOrFail(Archivo, { id: res.body[0].id });
+    expect(fila.nombre_original).toBe(nombre);
+    const descarga = await agente.get(`/api/archivos/${fila.id}`);
+    expect(descarga.status).toBe(200);
+    expect(descarga.headers['content-disposition']).toMatch(
+      /^inline; filename="a+\.pdf"; filename\*=/,
+    );
+  });
+
+  it('nombre con U+202E y caracteres de control: se guarda saneado', async () => {
+    const { agente } = await sesion();
+    const res = await agente.post('/api/archivos').attach('archivos', archivoDePrueba('doc.pdf'), {
+      filename: 'fact‮fdp.exe⁦.pdf',
+    } as unknown as { filename: string });
+    expect(res.status).toBe(201);
+    expect(res.body[0].nombre_original).toBe('factfdp.exe.pdf');
+    const descarga = await agente.get(`/api/archivos/${res.body[0].id}`);
+    expect(descarga.status).toBe(200);
+    expect(descarga.headers['content-disposition']).toContain('filename="factfdp.exe.pdf"');
   });
 });
 
@@ -504,6 +617,28 @@ describe('servicio: asociarArchivos y consultas', () => {
     const propios = await archivosDe(dataSource.manager, 'ot', ot.id);
     expect(propios.map((a) => a.nombre_original)).toEqual(['uno.txt']);
     expect(await archivosDe(dataSource.manager, 'ticket', ticket.id)).toEqual([]);
+  });
+
+  it('sanearNombre quita caracteres invisibles y acota a 255 conservando la extensión', () => {
+    expect(sanearNombre('factura‮fdp.exe')).toBe('facturafdp.exe');
+    expect(sanearNombre('a b⁦c.pdf')).toBe('abc.pdf');
+    expect(sanearNombre('‮')).toBe('archivo');
+    const largo = sanearNombre(`${'x'.repeat(1000)}.pdf`);
+    expect(largo).toHaveLength(255);
+    expect(largo.endsWith('.pdf')).toBe(true);
+  });
+
+  it('un adjunto de correo con nombre largo o invisible se guarda saneado', async () => {
+    const u = await crearUsuario();
+    const ok = await enTransaccion((tx) =>
+      guardarBufferComoArchivo(tx, {
+        contenido: archivoDePrueba('foto.jpg'),
+        nombre_original: `‮${'y'.repeat(400)}.jpg`,
+        subido_por: u.id,
+      }),
+    );
+    expect(ok.nombre_original).toHaveLength(255);
+    expect(ok.nombre_original).not.toContain('‮');
   });
 
   it('guardarBufferComoArchivo valida el contenido real y guarda con origen_correo_id', async () => {

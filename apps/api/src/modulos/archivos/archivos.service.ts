@@ -1,3 +1,4 @@
+import path from 'node:path';
 import type { ArchivoSalida } from '@zydesk/shared';
 import type { z } from 'zod';
 import { In, IsNull, type EntityManager } from 'typeorm';
@@ -181,6 +182,20 @@ export async function eliminarDeDisco(claves: string[]): Promise<void> {
 // y el límite de 20 MB (→ 400 ARCHIVO_NO_PERMITIDO { nombre }); con `tipo` (p. ej. el `.txt` del texto
 // pegado) se usa tal cual. Si la transacción del llamador se revierte, debe borrar el disco con
 // `eliminarDeDisco([archivo.clave])`.
+const MAX_NOMBRE = 255;
+
+// Se aplica a todo nombre que entra (subida HTTP y adjuntos de correo): quita caracteres de control y de
+// dirección bidireccional y acota a 255 conservando la extensión.
+export function sanearNombre(nombre: string): string {
+  const limpio = nombre.replace(/[\u0000-\u001F\u007F-\u009F\u202A-\u202E\u2066-\u2069]/g, '');
+  if (limpio.length <= MAX_NOMBRE) return limpio || 'archivo';
+  const ext = path.extname(limpio);
+  const extUtil = ext.length <= 32 ? ext : '';
+  let base = limpio.slice(0, MAX_NOMBRE - extUtil.length);
+  if (/[\uD800-\uDBFF]$/.test(base)) base = base.slice(0, -1); // no cortar un par sustituto
+  return base + extUtil;
+}
+
 export async function guardarBufferComoArchivo(
   tx: EntityManager,
   datos: {
@@ -194,16 +209,17 @@ export async function guardarBufferComoArchivo(
     categoria?: Archivo['categoria'];
   },
 ): Promise<Archivo> {
+  const nombre = sanearNombre(datos.nombre_original);
   let tipo = datos.tipo;
   if (!tipo) {
     const noPermitido = () =>
       new ErrorApp('ARCHIVO_NO_PERMITIDO', 'Tipo de archivo no permitido', {
-        nombre: datos.nombre_original,
+        nombre,
       });
     if (datos.contenido.length === 0 || datos.contenido.length > MAX_TAMANO_ARCHIVO) {
       throw noPermitido();
     }
-    tipo = await detectarMimeBuffer(datos.contenido, datos.nombre_original);
+    tipo = await detectarMimeBuffer(datos.contenido, nombre);
   }
   const clave = await storage.guardar(datos.contenido, tipo.ext);
   try {
@@ -212,7 +228,7 @@ export async function guardarBufferComoArchivo(
       entidad_id: datos.destino?.entidad_id ?? null,
       mensaje_id: datos.destino?.mensaje_id ?? null,
       categoria: datos.categoria ?? categoriaDe(tipo.tipo_mime),
-      nombre_original: datos.nombre_original,
+      nombre_original: nombre,
       tipo_mime: tipo.tipo_mime,
       tamano: datos.contenido.length,
       clave,
@@ -228,6 +244,29 @@ export async function guardarBufferComoArchivo(
 // ---------------------------------------------------------------------------------------------
 // Endpoints
 // ---------------------------------------------------------------------------------------------
+
+// Tope de pendientes (sin asociar) por persona; el job de limpieza los borra a las 24 h.
+export const MAX_PENDIENTES_POR_PERSONA = 50;
+export const MAX_BYTES_PENDIENTES_POR_PERSONA = 200 * 1024 * 1024;
+
+// Se llama antes de aceptar la subida: 429 CUPO_ARCHIVOS_PENDIENTES si el actor ya está en el tope.
+export async function comprobarCupoPendientes(actor: Pick<UsuarioSesion, 'id'>): Promise<void> {
+  const [r]: { cantidad: number; bytes: string }[] = await dataSource.query(
+    `SELECT count(*)::int AS cantidad, COALESCE(sum(tamano), 0)::text AS bytes
+       FROM archivo WHERE subido_por = $1 AND entidad IS NULL`,
+    [actor.id],
+  );
+  if (
+    r &&
+    (r.cantidad >= MAX_PENDIENTES_POR_PERSONA ||
+      Number(r.bytes) >= MAX_BYTES_PENDIENTES_POR_PERSONA)
+  ) {
+    throw new ErrorApp(
+      'CUPO_ARCHIVOS_PENDIENTES',
+      'Tienes demasiados archivos sin asociar. Adjúntalos a un ticket o quita algunos antes de subir más.',
+    );
+  }
+}
 
 export interface ArchivoSubido {
   path: string;

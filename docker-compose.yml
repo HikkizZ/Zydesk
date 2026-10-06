@@ -65,7 +65,7 @@ services:
       DEMO_PASSWORD: ${DEMO_PASSWORD:-}
     volumes:
       - ${DATOS_DIR:-/srv/data/zydesk}/archivos:/datos/archivos
-    tmpfs: [/tmp]
+    tmpfs: [/tmp:size=256m]
     read_only: true
     networks: [interna]
     depends_on:
