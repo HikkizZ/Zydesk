@@ -845,4 +845,43 @@ _(Se completa durante la fase: commits por bloque, respuestas a §19, desviacion
 - **B7 aprobada**: la historia de §11.3 está aprobada tal cual, con cuentas `@demo.zytech.dev` y contactos `.test`. F9-T10 ya puede implementarse.
 - Las preguntas no bloqueantes (B9–B22) se implementan con la recomendación si el usuario no dice otra cosa (regla acordada desde la Fase 7).
 - **Siguiente**: implementar por bloques según el plan aprobado por el usuario (§16, con los ajustes de §19).
+
+### Avance de la implementación (2026-10-05)
+
+**Entorno local.** En este PC, Smart App Control de Windows bloquea el binario nativo de `argon2`. La API, `db:*` y sus tests no corren en Windows. Se corren en un contenedor `node:22-alpine` con el repo montado y `node_modules` de Linux en volúmenes; `socat` reenvía `localhost:5433` a `zydesk-postgres-dev`. No se cambió nada de la configuración de Windows. Shared, web, bot, typecheck, lint y build sí corren en Windows.
+
+**Hecho y commiteado** (local, sin push):
+
+| Tarea | Commits | Notas |
+| --- | --- | --- |
+| F9-T1, versión 1.0.0 | `7a73ee5`, `c4385b2` | ADR 0032. `version:fijar` es un script que solo edita los campos `version`: no regenera el lock, porque npm en Windows poda entradas opcionales. CHANGELOG `[1.0.0]` con fecha provisional, que se fija en F9-T18 |
+| F9-T2 y F9-T3, imágenes | `85566f9`, `26e3ff2`, `c0530eb` | Tamaños: api 445 MB, web 85 MB, bot 287 MB. Superan la referencia porque `node:22-alpine` pesa 237 MB; no bloquea. nginx de la web con `resolver 127.0.0.11` y `proxy_pass` por variable. Dependencias de producción con `npm ci --omit=dev -w` por workspace |
+| F9-T10, semilla de demo | `330309f`, `2a7b8ed` | La imagen de la API copia `semillas/demo/archivos` a `dist`. Base vacía permitida sin `--reiniciar` |
+| F9-T6 y F9-T7, CI/CD | `15f3f92`, `58ff168` | Acciones v7 y v4/v6 fijadas por SHA. Imágenes en `ghcr.io/hikkizz/` |
+| F9-T11, versión en el pie | `6e44ef0` | La versión se lee de `/api/salud` |
+| F9-T4 y F9-T5, Compose y VPS | `1ebe231`, `040731f`, `daf1569`, `db8b920` | Ensayo local completo de §8.3 en 39 s |
+
+**Desviaciones de la semilla de demo** (para ADR 0031):
+
+- Las horas facturables a 90 días son 50 %, no 55–65 %: las OT cerradas de la historia son chicas.
+- La cotización sin IVA está en la OT de la Panadería, no en la del Colegio: el Colegio solo tiene una OT interna.
+- "En espera interno" se sembró como `aprobacion`.
+- Las fotos son PNG sintéticos de unos 17 KB en total.
+
+**Desviaciones del Compose y los scripts del VPS** (para ADR 0031 y §8):
+
+- **Respaldo con dueños y permisos.** El `pg_dump` conserva dueños y permisos (sin `--no-owner --no-acl`). Con esas opciones la API no arrancaba tras restaurar: las tablas de pg-boss son de `zydesk_app` y los `REVOKE` de `evento` y `auditoria` viven en las ACL.
+- **Permisos de `respaldos/`.** Queda como `root:zydesk-deploy 710`, para que `desplegar.sh` pueda dejar su respaldo previo.
+- **`desplegar.sh`:**
+  - Hace `up -d --wait zydesk-db` antes de migrar.
+  - Se niega a correr como root.
+- **Variables y `.env`:**
+  - La variable del destino remoto es `RCLONE_DESTINO`.
+  - La API y el bot reciben del `.env` solo las variables que usan.
+  - `.env.produccion.example` lleva los comentarios en líneas aparte.
+- **Timers.** Los de logs y errores también son de systemd.
+- **Bot.** El bot acepta `http://zydesk-api…` como dirección interna.
+- **Pruebas.** `probar-imagenes.sh` usa un host de base no local, porque las reglas de producción de `env.ts` rechazan `localhost`.
+
+**Pendiente:** F9-T8 (documentación, Fable), la ronda 4 en el VPS con el usuario (F9-T12, T13, T14, T16 y T17) y la ronda 5 (F9-T15, seguridad; F9-T18, ADR 0031, PR y `v1.0.0`).
 - Reglas de trabajo vigentes: responder al usuario siempre en español; commits con `/conventional-commit` en español, sin `Co-Authored-By`; push y PR solo con confirmación explícita; revisión de seguridad de cierre (Fable + `/security-review`) antes del PR.
