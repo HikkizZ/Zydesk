@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2015  # «cond && ok || fallo»: ok y fallo nunca fallan, es el patrón de los asertos
 # Prueba de humo de las imágenes (Fase 9, §4.5). Sin BD; corre en local (Git Bash/WSL) y en CI.
 # Uso: docker/probar-imagenes.sh   (desde cualquier carpeta; construye con la raíz del repo)
 set -euo pipefail
@@ -31,7 +32,7 @@ comprobar "server.js y términos de uso" docker run --rm zydesk-api:prueba \
   node -e "require('fs').accessSync('apps/api/dist/server.js'); require('fs').accessSync('docs/legal/terminos-de-uso.md')"
 
 echo "3. CLI de la API (sin conectar a la BD)"
-AYUDA="$(docker run --rm -e DATABASE_URL=postgres://x:y@localhost:1/z zydesk-api:prueba node apps/api/dist/database/cli.js --help 2>&1 || true)"
+AYUDA="$(docker run --rm -e DATABASE_URL=postgres://x:y@zydesk-db-inexistente:1/z zydesk-api:prueba node apps/api/dist/database/cli.js --help 2>&1 || true)"
 for orden in migrar admin sembrar reiniciar openapi; do
   if grep -q "$orden" <<<"$AYUDA"; then ok "cli lista $orden"; else fallo "cli lista $orden"; fi
 done
@@ -39,7 +40,7 @@ done
 # `demo` (bloque 9E) es obligatorio desde F9-T10
 comprobar "cli lista demo" grep -q "demo" <<<"$AYUDA"
 comprobar "entrypoint: 'migrar' llega al CLI" bash -c \
-  "docker run --rm -e DATABASE_URL=postgres://x:y@localhost:1/z zydesk-api:prueba migrar --help 2>&1 | grep -qi 'migraciones'"
+  "docker run --rm -e DATABASE_URL=postgres://x:y@zydesk-db-inexistente:1/z zydesk-api:prueba migrar --help 2>&1 | grep -qi 'migraciones'"
 
 echo "4. Usuario sin root"
 [ "$(docker run --rm zydesk-api:prueba id -u)" = "1000" ] && ok "api uid 1000" || fallo "api uid 1000"
@@ -47,7 +48,7 @@ echo "4. Usuario sin root"
 [ "$(docker run --rm zydesk-bot:prueba id -u)" = "1000" ] && ok "bot uid 1000" || fallo "bot uid 1000"
 
 echo "5. La API termina si no hay base de datos"
-SALIDA="$(docker run --rm -e DATABASE_URL=postgres://x:y@localhost:1/z zydesk-api:prueba \
+SALIDA="$(docker run --rm -e DATABASE_URL=postgres://x:y@zydesk-db-inexistente:1/z zydesk-api:prueba \
   node apps/api/dist/server.js 2>&1)" && CODIGO=0 || CODIGO=$?
 if [ "$CODIGO" -ne 0 ] && grep -q "no se pudo conectar a la base de datos" <<<"$SALIDA"; then
   ok "salida $CODIGO con el log esperado"
