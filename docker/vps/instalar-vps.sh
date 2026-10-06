@@ -55,10 +55,10 @@ done
   error 'corre como root'
   exit 1
 }
-[ -n "$LLAVE_ARCHIVO" ] && [ -f "$LLAVE_ARCHIVO" ] || {
+if [ -z "$LLAVE_ARCHIVO" ] || [ ! -f "$LLAVE_ARCHIVO" ]; then
   error 'falta --llave con el archivo de la clave pública ssh-ed25519'
   exit 2
-}
+fi
 LLAVE="$(head -n 1 "$LLAVE_ARCHIVO")"
 printf '%s\n' "$LLAVE" | grep -Eq '^ssh-ed25519 [A-Za-z0-9+/=]+( [^"]*)?$' || {
   error 'la llave debe ser una línea «ssh-ed25519 AAAA… comentario» (clave PÚBLICA)'

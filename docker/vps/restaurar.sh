@@ -32,7 +32,7 @@ uso() {
   exit 2
 }
 
-[ "$#" -ge 1 ] && [ "$#" -le 2 ] || uso
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ]; then uso; fi
 ARCHIVO="$1"
 MODO=todo
 if [ "$#" -eq 2 ]; then
