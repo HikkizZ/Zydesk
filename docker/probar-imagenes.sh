@@ -36,8 +36,8 @@ for orden in migrar admin sembrar reiniciar openapi; do
   if grep -q "$orden" <<<"$AYUDA"; then ok "cli lista $orden"; else fallo "cli lista $orden"; fi
 done
 # (la configuración se valida al importar el CLI, por eso lleva una DATABASE_URL falsa)
-# `demo` llega con el bloque 9E: se avisa pero no falla mientras no exista
-if grep -q "demo" <<<"$AYUDA"; then ok "cli lista demo"; else echo "  aviso cli aún no lista demo (bloque 9E)"; fi
+# `demo` (bloque 9E) es obligatorio desde F9-T10
+comprobar "cli lista demo" grep -q "demo" <<<"$AYUDA"
 comprobar "entrypoint: 'migrar' llega al CLI" bash -c \
   "docker run --rm -e DATABASE_URL=postgres://x:y@localhost:1/z zydesk-api:prueba migrar --help 2>&1 | grep -qi 'migraciones'"
 
@@ -79,6 +79,8 @@ done
 echo "8. Contenido de la imagen de la API"
 comprobar "sin .env, sin src y sin manuales" docker run --rm zydesk-api:prueba \
   sh -c 'ls /app; test ! -e /app/.env; test ! -d /app/apps/api/src; test ! -d /app/docs/manuales'
+comprobar "archivos de ejemplo de la demo en la imagen" docker run --rm zydesk-api:prueba \
+  sh -c 'test -s /app/apps/api/dist/database/semillas/demo/archivos/foto-rack-rancagua.png && ls /app/apps/api/dist/database/semillas/demo/archivos | grep -q ".eml$"'
 
 echo
 if [ "$FALLOS" -eq 0 ]; then echo "Imágenes: todo verde"; else echo "Imágenes: $FALLOS fallo(s)"; exit 1; fi

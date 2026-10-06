@@ -32,6 +32,8 @@ COPY --from=build --chown=node:node /app/packages/shared/package.json ./packages
 COPY --from=build --chown=node:node /app/packages/shared/dist ./packages/shared/dist
 COPY --from=build --chown=node:node /app/apps/api/package.json ./apps/api/package.json
 COPY --from=build --chown=node:node /app/apps/api/dist ./apps/api/dist
+# Archivos de ejemplo de la demo (PNG y EML): tsc no los copia a dist (F9-T10)
+COPY --chown=node:node apps/api/src/database/semillas/demo/archivos ./apps/api/dist/database/semillas/demo/archivos
 COPY --chown=node:node docs/legal ./docs/legal
 COPY --chmod=755 docker/entrypoint-api.sh /usr/local/bin/entrypoint-api
 RUN mkdir -p /datos/archivos && chown -R node:node /datos
