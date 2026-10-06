@@ -112,9 +112,13 @@ export function advertenciaApiUrl(apiUrl: string): string | null {
   if (u.hostname === 'desk.zytech.dev') {
     return 'API_URL apunta al dominio público; usa la dirección interna de la API';
   }
-  const interna = u.hostname === 'api' || u.hostname === 'localhost' || u.hostname === '127.0.0.1';
+  const interna =
+    u.hostname === 'api' ||
+    u.hostname === 'zydesk-api' ||
+    u.hostname === 'localhost' ||
+    u.hostname === '127.0.0.1';
   if (u.protocol === 'http:' && !interna) {
-    return 'API_URL debe ser http://api… o https://';
+    return 'API_URL debe ser http://zydesk-api… (o http://api…) o https://';
   }
   return null;
 }
