@@ -90,6 +90,26 @@ const esquema = z
         message: 'obligatoria con NODE_ENV=test',
       });
     }
+    if (v.NODE_ENV === 'production') {
+      // Spec fase 9 §5.3: la API no arranca en producción con la configuración de desarrollo.
+      if (
+        ['localhost', '127.0.0.1', '[::1]'].includes(new URL(v.DATABASE_URL).hostname) ||
+        v.DATABASE_URL.includes('zydesk_app:zydesk_app')
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['DATABASE_URL'],
+          message: 'en producción no puede apuntar a localhost ni usar la contraseña de desarrollo',
+        });
+      }
+      if (v.LOG_LEVEL === 'debug') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['LOG_LEVEL'],
+          message: 'en producción no puede ser debug',
+        });
+      }
+    }
     if (v.TELEGRAM_BOT_TOKEN) {
       if (!v.BOT_API_KEY) {
         ctx.addIssue({

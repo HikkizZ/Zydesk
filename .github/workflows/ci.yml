@@ -100,6 +100,10 @@ jobs:
             echo "docker/vps/desplegar.test.sh aún no existe (F9-T5)"
           fi
 
+      # Spec fase 9 §5.2 y §9.3: 01-roles.sh contra un postgres:16-alpine efímero (docker run, sin el service del job)
+      - name: Roles de producción (01-roles.sh)
+        run: bash docker/postgres-init-prod/probar-roles.sh
+
       - name: Navegador para Playwright
         run: npx playwright install --with-deps chromium
 

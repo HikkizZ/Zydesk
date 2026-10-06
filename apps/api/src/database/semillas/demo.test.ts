@@ -110,9 +110,9 @@ describe('db:demo: guardas', () => {
             env: {
               PATH: process.env['PATH'] ?? '',
               TZ: 'UTC',
-              // base inalcanzable: si intentara conectar, fallaría con otro mensaje
-              DATABASE_URL: 'postgres://u:p@127.0.0.1:1/inexistente',
-              DATABASE_URL_OWNER: 'postgres://u:p@127.0.0.1:1/inexistente',
+              // base inalcanzable y no local (en producción env.ts rechaza localhost): si intentara conectar, fallaría con otro mensaje
+              DATABASE_URL: 'postgres://u:p@zydesk-db-inexistente:1/inexistente',
+              DATABASE_URL_OWNER: 'postgres://u:p@zydesk-db-inexistente:1/inexistente',
               ...extra,
             },
             encoding: 'utf8',
