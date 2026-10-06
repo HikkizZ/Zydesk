@@ -33,11 +33,11 @@ jobs:
           --health-timeout 3s
           --health-retries 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version-file: .nvmrc
           cache: npm
@@ -71,8 +71,34 @@ jobs:
       - name: Tests
         run: npm test
 
+      - name: Scripts de versión
+        run: npm run test:scripts
+
       - name: Build
         run: npm run build
+
+      # Imágenes de producción (§9.3): se construyen y se prueban, no se publican (sin login).
+      # docker/probar-imagenes.sh usa `docker build`, que con buildx instalado usa su caché local.
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Imágenes
+        run: bash docker/probar-imagenes.sh
+
+      - name: Scripts del VPS (shellcheck)
+        run: |
+          if ! command -v shellcheck >/dev/null; then
+            sudo apt-get update && sudo apt-get install -y shellcheck
+          fi
+          find docker -name '*.sh' -print0 | xargs -0 shellcheck
+
+      # F9-T5: desplegar.test.sh lo agrega el bloque 9C; el paso se salta mientras no exista.
+      - name: Scripts del VPS (desplegar.test.sh)
+        run: |
+          if [ -f docker/vps/desplegar.test.sh ]; then
+            bash docker/vps/desplegar.test.sh
+          else
+            echo "docker/vps/desplegar.test.sh aún no existe (F9-T5)"
+          fi
 
       - name: Navegador para Playwright
         run: npx playwright install --with-deps chromium
@@ -83,7 +109,7 @@ jobs:
       - name: Pruebas móviles (Playwright)
         run: npm run test:movil
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         if: failure()
         with:
           name: informe-playwright
