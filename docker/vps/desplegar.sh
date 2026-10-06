@@ -180,7 +180,9 @@ fi
 
 # --- 6. Imágenes (públicas en GHCR: sin login) ---
 msg 'descargando imágenes'
-if ! dc pull --quiet; then
+# El .env todavía tiene la versión anterior (se fija en el paso 8, después de detener la API): la etiqueta
+# nueva se pasa solo a este pull, en una subshell, porque el entorno manda sobre --env-file
+if ! (ZYDESK_VERSION="$ETIQUETA" && export ZYDESK_VERSION && dc pull --quiet); then
   revertir 'no se pudieron descargar las imágenes'
 fi
 

@@ -48,7 +48,12 @@ docker() {
       [ -n "${SIM_FALLA_DUMP:-}" ] && return 1
       echo 'volcado-falso'
       ;;
-    *"pull --quiet") [ -z "${SIM_FALLA_PULL:-}" ] || return 1 ;;
+    *"pull --quiet")
+      # versión con la que Compose resolvería las imágenes: el entorno manda sobre el .env
+      printf '%s\n' "${ZYDESK_VERSION:-$(sed -n 's/^ZYDESK_VERSION=//p' "$ZYDESK_RAIZ/.env" | tail -n 1)}" \
+        >"$ZYDESK_RAIZ/version-pull"
+      [ -z "${SIM_FALLA_PULL:-}" ] || return 1
+      ;;
     *"run --rm --no-deps zydesk-api migrar") [ -z "${SIM_FALLA_MIGRAR:-}" ] || return 1 ;;
     *"exec -T zydesk-web wget"*)
       actual="$(sed -n 's/^ZYDESK_VERSION=//p' "$ZYDESK_RAIZ/.env" | tail -n 1)"
@@ -173,10 +178,12 @@ if [ "$(grep -c '' "$RAIZ/.env")" -eq 12 ]; then ok ".env: solo cambió la líne
 if [ "$(ls "$RAIZ"/datos/respaldos/pre-despliegue/*.dump | wc -l)" -eq 5 ]; then ok "pre-despliegue: se conservan 5 volcados (6 viejos + 1 nuevo)"; else fallo "pre-despliegue: se conservan 5 volcados (6 viejos + 1 nuevo)"; fi
 if sin_secretos "$RAIZ"; then ok "salida y registro sin secretos del .env"; else fallo "salida y registro sin secretos del .env"; fi
 if printf '%s\n' "$SALIDA" | grep -q 'desplegado v1.0.1'; then ok "la salida informa el resultado"; else fallo "la salida informa el resultado"; fi
+if [ "$(cat "$RAIZ/version-pull" 2>/dev/null)" = "v1.0.1" ]; then ok "el pull usa la etiqueta nueva, no la del .env"; else fallo "el pull usa la etiqueta nueva, no la del .env ($(cat "$RAIZ/version-pull" 2>/dev/null))"; fi
 
 echo "4. Primer despliegue (sin versión anterior): sin volcado previo"
 preparar ''
 ejecutar "$RAIZ" v1.0.0-rc.1 ssh
+if [ "$(cat "$RAIZ/version-pull" 2>/dev/null)" = "v1.0.0-rc.1" ]; then ok "primer despliegue: el pull usa la etiqueta (el .env está vacío)"; else fallo "primer despliegue: el pull usa la etiqueta ($(cat "$RAIZ/version-pull" 2>/dev/null))"; fi
 registro "$RAIZ" | grep -q pg_dump && fallo "no debe hacer pg_dump" || ok "sin pg_dump"
 if [ "$CODIGO" -eq 0 ] && grep -qx 'ZYDESK_VERSION=v1.0.0-rc.1' "$RAIZ/.env"; then ok "despliega y fija la versión"; else fallo "despliega y fija la versión"; fi
 
