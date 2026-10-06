@@ -1,0 +1,178 @@
+# Despliegue (ADR 0020, opción B; Fase 9 §9.1): etiqueta vX.Y.Z[-rc.N] -> imágenes en GHCR -> SSH a
+# `zydesk-deploy` en el VPS (comando forzado). Repositorio público: sin pull_request_target, sin runner
+# self-hosted, permisos mínimos por job y acciones fijadas por SHA de commit (el tag va como comentario).
+# El aviso por Telegram lo envía desplegar.sh desde el VPS: este workflow no tiene ningún token de Telegram.
+name: Desplegar
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      etiqueta:
+        description: 'Etiqueta vX.Y.Z[-rc.N] ya existente (una antigua = rollback)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desplegar
+  cancel-in-progress: false
+
+jobs:
+  verificar-etiqueta:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+    outputs:
+      etiqueta: ${{ steps.verificar.outputs.etiqueta }}
+      sha: ${{ steps.verificar.outputs.sha }}
+    steps:
+      - name: Validar etiqueta y exigir CI verde del commit
+        id: verificar
+        env:
+          # Origen no confiable: solo viaja por variables de entorno, nunca interpolada en el shell.
+          ETIQUETA: ${{ github.event_name == 'workflow_dispatch' && inputs.etiqueta || github.ref_name }}
+          REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "$ETIQUETA" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+(-rc\.[0-9]+)?$'; then
+            echo "::error::Etiqueta inválida (se espera vX.Y.Z o vX.Y.Z-rc.N)"
+            exit 1
+          fi
+
+          # La etiqueta debe existir; si es anotada se toma el commit al que apunta (^{}).
+          REFS="$(git ls-remote "https://github.com/${REPO}.git" "refs/tags/${ETIQUETA}" "refs/tags/${ETIQUETA}^{}")"
+          SHA="$(printf '%s\n' "$REFS" | awk '/\^\{\}$/ {print $1}')"
+          if [ -z "$SHA" ]; then
+            SHA="$(printf '%s\n' "$REFS" | awk 'NR==1 {print $1}')"
+          fi
+          if ! printf '%s' "$SHA" | grep -Eq '^[0-9a-f]{40}$'; then
+            echo "::error::La etiqueta no existe en el repositorio"
+            exit 1
+          fi
+          echo "Commit etiquetado: ${SHA}"
+
+          # El workflow CI del commit etiquetado debe haber terminado en success (espera hasta 20 min
+          # si todavía corre, porque el flujo documentado sube la rama y la etiqueta juntas).
+          for _ in $(seq 1 40); do
+            RUNS="$(gh api "repos/${REPO}/actions/workflows/ci.yml/runs?head_sha=${SHA}&per_page=100")"
+            EXITOS="$(jq '[.workflow_runs[] | select(.conclusion == "success")] | length' <<<"$RUNS")"
+            PENDIENTES="$(jq '[.workflow_runs[] | select(.status != "completed")] | length' <<<"$RUNS")"
+            if [ "$EXITOS" -gt 0 ]; then
+              echo "CI verde para ${SHA}"
+              {
+                echo "etiqueta=${ETIQUETA}"
+                echo "sha=${SHA}"
+              } >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$PENDIENTES" -eq 0 ]; then
+              echo "::error::El CI del commit etiquetado no terminó en success"
+              exit 1
+            fi
+            echo "CI en curso; se vuelve a consultar en 30 s"
+            sleep 30
+          done
+          echo "::error::El CI del commit etiquetado no terminó a tiempo"
+          exit 1
+
+  imagenes:
+    needs: verificar-etiqueta
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      packages: write
+    strategy:
+      fail-fast: true
+      matrix:
+        imagen: [api, web, bot]
+    env:
+      ETIQUETA: ${{ needs.verificar-etiqueta.outputs.etiqueta }}
+      COMMIT: ${{ needs.verificar-etiqueta.outputs.sha }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.verificar-etiqueta.outputs.sha }}
+          persist-credentials: false
+
+      - name: Nombre de la imagen (GHCR exige minúsculas)
+        id: nombre
+        run: |
+          {
+            echo "imagen=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/zydesk-${{ matrix.imagen }}"
+            echo "corto=${COMMIT:0:7}"
+          } >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ${{ steps.nombre.outputs.imagen }}
+          # `sha-<7>` y `revision` salen del commit etiquetado, no de GITHUB_SHA (en workflow_dispatch
+          # GITHUB_SHA es la punta de la rama, no la etiqueta).
+          tags: |
+            type=raw,value=${{ needs.verificar-etiqueta.outputs.etiqueta }}
+            type=raw,value=sha-${{ steps.nombre.outputs.corto }}
+          labels: |
+            org.opencontainers.image.revision=${{ needs.verificar-etiqueta.outputs.sha }}
+            org.opencontainers.image.version=${{ needs.verificar-etiqueta.outputs.etiqueta }}
+
+      - uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          file: docker/${{ matrix.imagen }}.Dockerfile
+          push: true
+          provenance: false
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=${{ matrix.imagen }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.imagen }}
+
+  desplegar:
+    needs: [verificar-etiqueta, imagenes]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    # Revisor obligatorio (el usuario) y los tres secretos viven solo en este environment.
+    environment: produccion
+    permissions: {}
+    env:
+      ETIQUETA: ${{ needs.verificar-etiqueta.outputs.etiqueta }}
+    steps:
+      - name: Desplegar por SSH (comando forzado, solo viaja la etiqueta)
+        env:
+          DEPLOY_SSH_KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
+          DEPLOY_KNOWN_HOSTS: ${{ secrets.DEPLOY_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          umask 077
+          mkdir -p "$RUNNER_TEMP/ssh"
+          printf '%s\n' "$DEPLOY_SSH_KEY" > "$RUNNER_TEMP/ssh/llave"
+          printf '%s\n' "$DEPLOY_KNOWN_HOSTS" > "$RUNNER_TEMP/ssh/known_hosts"
+          ssh \
+            -o StrictHostKeyChecking=yes \
+            -o BatchMode=yes \
+            -o IdentitiesOnly=yes \
+            -o UserKnownHostsFile="$RUNNER_TEMP/ssh/known_hosts" \
+            -i "$RUNNER_TEMP/ssh/llave" \
+            "zydesk-deploy@${DEPLOY_HOST}" "$ETIQUETA"
+
+      - name: Borrar la llave
+        if: always()
+        run: |
+          shred -u "$RUNNER_TEMP/ssh/llave" 2>/dev/null || rm -f "$RUNNER_TEMP/ssh/llave"
+          rm -f "$RUNNER_TEMP/ssh/known_hosts"
