@@ -58,6 +58,18 @@ jobs:
           fi
           echo "Commit etiquetado: ${SHA}"
 
+          # La versión de los package.json del commit debe ser la de la etiqueta: la API la informa en
+          # /api/salud y desplegar.sh la exige. Falla aquí, antes de construir imágenes y tocar el VPS.
+          ESPERADA="${ETIQUETA#v}"
+          for PAQUETE in package.json apps/api/package.json apps/web/package.json apps/bot/package.json packages/shared/package.json; do
+            VERSION="$(gh api "repos/${REPO}/contents/${PAQUETE}?ref=${SHA}" --jq '.content' | base64 -d | jq -r '.version')"
+            if [ "$VERSION" != "$ESPERADA" ]; then
+              echo "::error::${PAQUETE} tiene la versión ${VERSION} y la etiqueta pide ${ESPERADA} (npm run version:fijar)"
+              exit 1
+            fi
+          done
+          echo "Versión de los paquetes: ${ESPERADA}"
+
           # El workflow CI del commit etiquetado debe haber terminado en success (espera hasta 20 min
           # si todavía corre, porque el flujo documentado sube la rama y la etiqueta juntas).
           for _ in $(seq 1 40); do
