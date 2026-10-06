@@ -139,3 +139,28 @@ describe('cargarEnv (Fase 6: Telegram)', () => {
     );
   });
 });
+
+describe('cargarEnv (Fase 9: semilla de demo)', () => {
+  const base = { DATABASE_URL: URL_BD };
+
+  it('ZYDESK_DEMO es false por defecto y con valor vacío; "true" es true', () => {
+    expect(cargarEnv(base).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: '' }).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: 'false' }).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: 'true' }).ZYDESK_DEMO).toBe(true);
+    expect(() => cargarEnv({ ...base, ZYDESK_DEMO: 'si' })).toThrow(/ZYDESK_DEMO/);
+  });
+
+  it('DEMO_PASSWORD y ZYDESK_DEMO_CONFIRMAR vacíos son undefined', () => {
+    const e = cargarEnv({ ...base, DEMO_PASSWORD: '', ZYDESK_DEMO_CONFIRMAR: '' });
+    expect(e.DEMO_PASSWORD).toBeUndefined();
+    expect(e.ZYDESK_DEMO_CONFIRMAR).toBeUndefined();
+    const f = cargarEnv({
+      ...base,
+      DEMO_PASSWORD: 'Clave.Demo.2026',
+      ZYDESK_DEMO_CONFIRMAR: 'zydesk',
+    });
+    expect(f.DEMO_PASSWORD).toBe('Clave.Demo.2026');
+    expect(f.ZYDESK_DEMO_CONFIRMAR).toBe('zydesk');
+  });
+});

@@ -47,6 +47,13 @@ const esquema = z
       .transform((v) => v === 'true'),
     ADMIN_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
     SEMILLA_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
+    // Semilla de demo (spec fase 9 §11): sin ZYDESK_DEMO=true el comando `demo` se niega a correr; `--reiniciar`
+    // exige además ZYDESK_DEMO_CONFIRMAR con el nombre de la base. Nunca con valores en una instalación real.
+    ZYDESK_DEMO: z
+      .preprocess(vacioAUndefined, z.enum(['true', 'false']).default('false'))
+      .transform((v) => v === 'true'),
+    DEMO_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
+    ZYDESK_DEMO_CONFIRMAR: z.preprocess(vacioAUndefined, z.string().optional()),
     // Telegram (spec fase 6 §9.1): sin token el canal queda `omitido / sin_token`. Nunca en el repo ni en logs.
     TELEGRAM_BOT_TOKEN: z.preprocess(vacioAUndefined, z.string().optional()),
     // @usuario del bot (sin `@`): arma el enlace `https://t.me/<usuario>?start=<código>` en el servidor.

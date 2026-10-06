@@ -63,6 +63,11 @@ programa
   .command('sembrar')
   .description('Siembra datos de desarrollo, idempotente (lee SEMILLA_PASSWORD)')
   .action(async () => {
+    const { env } = await import('../config/env.js');
+    if (env.NODE_ENV === 'production') {
+      logger.error('db:sembrar no está permitido en producción');
+      process.exit(1);
+    }
     const { sembrarTodo } = await import('./semillas/cargar.js');
     await sembrarTodo();
   });
@@ -73,6 +78,20 @@ programa
   .action(async () => {
     const { reiniciarDesarrollo } = await import('./semillas/cargar.js');
     await reiniciarDesarrollo();
+  });
+
+programa
+  .command('demo')
+  .description(
+    'Siembra la demo con datos ficticios, idempotente (exige ZYDESK_DEMO=true y DEMO_PASSWORD; spec fase 9 §11)',
+  )
+  .option(
+    '--reiniciar',
+    'vacía TODA la base (también cuentas reales) y vuelve a sembrar; exige ZYDESK_DEMO_CONFIRMAR=<base>',
+  )
+  .action(async (opciones: { reiniciar?: boolean }) => {
+    const { ejecutarDemo } = await import('./semillas/demo/cargar.js');
+    await ejecutarDemo({ reiniciar: opciones.reiniciar === true });
   });
 
 programa
