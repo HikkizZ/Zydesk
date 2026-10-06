@@ -113,6 +113,8 @@ describe('db:demo: guardas', () => {
               // base inalcanzable y no local (en producción env.ts rechaza localhost): si intentara conectar, fallaría con otro mensaje
               DATABASE_URL: 'postgres://u:p@zydesk-db-inexistente:1/inexistente',
               DATABASE_URL_OWNER: 'postgres://u:p@zydesk-db-inexistente:1/inexistente',
+              // el .env local del desarrollador puede traer WEB_URL http://localhost, que producción rechaza antes de la guarda
+              WEB_URL: 'https://zydesk.invalid',
               ...extra,
             },
             encoding: 'utf8',
