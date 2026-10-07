@@ -66,31 +66,43 @@ Para correr los tests sin pisar otra ejecución en paralelo, crea una base propi
 
 Las fotos, documentos y correos de los tickets y de las órdenes de trabajo se guardan en disco en `ARCHIVOS_DIR` (por defecto `./datos/archivos`, carpeta ignorada por git). Respáldala junto con la base de datos. Más detalles en la sección 12 del [manual de administración](docs/manuales/administracion.md).
 
+## Producción
+
+`docker-compose.yml` (raíz) es el Compose de **producción**: `zydesk-db`, `zydesk-api`, `zydesk-web` (nginx sin privilegios en el 8080) y `zydesk-bot` (perfil `bot`), con las imágenes publicadas en `ghcr.io/hikkizz/zydesk-{api,web,bot}:<etiqueta>` por el workflow `Desplegar` (etiquetas `vX.Y.Z` y `vX.Y.Z-rc.N`, ADR 0032). `docker-compose.dev.yml` es solo el Postgres de desarrollo. Los Dockerfiles están en `docker/`, los scripts del servidor en `docker/vps/` y las variables en `.env.produccion.example`.
+
+- [Guía de instalación (producción, portátil)](docs/despliegue.md): requisitos, secretos, primer arranque, actualización y rollback, respaldos, operación.
+- [La demo en el VPS](docs/demo.md): lo que se ejecuta en la Fase 9 con datos ficticios (`npm run db:demo`).
+
+Scripts de la Fase 9: `npm run db:demo` carga la semilla de la demo (solo con `ZYDESK_DEMO=true` y `DEMO_PASSWORD`; `-- --reiniciar` vacía la base y exige `ZYDESK_DEMO_CONFIRMAR`), `npm run version:fijar -- X.Y.Z` fija la versión en los cinco `package.json` y el lock, `npm run test:scripts` prueba ese script.
+
 ## Integración continua
 
-El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `build`, la auditoría móvil (`npx playwright install --with-deps chromium`, migraciones y semillas, `npm run test:movil`; si falla, sube el informe HTML como artefacto `informe-playwright`) y `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
+El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` de una rama (no en los `push` de etiquetas) y en cada PR hacia `main`, en un job llamado `verificar` sobre `ubuntu-24.04`. Levanta un Postgres 16 (puerto 5433), ejecuta `docker/postgres-init/01-roles.sql` con `psql` y luego, en este orden: `npm ci`, `typecheck`, `lint`, `format:check`, `test`, `test:scripts`, `build`, la auditoría móvil (`npx playwright install --with-deps chromium`, migraciones y semillas, `npm run test:movil`; si falla, sube el informe HTML como artefacto `informe-playwright`), `npm run api:openapi` seguido de `git diff --exit-code docs/api/openapi.json` (si falla, regenera el archivo con `npm run api:openapi` y súbelo), la construcción y prueba de las tres imágenes (`docker/probar-imagenes.sh`, sin publicar), `shellcheck` de los `.sh` de `docker/`, `desplegar.test.sh`, `probar-roles.sh` y `compose.test.sh`. El workflow `Desplegar` (`desplegar.yml`) corre con cada etiqueta `v*`: exige el CI verde del commit y que los cinco `package.json` lleven la versión de la etiqueta, publica las imágenes en GHCR y despliega en el VPS tras la aprobación del environment `produccion` (ADR 0031 y 0032). El `.env` se genera desde `.env.example` con contraseñas de prueba; no usa secretos. El repositorio es público: las acciones de terceros van fijadas por SHA de commit (el tag queda como comentario) y hay que actualizarlas a mano. Para que un PR no pueda mezclarse con el CI en rojo, en GitHub: Settings > Branches > regla para `main` > "Require status checks to pass" > `verificar`.
 
 ## Scripts de la raíz
 
-| Script                  | Qué hace                                                                                        |
-| ----------------------- | ----------------------------------------------------------------------------------------------- |
-| `npm run dev`           | Compila `shared` y levanta shared (watch), API, web y bot                                       |
-| `npm run build`         | Compila los cuatro paquetes                                                                     |
-| `npm test`              | Corre los tests de los cuatro paquetes                                                          |
-| `npm run typecheck`     | Compila `shared` y revisa tipos en los cuatro paquetes                                          |
-| `npm run lint`          | ESLint                                                                                          |
-| `npm run format`        | Prettier (escribe)                                                                              |
-| `npm run format:check`  | Prettier (solo revisa)                                                                          |
-| `npm run clean`         | Borra los `dist/` de los cuatro paquetes                                                        |
-| `npm run db:migrar`     | Aplica las migraciones pendientes (como `zydesk_owner`)                                         |
-| `npm run db:revertir`   | Revierte la última migración (`-- --todo` las revierte todas)                                   |
-| `npm run db:admin`      | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`) |
-| `npm run db:sembrar`    | Carga datos de ejemplo (lee `SEMILLA_PASSWORD`)                                                 |
-| `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar (no migra: antes `db:migrar`)                 |
-| `npm run db:test:crear` | Crea una base de test propia (`-- <sufijo>`); usarla con `TEST_BD_SUFIJO=<sufijo>`              |
-| `npm run api:openapi`   | Regenera `docs/api/openapi.json`                                                                |
-| `npm run test:movil`    | Auditoría móvil con Playwright + axe (Chromium; requiere `npx playwright install chromium`)     |
-| `npm run docs:capturas` | Regenera las capturas de los manuales en `docs/manuales/img/` (solo local, solo semillas)       |
+| Script                  | Qué hace                                                                                         |
+| ----------------------- | ------------------------------------------------------------------------------------------------ |
+| `npm run dev`           | Compila `shared` y levanta shared (watch), API, web y bot                                        |
+| `npm run build`         | Compila los cuatro paquetes                                                                      |
+| `npm test`              | Corre los tests de los cuatro paquetes                                                           |
+| `npm run typecheck`     | Compila `shared` y revisa tipos en los cuatro paquetes                                           |
+| `npm run lint`          | ESLint                                                                                           |
+| `npm run format`        | Prettier (escribe)                                                                               |
+| `npm run format:check`  | Prettier (solo revisa)                                                                           |
+| `npm run clean`         | Borra los `dist/` de los cuatro paquetes                                                         |
+| `npm run db:migrar`     | Aplica las migraciones pendientes (como `zydesk_owner`)                                          |
+| `npm run db:revertir`   | Revierte la última migración (`-- --todo` las revierte todas)                                    |
+| `npm run db:admin`      | Crea la primera cuenta de Administración (`-- --correo ... --nombre ...`; lee `ADMIN_PASSWORD`)  |
+| `npm run db:sembrar`    | Carga datos de ejemplo (lee `SEMILLA_PASSWORD`)                                                  |
+| `npm run db:reiniciar`  | Vacía la base de desarrollo y la vuelve a sembrar (no migra: antes `db:migrar`)                  |
+| `npm run db:test:crear` | Crea una base de test propia (`-- <sufijo>`); usarla con `TEST_BD_SUFIJO=<sufijo>`               |
+| `npm run db:demo`       | Carga la semilla de la demo (exige `ZYDESK_DEMO=true` y `DEMO_PASSWORD`; `-- --reiniciar` vacía) |
+| `npm run api:openapi`   | Regenera `docs/api/openapi.json`                                                                 |
+| `npm run test:movil`    | Auditoría móvil con Playwright + axe (Chromium; requiere `npx playwright install chromium`)      |
+| `npm run docs:capturas` | Regenera las capturas de los manuales en `docs/manuales/img/` (solo local, solo semillas)        |
+| `npm run version:fijar` | Fija la versión (`-- X.Y.Z` o `X.Y.Z-rc.N`) en los cinco `package.json` y el lock (ADR 0032)     |
+| `npm run test:scripts`  | Prueba `scripts/version-fijar.mjs`                                                               |
 
 ## Estructura
 
@@ -113,5 +125,7 @@ docs            Plan, decisiones (ADR), especificaciones por fase, manuales (con
 - [Manual de coordinación: aprobar, cerrar y facturar OT](docs/manuales/usuario/02-coordinacion.md)
 - [Manual del bot de Telegram](docs/manuales/usuario/04-bot-telegram.md)
 - [Guía de la API](docs/api/README.md)
+- [Guía de instalación en producción](docs/despliegue.md)
+- [La demo en el VPS](docs/demo.md)
 - [Documentos legales (borradores)](docs/legal/README.md)
 - [Cambios por versión](docs/CHANGELOG.md)

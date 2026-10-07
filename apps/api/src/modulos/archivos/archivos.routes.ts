@@ -5,6 +5,7 @@ import { pipeline } from 'node:stream/promises';
 import multer from 'multer';
 import { z } from 'zod';
 import { ArchivoSalida, ArchivosPendientesQuery } from '@zydesk/shared';
+import type { UsuarioSesion } from '../../core/auth/tipos.js';
 import { actorRequerido } from '../../core/auth/requiere.js';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { contentDisposition } from '../../core/http/descarga.js';
@@ -15,12 +16,16 @@ import {
 } from '../../integraciones/archivos/mime.js';
 import { storage } from '../../integraciones/storage/storage.js';
 import {
+  comprobarCupoPendientes,
+  sanearNombre,
   listarPendientes,
   prepararDescarga,
   quitarPendiente,
   subirArchivos,
 } from './archivos.service.js';
 
+// La respuesta de un archivo no debe poder ejecutar scripts en el origen de la app (PDF o imagen abiertos directo).
+const CSP_ARCHIVO = "sandbox; default-src 'none'; img-src 'self'; style-src 'unsafe-inline'";
 const paramsId = z.object({ id: z.coerce.number().int().positive() });
 
 // Temporales en `os.tmpdir()`; `preservePath` para guardar `nombre_original` tal cual (nunca se usa en disco).
@@ -35,7 +40,7 @@ const recibirArchivos: RequestHandler = (req, res, next) => {
     if (!err) {
       // busboy entrega el nombre como latin1; los navegadores lo envían en UTF-8
       for (const f of (req.files as Express.Multer.File[] | undefined) ?? []) {
-        f.originalname = Buffer.from(f.originalname, 'latin1').toString('utf8');
+        f.originalname = sanearNombre(Buffer.from(f.originalname, 'latin1').toString('utf8'));
       }
       return next();
     }
@@ -51,6 +56,14 @@ const recibirArchivos: RequestHandler = (req, res, next) => {
   });
 };
 
+// Antes de multer, para no escribir temporales de quien ya superó el tope.
+const comprobarCupo: RequestHandler = (_req, res, next) => {
+  comprobarCupoPendientes(actorRequerido(res.locals['actor'] as UsuarioSesion | null)).then(
+    () => next(),
+    next,
+  );
+};
+
 const borrarTemporales = (files: Express.Multer.File[]) =>
   Promise.all(files.map((f) => fs.promises.unlink(f.path).catch(() => undefined)));
 
@@ -63,7 +76,7 @@ export function crearRutasArchivos(): Router {
     resumen: 'Subir archivos (multipart, campo `archivos`, hasta 10 de 20 MB); quedan pendientes',
     etiqueta: 'Archivos',
     permiso: 'tickets.editar',
-    previos: [recibirArchivos],
+    previos: [comprobarCupo, recibirArchivos],
     respuesta: z.array(ArchivoSalida),
     status: 201,
     handler: async ({ actor, req }) => {
@@ -102,6 +115,7 @@ export function crearRutasArchivos(): Router {
         'Content-Length': String(archivo.tamano),
         'Content-Disposition': contentDisposition(disposicion, archivo.nombre_original),
         'Cache-Control': 'private, max-age=3600',
+        'Content-Security-Policy': CSP_ARCHIVO,
       });
       try {
         await pipeline(storage.abrir(archivo.clave), res);

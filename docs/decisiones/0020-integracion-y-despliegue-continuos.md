@@ -1,6 +1,6 @@
 # ADR 0020 — Integración y despliegue continuos con GitHub Actions
 
-**Estado**: aceptada · 2026-09-30 · complementa a ADR 0001 (Compose portable), 0012 (`despliegue.md`) y 0017 (roles de BD, logs en Fase 9)
+**Estado**: aceptada · 2026-09-30 · complementa a ADR 0001 (Compose portable), 0012 (`despliegue.md`) y 0017 (roles de BD, logs en Fase 9) · precisada por ADR 0032 (etiquetas `-rc.N`, tres imágenes, tags sin `latest`) y por ADR 0031 (Fase 9: `PROXY_SALTOS=3`, `zydesk-web:8080`, `nexus-infra` en `/srv/nexus-infra/`, volcado previo sin cifrar hecho por `zydesk-deploy` sin `sudo`, comprobación de `version` y de los `package.json`, pasos nuevos del CI, doble cierre de SSH)
 
 ## Contexto
 

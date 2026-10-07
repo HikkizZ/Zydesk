@@ -89,6 +89,12 @@
     font-family: var(--font-texto);
     background: var(--color-fondo);
     color: var(--color-tinta);
+    /* Sin rebote del touchpad: no se ve el fondo del documento bajo el layout. */
+    overscroll-behavior-y: none;
+  }
+  body {
+    background: var(--color-fondo);
+    overscroll-behavior-y: none;
   }
   * {
     border-color: var(--color-borde);

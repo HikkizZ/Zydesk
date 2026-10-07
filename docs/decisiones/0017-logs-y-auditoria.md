@@ -1,6 +1,6 @@
 # ADR 0017 — Logs técnicos, auditoría de seguridad e inmutabilidad del historial
 
-**Estado**: aceptada · 2026-09-29 · complementa a ADR 0003 (`evento`) · sustituye parcialmente a ADR 0013 (tabla `intento_ingreso` y su retención de 90 días) · precisada por ADR 0021 (Fase 2), por ADR 0024 (seguridad de la Fase 3) y por ADR 0027 (Fase 6)
+**Estado**: aceptada · 2026-09-29 · complementa a ADR 0003 (`evento`) · sustituye parcialmente a ADR 0013 (tabla `intento_ingreso` y su retención de 90 días) · precisada por ADR 0021 (Fase 2), por ADR 0024 (seguridad de la Fase 3), por ADR 0027 (Fase 6) y por ADR 0031 (Fase 9: en producción rige la alternativa con archivado diario gzip y aviso de errores por Telegram; Alloy + Loki + Grafana queda como opción; credenciales del dueño solo en `zydesk-herramientas`)
 
 ## Contexto
 

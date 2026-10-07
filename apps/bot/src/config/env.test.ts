@@ -63,6 +63,7 @@ describe('env del bot', () => {
 describe('advertenciaApiUrl', () => {
   it.each([
     ['http://api:3000', false],
+    ['http://zydesk-api:3000', false],
     ['http://localhost:3010', false],
     ['https://interna.example.com', false],
     ['http://otro-host:3000', true],

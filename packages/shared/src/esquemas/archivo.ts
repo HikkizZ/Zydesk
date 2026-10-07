@@ -4,7 +4,7 @@ import { id, instante, referencia } from './comunes.js';
 
 export const ArchivoSalida = z.object({
   id,
-  nombre_original: z.string(),
+  nombre_original: z.string().max(255),
   tipo_mime: z.string(),
   tamano: z.number(),
   categoria: z.enum(CATEGORIAS_ARCHIVO),

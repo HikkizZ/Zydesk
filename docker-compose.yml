@@ -1,0 +1,146 @@
+# Zydesk · producción / demo (Fase 9, spec §5.1). Para desarrollo: docker-compose.dev.yml.
+# Portátil: lo único que supone del entorno es la red externa `web` (la del reverse proxy). Los valores salen del .env
+# de /srv/apps/zydesk (`--env-file`; ver .env.produccion.example). Ningún servicio publica puertos al host.
+name: zydesk
+
+x-registro: &registro
+  driver: json-file
+  options: { max-size: '20m', max-file: '10' }
+
+# Endurecimiento común (spec §14.1). Postgres no lleva cap_drop: su entrypoint necesita cambiar de usuario.
+x-endurecido: &endurecido
+  security_opt: ['no-new-privileges:true']
+  cap_drop: [ALL]
+
+services:
+  zydesk-db:
+    # postgres:16-alpine (digest del índice multi-arquitectura)
+    image: postgres:16-alpine@sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea
+    restart: unless-stopped
+    security_opt: ['no-new-privileges:true']
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres} # superusuario del contenedor; no lo usa la app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-zydesk}
+      ZYDESK_OWNER_PASSWORD: ${ZYDESK_OWNER_PASSWORD}
+      ZYDESK_APP_PASSWORD: ${ZYDESK_APP_PASSWORD}
+      TZ: UTC
+    volumes:
+      - ${DATOS_DIR:-/srv/data/zydesk}/postgres:/var/lib/postgresql/data
+      # Solo estos dos archivos: Postgres ejecuta todo *.sql de initdb.d y permisos.sql necesita la variable BD
+      - ./docker/postgres-init-prod/01-roles.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
+      - ./docker/postgres-init-prod/permisos.sql:/zydesk/permisos.sql:ro
+    mem_limit: 1g
+    pids_limit: 256
+    networks: [interna]
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-zydesk}']
+      interval: 10s
+      timeout: 3s
+      retries: 10
+    logging: *registro
+
+  zydesk-api:
+    image: ghcr.io/${GHCR_OWNER}/zydesk-api:${ZYDESK_VERSION}
+    restart: unless-stopped
+    stop_grace_period: 15s
+    <<: *endurecido
+    # Solo lo que la API lee (no se pasa el .env completo: las contraseñas de Postgres y la clave del bot no le hacen falta
+    # a quien no las usa). Vacío = ausente (env.ts). `docker compose run -e …` agrega lo puntual (p. ej. ZYDESK_DEMO_CONFIRMAR).
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      API_PUERTO: '3000'
+      ARCHIVOS_DIR: /datos/archivos
+      DATABASE_URL: postgres://zydesk_app:${ZYDESK_APP_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
+      PROXY_SALTOS: ${PROXY_SALTOS:-3} # cloudflared → nginx-proxy → zydesk-web (ADR 0020, spec §19 B1)
+      EJECUTAR_JOBS: 'true'
+      UF_ACTUALIZAR: ${UF_ACTUALIZAR:-true}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_URL: ${WEB_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USUARIO: ${TELEGRAM_BOT_USUARIO:-}
+      BOT_API_KEY: ${BOT_API_KEY:-}
+    volumes:
+      - ${DATOS_DIR:-/srv/data/zydesk}/archivos:/datos/archivos
+    tmpfs: [/tmp:size=256m]
+    read_only: true
+    mem_limit: 768m
+    pids_limit: 256
+    networks: [interna]
+    depends_on:
+      zydesk-db: { condition: service_healthy }
+    logging: *registro
+
+  # Herramientas de una sola vez (migrar, administrador, demo) con la misma imagen que la API. Es el único servicio con
+  # las credenciales del rol dueño de la base (`zydesk_owner`) y las contraseñas de las cuentas: la API de larga vida no
+  # las lleva (ADR 0031). Solo con `docker compose run --rm --no-deps zydesk-herramientas <migrar|admin|demo> …`.
+  zydesk-herramientas:
+    image: ghcr.io/${GHCR_OWNER}/zydesk-api:${ZYDESK_VERSION}
+    <<: *endurecido
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      ARCHIVOS_DIR: /datos/archivos
+      DATABASE_URL: postgres://zydesk_app:${ZYDESK_APP_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
+      DATABASE_URL_OWNER: postgres://zydesk_owner:${ZYDESK_OWNER_PASSWORD}@zydesk-db:5432/${POSTGRES_DB:-zydesk}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_URL: ${WEB_URL:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      ZYDESK_DEMO: ${ZYDESK_DEMO:-}
+      DEMO_PASSWORD: ${DEMO_PASSWORD:-}
+    volumes:
+      - ${DATOS_DIR:-/srv/data/zydesk}/archivos:/datos/archivos
+    tmpfs: [/tmp:size=256m]
+    read_only: true
+    mem_limit: 768m
+    pids_limit: 256
+    networks: [interna]
+    depends_on:
+      zydesk-db: { condition: service_healthy }
+    profiles: [herramientas] # nunca arranca con `up`
+    logging: *registro
+
+  zydesk-web:
+    image: ghcr.io/${GHCR_OWNER}/zydesk-web:${ZYDESK_VERSION}
+    restart: unless-stopped
+    <<: *endurecido
+    read_only: true
+    tmpfs: [/tmp]
+    mem_limit: 128m
+    pids_limit: 64
+    networks: [interna, web]
+    depends_on:
+      zydesk-api: { condition: service_started }
+    logging: *registro
+
+  zydesk-bot:
+    image: ghcr.io/${GHCR_OWNER}/zydesk-bot:${ZYDESK_VERSION}
+    restart: unless-stopped
+    <<: *endurecido
+    environment:
+      NODE_ENV: production
+      TZ: UTC
+      API_URL: http://zydesk-api:3000
+      BOT_DATOS_DIR: /datos/bot
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      WEB_URL: ${WEB_URL:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      BOT_API_KEY: ${BOT_API_KEY:-}
+      BOT_CLAVE_CIFRADO: ${BOT_CLAVE_CIFRADO:-}
+    volumes:
+      - ${DATOS_DIR:-/srv/data/zydesk}/bot:/datos/bot
+    tmpfs: [/tmp]
+    read_only: true
+    mem_limit: 256m
+    pids_limit: 64
+    networks: [interna]
+    depends_on:
+      zydesk-api: { condition: service_healthy }
+    profiles: [bot] # se levanta solo con COMPOSE_PROFILES=bot (si hay TELEGRAM_BOT_TOKEN)
+    logging: *registro
+
+networks:
+  interna: {}
+  web:
+    external: true # la red del nginx-proxy de Nexus (ADR 0001/0020)

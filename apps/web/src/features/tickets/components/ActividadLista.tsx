@@ -45,16 +45,16 @@ function TextoConMenciones({
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
-function ArchivoAdjunto({ archivo: a }: { archivo: ArchivoDatos }) {
+function ArchivoAdjunto({ archivo: a, varias }: { archivo: ArchivoDatos; varias: boolean }) {
   // Una imagen que el navegador no decodifica (HEIC) se muestra como documento.
   const [fallo, setFallo] = useState(false);
   return (
-    <li>
+    <li className="min-w-0 max-w-full">
       <a
         href={a.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex items-center gap-2 rounded-md border bg-superficie p-1 text-sm hover:bg-superficie-suave"
+        className="flex max-w-full items-center gap-2 rounded-md border bg-superficie p-1 text-sm hover:bg-superficie-suave"
       >
         {a.es_imagen && !fallo ? (
           <img
@@ -62,7 +62,11 @@ function ArchivoAdjunto({ archivo: a }: { archivo: ArchivoDatos }) {
             alt={a.nombre_original}
             loading="lazy"
             onError={() => setFallo(true)}
-            className="size-20 rounded object-cover lg:size-16"
+            className={
+              varias
+                ? 'h-40 w-full rounded object-cover'
+                : 'max-h-60 w-auto max-w-full rounded bg-superficie-suave object-contain sm:max-w-80'
+            }
           />
         ) : (
           <>
@@ -134,9 +138,15 @@ export function TarjetaMensaje({
         </p>
       ) : null}
       {mensaje.archivos.length > 0 ? (
-        <ul className="flex flex-wrap gap-2">
+        <ul
+          className={
+            mensaje.archivos.length > 1
+              ? 'grid grid-cols-2 gap-2 sm:grid-cols-3'
+              : 'flex flex-wrap gap-2'
+          }
+        >
           {mensaje.archivos.map((a) => (
-            <ArchivoAdjunto key={a.id} archivo={a} />
+            <ArchivoAdjunto key={a.id} archivo={a} varias={mensaje.archivos.length > 1} />
           ))}
         </ul>
       ) : null}

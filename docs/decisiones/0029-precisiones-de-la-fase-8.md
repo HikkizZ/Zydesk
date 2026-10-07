@@ -1,6 +1,6 @@
 # ADR 0029 — Precisiones surgidas al especificar e implementar la Fase 8
 
-**Estado**: aceptada · 2026-10-05 · precisa a ADR 0009, 0011, 0012, 0018, 0019, 0020 y 0027 (no cambia sus decisiones de fondo)
+**Estado**: aceptada · 2026-10-05 · precisa a ADR 0009, 0011, 0012, 0018, 0019, 0020 y 0027 (no cambia sus decisiones de fondo) · precisada por ADR 0032 (punto 28: SemVer y v1.0.0) y por ADR 0031 (Fase 9: `docs/manuales/` con `img/` dentro de la imagen de `web`, CSP con `img-src 'self' blob: data:`, versión en el pie, Playwright contra la demo omitido)
 
 ## Contexto
 

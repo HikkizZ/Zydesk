@@ -1,6 +1,6 @@
 # API de Zydesk
 
-La API vive bajo `/api` (en desarrollo, `http://localhost:3010/api`). La referencia completa de rutas está en [`openapi.json`](openapi.json) y, con sesión de Administración, en `/api/docs`. **`openapi.json` es generado: no se edita a mano.**
+La API vive bajo `/api` (en desarrollo, `http://localhost:3010/api`; en la demo de la Fase 9, `https://desk.zytech.dev/api`, el mismo origen que la web: nginx reenvía `/api/` a la API). La demo no lleva Cloudflare Access delante; una instalación definitiva con Access exige además una Service Token (`CF-Access-Client-Id` / `CF-Access-Client-Secret`) para llamadas sin navegador ([guía de instalación](../despliegue.md), sección 2.4). La referencia completa de rutas está en [`openapi.json`](openapi.json) y, con sesión de Administración, en `/api/docs`. **`openapi.json` es generado: no se edita a mano.**
 
 ## Autenticarse con curl
 

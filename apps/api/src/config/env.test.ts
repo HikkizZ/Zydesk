@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { BOT_API_KEY_EJEMPLO, cargarEnv } from './env.js';
 
 const URL_BD = 'postgres://u:p@localhost:5432/d';
+const URL_BD_PROD = 'postgres://zydesk_app:Clave.Prod@zydesk-db:5432/zydesk';
 
 describe('cargarEnv', () => {
   it('lanza si falta DATABASE_URL y el mensaje la menciona', () => {
@@ -117,6 +118,7 @@ describe('cargarEnv (Fase 6: Telegram)', () => {
   it('en producción con token: BOT_API_KEY de 32+ caracteres y distinta de la del ejemplo, y WEB_URL https', () => {
     const prod = {
       ...base,
+      DATABASE_URL: URL_BD_PROD,
       NODE_ENV: 'production',
       TELEGRAM_BOT_TOKEN: 'x',
       BOT_API_KEY: clave32,
@@ -137,5 +139,63 @@ describe('cargarEnv (Fase 6: Telegram)', () => {
     expect(() => cargarEnv({ ...base, TELEGRAM_BOT_USUARIO: 'a b/c' })).toThrow(
       /TELEGRAM_BOT_USUARIO/,
     );
+  });
+});
+
+describe('cargarEnv (Fase 9: semilla de demo)', () => {
+  const base = { DATABASE_URL: URL_BD };
+
+  it('ZYDESK_DEMO es false por defecto y con valor vacío; "true" es true', () => {
+    expect(cargarEnv(base).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: '' }).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: 'false' }).ZYDESK_DEMO).toBe(false);
+    expect(cargarEnv({ ...base, ZYDESK_DEMO: 'true' }).ZYDESK_DEMO).toBe(true);
+    expect(() => cargarEnv({ ...base, ZYDESK_DEMO: 'si' })).toThrow(/ZYDESK_DEMO/);
+  });
+
+  it('DEMO_PASSWORD y ZYDESK_DEMO_CONFIRMAR vacíos son undefined', () => {
+    const e = cargarEnv({ ...base, DEMO_PASSWORD: '', ZYDESK_DEMO_CONFIRMAR: '' });
+    expect(e.DEMO_PASSWORD).toBeUndefined();
+    expect(e.ZYDESK_DEMO_CONFIRMAR).toBeUndefined();
+    const f = cargarEnv({
+      ...base,
+      DEMO_PASSWORD: 'Clave.Demo.2026',
+      ZYDESK_DEMO_CONFIRMAR: 'zydesk',
+    });
+    expect(f.DEMO_PASSWORD).toBe('Clave.Demo.2026');
+    expect(f.ZYDESK_DEMO_CONFIRMAR).toBe('zydesk');
+  });
+});
+
+describe('cargarEnv (Fase 9: reglas de producción, spec §5.3)', () => {
+  const prod = { NODE_ENV: 'production', DATABASE_URL: URL_BD_PROD };
+
+  it('acepta una configuración de producción con la base del Compose', () => {
+    expect(cargarEnv(prod).NODE_ENV).toBe('production');
+    expect(cargarEnv({ ...prod, LOG_LEVEL: 'info' }).LOG_LEVEL).toBe('info');
+  });
+
+  it('DATABASE_URL no puede apuntar a localhost', () => {
+    for (const host of ['localhost', '127.0.0.1', '[::1]']) {
+      const url = `postgres://zydesk_app:Clave.Prod@${host}:5432/zydesk`;
+      expect(() => cargarEnv({ ...prod, DATABASE_URL: url }), host).toThrow(/DATABASE_URL/);
+    }
+  });
+
+  it('DATABASE_URL no puede llevar la contraseña de desarrollo', () => {
+    const url = 'postgres://zydesk_app:zydesk_app@zydesk-db:5432/zydesk';
+    expect(() => cargarEnv({ ...prod, DATABASE_URL: url })).toThrow(/DATABASE_URL/);
+  });
+
+  it('LOG_LEVEL no puede ser debug', () => {
+    expect(() => cargarEnv({ ...prod, LOG_LEVEL: 'debug' })).toThrow(/LOG_LEVEL/);
+  });
+
+  it('fuera de producción las mismas configuraciones siguen siendo válidas', () => {
+    expect(cargarEnv({ DATABASE_URL: URL_BD, LOG_LEVEL: 'debug' }).LOG_LEVEL).toBe('debug');
+    expect(
+      cargarEnv({ DATABASE_URL: 'postgres://zydesk_app:zydesk_app@localhost:5433/zydesk' })
+        .DATABASE_URL,
+    ).toContain('localhost');
   });
 });

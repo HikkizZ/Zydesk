@@ -47,6 +47,13 @@ const esquema = z
       .transform((v) => v === 'true'),
     ADMIN_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
     SEMILLA_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
+    // Semilla de demo (spec fase 9 §11): sin ZYDESK_DEMO=true el comando `demo` se niega a correr; `--reiniciar`
+    // exige además ZYDESK_DEMO_CONFIRMAR con el nombre de la base. Nunca con valores en una instalación real.
+    ZYDESK_DEMO: z
+      .preprocess(vacioAUndefined, z.enum(['true', 'false']).default('false'))
+      .transform((v) => v === 'true'),
+    DEMO_PASSWORD: z.preprocess(vacioAUndefined, z.string().optional()),
+    ZYDESK_DEMO_CONFIRMAR: z.preprocess(vacioAUndefined, z.string().optional()),
     // Telegram (spec fase 6 §9.1): sin token el canal queda `omitido / sin_token`. Nunca en el repo ni en logs.
     TELEGRAM_BOT_TOKEN: z.preprocess(vacioAUndefined, z.string().optional()),
     // @usuario del bot (sin `@`): arma el enlace `https://t.me/<usuario>?start=<código>` en el servidor.
@@ -82,6 +89,26 @@ const esquema = z
         path: ['TEST_DATABASE_URL'],
         message: 'obligatoria con NODE_ENV=test',
       });
+    }
+    if (v.NODE_ENV === 'production') {
+      // Spec fase 9 §5.3: la API no arranca en producción con la configuración de desarrollo.
+      if (
+        ['localhost', '127.0.0.1', '[::1]'].includes(new URL(v.DATABASE_URL).hostname) ||
+        v.DATABASE_URL.includes('zydesk_app:zydesk_app')
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['DATABASE_URL'],
+          message: 'en producción no puede apuntar a localhost ni usar la contraseña de desarrollo',
+        });
+      }
+      if (v.LOG_LEVEL === 'debug') {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['LOG_LEVEL'],
+          message: 'en producción no puede ser debug',
+        });
+      }
     }
     if (v.TELEGRAM_BOT_TOKEN) {
       if (!v.BOT_API_KEY) {

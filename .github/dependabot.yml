@@ -1,0 +1,8 @@
+# Dependabot solo para las acciones de GitHub (fase 9, §9.3): mantiene los SHA fijados al día.
+# No se activa para npm: esas actualizaciones se revisan a mano con la suite.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
