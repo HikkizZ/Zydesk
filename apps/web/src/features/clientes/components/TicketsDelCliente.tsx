@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Cargando } from '@/components/dominio/Cargando';
 import { Codigo } from '@/components/dominio/Codigo';
 import { EstadoError } from '@/components/dominio/EstadoError';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { claves, STALE_TICKETS, tickets, type ConsultaTickets } from '@/features/tickets/api';
 
@@ -35,12 +35,7 @@ export function TicketsDelCliente({ clienteId }: { clienteId: number }) {
           </Link>
           <span className="min-w-0 flex-1 basis-48 font-medium">{t.asunto}</span>
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
-          <FechaLimite
-            fecha_limite={t.fecha_limite}
-            vencido={t.vencido}
-            vence_hoy={t.vence_hoy}
-            prefijo="Vence"
-          />
+          <FranjaPlazo ticket={t} />
         </li>
       ))}
     </ul>

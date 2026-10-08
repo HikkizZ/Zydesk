@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { FechaRelativa } from '@/components/dominio/FechaRelativa';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
@@ -89,11 +89,7 @@ function Fila({ ticket }: { ticket: TicketResumenDatos }) {
         />
       </TableCell>
       <TableCell>
-        <FechaLimite
-          fecha_limite={ticket.fecha_limite}
-          vencido={ticket.vencido}
-          vence_hoy={ticket.vence_hoy}
-        />
+        <FranjaPlazo ticket={ticket} />
       </TableCell>
       <TableCell className="text-sm text-tinta-2">
         <FechaRelativa fecha={ticket.actualizado_en} />

@@ -6,7 +6,6 @@ import { Link } from 'react-router';
 import { toast } from 'sonner';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
 import { diaMesHora } from '@/components/dominio/formato-fecha';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
@@ -221,11 +220,11 @@ export function PanelTicket({
             {ticket.categoria?.nombre ?? <span className="text-tinta-3">Sin categoría</span>}
           </Fila>
           <Fila etiqueta="Fecha límite">
-            <FechaLimite
-              fecha_limite={ticket.fecha_limite}
-              vencido={ticket.vencido}
-              vence_hoy={ticket.vence_hoy}
-            />
+            {ticket.fecha_limite ? (
+              formatearFechaHora(ticket.fecha_limite)
+            ) : (
+              <span className="text-tinta-3">Sin fecha</span>
+            )}
           </Fila>
           <Fila etiqueta="Inicio planificado">
             {ticket.inicio_planificado ? (

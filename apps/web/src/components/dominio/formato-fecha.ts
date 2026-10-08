@@ -25,6 +25,20 @@ function partes(fecha: Date) {
   };
 }
 
+const DIAS_SEMANA = ['dom', 'lun', 'mar', 'mié', 'jue', 'vie', 'sáb'];
+
+/** "mié" */
+export function diaSemanaCorto(iso: string | Date): string {
+  const p = partes(new Date(iso));
+  return DIAS_SEMANA[new Date(Date.UTC(Number(p.anio), p.mes - 1, p.dia)).getUTCDay()] ?? '';
+}
+
+/** "17:30" */
+export function horaCorta(iso: string | Date): string {
+  const p = partes(new Date(iso));
+  return `${p.hora}:${p.minuto}`;
+}
+
 /** "30 sep" */
 export function diaMes(iso: string | Date): string {
   const p = partes(new Date(iso));
@@ -35,6 +49,11 @@ export function diaMes(iso: string | Date): string {
 export function diaMesHora(iso: string | Date): string {
   const p = partes(new Date(iso));
   return `${p.dia} ${MESES[p.mes - 1]} ${p.hora}:${p.minuto}`;
+}
+
+/** "mié 9 oct 12:00" */
+export function diaMesHoraCorto(iso: string | Date): string {
+  return `${diaSemanaCorto(iso)} ${diaMesHora(iso)}`;
 }
 
 /** "29 sep" a partir de `AAAA-MM-DD` (fecha sin zona, no se corre de día). */

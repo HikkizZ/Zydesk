@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Codigo } from '@/components/dominio/Codigo';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import type { TicketResumenDatos } from '@/features/tickets/api';
@@ -32,13 +32,7 @@ export function TarjetaTicketBreve({
       </Link>
       <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-tinta-2">
         <span>{ticket.cliente?.nombre ?? 'Sin cliente'}</span>
-        {pie ?? (
-          <FechaLimite
-            fecha_limite={ticket.fecha_limite}
-            vencido={ticket.vencido}
-            vence_hoy={ticket.vence_hoy}
-          />
-        )}
+        {pie ?? <FranjaPlazo ticket={ticket} />}
       </div>
     </article>
   );

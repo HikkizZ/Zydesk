@@ -3,7 +3,7 @@ import { Mail, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { Pill } from '@/components/dominio/Pill';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { PillTipo } from '@/components/dominio/PillTipo';
@@ -81,12 +81,7 @@ export function TarjetaTicket({ ticket }: { ticket: TicketResumenDatos }) {
         ) : (
           <span className="text-sm text-alta">Sin asignar</span>
         )}
-        <FechaLimite
-          fecha_limite={ticket.fecha_limite}
-          vencido={ticket.vencido}
-          vence_hoy={ticket.vence_hoy}
-          className="ml-auto"
-        />
+        <FranjaPlazo ticket={ticket} className="ml-auto" />
         <span
           className="inline-flex items-center gap-1 text-sm text-tinta-2"
           aria-label={`${ticket.n_mensajes} ${ticket.n_mensajes === 1 ? 'mensaje' : 'mensajes'}`}

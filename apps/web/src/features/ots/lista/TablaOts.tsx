@@ -1,7 +1,7 @@
 import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
-import { diaMesDeFecha } from '@/components/dominio/formato-fecha';
+import { TerminoOt } from '@/components/dominio/TerminoOt';
 import { Monto } from '@/components/dominio/Monto';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
@@ -17,7 +17,6 @@ import {
 import { MontoOculto } from '@/features/ots/lista/IndicadoresOts';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import type { OtResumenDatos } from '@/features/ots/api';
-import { cn } from '@/lib/utils';
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
@@ -67,8 +66,12 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
           </>
         )}
       </TableCell>
-      <TableCell className={cn('whitespace-nowrap', ot.vencida && 'font-semibold text-urgente')}>
-        {ot.termino ? diaMesDeFecha(ot.termino) : <span className="text-tinta-3">—</span>}
+      <TableCell className="whitespace-nowrap">
+        <TerminoOt
+          termino={ot.termino}
+          vencida={ot.vencida}
+          final={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
+        />
       </TableCell>
       <TableCell>
         <PillFacturacion estado={ot.estado_facturacion} />

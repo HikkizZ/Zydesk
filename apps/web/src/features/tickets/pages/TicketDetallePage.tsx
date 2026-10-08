@@ -9,7 +9,7 @@ import { Codigo } from '@/components/dominio/Codigo';
 import { DialogoCambiarEstado } from '@/components/dominio/DialogoCambiarEstado';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { Pill } from '@/components/dominio/Pill';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
@@ -177,15 +177,10 @@ export function TicketDetallePage() {
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
           <PillPrioridad prioridad={t.prioridad} />
           {t.ot_vinculada ? <PillTipo tipo={t.tipo} codigo={t.ot_vinculada.codigo} /> : null}
-          <FechaLimite
-            fecha_limite={t.fecha_limite}
-            vencido={t.vencido}
-            vence_hoy={t.vence_hoy}
-            prefijo="Vence"
-          />
           {t.correo ? <Pill tono="neutro">Correo adjunto</Pill> : null}
           {t.archivado_en ? <Pill tono="neutro">Archivado</Pill> : null}
         </div>
+        <FranjaPlazo ticket={t} variante="ancha" />
         <div className="flex flex-wrap items-center gap-2">
           {puedeEditar ? (
             <>

@@ -9,6 +9,7 @@ import { PillEstadoCotizacion } from '@/components/dominio/PillEstadoCotizacion'
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { diaMes, diaMesDeFecha, diaMesHora, hoyIso } from '@/components/dominio/formato-fecha';
 import { Pill } from '@/components/dominio/Pill';
+import { TerminoOt } from '@/components/dominio/TerminoOt';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
@@ -319,6 +320,15 @@ export function PanelOt({
           ) : null}
           {ot.cancelada_en ? <Dato etiqueta="Cancelada">{diaMesHora(ot.cancelada_en)}</Dato> : null}
           {ot.inicio ? <Dato etiqueta="Inicio">{diaMesDeFecha(ot.inicio)}</Dato> : null}
+          {ot.termino ? (
+            <Dato etiqueta="Término">
+              <TerminoOt
+                termino={ot.termino}
+                vencida={ot.vencida}
+                final={ot.etapa === 'cerrada' || ot.etapa === 'cancelada'}
+              />
+            </Dato>
+          ) : null}
         </ListaDatos>
         {ot.resumen_cierre ? (
           <div className="mt-2 border-t pt-2">
