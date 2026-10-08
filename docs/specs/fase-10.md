@@ -461,6 +461,10 @@ Comparar los cuatro pares de `docs/especificacion/rediseno-v2/` y la demo en el 
 
 **Ninguna pregunta bloquea**: todo se implementa con la recomendación si no hay respuesta, y cada alternativa es un cambio local (un umbral, una prop, un componente). La única decisión que conviene tener antes de F10-T2 es la 3 (alcance de `plazo_habil`), porque define el contrato y el `openapi.json`.
 
+### Respuestas del usuario (2026-10-08)
+
+El usuario aprobó las diez recomendaciones de §17: alias de transición; la franja sigue verde entre 25 % y 50 %; `plazo_habil` en todas las listas; días hábiles desde 24 h; OT sin franja; 44 px también en tabla, OT y avisos salvo que rompa la densidad; barra superior sin buscador global; línea compacta también en Mi día; lo excluido (⌘K, menú contraíble, selección múltiple, modo oscuro, franja de primera respuesta) se anota para después; y **la v1.1.0 es solo el rediseño, el correo entrante pasa a la v1.2.0**.
+
 ## 18. Cambios de ADR propuestos (no se editan las ADR existentes salvo la línea **Estado**; se escribe **ADR 0033 «Sistema visual v2»** en F10-T18 con §3, §15, las respuestas de §17 y las desviaciones)
 
 - **ADR 0011** (sustituida en parte por 0033): tokens (§3.2) en lugar de la paleta cálida `#F3F1EC` y los pares `urgente/alta/media/baja`; **IBM Plex Sans en todo** (desaparece Bricolage Grotesque y `--font-titulo`); radios 4/6/8 en lugar de 6/8/12; «profundidad solo con bordes; sombra solo en flotantes»; `Pill` → `Estado` (punto + texto) y `Chip`; `Monto` y `Codigo` en mono tabular; foco por `outline` de 2 px; 40 px de control en escritorio pasa a **32 px** (44 px bajo 1024 px se mantiene, ADR 0029); el resto (TanStack Query, RHF, rutas, Recharts con dos colores) **sigue vigente**.
