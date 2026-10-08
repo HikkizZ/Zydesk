@@ -15,7 +15,6 @@
     "docs:comparacion:despues": "cross-env CAPTURAS=1 COMPARACION=despues playwright test e2e/capturas.ts --project escritorio"
   },
   "dependencies": {
-    "@fontsource/bricolage-grotesque": "^5.3.0",
     "@fontsource/ibm-plex-mono": "^5.3.0",
     "@fontsource/ibm-plex-sans": "^5.3.0",
     "@hookform/resolvers": "^5.9.1",
