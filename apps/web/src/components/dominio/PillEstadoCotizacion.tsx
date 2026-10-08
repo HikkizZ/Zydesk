@@ -1,19 +1,19 @@
 import { ETIQUETA_ESTADO_COTIZACION, type EstadoCotizacion } from '@zydesk/shared';
-import { Pill, type TonoPill } from '@/components/dominio/Pill';
+import { Estado, type TonoEstado } from '@/components/dominio/Estado';
 
-const TONO: Record<EstadoCotizacion, TonoPill> = {
-  borrador: 'neutro',
-  enviada: 'acento',
+const TONO: Record<EstadoCotizacion, TonoEstado> = {
+  borrador: 'borrador',
+  enviada: 'en-curso',
   aprobada: 'resuelto',
-  rechazada: 'alta',
-  reemplazada: 'neutro',
+  rechazada: 'en-espera',
+  reemplazada: 'cerrado',
 };
 
 export function PillEstadoCotizacion({ estado }: { estado: EstadoCotizacion }) {
   const etiqueta = ETIQUETA_ESTADO_COTIZACION[estado];
   return (
-    <Pill tono={TONO[estado]}>
+    <Estado tono={TONO[estado]}>
       {estado === 'reemplazada' ? <span className="line-through">{etiqueta}</span> : etiqueta}
-    </Pill>
+    </Estado>
   );
 }

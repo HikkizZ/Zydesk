@@ -1,14 +1,18 @@
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 
 export type TipoTicket = 'ticket' | 'ot_facturable' | 'ot_interna';
 
 // Con `codigo` (la OT vinculada) dice "OT-0218 · Facturable"; sin él, el tipo a secas.
 export function PillTipo({ tipo = 'ticket', codigo }: { tipo?: TipoTicket; codigo?: string }) {
   if (tipo === 'ot_facturable') {
-    return <Pill tono="resuelto">{codigo ? `${codigo} · Facturable` : 'OT facturable'}</Pill>;
+    return <Chip tono="acento">{codigo ? `${codigo} · Facturable` : 'OT facturable'}</Chip>;
   }
   if (tipo === 'ot_interna') {
-    return <Pill tono="interna">{codigo ? `${codigo} · Interna` : 'OT interna'}</Pill>;
+    return (
+      <Chip tono="interna" punto>
+        {codigo ? `${codigo} · Interna` : 'OT interna'}
+      </Chip>
+    );
   }
-  return <Pill tono="neutro">Ticket</Pill>;
+  return <Chip>Ticket</Chip>;
 }

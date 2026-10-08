@@ -1,16 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import { ETIQUETA_ETAPA_OT, esCerrado, esEtapaFinal } from '@zydesk/shared';
-import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/components/ui/command';
+import { ListaCombo, type OpcionCombo } from '@/components/dominio/Combo';
 import {
   Dialog,
   DialogContent,
@@ -31,7 +23,6 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ot, ots, type OtResumenDatos } from '@/features/ots/api';
 import { tickets, type TicketResumenDatos } from '@/features/tickets/api';
-import { cn } from '@/lib/utils';
 import type { NuevaFilaDatos } from '../utiles';
 
 type Pestana = 'ticket' | 'ot' | 'sin_ticket';
@@ -71,41 +62,28 @@ function Buscador<T extends { id: number }>({
     queryKey: ['horas', 'buscar', claveConsulta, retardada],
     queryFn: () => buscar(retardada),
   });
-  const lista = consulta.data ?? [];
+  const opciones: OpcionCombo<number>[] = (consulta.data ?? []).map((item) => ({
+    valor: item.id,
+    etiqueta: texto(item),
+    deshabilitada: inactivo?.(item) ?? false,
+  }));
   return (
-    <Command shouldFilter={false} className="rounded-md border border-borde-campo">
-      <CommandInput
-        value={q}
-        onValueChange={setQ}
-        placeholder={`Buscar ${etiqueta}…`}
-        aria-label={`Buscar ${etiqueta}`}
-      />
-      <CommandList>
-        <CommandEmpty>
-          {consulta.isPending ? 'Buscando…' : 'Nada coincide con la búsqueda'}
-        </CommandEmpty>
-        <CommandGroup>
-          {lista.map((item) => {
-            const deshabilitado = inactivo?.(item) ?? false;
-            return (
-              <CommandItem
-                key={item.id}
-                value={String(item.id)}
-                disabled={deshabilitado}
-                onSelect={() => onElegir(item)}
-              >
-                <span className={cn('truncate', deshabilitado && 'text-tinta-3')}>
-                  {texto(item)}
-                </span>
-                {item.id === elegido ? (
-                  <Check aria-label="Seleccionado" className="ml-auto shrink-0" />
-                ) : null}
-              </CommandItem>
-            );
-          })}
-        </CommandGroup>
-      </CommandList>
-    </Command>
+    <ListaCombo
+      opciones={opciones}
+      esElegida={(v) => v === elegido}
+      alElegir={(o) => {
+        const item = (consulta.data ?? []).find((x) => x.id === o.valor);
+        if (item) onElegir(item);
+      }}
+      filtrar={false}
+      busqueda={q}
+      alBuscar={setQ}
+      placeholderBusqueda={`Buscar ${etiqueta}…`}
+      ariaBusqueda={`Buscar ${etiqueta}`}
+      textoVacio="Nada coincide con la búsqueda"
+      cargando={consulta.isPending}
+      className="rounded-md border border-linea-campo"
+    />
   );
 }
 
