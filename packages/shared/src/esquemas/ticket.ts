@@ -93,6 +93,13 @@ export const ResponsablesEntrada = z
 
 export const SeguidoresEntrada = z.object({ usuario_ids: z.array(id).max(20) });
 
+// Horas hábiles del plazo de un ticket (fase 10, §5.2): las calcula la API con el calendario del departamento.
+export const PlazoHabil = z.object({
+  total: z.number(), // entre el inicio y fecha_limite (≥ 0, 2 decimales)
+  restantes: z.number(), // entre calculado_en y fecha_limite; negativas si venció
+  calculado_en: instante, // ahora, o cerrado_en si el ticket está cerrado
+});
+
 export const TicketResumen = z.object({
   id,
   numero: z.number(),
@@ -108,6 +115,7 @@ export const TicketResumen = z.object({
   inicio_planificado: instante.nullable(),
   vencido: z.boolean(),
   vence_hoy: z.boolean(),
+  plazo_habil: PlazoHabil.nullable(), // null sin fecha_limite o sin calendario
   tiene_correo: z.boolean(),
   n_mensajes: z.number(), // B11
   motivo_cierre: z.string().nullable(),
