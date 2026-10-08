@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { aLocal, bloquesDelDia, diaMasN } from './calendario.js';
 import {
   esHoraExtendida,
   horasHabilesEntre,
@@ -123,5 +124,56 @@ describe('esHoraExtendida', () => {
     ['sáb 10:00', L(2026, 10, 3, 10, 0), true],
   ] as const)('25: %s', (_d, fecha, esperado) => {
     expect(esHoraExtendida(fecha, SOPORTE)).toBe(esperado);
+  });
+});
+
+describe('horasHabilesEntre: equivale a recorrer día a día', () => {
+  const recorrido = (a: Date, b: Date, cal: Calendario): number => {
+    const dia0 = aLocal(a);
+    const ultimo = aLocal(b).getTime();
+    let ms = 0;
+    for (let i = 0; ; i++) {
+      const d = diaMasN(dia0, i);
+      if (d.getTime() > ultimo) break;
+      for (const { inicio, fin } of bloquesDelDia(d, cal)) {
+        const ini = Math.max(inicio.getTime(), a.getTime());
+        const fn = Math.min(fin.getTime(), b.getTime());
+        if (fn > ini) ms += fn - ini;
+      }
+    }
+    return Math.round((ms / 3_600_000) * 100) / 100;
+  };
+  const CON_FIN_DE_SEMANA: Calendario = {
+    horario: [
+      dia(0, true, '10:00', '14:00', '13:00', 0),
+      dia(1, true, '08:00', '17:45', '12:30', 45),
+      dia(2, true, '08:00', '17:45', '12:30', 45),
+      dia(3, false, '08:00', '17:45', '12:30', 45),
+      dia(4, true, '08:00', '17:45', '12:30', 45),
+      dia(5, true, '08:00', '16:00', '13:00', 0),
+      dia(6, true, '09:00', '13:00', '13:00', 0),
+    ],
+    feriados: ['2026-04-03', '2026-05-01', '2026-09-18', '2026-09-19', '2026-12-25'],
+  };
+
+  it.each([
+    ['SOPORTE', SOPORTE],
+    ['con fines de semana y colación variable', CON_FIN_DE_SEMANA],
+  ])('600 pares aleatorios de 2025 a 2027 (%s), con ambos cambios de hora', (_n, cal) => {
+    let semilla = 12345;
+    const azar = (): number => {
+      semilla = (semilla * 1_664_525 + 1_013_904_223) % 4_294_967_296;
+      return semilla / 4_294_967_296;
+    };
+    const inicio = L(2025, 1, 1, 0, 0).getTime();
+    const rango = L(2027, 12, 31, 0, 0).getTime() - inicio;
+    for (let i = 0; i < 600; i++) {
+      const a = new Date(inicio + Math.floor(azar() * rango));
+      const largo = azar() < 0.5 ? azar() * 3 * 86_400_000 : azar() * 120 * 86_400_000;
+      const b = new Date(a.getTime() + Math.floor(largo));
+      expect(horasHabilesEntre(a, b, cal), `${a.toISOString()} → ${b.toISOString()}`).toBe(
+        recorrido(a, b, cal),
+      );
+    }
   });
 });

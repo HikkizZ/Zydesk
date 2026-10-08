@@ -8,7 +8,7 @@ export function aMinutos(hhmm: string): number {
 }
 
 /** Bloques de la jornada en minutos desde medianoche local. */
-function bloquesEnMinutos(h: HorarioDia): Array<[number, number]> {
+export function bloquesEnMinutos(h: HorarioDia): Array<[number, number]> {
   if (!h.activo) return [];
   const entrada = aMinutos(h.entrada);
   const salida = aMinutos(h.salida);
