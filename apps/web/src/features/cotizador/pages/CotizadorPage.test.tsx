@@ -380,7 +380,7 @@ it('sin valor UF la ayuda avisa que las tarifas en UF no se podrán convertir', 
   await esperarCarga();
   expect(
     screen.getByText('Sin valor: las tarifas en UF no se podrán convertir').className,
-  ).toContain('text-alta');
+  ).toContain('text-plazo-atento');
 });
 
 it('"Usar UF del día" escribe el valor y al guardar lo envía en una cotización en CLP', async () => {
@@ -750,4 +750,18 @@ it('404: "Cotización no encontrada" con enlace a la lista', async () => {
   expect(screen.getByRole('link', { name: 'Ir a cotizaciones' }).getAttribute('href')).toBe(
     '/cotizaciones',
   );
+});
+
+it('versiones como pestañas de línea (la actual con borde de acento) y total en mono tabular', async () => {
+  montar(borradorDePrueba());
+  await esperarCarga();
+  const versiones = screen.getByRole('region', { name: 'Versiones' });
+  const [actual, otra] = within(versiones).getAllByRole('link');
+  expect(actual?.className).toContain('border-acento');
+  expect(otra?.className).toContain('border-transparent');
+  const totales = screen.getByRole('region', { name: 'Totales' });
+  const total = within(totales).getByText('Total').nextElementSibling?.firstElementChild;
+  expect(total?.className).toContain('font-mono');
+  expect(total?.className).toContain('tabular-nums');
+  expect(total?.className).not.toContain('text-2xl');
 });

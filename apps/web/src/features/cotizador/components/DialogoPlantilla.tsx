@@ -84,8 +84,8 @@ function Contenido({
               <label
                 key={p.id}
                 className={cn(
-                  'flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3',
-                  elegida === p.id ? 'border-2 border-acento bg-media-fondo/40' : 'bg-superficie',
+                  'flex min-h-11 cursor-pointer items-start gap-3 rounded-md border p-3',
+                  elegida === p.id ? 'border border-acento bg-acento-suave' : 'bg-panel',
                 )}
               >
                 <input
@@ -107,7 +107,7 @@ function Contenido({
           </fieldset>
         )}
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

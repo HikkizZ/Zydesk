@@ -13,6 +13,14 @@ import { BotonConPista } from '@/components/dominio/BotonConPista';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { Monto } from '@/components/dominio/Monto';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { Input } from '@/components/ui/input';
 import { Seleccion } from '@/features/configuracion/Seleccion';
 import { cn } from '@/lib/utils';
@@ -29,7 +37,7 @@ const OPCIONES_UNIDAD = UNIDADES.map((u) => ({ valor: u, etiqueta: ETIQUETA_UNID
 
 function ErrorCampo({ mensaje }: { mensaje: string | undefined }) {
   return mensaje ? (
-    <p role="alert" className="mt-0.5 text-xs text-urgente">
+    <p role="alert" className="mt-0.5 text-xs text-plazo-vencido">
       {mensaje}
     </p>
   ) : null;
@@ -252,7 +260,7 @@ export function TablaLineas({
           {fields.map((f, i) => {
             const c = celdas(i);
             return (
-              <li key={f.id} className="rounded-lg border border-borde bg-superficie-suave-2 p-3">
+              <li key={f.id} className="rounded-md border border-linea bg-panel p-3">
                 <div className="mb-2 flex items-center justify-between">
                   <span className="font-mono text-sm font-semibold">Línea {i + 1}</span>
                   {c.quitar}
@@ -269,7 +277,7 @@ export function TablaLineas({
                   <Rotulo texto="Precio unitario">{c.precio}</Rotulo>
                   <Rotulo texto="Desc. %">{c.descuento}</Rotulo>
                 </div>
-                <p className="mt-3 flex items-baseline justify-between border-t pt-2 text-sm">
+                <p className="mt-3 flex items-baseline justify-between border-t border-linea pt-2 text-sm">
                   <span className="text-tinta-2">Total de la línea</span>
                   {c.total}
                 </p>
@@ -278,43 +286,41 @@ export function TablaLineas({
           })}
         </ul>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-borde">
-          <table className="w-full min-w-[56rem] text-sm">
-            <thead className="bg-superficie-suave text-left text-xs text-tinta-2">
-              <tr>
-                <th className="w-10 px-2 py-2 font-medium">N°</th>
-                <th className="w-40 px-2 py-2 font-medium">Tipo</th>
-                <th className="px-2 py-2 font-medium">Descripción</th>
-                <th className="w-24 px-2 py-2 text-right font-medium">Cantidad</th>
-                <th className="w-24 px-2 py-2 font-medium">Unidad</th>
-                <th className="w-36 px-2 py-2 text-right font-medium">Precio unitario</th>
-                <th className="w-24 px-2 py-2 text-right font-medium">Desc. %</th>
-                <th className="w-32 px-2 py-2 text-right font-medium">Total</th>
-                <th className="w-12 px-2 py-2">
-                  <span className="sr-only">Acciones</span>
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {fields.map((f, i) => {
-                const c = celdas(i);
-                return (
-                  <tr key={f.id} className="border-t align-top">
-                    <td className="px-2 py-3 font-mono text-tinta-2">{i + 1}</td>
-                    <td className="px-2 py-2">{c.tipo}</td>
-                    <td className="px-2 py-2">{c.descripcion}</td>
-                    <td className="px-2 py-2">{c.cantidad}</td>
-                    <td className="px-2 py-2">{c.unidad}</td>
-                    <td className="px-2 py-2">{c.precio}</td>
-                    <td className="px-2 py-2">{c.descuento}</td>
-                    <td className="px-2 py-3 text-right">{c.total}</td>
-                    <td className="px-1 py-1.5">{c.quitar}</td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+        <Table className="min-w-[56rem]">
+          <TableHeader>
+            <TableRow className="h-9">
+              <TableHead className="w-10">N°</TableHead>
+              <TableHead className="w-40">Tipo</TableHead>
+              <TableHead>Descripción</TableHead>
+              <TableHead className="w-24 text-right">Cantidad</TableHead>
+              <TableHead className="w-24">Unidad</TableHead>
+              <TableHead className="w-36 text-right">Precio unitario</TableHead>
+              <TableHead className="w-24 text-right">Desc. %</TableHead>
+              <TableHead className="w-32 text-right">Total</TableHead>
+              <TableHead className="w-12">
+                <span className="sr-only">Acciones</span>
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {fields.map((f, i) => {
+              const c = celdas(i);
+              return (
+                <TableRow key={f.id} className="align-top">
+                  <TableCell className="py-3 font-mono text-tinta-2">{i + 1}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.tipo}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.descripcion}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.cantidad}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.unidad}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.precio}</TableCell>
+                  <TableCell className="py-1.5 whitespace-normal">{c.descuento}</TableCell>
+                  <TableCell className="py-3 text-right">{c.total}</TableCell>
+                  <TableCell className="px-1 py-1">{c.quitar}</TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
       )}
       {editable ? (
         <div>

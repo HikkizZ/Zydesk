@@ -1,12 +1,5 @@
+import { Combo } from '@/components/dominio/Combo';
 import { useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
-import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 // Solo con `horas.ver_todas`: la propia primero, luego el resto de las personas activas.
 export function SelectorPersona({
@@ -28,22 +21,17 @@ export function SelectorPersona({
     a.id === yoId ? -1 : b.id === yoId ? 1 : a.nombre.localeCompare(b.nombre),
   );
   return (
-    <div className="flex items-center gap-2">
-      <Label htmlFor="selector-persona" className="text-sm text-tinta-2">
-        Persona
-      </Label>
-      <Select value={String(valor)} onValueChange={(v) => onCambiar(Number(v))}>
-        <SelectTrigger id="selector-persona" className="w-56">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          {opciones.map((o) => (
-            <SelectItem key={o.id} value={String(o.id)}>
-              {o.id === yoId ? `${o.nombre} (yo)` : o.nombre}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <Combo
+      etiqueta="Persona"
+      className="w-56"
+      valor={valor}
+      alCambiar={(id) => {
+        if (id !== null) onCambiar(id);
+      }}
+      opciones={opciones.map((o) => ({
+        valor: o.id,
+        etiqueta: o.id === yoId ? `${o.nombre} (yo)` : o.nombre,
+      }))}
+    />
   );
 }

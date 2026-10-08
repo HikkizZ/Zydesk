@@ -50,8 +50,10 @@ it('con la planilla del diseño el resumen muestra 12 h, 8,5 h y 3,5 h', async (
   const resumen = screen.getByRole('region', { name: 'Resumen semanal' });
   expect(within(resumen).getByTestId('total-semana').textContent).toBe('12 h');
   expect(within(resumen).getByTestId('jornada-semana').textContent).toBe('41 h');
-  expect(within(resumen).getByText('Facturables').nextElementSibling?.textContent).toBe('8,5 h');
-  expect(within(resumen).getByText('Internas').nextElementSibling?.textContent).toBe('3,5 h');
+  expect(within(resumen).getByText('Facturables').previousElementSibling?.textContent).toBe(
+    '8,5 h',
+  );
+  expect(within(resumen).getByText('Internas').previousElementSibling?.textContent).toBe('3,5 h');
 });
 
 it('el total del día se compara con la jornada: pasados o de hoy por debajo en "alta"', async () => {
@@ -344,7 +346,7 @@ it('en escritorio es una cuadrícula', async () => {
 it('sin horas.ver_todas no hay selector de persona', async () => {
   montar();
   await esperarPlanilla();
-  expect(screen.queryByRole('combobox', { name: 'Persona' })).toBeNull();
+  expect(screen.queryByRole('combobox', { name: /^Persona/ })).toBeNull();
 });
 
 it('con horas.ver_todas hay selector y la planilla ajena es de solo lectura', async () => {
@@ -355,7 +357,7 @@ it('con horas.ver_todas hay selector y la planilla ajena es de solo lectura', as
     '/horas?usuario=3&semana=2026-09-28',
   );
   await esperarPlanilla();
-  expect(screen.getByRole('combobox', { name: 'Persona' })).toBeTruthy();
+  expect(screen.getByRole('combobox', { name: /^Persona/ })).toBeTruthy();
   expect(
     screen.getByText('Estás viendo la planilla de Sebastián Díaz · solo lectura'),
   ).toBeTruthy();
@@ -403,4 +405,15 @@ it('sin departamento avisa que no hay jornada para comparar', async () => {
   await esperarPlanilla();
   expect(screen.getByText('Sin departamento: no hay jornada para comparar')).toBeTruthy();
   expect(screen.getByText('7,5 h')).toBeTruthy();
+});
+
+it('la planilla usa la tabla densa: celdas de día de 72 px con horas en mono tabular y total por fila', async () => {
+  montar();
+  await esperarPlanilla();
+  const cabecera = screen.getAllByRole('columnheader').find((c) => c.hasAttribute('data-hoy'));
+  expect(cabecera?.className).toContain('w-18');
+  const fila = document.querySelector('[data-fila]') as HTMLElement;
+  const total = fila.lastElementChild as HTMLElement;
+  expect(total.className).toContain('font-mono');
+  expect(total.className).toContain('tabular-nums');
 });

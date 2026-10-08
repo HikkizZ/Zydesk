@@ -16,12 +16,12 @@ export function SelectorSemana({
 }) {
   const siguienteFutura = semana.siguiente > hoyIso();
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-1.5">
       <Button type="button" variant="outline" size="sm" onClick={() => onCambiar(semana.anterior)}>
         <ChevronLeft aria-hidden="true" />
         Semana anterior
       </Button>
-      <span className="px-1 text-sm font-medium">{textoSemana(semana)}</span>
+      <span className="px-1.5 text-sm font-medium tabular-nums">{textoSemana(semana)}</span>
       <Button
         type="button"
         variant="outline"

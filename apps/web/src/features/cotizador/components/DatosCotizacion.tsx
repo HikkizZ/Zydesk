@@ -97,9 +97,9 @@ export function DatosCotizacion({
   return (
     <section
       aria-label="Datos de la cotización"
-      className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
+      className="rounded-md border border-linea bg-panel p-4"
     >
-      <h2 className="mb-3 font-titulo text-base font-semibold">Datos</h2>
+      <h2 className="mb-3 text-sm font-semibold">Datos</h2>
       <div className="grid gap-4 sm:grid-cols-2">
         <Campo etiqueta="Contacto" error={errors.contacto_id?.message}>
           {(p) => (
@@ -222,7 +222,7 @@ export function DatosCotizacion({
               </div>
               <p
                 id="cotizacion-valor-uf-ayuda"
-                className={ayudaUf.alerta ? 'text-sm text-alta' : 'text-sm text-tinta-2'}
+                className={ayudaUf.alerta ? 'text-xs text-plazo-atento' : 'text-xs text-tinta-3'}
               >
                 {ayudaUf.texto}
               </p>
@@ -270,7 +270,7 @@ export function DatosCotizacion({
             <Textarea
               {...p}
               rows={2}
-              className="border-nota-interna-borde bg-nota-interna-fondo"
+              className="border-plazo-atento/40 bg-plazo-atento-suave"
               disabled={!editable}
               {...register('nota_interna', { setValueAs: aTextoOpcional })}
             />

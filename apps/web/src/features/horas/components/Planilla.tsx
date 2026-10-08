@@ -26,8 +26,8 @@ interface Props {
 }
 
 const CLASE_TONO: Record<TonoDia, string> = {
-  urgente: 'bg-urgente-fondo text-urgente',
-  alta: 'bg-alta-fondo text-alta',
+  urgente: 'bg-plazo-vencido-suave text-plazo-vencido',
+  alta: 'bg-plazo-atento-suave text-plazo-atento',
   neutro: '',
 };
 
@@ -52,22 +52,17 @@ function JornadaDia({ dia }: { dia: DiaDatos }) {
 function Cuadricula({ planilla, filas, editable, acciones, onDetalle }: Props) {
   const { dias } = planilla;
   return (
-    <div
-      data-vista="cuadricula"
-      className="overflow-hidden rounded-lg border border-borde bg-superficie"
-    >
+    <div data-vista="cuadricula">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 z-10 w-80 min-w-80 bg-superficie">
-              Trabajo
-            </TableHead>
+            <TableHead className="sticky left-0 z-10 w-60 min-w-60 bg-panel">Trabajo</TableHead>
             {dias.map((dia, i) => (
               <TableHead
                 key={dia.fecha}
                 data-hoy={dia.hoy || undefined}
                 className={cn(
-                  'min-w-18 text-center',
+                  'w-18 min-w-18 text-center',
                   dia.hoy && 'text-acento',
                   dia.futuro && 'opacity-60',
                 )}
@@ -93,7 +88,7 @@ function Cuadricula({ planilla, filas, editable, acciones, onDetalle }: Props) {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell className="sticky left-0 z-10 bg-superficie-suave-2 font-medium">
+            <TableCell className="sticky left-0 z-10 bg-panel-hundido font-medium">
               Total del día
             </TableCell>
             {dias.map((dia) => (
@@ -101,14 +96,14 @@ function Cuadricula({ planilla, filas, editable, acciones, onDetalle }: Props) {
                 key={dia.fecha}
                 data-tono={tonoDia(dia)}
                 className={cn(
-                  'text-center font-mono text-xs whitespace-nowrap',
+                  'text-center font-mono text-xs tabular-nums',
                   CLASE_TONO[tonoDia(dia)],
                 )}
               >
                 {textoTotalDia(dia)}
               </TableCell>
             ))}
-            <TableCell className="text-right font-mono text-sm font-semibold">
+            <TableCell className="text-right font-mono font-semibold tabular-nums">
               {formatearHoras(planilla.totales.semana)}
             </TableCell>
           </TableRow>
@@ -141,9 +136,7 @@ function VistaDia({ planilla, filas, editable, acciones, onDetalle }: Props) {
             onClick={() => setElegido(i)}
             className={cn(
               'flex flex-col items-center rounded-md border py-1.5 text-sm',
-              i === elegido
-                ? 'border-acento bg-acento text-white'
-                : 'border-borde-campo bg-superficie',
+              i === elegido ? 'border-acento bg-acento text-white' : 'border-linea-campo bg-panel',
               d.futuro && i !== elegido && 'opacity-60',
             )}
           >
@@ -173,7 +166,7 @@ function VistaDia({ planilla, filas, editable, acciones, onDetalle }: Props) {
       <div
         data-tono={tonoDia(dia)}
         className={cn(
-          'sticky bottom-14 z-10 flex items-center justify-between rounded-lg border border-borde bg-superficie px-3 py-2 text-sm shadow-sm lg:bottom-0',
+          'sticky bottom-14 z-10 flex items-center justify-between rounded-md border border-linea-fuerte bg-panel px-3 py-2 text-sm shadow-flotante lg:bottom-0',
           CLASE_TONO[tonoDia(dia)],
         )}
       >

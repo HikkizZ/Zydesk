@@ -1,7 +1,7 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -46,35 +46,35 @@ const chipActivo = (params: URLSearchParams): ClaveChip =>
 function Fila({ c }: { c: CotizacionResumenDatos }) {
   return (
     <TableRow>
-      <TableCell className="sticky left-0 z-10 bg-superficie">
+      <TableCell className="sticky left-0 z-10 bg-panel">
         <Link
           to={`/cotizaciones/${c.id}`}
-          className="font-mono text-sm whitespace-nowrap text-acento underline underline-offset-2"
+          className="font-mono text-tabla whitespace-nowrap text-acento underline underline-offset-2"
         >
           {c.codigo} v{c.version}
         </Link>
       </TableCell>
-      <TableCell className="max-w-72 min-w-44 whitespace-normal">
+      <TableCell className="max-w-72 min-w-44">
         <Link
           to={`/ots/${c.ot.id}`}
           className="font-mono text-sm text-acento underline underline-offset-2"
         >
           {c.ot.codigo}
         </Link>
-        <p className="text-xs text-tinta-2">{c.ot.titulo}</p>
+        <p className="truncate text-xs text-tinta-3">{c.ot.titulo}</p>
       </TableCell>
       <TableCell>
         {c.cliente ? c.cliente.nombre : <span className="text-tinta-3">—</span>}
       </TableCell>
-      <TableCell className="whitespace-nowrap">{diaMesDeFecha(c.fecha_emision)}</TableCell>
-      <TableCell className="whitespace-nowrap">{diaMesDeFecha(c.vence_el)}</TableCell>
+      <TableCell>{diaMesDeFecha(c.fecha_emision)}</TableCell>
+      <TableCell>{diaMesDeFecha(c.vence_el)}</TableCell>
       <TableCell>
         <PillEstadoCotizacion estado={c.estado} />
       </TableCell>
-      <TableCell className="text-right whitespace-nowrap">
+      <TableCell className="text-right">
         <Monto valor={c.neto} moneda={c.moneda} />
       </TableCell>
-      <TableCell className="text-right whitespace-nowrap">
+      <TableCell className="text-right">
         <Monto valor={c.total} moneda={c.moneda} />
       </TableCell>
     </TableRow>
@@ -127,9 +127,9 @@ export function CotizacionesPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TituloPagina titulo="Cotizaciones" />
+      <CabeceraPagina titulo="Cotizaciones" {...(datos ? { contador: datos.total } : {})} />
 
-      <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-2">
+      <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-1.5">
         {CHIPS.map((c) => (
           <button
             key={c.clave}
@@ -137,10 +137,10 @@ export function CotizacionesPage() {
             aria-pressed={chip === c.clave}
             onClick={() => cambiar({ estado: c.clave === 'todas' ? null : c.clave })}
             className={cn(
-              'inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-9',
+              'inline-flex min-h-11 items-center rounded-md border px-3 text-sm transition-colors lg:min-h-8',
               chip === c.clave
-                ? 'border-acento bg-acento text-white'
-                : 'border-borde-campo bg-superficie hover:bg-superficie-suave',
+                ? 'border-acento/30 bg-acento-suave font-medium text-acento'
+                : 'border-linea-fuerte bg-panel text-tinta-2 hover:bg-panel-hundido hover:text-tinta',
             )}
           >
             {c.etiqueta}
@@ -165,11 +165,11 @@ export function CotizacionesPage() {
         <EstadoVacio titulo="Sin cotizaciones" descripcion="Se crean desde una OT facturable." />
       ) : datos ? (
         <>
-          <div className="rounded-lg border border-borde bg-superficie">
+          <div>
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="sticky left-0 z-10 bg-superficie">Cotización</TableHead>
+                  <TableHead className="sticky left-0 z-10 bg-panel">Cotización</TableHead>
                   <TableHead>OT</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Emisión</TableHead>
