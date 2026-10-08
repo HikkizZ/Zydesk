@@ -67,13 +67,13 @@ function Tarjeta({
   return (
     <label
       className={cn(
-        'flex min-h-11 items-start gap-3 rounded-lg border p-3',
+        'flex min-h-11 items-start gap-3 rounded-md border border-linea-fuerte p-3',
         disabled ? 'cursor-not-allowed opacity-60' : 'cursor-pointer',
         marcada
           ? tono === 'si'
-            ? 'border-2 border-resuelto bg-resuelto-fondo/50'
-            : 'border-2 border-alta bg-alta-fondo/60'
-          : 'bg-superficie',
+            ? 'border-plazo-ok bg-plazo-ok-suave'
+            : 'border-plazo-atento bg-plazo-atento-suave'
+          : 'bg-panel',
       )}
     >
       <input
@@ -245,7 +245,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
     {
       quien: origen.codigo,
       texto: efectos.ticket,
-      clase: resolvio ? 'font-semibold text-resuelto' : 'font-semibold text-en-espera',
+      clase: resolvio ? 'font-semibold text-plazo-ok' : 'font-semibold text-plazo-atento',
     },
     { quien: 'Historial', texto: efectos.historial },
     { quien: 'Avisos', texto: efectos.avisos },
@@ -375,12 +375,28 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
           )}
         </Campo>
 
-        <section aria-label="Qué va a pasar" className="rounded-lg border bg-superficie-suave p-3">
+        <section
+          aria-label="Qué va a pasar"
+          className="rounded-md border border-linea bg-panel-hundido p-3"
+        >
           <h3 className="mb-2 text-sm font-semibold">Qué va a pasar</h3>
           <dl className="flex flex-col gap-2 text-sm">
             {lineas.map((l) => (
-              <div key={l.quien} className="grid grid-cols-[5.5rem_1fr] gap-2">
-                <dt className="font-mono text-xs text-tinta-2">{l.quien}</dt>
+              <div key={l.quien} className="grid grid-cols-[6.5rem_1fr] gap-2">
+                <dt className="flex items-center gap-1.5 font-mono text-xs text-tinta-2">
+                  <span
+                    aria-hidden="true"
+                    className={cn(
+                      'size-1.5 shrink-0 rounded-full',
+                      l.clase?.includes('text-plazo-ok')
+                        ? 'bg-plazo-ok'
+                        : l.clase
+                          ? 'bg-plazo-atento'
+                          : 'bg-tinta-4',
+                    )}
+                  />
+                  {l.quien}
+                </dt>
                 <dd className={l.clase}>{l.texto}</dd>
               </div>
             ))}
@@ -388,7 +404,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
         </section>
 
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

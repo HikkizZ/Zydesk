@@ -102,7 +102,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
         </DialogDescription>
       </DialogHeader>
       {ot.cotizacion ? (
-        <p className="rounded-md bg-superficie-suave px-3 py-2 text-sm">
+        <p className="rounded-md bg-panel-hundido px-3 py-2 text-sm">
           Aprueba{' '}
           <strong className="font-mono">
             {ot.cotizacion.codigo} v{ot.cotizacion.version}
@@ -182,7 +182,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
           <Label htmlFor="iniciar-ejecucion">Iniciar la ejecución al registrar</Label>
         </div>
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

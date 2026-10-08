@@ -8,7 +8,7 @@ import { Monto } from '@/components/dominio/Monto';
 import { PillEstadoCotizacion } from '@/components/dominio/PillEstadoCotizacion';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { diaMes, diaMesDeFecha, diaMesHora, hoyIso } from '@/components/dominio/formato-fecha';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { TerminoOt } from '@/components/dominio/TerminoOt';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
@@ -34,9 +34,9 @@ function Tarjeta({ id, titulo, children }: { id: string; titulo: string; childre
     <section
       id={id}
       aria-label={titulo}
-      className="scroll-mt-4 rounded-lg border border-borde bg-superficie p-4"
+      className="scroll-mt-4 rounded-md border border-linea bg-panel p-4"
     >
-      <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
+      <h2 className="mb-3 text-sm font-semibold">{titulo}</h2>
       {children}
     </section>
   );
@@ -54,7 +54,7 @@ function ListaDatos({ children }: { children: ReactNode }) {
 function Dato({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
   return (
     <>
-      <dt className="text-tinta-2">{etiqueta}</dt>
+      <dt className="text-xs text-tinta-2">{etiqueta}</dt>
       <dd className="min-w-0 text-right break-words">{children}</dd>
     </>
   );
@@ -154,7 +154,9 @@ function Aprobacion({ ot }: { ot: OtDatos }) {
     const a = ot.aprobacion;
     return (
       <div className="flex flex-col gap-2 text-sm">
-        <Pill tono={a ? 'resuelto' : 'alta'}>{a ? 'Aprobada' : 'Pendiente'}</Pill>
+        <Chip tono={a ? 'suave-ok' : 'suave-atento'} className="self-start">
+          {a ? 'Aprobada' : 'Pendiente'}
+        </Chip>
         {a ? (
           <ListaDatos>
             <Dato etiqueta="Contacto">{a.contacto.nombre}</Dato>
@@ -179,9 +181,9 @@ function Aprobacion({ ot }: { ot: OtDatos }) {
   }
   return (
     <div className="flex flex-col gap-2 text-sm">
-      <Pill tono={ot.aprobada_por ? 'resuelto' : 'alta'}>
+      <Chip tono={ot.aprobada_por ? 'suave-ok' : 'suave-atento'} className="self-start">
         {ot.aprobada_por ? 'Aprobada' : 'Pendiente'}
-      </Pill>
+      </Chip>
       <ListaDatos>
         <Dato etiqueta="Quién aprueba">
           {ot.aprobador?.nombre ?? <span className="text-tinta-3">Sin definir</span>}
@@ -211,7 +213,7 @@ export function PanelOt({
   const origen = ot.ticket_origen;
   const ultimos = eventos.slice(-5).reverse();
   return (
-    <aside aria-label="Datos de la OT" className={cn('flex flex-col gap-4', className)}>
+    <aside aria-label="Datos de la OT" className={cn('flex flex-col gap-3', className)}>
       {ot.tipo === 'facturable' ? <TarjetaCotizacion ot={ot} /> : <TarjetaCostoInterno ot={ot} />}
 
       <Tarjeta id="aprobacion" titulo="Aprobación">
@@ -262,10 +264,10 @@ export function PanelOt({
               </span>
             </div>
           ) : (
-            <span className="text-alta">Sin responsables</span>
+            <span className="text-plazo-atento">Sin responsables</span>
           )}
           {origen.otras_ots_abiertas.length > 0 ? (
-            <div className="flex flex-col gap-1 border-t pt-2">
+            <div className="flex flex-col gap-1 border-t border-linea-suave pt-2">
               <p className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">
                 Otras OT abiertas
               </p>
@@ -331,7 +333,7 @@ export function PanelOt({
           ) : null}
         </ListaDatos>
         {ot.resumen_cierre ? (
-          <div className="mt-2 border-t pt-2">
+          <div className="mt-2 border-t border-linea-suave pt-2">
             <p className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">
               Resumen de cierre
               {ot.resolvio_ticket !== null

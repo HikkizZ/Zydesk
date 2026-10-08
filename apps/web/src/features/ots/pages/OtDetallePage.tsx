@@ -1,13 +1,14 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Cargando } from '@/components/dominio/Cargando';
 import { Codigo } from '@/components/dominio/Codigo';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { diaMesDeFecha } from '@/components/dominio/formato-fecha';
+import { Chip } from '@/components/dominio/Chip';
+import { TerminoOt } from '@/components/dominio/TerminoOt';
 import { ListaTareas } from '@/components/dominio/ListaTareas';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { PillFacturacion } from '@/components/dominio/PillFacturacion';
@@ -60,12 +61,9 @@ function Tarjeta({
     <section
       id={id}
       aria-label={titulo}
-      className={cn(
-        'scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
-        className,
-      )}
+      className={cn('scroll-mt-4 rounded-md border border-linea bg-panel p-4', className)}
     >
-      <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
+      <h2 className="mb-3 text-sm font-semibold">{titulo}</h2>
       {children}
     </section>
   );
@@ -167,39 +165,41 @@ export function OtDetallePage() {
 
   return (
     <>
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <Codigo className="text-lg">{ot.codigo}</Codigo>
-          <TituloPagina titulo={ot.titulo} codigo={ot.codigo} />
-        </div>
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+      <header className="-mx-4 border-b border-linea bg-panel px-4 py-5 lg:-mx-7 lg:px-7">
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
+          <Codigo className="text-sm text-tinta-2">{ot.codigo}</Codigo>
+          <span aria-hidden="true" className="h-4 border-l border-linea-fuerte" />
           <PillTipoOt tipo={ot.tipo} />
           <PillEtapaOt etapa={ot.etapa} />
           {ot.tipo === 'facturable' ? <PillFacturacion estado={ot.estado_facturacion} /> : null}
-          <span className="text-sm">
-            Ticket{' '}
-            <Link
-              to={`/tickets/${ot.ticket.id}`}
-              className="inline-flex min-h-11 items-center font-mono text-acento underline underline-offset-2 lg:min-h-0"
-            >
+          <Link
+            to={`/tickets/${ot.ticket.id}`}
+            className="inline-flex min-h-11 items-center lg:min-h-0"
+          >
+            <Chip tono="acento" className="font-mono">
               {ot.ticket.codigo}
-            </Link>
-          </span>
+            </Chip>
+          </Link>
           {ot.responsable_tecnico ? (
-            <span className="inline-flex items-center gap-2 text-sm">
+            <span className="inline-flex items-center gap-2 text-sm text-tinta-2">
               <Avatares personas={[ot.responsable_tecnico]} />
               {ot.responsable_tecnico.nombre}
             </span>
           ) : (
-            <span className="text-sm text-alta">Sin responsable técnico</span>
+            <span className="text-sm text-plazo-atento">Sin responsable técnico</span>
           )}
           {ot.termino ? (
-            <span className={cn('text-sm', ot.vencida && 'font-semibold text-urgente')}>
-              {ot.vencida ? 'Vencida' : final ? 'Terminó' : 'Termina'} {diaMesDeFecha(ot.termino)}
-            </span>
+            <TerminoOt
+              termino={ot.termino}
+              vencida={ot.vencida}
+              final={final}
+              className="text-sm"
+            />
           ) : null}
         </div>
-        <AccionesOt ot={ot} />
+        <div className="[&>div]:mb-0">
+          <CabeceraPagina titulo={ot.titulo} codigo={ot.codigo} acciones={<AccionesOt ot={ot} />} />
+        </div>
       </header>
 
       <AtajosSecciones
@@ -220,10 +220,7 @@ export function OtDetallePage() {
         <section
           id="etapas"
           aria-label="Etapas"
-          className={cn(
-            COLUMNA,
-            'order-1 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
-          )}
+          className={cn(COLUMNA, 'order-1 scroll-mt-4 rounded-md border border-linea bg-panel p-4')}
         >
           <Etapas ot={ot} />
         </section>
@@ -238,10 +235,7 @@ export function OtDetallePage() {
         <section
           id="tareas"
           aria-label="Tareas"
-          className={cn(
-            COLUMNA,
-            'order-2 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
-          )}
+          className={cn(COLUMNA, 'order-2 scroll-mt-4 rounded-md border border-linea bg-panel p-4')}
         >
           <ListaTareas
             destino={{ tipo: 'ot', id: ot.id }}
@@ -258,10 +252,7 @@ export function OtDetallePage() {
         <section
           id="actividad"
           aria-label="Actividad"
-          className={cn(
-            COLUMNA,
-            'order-4 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5',
-          )}
+          className={cn(COLUMNA, 'order-4 scroll-mt-4 rounded-md border border-linea bg-panel p-4')}
         >
           <Tabs value={tipo} onValueChange={cambiarTipo}>
             <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">

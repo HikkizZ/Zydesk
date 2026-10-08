@@ -4,7 +4,7 @@ import { ETAPAS_OT, ETIQUETA_ETAPA_OT } from '@zydesk/shared';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -128,25 +128,28 @@ export function OtsPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <TituloPagina titulo="Órdenes de trabajo" />
-        {puedeExportar ? (
-          <Button variant="outline" onClick={() => void exportar()}>
-            Exportar para facturación (.xlsx)
-          </Button>
-        ) : (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-flex">
-                <Button variant="outline" disabled>
-                  Exportar para facturación (.xlsx)
-                </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Requiere permiso para marcar OT como facturada</TooltipContent>
-          </Tooltip>
-        )}
-      </div>
+      <CabeceraPagina
+        titulo="Órdenes de trabajo"
+        {...(datos ? { contador: datos.total } : {})}
+        acciones={
+          puedeExportar ? (
+            <Button variant="outline" onClick={() => void exportar()}>
+              Exportar para facturación (.xlsx)
+            </Button>
+          ) : (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span tabIndex={0} className="inline-flex">
+                  <Button variant="outline" disabled>
+                    Exportar para facturación (.xlsx)
+                  </Button>
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>Requiere permiso para marcar OT como facturada</TooltipContent>
+            </Tooltip>
+          )
+        }
+      />
 
       <IndicadoresOts />
 

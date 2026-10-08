@@ -31,19 +31,19 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
   const verMontos = usePermiso('reportes.ver');
   return (
     <TableRow>
-      <TableCell className="sticky left-0 z-10 bg-superficie">
+      <TableCell className="sticky left-0 z-10 bg-panel">
         <Link
           to={`/ots/${ot.id}`}
-          className="font-mono text-sm text-acento underline underline-offset-2"
+          className="font-mono text-tabla text-acento underline underline-offset-2"
         >
           {ot.codigo}
         </Link>
       </TableCell>
-      <TableCell className="max-w-80 min-w-56 whitespace-normal">
-        <Link to={`/ots/${ot.id}`} className="font-medium hover:underline">
+      <TableCell className="max-w-80 min-w-56">
+        <Link to={`/ots/${ot.id}`} className="block truncate font-medium hover:underline">
           {ot.titulo}
         </Link>
-        <p className="text-xs text-tinta-2">
+        <p className="truncate text-xs text-tinta-3">
           {ot.cliente ? `${ot.cliente.nombre} · ` : ''}
           <Codigo className="text-xs">{ot.ticket.codigo}</Codigo>
         </p>
@@ -54,7 +54,7 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
       <TableCell>
         <PillEtapaOt etapa={ot.etapa} {...etiquetaDerivada(ot)} />
       </TableCell>
-      <TableCell className="font-mono text-sm whitespace-nowrap">
+      <TableCell className="text-right font-mono tabular-nums">
         {ot.tipo === 'facturable' && !verMontos ? (
           <MontoOculto />
         ) : ot.tipo === 'facturable' && ot.neto !== null ? (
@@ -66,7 +66,7 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
           </>
         )}
       </TableCell>
-      <TableCell className="whitespace-nowrap">
+      <TableCell>
         <TerminoOt
           termino={ot.termino}
           vencida={ot.vencida}
@@ -93,15 +93,15 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
 // Vista de solo lectura (ADR 0022): cada fila enlaza a la OT; las etapas se cambian desde ella.
 export function TablaOts({ ots }: { ots: OtResumenDatos[] }) {
   return (
-    <div className="rounded-lg border border-borde bg-superficie">
+    <div>
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="sticky left-0 z-10 bg-superficie">OT</TableHead>
+            <TableHead className="sticky left-0 z-10 bg-panel">OT</TableHead>
             <TableHead>Trabajo</TableHead>
             <TableHead>Tipo</TableHead>
             <TableHead>Etapa</TableHead>
-            <TableHead>Neto / horas</TableHead>
+            <TableHead className="text-right">Neto / horas</TableHead>
             <TableHead>Término</TableHead>
             <TableHead>Facturación</TableHead>
             <TableHead>Responsable</TableHead>

@@ -66,7 +66,7 @@ function Contenido({ ot, onCerrar }: { ot: OtDatos; onCerrar: () => void }) {
           )}
         </Campo>
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

@@ -12,7 +12,7 @@ export function ChipsOts({
   onElegir: (clave: ClaveChipOt) => void;
 }) {
   return (
-    <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-2">
+    <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-1.5">
       {CHIPS_OT.map((c) => {
         const n = contadores[c.clave];
         return (
@@ -22,10 +22,10 @@ export function ChipsOts({
             aria-pressed={activo === c.clave}
             onClick={() => onElegir(c.clave)}
             className={cn(
-              'inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-9',
+              'inline-flex min-h-11 items-center rounded-md border px-3 text-sm transition-colors lg:min-h-8',
               activo === c.clave
-                ? 'border-acento bg-acento text-white'
-                : 'border-borde-campo bg-superficie hover:bg-superficie-suave',
+                ? 'border-acento/30 bg-acento-suave font-medium text-acento'
+                : 'border-linea-fuerte bg-panel text-tinta-2 hover:bg-panel-hundido hover:text-tinta',
             )}
           >
             {c.etiqueta}
