@@ -5,21 +5,21 @@ import { cn } from '@/lib/utils';
 import type { Barra } from './disposicion';
 
 const COLOR_PRIORIDAD: Record<Prioridad, string> = {
-  urgente: 'bg-urgente-punto',
-  alta: 'bg-alta-punto',
-  media: 'bg-media-punto',
-  baja: 'bg-baja-punto',
+  urgente: 'bg-plazo-vencido',
+  alta: 'bg-plazo-atento',
+  media: 'bg-tinta-4',
+  baja: 'bg-tinta-4',
 };
 
 // Estado nunca solo por color: relleno lleno, borde punteado y rayado se distinguen también en gris.
 const ESTILO_ESTADO: Record<EstadoTicket, string> = {
-  en_curso: 'bg-acento text-white',
-  nuevo: 'border border-dashed border-tinta-3 bg-superficie text-tinta',
+  en_curso: 'border border-acento/40 bg-acento-suave text-acento',
+  nuevo: 'border border-dashed border-tinta-3 bg-panel text-tinta',
   en_espera:
-    'border border-en-espera/30 bg-[repeating-linear-gradient(135deg,var(--color-en-espera-fondo)_0_6px,#efe2c2_6px_12px)] text-en-espera',
-  resuelto: 'bg-[#e6e3dc] text-tinta-2',
-  descartado: 'bg-[#e6e3dc] text-tinta-2',
-  duplicado: 'bg-[#e6e3dc] text-tinta-2',
+    'border border-plazo-atento/40 bg-[repeating-linear-gradient(135deg,var(--color-plazo-atento-suave)_0_6px,#f6e3c4_6px_12px)] text-plazo-atento',
+  resuelto: 'bg-panel-hundido text-tinta-3',
+  descartado: 'bg-panel-hundido text-tinta-3',
+  duplicado: 'bg-panel-hundido text-tinta-3',
 };
 
 const recortar = (texto: string, max: number) =>
@@ -31,10 +31,7 @@ function PuntoPrioridad({ prioridad }: { prioridad: Prioridad }) {
     <span
       role="img"
       aria-label={`Prioridad ${ETIQUETA_PRIORIDAD[prioridad].toLowerCase()}`}
-      className={cn(
-        'size-2 shrink-0 rounded-full ring-1 ring-white/70',
-        COLOR_PRIORIDAD[prioridad],
-      )}
+      className={cn('size-2 shrink-0 rounded-full ring-1 ring-panel', COLOR_PRIORIDAD[prioridad])}
     />
   );
 }
@@ -63,9 +60,9 @@ export function BarraTicket({ barra }: { barra: Barra }) {
         gridRow: barra.subfila + 1,
       }}
       className={cn(
-        'z-[1] mx-0.5 my-0.5 flex min-h-6 min-w-6 items-center gap-1.5 overflow-hidden rounded-md px-2 text-xs font-medium whitespace-nowrap focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none',
+        'z-[1] mx-0.5 my-0.5 flex min-h-6 min-w-6 items-center gap-1.5 overflow-hidden rounded-sm px-2 font-mono text-xs whitespace-nowrap',
         item.vencido
-          ? 'border border-dashed border-urgente-punto bg-urgente-fondo text-urgente'
+          ? 'border border-dashed border-plazo-vencido/40 bg-plazo-vencido-suave text-plazo-vencido'
           : ESTILO_ESTADO[item.estado],
       )}
     >

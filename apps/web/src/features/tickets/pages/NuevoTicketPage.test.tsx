@@ -124,10 +124,10 @@ it('la vista previa del plazo usa el departamento del principal', async () => {
   const llamadas = montar();
   expect(screen.getByText(/Sin fecha límite \(elige responsable y categoría/)).toBeTruthy();
 
-  await usuario.click(screen.getByRole('combobox', { name: 'Categoría' }));
+  await usuario.click(screen.getByRole('combobox', { name: /^Categoría/ }));
   await usuario.click(await screen.findByRole('option', { name: 'ERP / Facturación' }));
 
-  await screen.findByText(/Se calculará: vence el/);
+  await screen.findByText(/Resolución: vence/);
   const calculo = llamadas.find((l) => l.ruta === '/api/plazos/calcular');
   expect(calculo?.cuerpo).toMatchObject({
     departamento_id: 1,

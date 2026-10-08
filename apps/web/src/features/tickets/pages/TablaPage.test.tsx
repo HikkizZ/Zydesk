@@ -232,19 +232,19 @@ it('archivados=true deja activa la pestaña Archivados y muestra el ticket archi
   expect(screen.getByRole('button', { name: /^Todos/ }).getAttribute('aria-pressed')).toBe('false');
 });
 
-it('ordena por Vence desde la cabecera y lo deja en la URL', async () => {
+it('ordena por Plazo hábil desde la cabecera y lo deja en la URL', async () => {
   const usuario = userEvent.setup();
   const llamadas = montar();
   await screen.findByText('TK-1051');
   expect(screen.getByRole('columnheader', { name: /Actualizado/ }).getAttribute('aria-sort')).toBe(
     'descending',
   );
-  await usuario.click(screen.getByRole('button', { name: 'Vence' }));
+  await usuario.click(screen.getByRole('button', { name: 'Plazo hábil' }));
   expect(ubicacion()).toBe('/tickets/tabla?orden=fecha_limite');
   await waitFor(() =>
     expect(llamadas.some((l) => l.ruta.includes('orden=fecha_limite'))).toBe(true),
   );
-  expect(screen.getByRole('columnheader', { name: /Vence/ }).getAttribute('aria-sort')).toBe(
+  expect(screen.getByRole('columnheader', { name: /Plazo hábil/ }).getAttribute('aria-sort')).toBe(
     'ascending',
   );
 });

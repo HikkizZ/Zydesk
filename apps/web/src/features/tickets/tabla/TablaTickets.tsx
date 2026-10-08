@@ -29,25 +29,30 @@ function CabeceraOrdenable({
   valor,
   actual,
   onOrden,
+  className,
 }: {
   etiqueta: string;
   valor: Orden;
   actual: Orden;
   onOrden: (orden: Orden) => void;
+  className?: string;
 }) {
   const activo = actual === valor;
   return (
-    <TableHead aria-sort={activo ? (valor.startsWith('-') ? 'descending' : 'ascending') : 'none'}>
+    <TableHead
+      className={className}
+      aria-sort={activo ? (valor.startsWith('-') ? 'descending' : 'ascending') : 'none'}
+    >
       <button
         type="button"
         onClick={() => onOrden(valor)}
-        className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-md px-2 font-medium hover:bg-superficie-suave focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-8"
+        className="-ml-2 inline-flex min-h-11 items-center gap-1 rounded-md px-2 hover:text-tinta lg:min-h-8"
       >
         {etiqueta}
         {activo ? (
-          <ArrowDown aria-hidden="true" className="size-3.5" />
+          <ArrowDown aria-hidden="true" className="size-[11px]" />
         ) : (
-          <ArrowUpDown aria-hidden="true" className="size-3.5 opacity-40" />
+          <ArrowUpDown aria-hidden="true" className="size-[11px] opacity-40" />
         )}
       </button>
     </TableHead>
@@ -57,17 +62,19 @@ function CabeceraOrdenable({
 function Fila({ ticket }: { ticket: TicketResumenDatos }) {
   return (
     <TableRow>
-      <TableCell className="sticky left-0 z-10 bg-superficie">
+      <TableCell className="sticky left-0 z-10 bg-panel">
         <Link
           to={`/tickets/${ticket.id}`}
-          className="inline-flex min-h-11 items-center text-acento underline-offset-2 hover:underline lg:min-h-0"
+          className="inline-flex min-h-11 items-center text-tinta-2 hover:text-acento lg:min-h-0"
         >
           <Codigo>{ticket.codigo}</Codigo>
         </Link>
       </TableCell>
-      <TableCell className="max-w-[360px] min-w-[240px] whitespace-normal">
-        <p className="font-medium">{ticket.asunto}</p>
-        <p className="text-sm text-tinta-2">{ticket.cliente?.nombre ?? 'Sin cliente'}</p>
+      <TableCell>
+        <div className="max-w-[520px] min-w-[240px]">
+          <p className="truncate font-medium text-tinta">{ticket.asunto}</p>
+          <p className="truncate text-xs text-tinta-3">{ticket.cliente?.nombre ?? 'Sin cliente'}</p>
+        </div>
       </TableCell>
       <TableCell>
         <PillEstado estado={ticket.estado} espera_de={ticket.espera_de} />
@@ -77,9 +84,14 @@ function Fila({ ticket }: { ticket: TicketResumenDatos }) {
       </TableCell>
       <TableCell>
         {ticket.responsables.length > 0 ? (
-          <Avatares personas={ticket.responsables} />
+          <span className="inline-flex items-center gap-2">
+            <Avatares personas={ticket.responsables} />
+            <span aria-hidden="true" className="max-w-[120px] truncate text-xs text-tinta-2">
+              {ticket.responsables[0]?.nombre}
+            </span>
+          </span>
         ) : (
-          <span className="text-sm text-alta">Sin asignar</span>
+          <span className="text-xs text-plazo-atento">Sin asignar</span>
         )}
       </TableCell>
       <TableCell>
@@ -88,10 +100,10 @@ function Fila({ ticket }: { ticket: TicketResumenDatos }) {
           {...(ticket.ot_vinculada ? { codigo: ticket.ot_vinculada.codigo } : {})}
         />
       </TableCell>
-      <TableCell>
+      <TableCell className="w-[156px]">
         <FranjaPlazo ticket={ticket} />
       </TableCell>
-      <TableCell className="text-sm text-tinta-2">
+      <TableCell className="w-[96px] text-xs text-tinta-2">
         <FechaRelativa fecha={ticket.actualizado_en} />
       </TableCell>
     </TableRow>
@@ -110,21 +122,21 @@ function CabeceraGrupo({
   const n = grupo.tickets.length;
   const Icono = colapsado ? ChevronRight : ChevronDown;
   return (
-    <TableRow className="bg-superficie-suave hover:bg-superficie-suave">
+    <TableRow className="bg-panel-hundido hover:bg-panel-hundido">
       <TableCell colSpan={COLUMNAS} className="p-0">
         <div className="sticky left-0 w-fit">
           <button
             type="button"
             aria-expanded={!colapsado}
             onClick={onAlternar}
-            className="flex min-h-11 items-center gap-2 px-3 font-semibold focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-9"
+            className="flex min-h-11 items-center gap-2 px-3 text-tabla font-medium text-tinta lg:min-h-9"
           >
             <Icono aria-hidden="true" className="size-4" />
             {grupo.punto ? (
-              <span aria-hidden="true" className={cn('size-2.5 rounded-full', grupo.punto)} />
+              <span aria-hidden="true" className={cn('size-1.5 rounded-full', grupo.punto)} />
             ) : null}
             {grupo.titulo}{' '}
-            <span className="font-normal text-tinta-2">
+            <span className="font-normal text-tinta-3">
               {n} {n === 1 ? 'ticket' : 'tickets'}
             </span>
           </button>
@@ -153,11 +165,11 @@ export function TablaTickets({
     });
 
   return (
-    <div className="w-0 min-w-full rounded-lg border border-borde bg-superficie">
+    <div className="w-0 min-w-full">
       <Table>
         <TableHeader>
           <TableRow className="hover:bg-transparent">
-            <TableHead className="sticky left-0 z-10 bg-superficie">ID</TableHead>
+            <TableHead className="sticky left-0 z-10 w-[82px] bg-panel-hundido">Folio</TableHead>
             <TableHead>Asunto</TableHead>
             <TableHead>Estado</TableHead>
             <CabeceraOrdenable
@@ -169,13 +181,15 @@ export function TablaTickets({
             <TableHead>Responsables</TableHead>
             <TableHead>Tipo</TableHead>
             <CabeceraOrdenable
-              etiqueta="Vence"
+              etiqueta="Plazo hábil"
+              className="w-[156px]"
               valor="fecha_limite"
               actual={orden}
               onOrden={onOrden}
             />
             <CabeceraOrdenable
               etiqueta="Actualizado"
+              className="w-[96px]"
               valor="-actualizado_en"
               actual={orden}
               onOrden={onOrden}

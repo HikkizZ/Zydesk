@@ -13,7 +13,7 @@ export function ChipsFiltro({
   onElegir: (clave: ClaveChip) => void;
 }) {
   return (
-    <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-2">
+    <div role="group" aria-label="Filtros rápidos" className="flex flex-wrap gap-1.5">
       {CHIPS.map((c) => {
         const n = contadores[c.clave];
         const boton = (
@@ -23,10 +23,10 @@ export function ChipsFiltro({
             disabled={c.deshabilitado !== undefined}
             onClick={() => onElegir(c.clave)}
             className={cn(
-              'inline-flex min-h-11 items-center rounded-full border px-4 text-sm font-medium transition-colors focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 lg:min-h-9',
+              'inline-flex min-h-11 items-center rounded-md border px-3 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 lg:min-h-8',
               activo === c.clave
-                ? 'border-acento bg-acento text-white'
-                : 'border-borde-campo bg-superficie hover:bg-superficie-suave',
+                ? 'border-acento/40 bg-acento-suave text-acento'
+                : 'border-linea-campo bg-panel text-tinta-2 hover:bg-lienzo',
             )}
           >
             {c.etiqueta}

@@ -19,24 +19,27 @@ export function Columna({
   return (
     <section
       aria-labelledby={`columna-${clave}`}
-      className="flex min-w-[260px] flex-1 snap-start flex-col gap-3 rounded-lg border border-borde bg-superficie-suave p-3"
+      className="flex min-w-[260px] flex-1 snap-start flex-col gap-2 rounded-md border border-linea bg-lienzo p-2"
     >
-      <header>
-        <h2 id={`columna-${clave}`} className="flex items-center gap-2 font-semibold">
-          <span aria-hidden="true" className={cn('size-2.5 rounded-full', punto)} />
+      <header className="px-1 pt-1">
+        <h2
+          id={`columna-${clave}`}
+          className="flex items-center gap-2 text-tabla font-medium text-tinta"
+        >
+          <span aria-hidden="true" className={cn('size-1.5 rounded-full', punto)} />
           {titulo}
-          <span className="rounded-full bg-superficie px-2 text-sm font-medium text-tinta-2">
+          <span className="rounded-sm border border-linea bg-panel px-1.5 text-xs font-medium text-tinta-2 tabular-nums">
             {tickets.length}
           </span>
         </h2>
         {subtitulo ? <p className="mt-0.5 text-xs text-tinta-2">{subtitulo}</p> : null}
       </header>
       {tickets.length === 0 ? (
-        <p className="rounded-md border border-dashed border-borde-campo px-3 py-6 text-center text-sm text-tinta-2">
+        <p className="rounded-md border border-dashed border-linea-campo px-3 py-6 text-center text-sm text-tinta-3">
           Sin tickets
         </p>
       ) : (
-        <ul className="flex flex-col gap-3">
+        <ul className="flex flex-col gap-2">
           {tickets.map((t) => (
             <li key={t.id}>
               <TarjetaTicket ticket={t} />

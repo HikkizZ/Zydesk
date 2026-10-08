@@ -2,7 +2,7 @@ import { keepPreviousData, useQueries, useQuery } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -18,6 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { claves, STALE_TICKETS, tickets, type ConsultaTickets } from '@/features/tickets/api';
+import { VistasTickets } from '../components/VistasTickets';
 import { useClientesActivos } from '../components/SelectorCliente';
 import { BuscadorTickets } from '../tablero/BuscadorTickets';
 import { agrupar, ETIQUETA_AGRUPAR, MODOS_AGRUPAR, type ModoAgrupar } from '../tabla/agrupar';
@@ -123,25 +124,31 @@ export function TablaPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <TituloPagina titulo="Tabla" />
-        <div className="flex flex-wrap items-center gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span tabIndex={0} className="inline-flex">
-                <Button variant="outline" disabled>
-                  Exportar
+      <div>
+        <CabeceraPagina
+          titulo="Tickets"
+          {...(datos ? { contador: datos.total } : {})}
+          acciones={
+            <>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span tabIndex={0} className="inline-flex">
+                    <Button variant="outline" disabled>
+                      Exportar
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>Disponible en la Fase 7</TooltipContent>
+              </Tooltip>
+              {puedeEditar ? (
+                <Button asChild>
+                  <Link to="/tickets/nuevo">Nuevo ticket</Link>
                 </Button>
-              </span>
-            </TooltipTrigger>
-            <TooltipContent>Disponible en la Fase 7</TooltipContent>
-          </Tooltip>
-          {puedeEditar ? (
-            <Button asChild>
-              <Link to="/tickets/nuevo">Nuevo ticket</Link>
-            </Button>
-          ) : null}
-        </div>
+              ) : null}
+            </>
+          }
+        />
+        <VistasTickets />
       </div>
 
       <ChipsFiltro activo={chip} contadores={conteo} onElegir={elegirChip} />
@@ -149,11 +156,13 @@ export function TablaPage() {
       <div
         role="search"
         aria-label="Búsqueda y agrupación"
-        className="flex flex-wrap items-center gap-3"
+        className="flex flex-wrap items-center gap-2"
       >
         <BuscadorTickets valor={q} onCambio={(valor) => cambiar({ q: valor || null })} />
         <div className="flex items-center gap-2">
-          <Label htmlFor="agrupar-por">Agrupar por</Label>
+          <Label htmlFor="agrupar-por" className="text-tinta-2">
+            Agrupar por
+          </Label>
           <Select
             value={agruparPor}
             onValueChange={(valor) =>

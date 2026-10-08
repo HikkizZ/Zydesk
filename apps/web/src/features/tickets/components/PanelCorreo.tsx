@@ -122,10 +122,10 @@ export function PanelCorreo({
   return (
     <section
       aria-label="Adjuntar correo"
-      className="rounded-lg border border-borde bg-superficie p-4"
+      className="rounded-md border border-dashed border-linea-campo bg-panel p-4"
     >
       <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-titulo text-base font-semibold">
+        <h2 className="flex items-center gap-2 text-sm font-semibold text-tinta">
           <Mail aria-hidden="true" className="size-4" />
           Adjuntar correo
         </h2>
@@ -184,8 +184,8 @@ export function PanelCorreo({
                 onDragLeave={() => setArrastrando(false)}
                 onDrop={alSoltar}
                 className={cn(
-                  'flex flex-col items-center gap-2 rounded-lg border border-dashed border-borde-campo bg-superficie-suave-2 px-4 py-6 text-center text-sm text-tinta-2',
-                  arrastrando && 'border-acento bg-media-fondo',
+                  'flex flex-col items-center gap-2 rounded-md border border-dashed border-linea-campo bg-lienzo px-4 py-6 text-center text-sm text-tinta-2',
+                  arrastrando && 'border-acento bg-acento-suave',
                 )}
               >
                 <Paperclip aria-hidden="true" className="size-5 text-tinta-3" />
@@ -228,14 +228,14 @@ export function PanelCorreo({
           <div aria-live="polite" className="mt-3">
             {leyendo ? <p className="text-sm text-tinta-2">Leyendo correo…</p> : null}
             {error ? (
-              <p role="alert" className="text-sm text-urgente">
+              <p role="alert" className="text-sm text-plazo-vencido">
                 {error}
               </p>
             ) : null}
           </div>
 
           {vista ? (
-            <div className="mt-3 flex flex-col gap-3 border-t pt-3">
+            <div className="mt-3 flex flex-col gap-3 border-t border-linea pt-3">
               <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-sm">
                 <dt className="text-tinta-2">De</dt>
                 <dd className="break-words">{vista.datos.de ?? '—'}</dd>
@@ -249,7 +249,7 @@ export function PanelCorreo({
               <pre
                 tabIndex={0}
                 aria-label="Cuerpo del correo"
-                className="max-h-[240px] overflow-auto rounded-md border bg-superficie-suave-2 p-3 font-texto text-sm whitespace-pre-wrap"
+                className="max-h-[240px] overflow-auto rounded-md border border-linea bg-lienzo p-3 font-texto text-sm whitespace-pre-wrap"
               >
                 {vista.datos.cuerpo_texto}
               </pre>
