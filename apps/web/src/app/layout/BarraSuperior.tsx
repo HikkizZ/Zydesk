@@ -35,11 +35,11 @@ export function BarraSuperior() {
                   <Link
                     to={miga.ruta}
                     className={cn(
-                      'truncate hover:text-tinta hover:underline',
+                      'flex min-h-11 min-w-11 items-center hover:text-tinta hover:underline lg:min-h-0 lg:min-w-0',
                       miga.mono && 'font-mono',
                     )}
                   >
-                    {miga.etiqueta}
+                    <span className="truncate">{miga.etiqueta}</span>
                   </Link>
                 ) : (
                   <span

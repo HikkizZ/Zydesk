@@ -58,3 +58,11 @@ it('bajo lg se ocultan los niveles anteriores a los dos últimos', () => {
   expect(raiz.className).toContain('hidden');
   expect(screen.getByText('Configuración').closest('li')!.className).not.toContain('hidden');
 });
+
+it('bajo lg la miga enlazada mide 44 px (min-h-11) y en escritorio no cambia (lg:min-h-0)', () => {
+  montar('/tickets/12', <PaginaDeTicket />);
+  const enlace = screen.getByRole('link', { name: 'Tickets' });
+  expect(enlace.className).toContain('min-h-11');
+  expect(enlace.className).toContain('min-w-11');
+  expect(enlace.className).toContain('lg:min-h-0');
+});

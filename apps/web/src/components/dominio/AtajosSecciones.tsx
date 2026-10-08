@@ -18,7 +18,7 @@ export function AtajosSecciones({
   return (
     <nav
       aria-label={etiqueta}
-      className="-mx-6 mt-4 flex gap-2 overflow-x-auto px-6 pb-1 lg:hidden"
+      className="-mx-4 mt-4 flex gap-2 overflow-x-auto px-4 pb-1 lg:hidden"
     >
       {secciones.map((s) => (
         <a

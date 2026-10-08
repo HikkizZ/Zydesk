@@ -48,7 +48,7 @@ export function RedactorPlegable({ className, ...props }: PropsRedactor) {
   return (
     <div
       className={cn(
-        'sticky bottom-14 z-[5] -mx-6 border-t border-linea bg-panel px-6 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(22,25,31,0.12),0_-1px_2px_rgba(22,25,31,0.06)]',
+        'sticky bottom-14 z-[5] -mx-4 border-t border-linea bg-panel px-4 py-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(22,25,31,0.12),0_-1px_2px_rgba(22,25,31,0.06)]',
         className,
       )}
     >
