@@ -144,10 +144,10 @@ it('con no_leidos: 3 el enlace Avisos lleva el badge «3»; con 0 no hay badge',
 
 it('Más se pinta activo solo cuando la ruta no es de los otros cuatro accesos', () => {
   const { unmount } = montar('tecnico', '/clientes');
-  expect(botonMas().className).toContain('bg-white/10');
+  expect(botonMas().className).toContain('bg-acento-suave');
   unmount();
   montar('tecnico', '/tickets');
-  expect(botonMas().className).not.toContain('bg-white/10');
+  expect(botonMas().className).not.toContain('bg-acento-suave');
 });
 
 it('cualquier ruta bajo /tickets marca Tickets y no Más; /tickets/nuevo marca Nuevo', () => {
@@ -155,13 +155,13 @@ it('cualquier ruta bajo /tickets marca Tickets y no Más; /tickets/nuevo marca N
     const { unmount } = montar('tecnico', ruta);
     expect(screen.getByRole('link', { name: 'Tickets' }).getAttribute('aria-current')).toBe('page');
     expect(screen.getByRole('link', { name: 'Nuevo' }).getAttribute('aria-current')).toBeNull();
-    expect(botonMas().className).not.toContain('bg-white/10');
+    expect(botonMas().className).not.toContain('bg-acento-suave');
     unmount();
   }
   montar('tecnico', '/tickets/nuevo');
   expect(screen.getByRole('link', { name: 'Nuevo' }).getAttribute('aria-current')).toBe('page');
   expect(screen.getByRole('link', { name: 'Tickets' }).getAttribute('aria-current')).toBeNull();
-  expect(botonMas().className).not.toContain('bg-white/10');
+  expect(botonMas().className).not.toContain('bg-acento-suave');
 });
 
 it('el panel Más muestra Ayuda hacia /ayuda para todos los roles y pulsarlo lo cierra', async () => {

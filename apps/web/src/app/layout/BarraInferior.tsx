@@ -17,7 +17,7 @@ const ACCESOS = [
 const claseAcceso = (activo: boolean) =>
   cn(
     'relative flex min-h-14 flex-1 flex-col items-center justify-center gap-0.5 whitespace-nowrap text-xs font-medium',
-    activo ? 'bg-white/10 text-fondo' : 'text-fondo/80',
+    activo ? 'bg-acento-suave text-acento' : 'text-tinta-2',
   );
 
 // "Tickets" cubre todo lo que cuelga de /tickets (tablero, tabla, línea de tiempo…), salvo "Nuevo".
@@ -34,7 +34,7 @@ export function BarraInferior() {
   return (
     <nav
       aria-label="Principal (móvil)"
-      className="fixed inset-x-0 bottom-0 z-10 flex bg-tinta pb-[env(safe-area-inset-bottom)] lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-10 flex border-t border-linea-fuerte bg-panel pb-[env(safe-area-inset-bottom)] lg:hidden"
     >
       {ACCESOS.map(({ ruta, etiqueta, icono: Icono }) => {
         const activo = esActivo(ruta, pathname);

@@ -118,3 +118,30 @@ it('todos los roles, incluido lectura, ven el enlace Ayuda hacia /ayuda', () => 
     unmount();
   }
 });
+
+it('el enlace de la ruta actual lleva aria-current="page" y el fondo de acento suave', () => {
+  render(
+    <ConSesion yo={yoDePrueba()} ruta="/tickets/tabla">
+      <MenuLateral />
+    </ConSesion>,
+  );
+  const activo = screen.getByRole('link', { name: 'Tabla' });
+  expect(activo.getAttribute('aria-current')).toBe('page');
+  expect(activo.className).toContain('bg-acento-suave');
+  const otro = screen.getByRole('link', { name: 'Horas' });
+  expect(otro.getAttribute('aria-current')).toBeNull();
+  expect(otro.className).not.toContain('bg-acento-suave');
+});
+
+it('los rótulos de grupo son decorativos (aria-hidden) y de 11 px', () => {
+  render(
+    <ConSesion yo={yoDePrueba({ rol: 'admin' })}>
+      <MenuLateral />
+    </ConSesion>,
+  );
+  for (const grupo of ['Tickets', 'Trabajo', 'Administración']) {
+    const rotulo = screen.getByText(grupo, { selector: 'div' });
+    expect(rotulo.getAttribute('aria-hidden')).toBe('true');
+    expect(rotulo.className).toContain('text-[11px]');
+  }
+});

@@ -22,7 +22,7 @@ export function InsigniaAvisos({ className }: { className?: string }) {
       data-letra="insignia"
       aria-label={n === 1 ? '1 aviso sin leer' : `${n} avisos sin leer`}
       className={cn(
-        'inline-flex min-w-5 items-center justify-center rounded-full bg-urgente-punto px-1.5 text-xs font-semibold leading-5 text-white',
+        'inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-sm bg-acento px-1.5 text-xs font-semibold leading-[18px] text-white',
         className,
       )}
     >
