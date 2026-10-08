@@ -140,7 +140,7 @@ function Formulario({ ticket, onCerrar }: { ticket: TicketDatos; onCerrar: () =>
           </div>
         ) : null}
         {errores['descuenta_bolsa'] ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errores['descuenta_bolsa']}
           </p>
         ) : null}
@@ -152,7 +152,7 @@ function Formulario({ ticket, onCerrar }: { ticket: TicketDatos; onCerrar: () =>
           </p>
         ) : null}
         {errorGeneral ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errorGeneral}
           </p>
         ) : null}

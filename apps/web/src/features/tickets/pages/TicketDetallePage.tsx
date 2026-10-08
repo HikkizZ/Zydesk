@@ -1,5 +1,6 @@
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { formatearFecha } from '@zydesk/shared';
+import { ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
 import { TituloPagina } from '@/app/TituloPagina';
@@ -9,6 +10,7 @@ import { Codigo } from '@/components/dominio/Codigo';
 import { DialogoCambiarEstado } from '@/components/dominio/DialogoCambiarEstado';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
+import { diaMesHora } from '@/components/dominio/formato-fecha';
 import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { Pill } from '@/components/dominio/Pill';
 import { PillEstado } from '@/components/dominio/PillEstado';
@@ -65,9 +67,9 @@ function Tarjeta({
     <section
       id={id}
       aria-label={titulo}
-      className={`scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 ${className}`}
+      className={`scroll-mt-4 rounded-md border border-linea bg-panel p-4 ${className}`}
     >
-      <h2 className="mb-3 font-titulo text-base font-semibold">{titulo}</h2>
+      <h2 className="mb-3 text-sm font-semibold text-tinta">{titulo}</h2>
       {children}
     </section>
   );
@@ -168,48 +170,60 @@ export function TicketDetallePage() {
 
   return (
     <>
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <Codigo className="text-lg">{t.codigo}</Codigo>
-          <TituloPagina titulo={t.asunto} codigo={t.codigo} />
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <header className="-mx-4 -mt-4 flex flex-col gap-3 border-b border-linea bg-panel px-4 py-5 lg:-mx-7 lg:-mt-7 lg:px-7">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Link
+            to="/tickets"
+            aria-label="Volver a tickets"
+            className="-ml-2 inline-flex size-11 items-center justify-center rounded-md text-tinta-2 hover:bg-lienzo hover:text-tinta lg:size-8"
+          >
+            <ArrowLeft aria-hidden="true" className="size-4" />
+          </Link>
+          <Codigo className="text-sm text-tinta">{t.codigo}</Codigo>
+          <span aria-hidden="true" className="h-4 border-l border-linea-fuerte" />
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
           <PillPrioridad prioridad={t.prioridad} />
           {t.ot_vinculada ? <PillTipo tipo={t.tipo} codigo={t.ot_vinculada.codigo} /> : null}
           {t.correo ? <Pill tono="neutro">Correo adjunto</Pill> : null}
           {t.archivado_en ? <Pill tono="neutro">Archivado</Pill> : null}
         </div>
-        <FranjaPlazo ticket={t} variante="ancha" />
-        <div className="flex flex-wrap items-center gap-2">
-          {puedeEditar ? (
-            <>
-              <Button type="button" onClick={() => setEstadoAbierto(true)}>
-                Cambiar estado
-              </Button>
-              {cerrado ? (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <span tabIndex={0} className="inline-flex">
-                      <Button type="button" variant="outline" disabled>
-                        Editar
-                      </Button>
-                    </span>
-                  </TooltipTrigger>
-                  <TooltipContent>Reabre el ticket para editarlo</TooltipContent>
-                </Tooltip>
-              ) : (
-                <Button type="button" variant="outline" onClick={() => setEditando(true)}>
-                  Editar
+        <TituloPagina titulo={t.asunto} codigo={t.codigo} />
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
+          <FranjaPlazo ticket={t} variante="ancha" className="min-w-0 lg:flex-1" />
+          <div className="flex flex-wrap items-center gap-2 lg:shrink-0">
+            {puedeEditar ? (
+              <>
+                <Button
+                  type="button"
+                  className="flex-1 lg:flex-none"
+                  onClick={() => setEstadoAbierto(true)}
+                >
+                  Cambiar estado
                 </Button>
-              )}
-            </>
-          ) : (
-            <span className="text-sm text-tinta-2">Solo lectura</span>
-          )}
-          {puedeEditar ? (
-            <BotonConvertir ticket={t} onConvertir={() => setConvirtiendo(true)} />
-          ) : null}
+                {cerrado ? (
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span tabIndex={0} className="inline-flex">
+                        <Button type="button" variant="outline" disabled>
+                          Editar
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent>Reabre el ticket para editarlo</TooltipContent>
+                  </Tooltip>
+                ) : (
+                  <Button type="button" variant="outline" onClick={() => setEditando(true)}>
+                    Editar
+                  </Button>
+                )}
+              </>
+            ) : (
+              <span className="text-sm text-tinta-2">Solo lectura</span>
+            )}
+            {puedeEditar ? (
+              <BotonConvertir ticket={t} onConvertir={() => setConvirtiendo(true)} />
+            ) : null}
+          </div>
         </div>
       </header>
 
@@ -225,13 +239,13 @@ export function TicketDetallePage() {
         ]}
       />
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start lg:gap-6">
+      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_300px] lg:gap-6">
         {/* Bajo lg, las secciones son hijas directas del grid (display: contents) para poder reordenarlas con `order`; el DOM no cambia. */}
         <div className="contents lg:flex lg:min-w-0 lg:flex-col lg:gap-4">
           {cerrado ? (
             <div
               role="status"
-              className="order-1 flex flex-wrap items-center gap-3 rounded-lg border border-borde bg-superficie-suave px-4 py-3 text-sm lg:order-none"
+              className="order-1 flex flex-wrap items-center gap-3 rounded-md border border-linea bg-panel-hundido px-4 py-3 text-sm lg:order-none"
             >
               <span>
                 {t.archivado_en
@@ -257,7 +271,7 @@ export function TicketDetallePage() {
 
           <Tarjeta titulo="Descripción" id="descripcion" className="order-3 lg:order-none">
             {t.descripcion ? (
-              <p className="text-sm break-words whitespace-pre-wrap">{t.descripcion}</p>
+              <p className="text-sm break-words whitespace-pre-wrap text-tinta">{t.descripcion}</p>
             ) : (
               <p className="text-sm text-tinta-2">Sin descripción</p>
             )}
@@ -276,7 +290,7 @@ export function TicketDetallePage() {
           <section
             id="tareas"
             aria-label="Tareas"
-            className="order-4 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 lg:order-none"
+            className="order-4 scroll-mt-4 rounded-md border border-linea bg-panel p-4 lg:order-none"
           >
             <ListaTareas ticketId={t.id} tareas={t.tareas} cerrado={cerrado} />
           </section>
@@ -284,8 +298,19 @@ export function TicketDetallePage() {
           <section
             id="actividad"
             aria-label="Actividad"
-            className="order-5 scroll-mt-4 rounded-lg border border-borde bg-superficie p-4 sm:p-5 lg:order-none"
+            className="order-5 scroll-mt-4 rounded-md border border-linea bg-panel p-4 lg:order-none"
           >
+            <div className="mb-2 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+              <h2 className="text-sm font-semibold text-tinta">
+                Actividad
+                {todo.data ? (
+                  <span className="ml-2 rounded-sm border border-linea bg-panel px-1.5 text-xs font-medium text-tinta-2 tabular-nums">
+                    {todo.data.conteos.todo}
+                  </span>
+                ) : null}
+              </h2>
+              <p className="text-xs text-tinta-3">Creado {diaMesHora(t.creado_en)}</p>
+            </div>
             <Tabs value={tipo} onValueChange={cambiarTipo}>
               <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">
                 {TIPOS.map((x) => (
@@ -312,7 +337,7 @@ export function TicketDetallePage() {
           ) : null}
         </div>
 
-        <div className="order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-start-1">
+        <div className="order-2 min-w-0 lg:order-none lg:col-start-2 lg:row-start-1 lg:border-l lg:border-linea lg:pl-6">
           <PanelTicket
             plegable={esMovil}
             ticket={t}

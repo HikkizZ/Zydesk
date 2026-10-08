@@ -28,25 +28,34 @@ import { DialogoResponsables, DialogoSeguidores } from './DialogosPersonas';
 
 const formatoHoras = new Intl.NumberFormat('es-CL', { maximumFractionDigits: 2 });
 
-function Fila({
-  etiqueta,
-  acciones,
+function Fila({ etiqueta, children }: { etiqueta: string; children: ReactNode }) {
+  return (
+    <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-x-2 text-xs">
+      <dt className="text-tinta-3">{etiqueta}</dt>
+      <dd className="min-w-0 text-tinta">{children}</dd>
+    </div>
+  );
+}
+
+// Sección del panel con borde fino entre secciones (el pliegue en móvil es del panel entero, ADR 0029).
+function Seccion({
+  titulo,
+  region = false,
   children,
 }: {
-  etiqueta: string;
-  acciones?: ReactNode;
+  titulo: string;
+  region?: boolean;
   children: ReactNode;
 }) {
+  const Raiz = region ? 'section' : 'div';
   return (
-    <div className="flex flex-col gap-1 py-3">
-      <dt className="flex items-center justify-between gap-2">
-        <span className="text-xs font-semibold tracking-wide text-tinta-2 uppercase">
-          {etiqueta}
-        </span>
-        {acciones}
-      </dt>
-      <dd className="text-sm">{children}</dd>
-    </div>
+    <Raiz
+      {...(region ? { 'aria-label': titulo } : {})}
+      className="border-b border-linea py-4 first:pt-0 last:border-b-0 last:pb-0"
+    >
+      <h3 className="mb-3 text-tabla font-medium text-tinta">{titulo}</h3>
+      {children}
+    </Raiz>
   );
 }
 
@@ -99,19 +108,17 @@ export function PanelTicket({
 
   const contenido = (
     <>
-      <section className="rounded-lg border border-borde bg-superficie px-4">
-        <dl className="divide-y">
-          <Fila
-            etiqueta="Estado"
-            acciones={
-              puedeEditar ? (
+      <Seccion titulo="Datos">
+        <dl className="flex flex-col gap-3">
+          <Fila etiqueta="Estado">
+            <span className="flex flex-wrap items-center justify-between gap-2">
+              <PillEstado estado={ticket.estado} espera_de={ticket.espera_de} />
+              {puedeEditar ? (
                 <Button type="button" variant="outline" size="sm" onClick={onCambiarEstado}>
                   Cambiar
                 </Button>
-              ) : null
-            }
-          >
-            <PillEstado estado={ticket.estado} espera_de={ticket.espera_de} />
+              ) : null}
+            </span>
             {ticket.espera_detalle ? (
               <span className="mt-1 block text-tinta-2">{ticket.espera_detalle}</span>
             ) : null}
@@ -127,72 +134,6 @@ export function PanelTicket({
               />
             ) : (
               <PillPrioridad prioridad={ticket.prioridad} />
-            )}
-          </Fila>
-          <Fila
-            etiqueta="Responsables"
-            acciones={
-              puedeEditar && !cerrado ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditando('responsables')}
-                >
-                  Editar
-                </Button>
-              ) : null
-            }
-          >
-            {ticket.responsables.length === 0 ? (
-              <span className="text-alta">Sin asignar</span>
-            ) : (
-              <ul className="flex flex-col gap-1.5">
-                {ticket.responsables.map((r) => (
-                  <li key={r.id} className="flex items-center gap-2">
-                    <Avatares personas={[r]} />
-                    <span>{r.nombre}</span>
-                    {r.principal ? <span className="text-xs text-tinta-2">principal</span> : null}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </Fila>
-          <Fila
-            etiqueta="Seguidores"
-            acciones={
-              puedeEditar ? (
-                <span className="flex gap-1">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    disabled={seguir.isPending}
-                    onClick={() => seguir.mutate()}
-                  >
-                    {sigo ? 'Dejar de seguir' : 'Seguir'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setEditando('seguidores')}
-                  >
-                    Editar
-                  </Button>
-                </span>
-              ) : null
-            }
-          >
-            {ticket.seguidores.length === 0 ? (
-              <span className="text-tinta-3">Sin seguidores</span>
-            ) : (
-              <span className="flex items-center gap-2">
-                <Avatares personas={ticket.seguidores} max={5} />
-                <span className="text-tinta-2">
-                  {ticket.seguidores.map((s) => s.nombre).join(', ')}
-                </span>
-              </span>
             )}
           </Fila>
           <Fila etiqueta="Solicitante">
@@ -247,15 +188,73 @@ export function PanelTicket({
             {ticket.creado_por?.nombre ?? '—'} · {formatearFechaHora(ticket.creado_en)}
           </Fila>
         </dl>
-      </section>
+      </Seccion>
 
-      <section
-        aria-label="OT vinculadas"
-        className="rounded-lg border border-borde bg-superficie p-4"
-      >
-        <h2 className="mb-3 font-titulo text-base font-semibold">OT vinculadas</h2>
+      <Seccion titulo="Responsables">
+        {puedeEditar && !cerrado ? (
+          <div className="mb-2 flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditando('responsables')}
+            >
+              Editar
+            </Button>
+          </div>
+        ) : null}
+        {ticket.responsables.length === 0 ? (
+          <span className="text-xs text-plazo-atento">Sin asignar</span>
+        ) : (
+          <ul className="flex flex-col gap-1.5 text-xs text-tinta">
+            {ticket.responsables.map((r) => (
+              <li key={r.id} className="flex items-center gap-2">
+                <Avatares personas={[r]} />
+                <span>{r.nombre}</span>
+                {r.principal ? <span className="text-tinta-3">principal</span> : null}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Seccion>
+
+      <Seccion titulo="Seguidores">
+        {puedeEditar ? (
+          <div className="mb-2 flex justify-end gap-1">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              disabled={seguir.isPending}
+              onClick={() => seguir.mutate()}
+            >
+              {sigo ? 'Dejar de seguir' : 'Seguir'}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setEditando('seguidores')}
+            >
+              Editar
+            </Button>
+          </div>
+        ) : null}
+        {ticket.seguidores.length === 0 ? (
+          <span className="text-xs text-tinta-3">Sin seguidores</span>
+        ) : (
+          <span className="flex items-center gap-2 text-xs">
+            <Avatares personas={ticket.seguidores} max={5} />
+            <span className="text-tinta-2">
+              {ticket.seguidores.map((s) => s.nombre).join(', ')}
+            </span>
+          </span>
+        )}
+      </Seccion>
+
+      <Seccion titulo="OT vinculadas" region>
         {ticket.ots.length === 0 ? (
-          <p className="text-sm text-tinta-2">Sin OT</p>
+          <p className="text-xs text-tinta-3">Sin OT</p>
         ) : (
           <ul className="flex flex-col gap-3">
             {ticket.ots.map((o) => (
@@ -263,7 +262,7 @@ export function PanelTicket({
                 <div className="flex flex-wrap items-center gap-2">
                   <Link
                     to={`/ots/${o.id}`}
-                    className="inline-flex min-h-11 items-center text-acento underline-offset-2 hover:underline lg:min-h-0"
+                    className="inline-flex min-h-11 items-center text-tinta-2 hover:text-acento lg:min-h-0"
                   >
                     <Codigo>{o.codigo}</Codigo>
                   </Link>
@@ -273,9 +272,9 @@ export function PanelTicket({
                     <PillFacturacion estado={o.estado_facturacion} />
                   ) : null}
                 </div>
-                <p className="text-sm break-words">{o.titulo}</p>
+                <p className="text-xs break-words text-tinta">{o.titulo}</p>
                 {o.etapa === 'cerrada' && o.resolvio_ticket !== null ? (
-                  <p className="text-xs text-tinta-2">
+                  <p className="text-xs text-tinta-3">
                     {o.resolvio_ticket ? 'Resolvió el ticket' : 'No resolvió el ticket'}
                   </p>
                 ) : null}
@@ -288,21 +287,21 @@ export function PanelTicket({
             <BotonConvertir ticket={ticket} onConvertir={onConvertir} textoPrimero="Crear OT" />
           </div>
         ) : null}
-      </section>
+      </Seccion>
     </>
   );
 
   return (
-    <aside aria-label="Datos del ticket" id="datos" className="flex scroll-mt-4 flex-col gap-4">
+    <aside aria-label="Datos del ticket" id="datos" className="flex scroll-mt-4 flex-col">
       {plegable ? (
-        <details className="group rounded-lg border border-borde bg-superficie">
-          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 font-titulo text-base font-semibold">
+        <details className="group rounded-md border border-linea bg-panel">
+          <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-4 py-2 text-sm font-semibold text-tinta">
             <span className="shrink-0">Datos del ticket</span>
             <span aria-hidden="true">·</span>
             <span className="min-w-0 truncate">{ticket.cliente?.nombre ?? 'Sin cliente'}</span>
             <span aria-hidden="true">·</span>
             {ticket.responsables.length === 0 ? (
-              <span className="shrink-0 text-alta">Sin responsable</span>
+              <span className="shrink-0 text-plazo-atento">Sin responsable</span>
             ) : (
               <Avatares personas={ticket.responsables} />
             )}
@@ -311,7 +310,7 @@ export function PanelTicket({
               className="ml-auto size-4 shrink-0 group-open:rotate-180"
             />
           </summary>
-          <div className="flex flex-col gap-4 border-t border-borde p-3">{contenido}</div>
+          <div className="flex flex-col border-t border-linea px-4">{contenido}</div>
         </details>
       ) : (
         contenido
