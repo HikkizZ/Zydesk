@@ -25,10 +25,13 @@ function sinNodo<T extends ExtraProps>(p: T): Omit<T, 'node'> {
 
 // El `# ` del manual baja a h2 (el único h1 de la página es «Ayuda») y el resto baja un nivel.
 const NIVELES = {
-  h1: { Etiqueta: 'h2', clase: 'mb-3 mt-6 font-titulo text-2xl font-bold' },
-  h2: { Etiqueta: 'h3', clase: 'mb-2 mt-6 font-titulo text-xl font-semibold' },
-  h3: { Etiqueta: 'h4', clase: 'mb-2 mt-4 font-titulo text-lg font-semibold' },
-  h4: { Etiqueta: 'h5', clase: 'mb-2 mt-4 font-semibold' },
+  h1: {
+    Etiqueta: 'h2',
+    clase: 'mb-3 mt-8 border-b border-linea pb-2 text-base font-semibold text-tinta first:mt-0',
+  },
+  h2: { Etiqueta: 'h3', clase: 'mb-2 mt-6 text-sm font-semibold text-tinta' },
+  h3: { Etiqueta: 'h4', clase: 'mb-2 mt-4 text-sm font-semibold text-tinta' },
+  h4: { Etiqueta: 'h5', clase: 'mb-2 mt-4 text-sm font-medium text-tinta' },
 } as const;
 
 function Enlace({ href, children }: { href: string | undefined; children: ReactNode }) {
@@ -99,7 +102,7 @@ export function MarkdownManual({
           <span
             role="img"
             aria-label={alt || 'Imagen sin descripción'}
-            className="my-3 block rounded-md border border-dashed border-borde px-3 py-2 text-sm text-tinta-2"
+            className="my-3 block rounded-md border border-dashed border-linea px-3 py-2 text-sm text-tinta-2"
           >
             Imagen no disponible{alt ? `: ${alt}` : ''}
           </span>
@@ -110,23 +113,23 @@ export function MarkdownManual({
           src={src}
           alt={alt}
           loading="lazy"
-          className="my-3 max-w-full rounded-md border border-borde"
+          className="my-3 max-w-full rounded-md border border-linea"
         />
       );
     },
     table: (p) => (
       <div className="mb-3 overflow-x-auto">
-        <table className="w-full border-collapse text-sm" {...sinNodo(p)} />
+        <table className="w-full border-collapse text-tabla" {...sinNodo(p)} />
       </div>
     ),
     thead: (p) => <thead {...sinNodo(p)} />,
     th: (p) => (
       <th
-        className="border border-borde bg-secondary px-3 py-2 text-left font-semibold"
+        className="border border-linea bg-panel-hundido px-3 py-2 text-left text-xs font-medium text-tinta-3"
         {...sinNodo(p)}
       />
     ),
-    td: (p) => <td className="border border-borde px-3 py-2 text-left" {...sinNodo(p)} />,
+    td: (p) => <td className="border border-linea px-3 py-2 text-left" {...sinNodo(p)} />,
   };
 
   return (

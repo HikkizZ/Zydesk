@@ -78,7 +78,7 @@ export function DialogoTerminos() {
             <div
               tabIndex={0}
               aria-label="Texto de los términos de uso"
-              className="max-h-[60vh] overflow-y-auto rounded-md border border-borde p-4 text-sm"
+              className="max-h-[60vh] overflow-y-auto rounded-md border border-linea bg-panel p-4 text-sm"
             >
               <Markdown texto={consulta.data.contenido_md} />
             </div>
@@ -102,7 +102,7 @@ export function DialogoTerminos() {
               </Label>
             </div>
             {error ? (
-              <p role="alert" className="text-sm text-urgente">
+              <p role="alert" className="text-sm text-plazo-vencido">
                 {error}
               </p>
             ) : null}

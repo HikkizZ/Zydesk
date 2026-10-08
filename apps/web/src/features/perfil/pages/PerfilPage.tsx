@@ -3,11 +3,11 @@ import { ETIQUETA_ROL } from '@zydesk/shared';
 import { Bot } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Avatar } from '@/components/dominio/Avatar';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -36,8 +36,8 @@ import { nombreDispositivo } from '../dispositivo';
 
 function Tarjeta({ titulo, children }: { titulo: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-borde bg-superficie p-4 sm:p-6">
-      <h2 className="mb-4 text-lg font-semibold">{titulo}</h2>
+    <section className="rounded-md border border-linea bg-panel p-5">
+      <h2 className="mb-4 text-sm font-semibold text-tinta">{titulo}</h2>
       {children}
     </section>
   );
@@ -46,8 +46,8 @@ function Tarjeta({ titulo, children }: { titulo: string; children: React.ReactNo
 function Dato({ etiqueta, valor }: { etiqueta: string; valor: string }) {
   return (
     <div>
-      <dt className="text-sm text-tinta-2">{etiqueta}</dt>
-      <dd className="font-medium">{valor}</dd>
+      <dt className="text-xs text-tinta-2">{etiqueta}</dt>
+      <dd className="text-sm text-tinta">{valor}</dd>
     </div>
   );
 }
@@ -81,7 +81,7 @@ function SesionesActivas() {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <div>
         <Table>
           <TableHeader>
             <TableRow>
@@ -108,7 +108,7 @@ function SesionesActivas() {
                     ) : (
                       <span>{nombreDispositivo(s.user_agent)}</span>
                     )}
-                    {s.actual ? <Pill tono="acento">Esta sesión</Pill> : null}
+                    {s.actual ? <Chip tono="acento">Esta sesión</Chip> : null}
                   </div>
                 </TableCell>
                 <TableCell className="font-mono text-xs">{s.ip ?? '—'}</TableCell>
@@ -175,8 +175,8 @@ export function PerfilPage() {
   }
 
   return (
-    <div className="flex max-w-4xl flex-col gap-6">
-      <TituloPagina titulo="Perfil" />
+    <div className="flex max-w-4xl flex-col gap-6 [&>div:first-child]:mb-0">
+      <CabeceraPagina titulo="Perfil" />
       <Tarjeta titulo="Tus datos">
         <div className="flex flex-wrap items-start gap-4">
           <Avatar iniciales={yo.iniciales} color={yo.color_avatar} className="size-14 text-lg" />
@@ -187,7 +187,7 @@ export function PerfilPage() {
             <Dato etiqueta="Departamento" valor={yo.departamento?.nombre ?? 'Sin departamento'} />
           </dl>
         </div>
-        <p className="mt-4 text-sm text-tinta-2">Pide a Administración para cambiar estos datos</p>
+        <p className="mt-4 text-xs text-tinta-3">Pide a Administración para cambiar estos datos</p>
       </Tarjeta>
       <Tarjeta titulo="Sesiones activas">
         <SesionesActivas />

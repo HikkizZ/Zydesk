@@ -11,7 +11,7 @@ import { Markdown } from './Markdown';
 export function DocumentoLegalPage({ clave }: { clave: DocumentoLegalSalidaDatos['clave'] }) {
   const consulta = useQuery({ queryKey: ['legal', clave], queryFn: () => documentoLegal(clave) });
   return (
-    <div className="mx-auto max-w-3xl px-4 py-10">
+    <div className="mx-auto max-w-[720px] px-4 py-10">
       {consulta.isPending ? (
         <Cargando />
       ) : consulta.isError ? (
@@ -20,14 +20,17 @@ export function DocumentoLegalPage({ clave }: { clave: DocumentoLegalSalidaDatos
         <>
           <TituloPagina titulo={consulta.data.titulo} />
           {consulta.data.borrador ? <AvisoBorrador /> : null}
-          <article className="mt-4 rounded-lg border border-borde bg-superficie p-6">
+          <article className="mt-4 rounded-md border border-linea bg-panel p-5 text-sm leading-relaxed text-tinta lg:p-6">
             <Markdown texto={consulta.data.contenido_md} />
           </article>
-          <p className="mt-4 text-sm text-tinta-2">Versión {consulta.data.version}</p>
+          <p className="mt-4 text-xs text-tinta-3">Versión {consulta.data.version}</p>
         </>
       )}
       <p className="mt-6">
-        <Link to="/" className="text-acento underline underline-offset-2">
+        <Link
+          to="/"
+          className="inline-flex min-h-11 items-center text-acento underline underline-offset-2 lg:min-h-0"
+        >
           Volver
         </Link>
       </p>
