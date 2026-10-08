@@ -8,9 +8,18 @@ import { idDeOt, idDeTicket, ingresar, type UsuarioSemilla } from './sesion.js';
 // Capturas de los manuales (spec fase 8 §10). Se ejecuta a mano: `npm run db:reiniciar` y luego
 // `npm run docs:capturas`. Solo semillas: aborta si hay un usuario que no lo es. Ningún diálogo se
 // confirma y nada se envía; las vistas previas se descartan. Sobrescribe los PNG existentes.
+// Con `COMPARACION=antes|despues` (`npm run docs:comparacion:antes|despues`, spec fase 10 §8) toma solo
+// cuatro capturas a 1440 × 900 en `docs/especificacion/rediseno-v2/<pantalla>-<modo>.png`.
 
 const aqui = path.dirname(fileURLToPath(import.meta.url));
-const IMG = path.resolve(aqui, '../../../docs/manuales/img');
+const COMPARACION = process.env.COMPARACION;
+if (COMPARACION && COMPARACION !== 'antes' && COMPARACION !== 'despues') {
+  throw new Error('COMPARACION debe ser «antes» o «despues».');
+}
+const IMG = path.resolve(
+  aqui,
+  COMPARACION ? '../../../docs/especificacion/rediseno-v2' : '../../../docs/manuales/img',
+);
 const fixture = (nombre: string) => path.resolve(aqui, 'fixtures', nombre);
 const CORREO_EML = path.resolve(aqui, '../../api/test/fixtures/correo.eml');
 
@@ -287,6 +296,13 @@ const CAPTURAS: Captura[] = [
   })),
 ];
 
+const COMPARADAS: Captura[] = [
+  { manual: 'tecnico', archivo: 'tabla', cuenta: 'crojas', ruta: fija('/tickets/tabla') },
+  { manual: 'tecnico', archivo: 'detalle-ticket', cuenta: 'crojas', ruta: ticket(TICKET) },
+  { manual: 'tecnico', archivo: 'mi-dia', cuenta: 'crojas', ruta: fija('/mi-dia') },
+  { manual: 'tecnico', archivo: 'ot', cuenta: 'crojas', ruta: ot('OT-0218') },
+];
+
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(async ({ browser, baseURL }) => {
@@ -300,11 +316,13 @@ test.beforeAll(async ({ browser, baseURL }) => {
   await contexto.close();
 });
 
-for (const c of CAPTURAS) {
+for (const c of COMPARACION ? COMPARADAS : CAPTURAS) {
   test(`${c.manual}/${c.archivo}`, async ({ page }, info) => {
     const esMovil = c.archivo.endsWith('-movil');
     test.skip(
-      esMovil !== (info.project.name === 'movil-375'),
+      COMPARACION
+        ? info.project.name !== 'escritorio'
+        : esMovil !== (info.project.name === 'movil-375'),
       'el sufijo -movil decide el proyecto',
     );
 
@@ -318,7 +336,9 @@ for (const c of CAPTURAS) {
     // El cursor y el foco no deben quedar a la vista.
     await page.mouse.move(0, 0);
 
-    const archivo = path.join(IMG, c.manual, `${c.archivo}.png`);
+    const archivo = COMPARACION
+      ? path.join(IMG, `${c.archivo}-${COMPARACION === 'antes' ? 'antes' : 'despues'}.png`)
+      : path.join(IMG, c.manual, `${c.archivo}.png`);
     fs.mkdirSync(path.dirname(archivo), { recursive: true });
     const opciones = { path: archivo, type: 'png', animations: 'disabled', scale: 'css' } as const;
     if (typeof c.modo === 'function') await c.modo(page).screenshot(opciones);
