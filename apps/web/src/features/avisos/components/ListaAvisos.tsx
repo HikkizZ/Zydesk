@@ -43,7 +43,7 @@ export function ListaAvisos({
 }) {
   return (
     <TooltipProvider>
-      <ul className="divide-y divide-borde overflow-hidden rounded-lg border border-borde bg-superficie">
+      <ul className="divide-y divide-linea-suave overflow-hidden rounded-md border border-linea bg-panel">
         {avisos.map((a) => {
           const { glifo, etiqueta } = GLIFOS[a.evento];
           return (
@@ -52,19 +52,21 @@ export function ListaAvisos({
                 to={a.enlace}
                 onClick={() => alPulsar(a)}
                 className={cn(
-                  'flex min-h-14 items-start gap-3 px-4 py-3 hover:bg-superficie-suave',
-                  !a.leido && 'bg-[#f7f8fe]',
+                  'flex min-h-12 items-start gap-3 px-4 py-3 hover:bg-lienzo',
+                  !a.leido && 'bg-acento-suave/40',
                 )}
               >
                 <span
                   role="img"
                   aria-label={etiqueta}
-                  className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-superficie-suave font-mono text-sm font-semibold text-tinta-2"
+                  className="mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full bg-panel-hundido font-mono text-sm font-medium text-tinta-2"
                 >
                   {glifo}
                 </span>
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <span className={cn('text-sm', !a.leido && 'font-medium')}>{a.texto}</span>
+                  <span className={cn('text-tabla text-tinta', !a.leido && 'font-medium')}>
+                    {a.texto}
+                  </span>
                   <span className="text-xs text-tinta-3">
                     <FechaRelativa fecha={a.creado_en} />
                   </span>
@@ -74,7 +76,7 @@ export function ListaAvisos({
                   <span
                     role="img"
                     aria-label="Sin leer"
-                    className="mt-2 size-2 shrink-0 rounded-full bg-acento"
+                    className="mt-2 size-1.5 shrink-0 rounded-full bg-acento"
                   />
                 )}
               </Link>

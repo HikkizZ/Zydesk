@@ -1,22 +1,21 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRef, type ReactNode } from 'react';
 import { Link } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { Codigo } from '@/components/dominio/Codigo';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { FechaRelativa } from '@/components/dominio/FechaRelativa';
 import { hoyIso } from '@/components/dominio/formato-fecha';
+import { LineaIndicadores } from '@/components/dominio/LineaIndicadores';
 import { PillTipoOt } from '@/components/dominio/PillTipoOt';
 import { Button } from '@/components/ui/button';
-import { usePermiso } from '@/features/auth/SesionProvider';
-import { useVistaTarjetas } from '@/features/cotizador/useVistaTarjetas';
+import { usePermiso, useYo } from '@/features/auth/SesionProvider';
 import { formatearFechaLarga } from '@/lib/fechas';
 import { formatearHoras } from '@/lib/formato';
 import { clavesMiDia, miDia, REFRESCO_MI_DIA_MS, STALE_MI_DIA, type MiDiaDatos } from '../api';
 import { ListaTareasMiDia } from '../components/ListaTareasMiDia';
-import { TarjetaConteo } from '../components/TarjetaConteo';
 import { TarjetaTicketBreve } from '../components/TarjetaTicketBreve';
 
 const DIA_MS = 86_400_000;
@@ -26,21 +25,26 @@ function Seccion({
   titulo,
   total,
   children,
-  pie,
+  enlace,
 }: {
   id: string;
   titulo: string;
   total: number;
   children: ReactNode;
-  pie?: ReactNode;
+  enlace?: ReactNode;
 }) {
   return (
-    <section id={id} aria-labelledby={`${id}-titulo`} className="flex scroll-mt-4 flex-col gap-2">
-      <h2 id={`${id}-titulo`} className="font-titulo text-lg font-semibold">
-        {titulo} <span className="text-sm font-normal text-tinta-2">({total})</span>
-      </h2>
+    <section id={id} aria-labelledby={`${id}-titulo`} className="flex scroll-mt-4 flex-col">
+      <div className="flex items-center gap-2 border-b border-linea-fuerte pb-2">
+        <h2 id={`${id}-titulo`} className="text-sm font-semibold text-tinta">
+          {titulo}
+        </h2>
+        <span className="rounded-sm border border-linea bg-panel px-1.5 text-xs font-medium text-tinta-2 tabular-nums">
+          {total}
+        </span>
+        {enlace ? <span className="ml-auto">{enlace}</span> : null}
+      </div>
       {children}
-      {pie}
     </section>
   );
 }
@@ -53,7 +57,6 @@ const diasEntre = (desde: string, hasta: string) =>
 
 function Contenido({ datos }: { datos: MiDiaDatos }) {
   const puedeAprobar = usePermiso('ots.aprobar');
-  const tarjetas = useVistaTarjetas();
   const raiz = useRef<HTMLDivElement>(null);
   const ir = (id: string) =>
     raiz.current?.querySelector(`#${id}`)?.scrollIntoView?.({ behavior: 'smooth' });
@@ -82,36 +85,40 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
 
   return (
     <div ref={raiz} className="flex flex-col gap-6">
-      <div
-        data-columnas={tarjetas ? '2' : '4'}
-        className={`grid gap-3 grid-cols-2 ${puedeAprobar ? 'lg:grid-cols-4' : 'lg:grid-cols-3'}`}
-      >
-        <TarjetaConteo
-          etiqueta="Vencen hoy"
-          valor={conteos.vencen_hoy}
-          urgente
-          onClick={() => ir('vencen-hoy')}
-        />
-        {puedeAprobar ? (
-          <TarjetaConteo
-            etiqueta="Por aprobar"
-            valor={conteos.por_aprobar}
-            onClick={() => ir('por-aprobar')}
-          />
-        ) : null}
-        <TarjetaConteo
-          etiqueta="Te mencionaron"
-          valor={conteos.menciones}
-          onClick={() => ir('menciones')}
-        />
-        <TarjetaConteo etiqueta="Tus tareas" valor={conteos.tareas} onClick={() => ir('tareas')} />
-      </div>
+      <LineaIndicadores
+        items={[
+          {
+            etiqueta: 'Vencen hoy',
+            valor: conteos.vencen_hoy,
+            tono: 'atento',
+            onClick: () => ir('vencen-hoy'),
+          },
+          {
+            etiqueta: 'Vencidos',
+            valor: conteos.vencidos,
+            tono: 'vencido',
+            onClick: () => ir('vencidos'),
+          },
+          ...(puedeAprobar
+            ? [
+                {
+                  etiqueta: 'Por aprobar',
+                  valor: conteos.por_aprobar,
+                  onClick: () => ir('por-aprobar'),
+                },
+              ]
+            : []),
+          { etiqueta: 'Te mencionaron', valor: conteos.menciones, onClick: () => ir('menciones') },
+          { etiqueta: 'Tus tareas', valor: conteos.tareas, onClick: () => ir('tareas') },
+          { etiqueta: 'Detenidos', valor: conteos.detenidos, onClick: () => ir('detenidos') },
+        ]}
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="flex flex-col gap-6">
           {datos.vencen_hoy.length > 0 ? (
             <Seccion id="vencen-hoy" titulo="Vencen hoy" total={conteos.vencen_hoy}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {datos.vencen_hoy.map((t) => (
                   <TarjetaTicketBreve key={t.id} ticket={t} />
                 ))}
@@ -120,7 +127,7 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
           ) : null}
           {datos.vencidos.length > 0 ? (
             <Seccion id="vencidos" titulo="Vencidos" total={conteos.vencidos}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {datos.vencidos.map((t) => (
                   <TarjetaTicketBreve key={t.id} ticket={t} />
                 ))}
@@ -129,19 +136,19 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
           ) : null}
           {puedeAprobar && datos.por_aprobar.length > 0 ? (
             <Seccion id="por-aprobar" titulo="Por aprobar" total={conteos.por_aprobar}>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col">
                 {datos.por_aprobar.map((ot) => (
                   <li
                     key={ot.id}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-borde bg-superficie p-3"
+                    className="flex min-h-12 flex-wrap items-center justify-between gap-2 border-b border-linea py-3 last:border-b-0"
                   >
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
                         <Codigo>{ot.codigo}</Codigo>
                         <PillTipoOt tipo={ot.tipo} />
                       </div>
-                      <p className="font-medium">{ot.titulo}</p>
-                      <p className="text-sm text-tinta-2">
+                      <p className="text-tabla font-medium text-tinta">{ot.titulo}</p>
+                      <p className="text-xs text-tinta-3">
                         interna · {formatearHoras(ot.horas.estimadas)} estimadas
                         {ot.responsable_tecnico ? ` · ${ot.responsable_tecnico.nombre}` : ''}
                       </p>
@@ -164,21 +171,27 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
               id="menciones"
               titulo="Te mencionaron"
               total={conteos.menciones}
-              pie={
+              enlace={
                 <Button asChild variant="link" className="min-h-11 px-0 lg:min-h-0">
                   <Link to="/avisos?filtro=menciones">Ver todos</Link>
                 </Button>
               }
             >
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col">
                 {datos.menciones.map((a) => (
                   <li key={a.id}>
                     <Link
                       to={a.enlace}
-                      className="flex flex-wrap items-baseline justify-between gap-2 rounded-lg border border-borde bg-superficie p-3 text-sm hover:bg-superficie-suave"
+                      className="flex min-h-12 items-center gap-3 border-b border-linea py-3 text-tabla text-tinta hover:bg-lienzo"
                     >
+                      <span
+                        aria-hidden="true"
+                        className="flex size-7 shrink-0 items-center justify-center rounded-full bg-panel-hundido text-xs font-medium text-tinta-2"
+                      >
+                        @
+                      </span>
                       <span className="min-w-0 flex-1">{a.texto}</span>
-                      <span className="text-tinta-2">
+                      <span className="shrink-0 text-xs text-tinta-3">
                         <FechaRelativa fecha={a.creado_en} />
                       </span>
                     </Link>
@@ -194,7 +207,7 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
           ) : null}
           {datos.detenidos.length > 0 ? (
             <Seccion id="detenidos" titulo="Detenidos hace días" total={conteos.detenidos}>
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {datos.detenidos.map((t) => (
                   <TarjetaTicketBreve
                     key={t.id}
@@ -217,7 +230,10 @@ function Contenido({ datos }: { datos: MiDiaDatos }) {
   );
 }
 
+const mayuscula = (texto: string) => texto.charAt(0).toUpperCase() + texto.slice(1);
+
 export function MiDiaPage() {
+  const yo = useYo();
   const consulta = useQuery({
     queryKey: clavesMiDia.miDia,
     queryFn: miDia,
@@ -228,7 +244,10 @@ export function MiDiaPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TituloPagina titulo={`Mi día · ${formatearFechaLarga(datos?.fecha ?? hoyIso())}`} />
+      <CabeceraPagina
+        titulo={mayuscula(formatearFechaLarga(datos?.fecha ?? hoyIso()))}
+        subtitulo={`Buen día, ${yo.nombre.split(' ')[0]}`}
+      />
       {consulta.isPending ? (
         <Cargando />
       ) : consulta.isError && !datos ? (

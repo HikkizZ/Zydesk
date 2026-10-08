@@ -47,7 +47,7 @@ export function ListaTareasMiDia({ tareas }: { tareas: TareaMiDiaDatos[] }) {
       {tareas.map((t) => (
         <li
           key={t.id}
-          className="flex min-h-14 items-center gap-1 border-b py-1.5 last:border-b-0 lg:min-h-11"
+          className="flex min-h-14 items-center gap-1 border-b border-linea py-1.5 last:border-b-0 lg:min-h-11"
         >
           <CasillaTactil
             id={`tarea-mi-dia-${t.id}`}
@@ -56,13 +56,16 @@ export function ListaTareasMiDia({ tareas }: { tareas: TareaMiDiaDatos[] }) {
             aria-label={`Tarea hecha: ${t.titulo}`}
             onCheckedChange={() => marcar.mutate(t)}
           />
-          <span className={cn('min-w-0 flex-1 text-sm', t.hecha && 'text-tinta-3 line-through')}>
+          <span className={cn('min-w-0 flex-1 text-tabla', t.hecha && 'text-tinta-3 line-through')}>
             {t.titulo}
           </span>
           <Codigo className="text-xs text-tinta-2">{t.destino.codigo}</Codigo>
           {t.fecha ? (
             <span
-              className={cn('text-sm', t.vencida ? 'font-semibold text-urgente' : 'text-tinta-2')}
+              className={cn(
+                'text-xs',
+                t.vencida ? 'font-medium text-plazo-vencido' : 'text-tinta-2',
+              )}
             >
               {diaMesDeFecha(t.fecha)}
             </span>
