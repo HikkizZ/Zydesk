@@ -10,6 +10,7 @@ import {
   type EsperaDe,
   type EstadoTicket,
 } from '@zydesk/shared';
+import { Check } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -83,7 +84,7 @@ function BuscadorOriginal({
 
   if (elegido) {
     return (
-      <div className="flex items-center gap-2 rounded-md border bg-superficie-suave px-3 py-2 text-sm">
+      <div className="flex items-center gap-2 rounded-md border border-linea bg-panel-hundido px-3 py-2 text-sm">
         <Codigo>{elegido.codigo}</Codigo>
         <span className="min-w-0 flex-1 truncate">{elegido.asunto}</span>
         <Button type="button" variant="ghost" size="sm" onClick={() => onElegir(null)}>
@@ -110,14 +111,14 @@ function BuscadorOriginal({
       {resultados.length > 0 ? (
         <ul
           aria-label="Resultados"
-          className="flex max-h-44 flex-col overflow-y-auto rounded-md border"
+          className="flex max-h-44 flex-col overflow-y-auto rounded-md border border-linea-fuerte"
         >
           {resultados.map((t) => (
             <li key={t.id}>
               <button
                 type="button"
                 onClick={() => onElegir(t)}
-                className="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left text-sm hover:bg-superficie-suave"
+                className="flex min-h-11 w-full items-center gap-2 px-3 py-1.5 text-left text-tabla hover:bg-lienzo"
               >
                 <Codigo>{t.codigo}</Codigo>
                 <span className="min-w-0 flex-1 truncate">{t.asunto}</span>
@@ -252,16 +253,16 @@ function Contenido({
           if (payload) cambiar.mutate(payload);
         }}
       >
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 text-sm font-medium">
+        <fieldset className="flex flex-col">
+          <legend className="mb-1 text-xs font-medium text-tinta-2">
             {cerrado ? 'Reabrir' : 'Nuevo estado'}
           </legend>
           {permitidas.map((e) => (
             <label
               key={e}
               className={cn(
-                'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border px-3 py-1.5',
-                estado === e && 'border-acento bg-media-fondo',
+                'flex min-h-11 cursor-pointer items-center gap-3 border-b border-linea-suave px-3 py-1.5 last:border-b-0 lg:min-h-10',
+                estado === e && 'bg-acento-suave',
               )}
             >
               <input
@@ -270,13 +271,16 @@ function Contenido({
                 value={e}
                 checked={estado === e}
                 onChange={() => setEstado(e)}
-                className="size-4 accent-[var(--color-acento)]"
+                className="size-4 shrink-0 accent-[var(--color-acento)]"
               />
               {cerrado ? (
                 <span className="text-sm font-medium">Reabrir (En curso)</span>
               ) : (
                 <PillEstado estado={e} />
               )}
+              {estado === e ? (
+                <Check aria-hidden="true" className="ml-auto size-4 text-acento" />
+              ) : null}
             </label>
           ))}
         </fieldset>
@@ -329,7 +333,7 @@ function Contenido({
         ) : null}
 
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

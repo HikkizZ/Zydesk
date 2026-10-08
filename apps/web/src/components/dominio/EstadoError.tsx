@@ -10,7 +10,7 @@ export function EstadoError({ error, reintentar }: { error: unknown; reintentar?
   return (
     <div
       role="alert"
-      className="flex flex-col items-start gap-3 rounded-lg border border-urgente-punto/40 bg-urgente-fondo p-4 text-urgente"
+      className="flex flex-col items-start gap-3 rounded-md border border-plazo-vencido/40 bg-plazo-vencido-suave p-3 text-sm text-plazo-vencido"
     >
       <p>{mensajeDeError(error)}</p>
       {reintentar ? (

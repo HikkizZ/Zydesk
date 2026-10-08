@@ -192,7 +192,7 @@ export function ListaTareas({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <h3 className="font-titulo text-base font-semibold">
+        <h3 className="text-sm font-semibold">
           Tareas · {hechas}/{tareas.length}
           {conHoras
             ? ` · ${formatoHoras.format(estimadas)} h estimadas · ${formatoHoras.format(reales)} h reales`
@@ -221,7 +221,7 @@ export function ListaTareas({
           <li
             key={t.id}
             className={cn(
-              'flex min-h-11 items-center gap-3 border-b py-1.5 last:border-b-0',
+              'flex min-h-12 items-center gap-3 border-b border-linea-suave py-1.5 last:border-b-0 lg:min-h-11',
               conHoras && 'flex-wrap sm:flex-nowrap',
             )}
           >
@@ -234,7 +234,7 @@ export function ListaTareas({
             />
             <span
               className={cn(
-                'min-w-0 flex-1 text-sm',
+                'min-w-0 flex-1 text-tabla',
                 conHoras && 'basis-32',
                 t.hecha && 'text-tinta-3 line-through',
               )}
@@ -253,7 +253,10 @@ export function ListaTareas({
             ) : null}
             {t.fecha ? (
               <span
-                className={cn('text-sm', t.vencida ? 'font-semibold text-urgente' : 'text-tinta-2')}
+                className={cn(
+                  'text-tabla',
+                  t.vencida ? 'font-semibold text-plazo-vencido' : 'text-tinta-2',
+                )}
               >
                 {diaMesDeFecha(t.fecha)}
               </span>
@@ -288,7 +291,7 @@ export function ListaTareas({
                 <span
                   role="img"
                   aria-label={`${formatoHoras.format(t.horas_estimadas ?? 0)} h estimadas, ${formatoHoras.format(t.horas_reales ?? 0)} h reales, ${formatoHoras.format(t.horas_registradas)} h registradas`}
-                  className="w-12 text-right font-mono text-sm"
+                  className="w-12 text-right font-mono text-tabla"
                 >
                   {formatoHoras.format(t.horas_registradas)}
                 </span>

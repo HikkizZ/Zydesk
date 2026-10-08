@@ -155,8 +155,8 @@ it('la pestaña viene de la URL', async () => {
 it('la nota interna va con fondo ámbar, candado, menciones, horas y foto', async () => {
   montar();
   const nota = await screen.findByRole('article', { name: /Nota interna de Sebastián Díaz/ });
-  expect(nota.className).toContain('bg-nota-interna-fondo');
-  expect(within(nota).getByText('Nota interna · solo equipo')).toBeTruthy();
+  expect(nota.className).toContain('bg-plazo-atento-suave');
+  expect(within(nota).getByText('Interna')).toBeTruthy();
   expect(within(nota).getByText('@Diego Muñoz').className).toContain('font-medium');
   expect(within(nota).getByText(/3 h registradas/)).toBeTruthy();
   expect(within(nota).getByAltText('foto.jpg')).toBeTruthy();

@@ -1,10 +1,8 @@
-import { iniciales } from '@zydesk/shared';
-import { FileText, History, Lock } from 'lucide-react';
+import { FileText, Lock } from 'lucide-react';
 import { Fragment, useState, type ReactNode, type Ref } from 'react';
 import { Link } from 'react-router';
 import { Avatar } from '@/components/dominio/Avatar';
 import { formatearTamano } from '@/components/dominio/formato-fecha';
-import { Pill } from '@/components/dominio/Pill';
 import type {
   ActividadDatos,
   ArchivoDatos,
@@ -34,7 +32,7 @@ function TextoConMenciones({
   const partes = texto.split(new RegExp(`(@(?:${nombres.map(escapar).join('|')}))`, 'g'));
   return partes.map((parte, i) =>
     i % 2 === 1 ? (
-      <span key={i} className="font-medium">
+      <span key={i} className="font-medium text-tinta">
         {parte}
       </span>
     ) : (
@@ -54,7 +52,7 @@ function ArchivoAdjunto({ archivo: a, varias }: { archivo: ArchivoDatos; varias:
         href={a.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="flex max-w-full items-center gap-2 rounded-md border bg-superficie p-1 text-sm hover:bg-superficie-suave"
+        className="flex max-w-full items-center gap-2 rounded-sm border border-linea bg-panel p-1 text-sm hover:bg-lienzo"
       >
         {a.es_imagen && !fallo ? (
           <img
@@ -64,15 +62,15 @@ function ArchivoAdjunto({ archivo: a, varias }: { archivo: ArchivoDatos; varias:
             onError={() => setFallo(true)}
             className={
               varias
-                ? 'h-40 w-full rounded object-cover'
-                : 'max-h-60 w-auto max-w-full rounded bg-superficie-suave object-contain sm:max-w-80'
+                ? 'h-40 w-full rounded-sm object-cover'
+                : 'max-h-60 w-auto max-w-full rounded-sm bg-panel-hundido object-contain sm:max-w-80'
             }
           />
         ) : (
           <>
             <FileText aria-hidden="true" className="ml-1 size-4 text-tinta-2" />
             <span className="max-w-48 truncate">{a.nombre_original}</span>
-            <span className="mr-1 text-xs text-tinta-2">{formatearTamano(a.tamano)}</span>
+            <span className="mr-1 text-xs text-tinta-3">{formatearTamano(a.tamano)}</span>
           </>
         )}
       </a>
@@ -93,8 +91,8 @@ export function TarjetaMensaje({
     <article
       aria-label={`${esNota ? 'Nota interna' : 'Seguimiento'} de ${mensaje.autor?.nombre ?? 'persona desconocida'}`}
       className={cn(
-        'flex flex-col gap-2 rounded-lg border p-3',
-        esNota ? 'border-nota-interna-borde bg-nota-interna-fondo' : 'bg-superficie',
+        'flex max-w-[680px] flex-col gap-2',
+        esNota && 'rounded-md border border-linea bg-plazo-atento-suave p-4',
       )}
     >
       <header className="flex flex-wrap items-center gap-2">
@@ -102,20 +100,20 @@ export function TarjetaMensaje({
           <Avatar
             iniciales={mensaje.autor.iniciales}
             color={mensaje.autor.color_avatar}
-            className="size-7 text-[10px]"
+            className="size-7"
           />
         ) : null}
-        <span className="text-sm font-semibold">{mensaje.autor?.nombre ?? 'Sin autor'}</span>
+        <span className="text-xs font-medium text-tinta">
+          {mensaje.autor?.nombre ?? 'Sin autor'}
+        </span>
         {esNota ? (
-          <Pill tono="alta">
+          <span className="inline-flex items-center gap-1 text-xs font-medium text-plazo-atento">
             <Lock aria-hidden="true" className="size-3" />
-            Nota interna · solo equipo
-          </Pill>
-        ) : (
-          <Pill tono="acento">Seguimiento</Pill>
-        )}
+            Interna
+          </span>
+        ) : null}
         {mensaje.copiado_de ? (
-          <span className="text-xs text-tinta-2">
+          <span className="text-xs text-tinta-3">
             {cierreDe ? 'Cierre de ' : esNota ? 'Nota · desde ' : 'Seguimiento · desde '}
             <Link
               to={`/ots/${mensaje.copiado_de.ot.id}`}
@@ -125,15 +123,18 @@ export function TarjetaMensaje({
             </Link>
           </span>
         ) : null}
-        <time dateTime={mensaje.creado_en} className="text-sm text-tinta-2">
+        <span aria-hidden="true" className="text-xs text-tinta-3">
+          ·
+        </span>
+        <time dateTime={mensaje.creado_en} className="text-xs text-tinta-3">
           {formatearFechaHora(mensaje.creado_en)}
         </time>
       </header>
-      <p className="text-sm break-words whitespace-pre-wrap">
+      <p className="text-tabla leading-relaxed break-words whitespace-pre-wrap text-tinta-2">
         <TextoConMenciones texto={mensaje.texto} mencionados={mensaje.mencionados} />
       </p>
       {mensaje.horas ? (
-        <p className="font-mono text-xs text-tinta-2">
+        <p className="font-mono text-xs text-tinta-3">
           · {formatoHoras.format(mensaje.horas)} h registradas
         </p>
       ) : null}
@@ -164,33 +165,28 @@ function LineaEvento({
   const d = describir(evento);
   const delSistema = evento.accion === 'archivado' || !evento.autor;
   return (
-    <div className="flex items-start gap-2 px-1 text-sm text-tinta-2">
-      {evento.autor ? (
-        <Avatar
-          iniciales={iniciales(evento.autor.nombre)}
-          color="#E8E5DD"
-          className="mt-0.5 size-5 text-[8px]"
-        />
-      ) : (
-        <History aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
-      )}
+    <div className="flex items-start gap-2 px-1 text-xs text-tinta-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 inline-block size-2 shrink-0 rounded-full border border-linea-campo"
+      />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
         <p className="break-words">
           {delSistema ? null : (
-            <strong className="font-semibold text-tinta">{evento.autor?.nombre}</strong>
+            <strong className="font-medium text-tinta-2">{evento.autor?.nombre}</strong>
           )}
           {delSistema ? null : ' '}
           {d.texto}
           {d.cambio ? (
             <>
               {' '}
-              <span className="rounded bg-superficie-suave px-1.5 py-0.5 font-mono text-xs text-tinta">
+              <span className="rounded-sm bg-panel-hundido px-1.5 py-0.5 font-mono text-xs text-tinta-2">
                 {d.cambio}
               </span>
             </>
           ) : null}
         </p>
-        {d.detalle ? <p className="text-xs break-words">{d.detalle}</p> : null}
+        {d.detalle ? <p className="break-words">{d.detalle}</p> : null}
       </div>
       <time dateTime={evento.creado_en} className="shrink-0 text-xs">
         {formatearFechaHora(evento.creado_en)}
@@ -225,9 +221,9 @@ export function ActividadLista({
   /** Frase de cada evento; por defecto la de tickets (la OT pasa la suya). */
   describir?: (e: EventoDatos) => DescripcionEvento;
 }) {
-  if (items.length === 0) return <p className="py-4 text-sm text-tinta-2">Sin actividad todavía</p>;
+  if (items.length === 0) return <p className="py-4 text-sm text-tinta-3">Sin actividad todavía</p>;
   return (
-    <ol className="flex flex-col gap-3">
+    <ol className="flex flex-col gap-4">
       {items.map((item, i) => (
         <li key={`${item.tipo}-${item.tipo === 'mensaje' ? item.mensaje.id : item.evento.id}`}>
           {item.tipo === 'mensaje' ? (

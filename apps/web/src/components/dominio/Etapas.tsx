@@ -25,7 +25,7 @@ export function Etapas({
     return (
       <p
         role="status"
-        className="rounded-lg border border-borde bg-superficie-suave px-4 py-3 text-sm font-medium"
+        className="rounded-md border border-linea bg-panel-hundido px-4 py-3 text-sm font-medium text-tinta"
       >
         Cancelada{ot.motivo_cancelacion ? ` · ${ot.motivo_cancelacion}` : ''}
       </p>
@@ -36,7 +36,7 @@ export function Etapas({
       ref={lista}
       aria-label="Etapas de la OT"
       tabIndex={0}
-      className="relative flex items-center gap-2 overflow-x-auto pb-1 focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none"
+      className="relative flex items-center gap-2 overflow-x-auto pb-1 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-acento"
     >
       {pasos.map((etiqueta, i) => {
         const hecho = actual !== null && i < actual;
@@ -50,19 +50,17 @@ export function Etapas({
             <span
               aria-hidden="true"
               className={cn(
-                'inline-flex size-6 items-center justify-center rounded-full border-2 text-xs font-semibold',
-                hecho && 'border-tinta bg-tinta text-white',
-                esActual && 'border-acento bg-superficie text-acento',
-                !hecho && !esActual && 'border-borde-campo bg-superficie text-tinta-3',
+                'inline-block size-2 shrink-0 rounded-full border',
+                hecho && 'border-tinta-4 bg-tinta-4',
+                esActual && 'border-acento bg-acento',
+                !hecho && !esActual && 'border-linea-campo bg-panel',
               )}
-            >
-              {i + 1}
-            </span>
+            />
             <span
               className={cn(
                 'text-sm',
-                hecho && 'text-tinta',
-                esActual && 'font-semibold text-acento',
+                hecho && 'text-tinta-2',
+                esActual && 'font-medium text-tinta',
                 !hecho && !esActual && 'text-tinta-3',
               )}
             >
@@ -70,10 +68,7 @@ export function Etapas({
               {hecho ? <span className="sr-only"> (hecho)</span> : null}
             </span>
             {i < pasos.length - 1 ? (
-              <span
-                aria-hidden="true"
-                className={cn('h-0.5 w-6 shrink-0 rounded', hecho ? 'bg-tinta' : 'bg-borde-campo')}
-              />
+              <span aria-hidden="true" className="h-px w-6 shrink-0 bg-linea-fuerte" />
             ) : null}
           </li>
         );

@@ -24,7 +24,7 @@ export function AtajosSecciones({
         <a
           key={s.id}
           href={`#${s.id}`}
-          className="inline-flex min-h-11 shrink-0 items-center rounded-full border border-borde bg-superficie px-3 text-sm"
+          className="inline-flex min-h-11 shrink-0 items-center rounded-sm border border-linea-fuerte bg-panel px-3 text-xs text-tinta-2"
         >
           {s.etiqueta}
         </a>
