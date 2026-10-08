@@ -25,7 +25,7 @@ export function OtsDelCliente({ clienteId }: { clienteId: number }) {
     return <p className="text-tinta-2">Este cliente aún no tiene órdenes de trabajo.</p>;
   }
   return (
-    <ul className="divide-y divide-borde">
+    <ul className="divide-y divide-linea-suave">
       {lista.data.datos.map((o) => (
         <li key={o.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
           <Link

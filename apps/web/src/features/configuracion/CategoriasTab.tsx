@@ -14,7 +14,7 @@ import { Campo } from '@/components/dominio/Campo';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -134,7 +134,7 @@ function VistaPrevia({
     texto = `Si un ticket Alta entra ahora, vencería el ${formatearFechaHora(consulta.data.hasta)}.`;
   }
   return (
-    <p role="status" className="rounded-md bg-superficie-suave px-3 py-2 text-sm">
+    <p role="status" className="rounded-md bg-panel-hundido px-3 py-2 text-sm">
       {texto}
     </p>
   );
@@ -255,7 +255,7 @@ function FormularioCategoria({
           </div>
           <VistaPrevia plazo={resolucion.alta} departamentoId={departamentoDelResponsable} />
           {errores.general ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errores.general}
             </p>
           ) : null}
@@ -330,7 +330,7 @@ export function CategoriasTab() {
                 <TableCell className="font-medium">
                   <div className="flex flex-wrap items-center gap-2">
                     {c.nombre}
-                    {c.activo ? null : <Pill tono="neutro">Inactiva</Pill>}
+                    {c.activo ? null : <Chip>Inactiva</Chip>}
                   </div>
                 </TableCell>
                 <TableCell>{c.responsable_defecto?.nombre ?? '—'}</TableCell>

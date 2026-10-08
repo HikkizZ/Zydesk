@@ -3,10 +3,11 @@ import { CONCEPTOS_TARIFA, ETIQUETA_CONCEPTO_TARIFA, formatearMonto } from '@zyd
 import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
+import { useMigas } from '@/app/proveedores';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { ErrorApi } from '@/lib/api';
 import {
@@ -46,9 +48,9 @@ function Tarjeta({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-borde bg-superficie p-4 sm:p-6">
+    <section className="rounded-md border border-linea bg-panel p-4">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">{titulo}</h2>
+        <h2 className="text-sm font-semibold text-tinta">{titulo}</h2>
         {acciones}
       </div>
       {children}
@@ -61,7 +63,7 @@ function Bolsa({ c }: { c: ClienteSalidaDatos }) {
   return (
     <Tarjeta titulo="Bolsa de horas">
       {vigente ? (
-        <p className="font-medium">
+        <p className="text-sm font-medium text-tinta">
           {formatearHoras(vigente.horas_mes)} h al mes
           {vigente.fecha_renovacion
             ? ` · Se renueva el ${formatearDia(vigente.fecha_renovacion)}`
@@ -70,30 +72,30 @@ function Bolsa({ c }: { c: ClienteSalidaDatos }) {
           {vigente.vigente_hasta ? ` hasta ${formatearDiaAnio(vigente.vigente_hasta)}` : ''}
         </p>
       ) : (
-        <p className="font-medium">Sin contrato vigente</p>
+        <p className="text-sm font-medium text-tinta">Sin contrato vigente</p>
       )}
       {vigente && vigente.horas_usadas_mes !== null ? (
         <p
           className={
             vigente.horas_usadas_mes > vigente.horas_mes
-              ? 'mt-1 text-sm font-semibold text-urgente'
+              ? 'mt-1 text-sm font-semibold text-plazo-vencido'
               : 'mt-1 text-sm text-tinta-2'
           }
         >
           {`${formatearHoras(vigente.horas_usadas_mes)} / ${formatearHoras(vigente.horas_mes)} h usadas este mes`}
         </p>
       ) : null}
-      <h3 className="mt-4 mb-2 text-sm font-semibold text-tinta-2">Historial de contratos</h3>
-      <ul className="divide-y divide-borde text-sm">
+      <h3 className="mt-4 mb-1 text-xs font-medium text-tinta-3">Historial de contratos</h3>
+      <ul className="divide-y divide-linea-suave text-sm">
         {historial.map((h) => (
           <li key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-2">
-            <span className="font-medium">{formatearHoras(h.horas_mes)} h al mes</span>
+            <span className="font-medium text-tinta">{formatearHoras(h.horas_mes)} h al mes</span>
             <span className="text-tinta-2">
               {formatearDiaAnio(h.vigente_desde)}
               {' – '}
               {h.vigente_hasta ? formatearDiaAnio(h.vigente_hasta) : 'sin término'}
             </span>
-            {h.vigente ? <Pill tono="resuelto">Vigente</Pill> : null}
+            {h.vigente ? <Chip tono="suave-ok">Vigente</Chip> : null}
             {h.notas ? <span className="text-tinta-2">{h.notas}</span> : null}
           </li>
         ))}
@@ -102,11 +104,28 @@ function Bolsa({ c }: { c: ClienteSalidaDatos }) {
   );
 }
 
-function Condiciones({ c, puedeEditar }: { c: ClienteSalidaDatos; puedeEditar: boolean }) {
+function Condiciones({ c }: { c: ClienteSalidaDatos }) {
+  return (
+    <Tarjeta titulo="Condiciones comerciales">
+      <dl className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
+        <div>
+          <dt className="text-xs text-tinta-2">Condición de pago</dt>
+          <dd className="text-sm text-tinta">{c.condicion_pago ?? 'Sin definir'}</dd>
+        </div>
+        <div>
+          <dt className="text-xs text-tinta-2">Exige OC</dt>
+          <dd className="text-sm text-tinta">{c.exige_oc ? 'Sí' : 'No'}</dd>
+        </div>
+      </dl>
+    </Tarjeta>
+  );
+}
+
+function Tarifas({ c, puedeEditar }: { c: ClienteSalidaDatos; puedeEditar: boolean }) {
   const [editando, setEditando] = useState(false);
   return (
     <Tarjeta
-      titulo="Condiciones comerciales"
+      titulo="Tarifas"
       acciones={
         puedeEditar ? (
           <Button variant="outline" size="sm" onClick={() => setEditando(true)}>
@@ -120,21 +139,13 @@ function Condiciones({ c, puedeEditar }: { c: ClienteSalidaDatos; puedeEditar: b
           const t = c.tarifas.find((x) => x.concepto === concepto);
           return (
             <div key={concepto}>
-              <dt className="text-sm text-tinta-2">{ETIQUETA_CONCEPTO_TARIFA[concepto]}</dt>
-              <dd className="font-medium">
+              <dt className="text-xs text-tinta-2">{ETIQUETA_CONCEPTO_TARIFA[concepto]}</dt>
+              <dd className="text-sm text-tinta tabular-nums">
                 {t ? `${formatearMonto(t.valor, t.moneda)} + IVA` : 'Tarifa global'}
               </dd>
             </div>
           );
         })}
-        <div>
-          <dt className="text-sm text-tinta-2">Condición de pago</dt>
-          <dd className="font-medium">{c.condicion_pago ?? 'Sin definir'}</dd>
-        </div>
-        <div>
-          <dt className="text-sm text-tinta-2">Exige OC</dt>
-          <dd className="font-medium">{c.exige_oc ? 'Sí' : 'No'}</dd>
-        </div>
       </dl>
       <DialogoTarifas
         abierto={editando}
@@ -174,13 +185,13 @@ function Contactos({ c }: { c: ClienteSalidaDatos }) {
       }
     >
       {c.contactos.length === 0 ? (
-        <p className="text-tinta-2">Sin contactos registrados.</p>
+        <p className="text-sm text-tinta-2">Sin contactos registrados.</p>
       ) : (
-        <ul className="divide-y divide-borde">
+        <ul className="divide-y divide-linea-suave">
           {c.contactos.map((k) => (
             <li key={k.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
               <div className="min-w-0 flex-1">
-                <p className="font-medium">
+                <p className="text-sm font-medium text-tinta">
                   {k.nombre}
                   {k.area ? <span className="font-normal text-tinta-2"> · {k.area}</span> : null}
                 </p>
@@ -188,7 +199,7 @@ function Contactos({ c }: { c: ClienteSalidaDatos }) {
                   {[k.correo, k.telefono].filter(Boolean).join(' · ') || 'Sin datos de contacto'}
                 </p>
               </div>
-              {k.aprueba_cotizaciones ? <Pill tono="acento">Aprueba cotizaciones</Pill> : null}
+              {k.aprueba_cotizaciones ? <Chip tono="acento">Aprueba cotizaciones</Chip> : null}
               {puedeEditar ? (
                 <div className="flex gap-1">
                   <Button
@@ -258,6 +269,8 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
   const puedeEditarTickets = usePermiso('tickets.editar');
   const [editando, setEditando] = useState(false);
   const [agregandoBolsa, setAgregandoBolsa] = useState(false);
+  const [pestana, setPestana] = useState(c.es_interno ? 'contactos' : 'datos');
+  useMigas({ nombre: c.nombre });
 
   const cambiarActivo = useMutation({
     mutationFn: () => (c.activo ? desactivarCliente(c.id) : reactivarCliente(c.id)),
@@ -273,14 +286,17 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
 
   return (
     <div className="flex flex-col gap-4">
-      <header className="rounded-lg border border-borde bg-superficie p-4 sm:p-6">
+      <header>
         <div className="flex flex-wrap items-center gap-2">
-          <h1 className="font-titulo text-2xl font-bold">{c.nombre}</h1>
-          {c.es_interno ? <Pill tono="interna">Área interna</Pill> : null}
-          {c.activo ? null : <Pill tono="neutro">Inactivo</Pill>}
+          <h1 className="text-xl font-semibold text-tinta">{c.nombre}</h1>
+          {c.es_interno ? <Chip tono="interna">Área interna</Chip> : null}
+          {c.bolsa.vigente ? (
+            <Chip>Bolsa {formatearHoras(c.bolsa.vigente.horas_mes)} h</Chip>
+          ) : null}
+          {c.activo ? null : <Chip>Inactivo</Chip>}
         </div>
         {c.es_interno ? null : (
-          <p className="mt-1 text-tinta-2">
+          <p className="mt-1 text-xs text-tinta-3">
             {c.rut ? `RUT ${c.rut}` : 'Sin RUT'}
             {c.direccion ? ` · ${c.direccion}` : ''}
           </p>
@@ -313,35 +329,55 @@ function Ficha({ c }: { c: ClienteSalidaDatos }) {
         </div>
       </header>
 
-      {c.bolsa.historial.length > 0 ? <Bolsa c={c} /> : null}
-      {c.es_interno ? null : <Condiciones c={c} puedeEditar={puedeEditarFicha} />}
-      <Contactos c={c} />
-      <Tarjeta
-        titulo="Tickets"
-        acciones={
-          <Link
-            to={`/tickets/tabla?cliente_id=${c.id}`}
-            className="text-sm text-acento underline underline-offset-2"
+      <Tabs value={pestana} onValueChange={setPestana} className="gap-4">
+        <TabsList variant="line" className="h-auto w-full justify-start overflow-x-auto">
+          {c.es_interno ? null : <TabsTrigger value="datos">Datos</TabsTrigger>}
+          <TabsTrigger value="contactos">Contactos</TabsTrigger>
+          <TabsTrigger value="tickets">Tickets</TabsTrigger>
+          <TabsTrigger value="ots">OT</TabsTrigger>
+          {c.es_interno ? null : <TabsTrigger value="tarifas">Tarifas</TabsTrigger>}
+        </TabsList>
+        <TabsContent value="datos" className="flex flex-col gap-4">
+          {c.bolsa.historial.length > 0 ? <Bolsa c={c} /> : null}
+          <Condiciones c={c} />
+        </TabsContent>
+        <TabsContent value="contactos">
+          <Contactos c={c} />
+        </TabsContent>
+        <TabsContent value="tickets">
+          <Tarjeta
+            titulo="Tickets"
+            acciones={
+              <Link
+                to={`/tickets/tabla?cliente_id=${c.id}`}
+                className="inline-flex min-h-11 items-center text-sm text-acento underline underline-offset-2 lg:min-h-0"
+              >
+                Ver todos en la tabla
+              </Link>
+            }
           >
-            Ver todos en la tabla
-          </Link>
-        }
-      >
-        <TicketsDelCliente clienteId={c.id} />
-      </Tarjeta>
-      <Tarjeta
-        titulo="Órdenes de trabajo"
-        acciones={
-          <Link
-            to={`/ots?cliente_id=${c.id}`}
-            className="text-sm text-acento underline underline-offset-2"
+            <TicketsDelCliente clienteId={c.id} />
+          </Tarjeta>
+        </TabsContent>
+        <TabsContent value="ots">
+          <Tarjeta
+            titulo="Órdenes de trabajo"
+            acciones={
+              <Link
+                to={`/ots?cliente_id=${c.id}`}
+                className="inline-flex min-h-11 items-center text-sm text-acento underline underline-offset-2 lg:min-h-0"
+              >
+                Ver todas
+              </Link>
+            }
           >
-            Ver todas
-          </Link>
-        }
-      >
-        <OtsDelCliente clienteId={c.id} />
-      </Tarjeta>
+            <OtsDelCliente clienteId={c.id} />
+          </Tarjeta>
+        </TabsContent>
+        <TabsContent value="tarifas">
+          <Tarifas c={c} puedeEditar={puedeEditarFicha} />
+        </TabsContent>
+      </Tabs>
 
       <DialogoCliente abierto={editando} alCambiar={setEditando} cliente={c} />
       <DialogoBolsa abierto={agregandoBolsa} alCambiar={setAgregandoBolsa} clienteId={c.id} />

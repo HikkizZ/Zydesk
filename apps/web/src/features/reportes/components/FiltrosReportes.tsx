@@ -3,6 +3,7 @@ import { Download } from 'lucide-react';
 import { useState } from 'react';
 import { hoyIso } from '@/components/dominio/formato-fecha';
 import { useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
+import { Combo } from '@/components/dominio/Combo';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -24,14 +25,13 @@ import {
   type PresetPeriodo,
 } from '../filtros';
 
-const TODOS = 'todos';
-
 interface Opcion {
   id: number;
   nombre: string;
 }
 
-// Un filtro de lista: «Todos» + opciones activas (+ la elegida aunque esté inactiva, p. ej. desde la URL).
+// Un filtro de lista con búsqueda: «Todos» (sin selección) + opciones activas (+ la elegida aunque esté
+// inactiva, p. ej. desde la URL).
 function SelectorFiltro({
   etiqueta,
   todos,
@@ -50,24 +50,20 @@ function SelectorFiltro({
   const lista = [...opciones];
   if (actual && !lista.some((o) => o.id === actual.id)) lista.push(actual);
   const id = `filtro-${etiqueta.toLowerCase()}`;
+  const numero = valor === null ? null : Number(valor);
   return (
-    <div className="flex flex-col gap-1">
-      <Label htmlFor={id} className="text-sm text-tinta-2">
-        {etiqueta}
-      </Label>
-      <Select value={valor ?? TODOS} onValueChange={(v) => onCambiar(v === TODOS ? null : v)}>
-        <SelectTrigger id={id} className="w-full sm:w-52">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={TODOS}>{todos}</SelectItem>
-          {lista.map((o) => (
-            <SelectItem key={o.id} value={String(o.id)}>
-              {o.nombre}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+    <div className="flex flex-col gap-1.5">
+      <Label htmlFor={id}>{etiqueta}</Label>
+      <Combo
+        id={id}
+        etiqueta={etiqueta}
+        placeholder={todos}
+        className="sm:w-52"
+        opciones={lista.map((o) => ({ valor: o.id, etiqueta: o.nombre }))}
+        valor={numero !== null && Number.isFinite(numero) ? numero : null}
+        textoQuitar={todos}
+        alCambiar={(v) => onCambiar(v === null ? null : String(v))}
+      />
     </div>
   );
 }
@@ -109,12 +105,10 @@ export function FiltrosReportes({
   };
 
   return (
-    <div className="space-y-3 rounded-lg border border-borde bg-superficie p-4">
+    <div className="mb-5">
       <div className="flex flex-wrap items-end gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="filtro-periodo" className="text-sm text-tinta-2">
-            Período
-          </Label>
+        <div className="flex flex-col gap-1.5">
+          <Label htmlFor="filtro-periodo">Período</Label>
           <Select value={preset} onValueChange={elegirPreset}>
             <SelectTrigger id="filtro-periodo" className="w-full sm:w-48">
               <SelectValue />
@@ -130,10 +124,8 @@ export function FiltrosReportes({
         </div>
         {preset === 'personalizado' ? (
           <>
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="filtro-desde" className="text-sm text-tinta-2">
-                Desde
-              </Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="filtro-desde">Desde</Label>
               <Input
                 id="filtro-desde"
                 type="date"
@@ -143,10 +135,8 @@ export function FiltrosReportes({
                 className="w-full sm:w-40"
               />
             </div>
-            <div className="flex flex-col gap-1">
-              <Label htmlFor="filtro-hasta" className="text-sm text-tinta-2">
-                Hasta
-              </Label>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="filtro-hasta">Hasta</Label>
               <Input
                 id="filtro-hasta"
                 type="date"

@@ -190,6 +190,10 @@ function pantalla(rol: Parameters<typeof yoDePrueba>[0] = {}, ruta = '/clientes'
   );
 }
 
+async function irAPestana(nombre: string) {
+  await userEvent.setup().click(await screen.findByRole('tab', { name: nombre }));
+}
+
 const llamadasA = (metodo: string, ruta: string) =>
   fetchSimulado.mock.calls.filter(
     ([r, init]) => r === ruta && (init as RequestInit | undefined)?.method === metodo,
@@ -248,19 +252,23 @@ it('administración ve la ficha completa con bolsa, tarifas y acciones de edici�
   pantalla({ rol: 'admin' }, '/clientes/1');
   expect(await screen.findByRole('heading', { level: 1, name: 'Viña Santa Clara' })).toBeTruthy();
   expect(screen.getByText(/RUT 76123456-K/)).toBeTruthy();
+  expect(screen.getByText('Bolsa 20 h')).toBeTruthy();
   expect(screen.getByText(/20 h al mes · Se renueva el 1 oct/)).toBeTruthy();
   expect(screen.getByText('12,5 / 20 h usadas este mes')).toBeTruthy();
-  expect(screen.getByText('$38.000 + IVA')).toBeTruthy();
-  expect(screen.getAllByText('Tarifa global').length).toBe(3);
-  expect(screen.getByText('Paula Herrera', { exact: false })).toBeTruthy();
-  expect(screen.getByText('Aprueba cotizaciones')).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Editar ficha' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Desactivar' })).toBeTruthy();
   expect(screen.getByRole('button', { name: 'Agregar bolsa' })).toBeTruthy();
-  expect(screen.getByRole('button', { name: 'Editar tarifas' })).toBeTruthy();
   expect(
     screen.getByRole('link', { name: 'Nuevo ticket para este cliente' }).getAttribute('href'),
   ).toBe('/tickets/nuevo?cliente_id=1');
+  await irAPestana('Tarifas');
+  expect(screen.getByText('$38.000 + IVA')).toBeTruthy();
+  expect(screen.getAllByText('Tarifa global').length).toBe(3);
+  expect(screen.getByRole('button', { name: 'Editar tarifas' })).toBeTruthy();
+  await irAPestana('Contactos');
+  expect(screen.getByText('Paula Herrera', { exact: false })).toBeTruthy();
+  expect(screen.getByText('Aprueba cotizaciones')).toBeTruthy();
+  await irAPestana('Tickets');
   expect(await screen.findByText('TK-1048')).toBeTruthy();
   expect(screen.getByText('TK-1028')).toBeTruthy();
   expect(screen.getByText('En espera · repuesto')).toBeTruthy();
@@ -271,6 +279,7 @@ it('administración ve la ficha completa con bolsa, tarifas y acciones de edici�
 
 it('la ficha lista las OT del cliente con su tipo y etapa, y enlaza a todas', async () => {
   pantalla({ rol: 'tecnico' }, '/clientes/1');
+  await irAPestana('OT');
   const tarjeta = await screen.findByRole('heading', { name: 'Órdenes de trabajo' });
   const seccion = tarjeta.closest('section') as HTMLElement;
   expect(await within(seccion).findByRole('link', { name: 'OT-0218' })).toBeTruthy();
@@ -287,6 +296,7 @@ it('la ficha lista las OT del cliente con su tipo y etapa, y enlaza a todas', as
 
 it('quien solo lee no ve el botón de nuevo ticket pero sí la lista de tickets', async () => {
   pantalla({ rol: 'lectura' }, '/clientes/1');
+  await irAPestana('Tickets');
   expect(await screen.findByText('TK-1048')).toBeTruthy();
   expect(screen.queryByRole('link', { name: 'Nuevo ticket para este cliente' })).toBeNull();
 });
@@ -298,8 +308,10 @@ it('el técnico no ve "Editar ficha", bolsa ni tarifas, pero sí puede agregar c
   expect(screen.queryByRole('button', { name: 'Editar ficha' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Desactivar' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Agregar bolsa' })).toBeNull();
-  expect(screen.queryByRole('button', { name: 'Editar tarifas' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Nuevo cliente' })).toBeNull();
+  await irAPestana('Tarifas');
+  expect(screen.queryByRole('button', { name: 'Editar tarifas' })).toBeNull();
+  await irAPestana('Contactos');
 
   await usuario.click(screen.getByRole('button', { name: '+ Agregar contacto' }));
   await usuario.type(await screen.findByLabelText('Nombre'), 'Luis Soto');
@@ -322,9 +334,11 @@ it('lectura no puede editar nada de la ficha ni agregar contactos', async () => 
   pantalla({ rol: 'lectura' }, '/clientes/1');
   await screen.findByRole('heading', { level: 1, name: 'Viña Santa Clara' });
   expect(screen.queryByRole('button', { name: 'Editar ficha' })).toBeNull();
-  expect(screen.queryByRole('button', { name: '+ Agregar contacto' })).toBeNull();
   expect(screen.queryByRole('button', { name: 'Agregar bolsa' })).toBeNull();
+  await irAPestana('Tarifas');
   expect(screen.queryByRole('button', { name: 'Editar tarifas' })).toBeNull();
+  await irAPestana('Contactos');
+  expect(screen.queryByRole('button', { name: '+ Agregar contacto' })).toBeNull();
 });
 
 it('coordinación puede agregar bolsa pero no editar la ficha', async () => {
@@ -340,6 +354,7 @@ it('un área interna no muestra condiciones comerciales ni agregar bolsa', async
   expect(screen.queryByText('Condiciones comerciales')).toBeNull();
   expect(screen.queryByRole('button', { name: 'Agregar bolsa' })).toBeNull();
   expect(screen.queryByText('Bolsa de horas')).toBeNull();
+  expect(screen.queryByRole('tab', { name: 'Tarifas' })).toBeNull();
   expect(screen.getByRole('heading', { name: 'Contactos' })).toBeTruthy();
 });
 
@@ -358,6 +373,7 @@ it('en el diálogo, un área interna oculta RUT, dirección, condición de pago 
 it('editar tarifas: "Usar tarifa global" quita el concepto del PUT', async () => {
   const usuario = userEvent.setup();
   pantalla({ rol: 'admin' }, '/clientes/1');
+  await irAPestana('Tarifas');
   await usuario.click(await screen.findByRole('button', { name: 'Editar tarifas' }));
   const horaNormal = await screen.findByLabelText('Hora normal');
   expect((horaNormal as HTMLInputElement).value).toBe('38000');
@@ -395,6 +411,7 @@ it('editar tarifas: una tarifa en UF viaja con su moneda y la ficha la muestra e
     return Promise.resolve(respuesta(200, ACTIVOS));
   });
   pantalla({ rol: 'admin' }, '/clientes/1');
+  await irAPestana('Tarifas');
   expect(await screen.findByText('UF 0,80 + IVA')).toBeTruthy();
   await usuario.click(screen.getByRole('button', { name: 'Editar tarifas' }));
   expect(((await screen.findByLabelText('Hora normal')) as HTMLInputElement).value).toBe('0.8');

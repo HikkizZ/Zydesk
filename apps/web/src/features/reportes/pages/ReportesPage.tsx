@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { descargar, ErrorApi } from '@/lib/api';
@@ -80,8 +80,8 @@ export function ReportesPage() {
     resultado.error instanceof ErrorApi && resultado.error.status === 400 ? resultado.error : null;
 
   return (
-    <div className="space-y-4">
-      <TituloPagina titulo="Reportes" />
+    <div className="space-y-6">
+      <CabeceraPagina titulo="Reportes" />
       <FiltrosReportes
         params={params}
         resueltos={datos?.filtros}
@@ -89,11 +89,11 @@ export function ReportesPage() {
         onExportar={() => void exportar()}
       />
       {errorDeFiltro ? (
-        <p role="alert" className="text-sm font-medium text-urgente">
+        <p role="alert" className="text-sm font-medium text-plazo-vencido">
           {errorDeFiltro.message}
         </p>
       ) : datos ? (
-        <p className="text-sm text-tinta-3">{resumenFiltros(datos.filtros)}</p>
+        <p className="-mt-2 text-xs text-tinta-3">{resumenFiltros(datos.filtros)}</p>
       ) : null}
 
       {errorDeFiltro ? null : resultado.isError ? (
@@ -101,7 +101,7 @@ export function ReportesPage() {
       ) : datos ? (
         <>
           <IndicadoresReportes indicadores={datos.indicadores} />
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-2">
             <GraficoHorasSemana
               semanas={datos.horas_por_semana}
               {...(bajo1024 ? { maxSemanas: SEMANAS_MOVIL } : {})}

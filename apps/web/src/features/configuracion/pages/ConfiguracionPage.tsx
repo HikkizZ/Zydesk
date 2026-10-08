@@ -1,5 +1,5 @@
 import { Navigate, useNavigate, useParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import {
   Select,
   SelectContent,
@@ -40,19 +40,17 @@ export function ConfiguracionPage() {
   const ir = (clave: string) => void navigate(`/configuracion/${clave}`);
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <TituloPagina titulo="Configuración" />
-        <p className="mt-1 text-tinta-2">
-          Solo las personas con rol Administración pueden cambiar esta sección
-        </p>
-      </div>
+    <div className="flex flex-col gap-6 [&>div:first-child]:mb-0">
+      <CabeceraPagina
+        titulo="Configuración"
+        subtitulo="Solo las personas con rol Administración pueden cambiar esta sección"
+      />
 
       {pestana === 'ingresos' ? null : (
         <>
           <div className="hidden lg:block">
             <Tabs value={pestana} onValueChange={ir}>
-              <TabsList>
+              <TabsList variant="line">
                 {PESTANAS.map((p) => (
                   <TabsTrigger key={p.clave} value={p.clave}>
                     {p.etiqueta}

@@ -124,7 +124,7 @@ function FormularioContacto({
           <Label htmlFor="contacto-aprueba">Aprueba cotizaciones</Label>
         </div>
         {errorGeneral ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errorGeneral}
           </p>
         ) : null}

@@ -187,7 +187,7 @@ export function DialogoPlantilla({
                             {...register(`lineas.${i}.descripcion`)}
                           />
                           {errorLinea(i, 'descripcion') ? (
-                            <p role="alert" className="mt-1 text-xs text-urgente">
+                            <p role="alert" className="mt-1 text-xs text-plazo-vencido">
                               {errorLinea(i, 'descripcion')}
                             </p>
                           ) : null}
@@ -202,7 +202,7 @@ export function DialogoPlantilla({
                             {...register(`lineas.${i}.cantidad`, { setValueAs: aNumero })}
                           />
                           {errorLinea(i, 'cantidad') ? (
-                            <p role="alert" className="mt-1 text-xs text-urgente">
+                            <p role="alert" className="mt-1 text-xs text-plazo-vencido">
                               {errorLinea(i, 'cantidad')}
                             </p>
                           ) : null}
@@ -237,7 +237,7 @@ export function DialogoPlantilla({
                             })}
                           />
                           {errorLinea(i, 'precio_unitario') ? (
-                            <p role="alert" className="mt-1 text-xs text-urgente">
+                            <p role="alert" className="mt-1 text-xs text-plazo-vencido">
                               {errorLinea(i, 'precio_unitario')}
                             </p>
                           ) : null}
@@ -253,7 +253,7 @@ export function DialogoPlantilla({
                             {...register(`lineas.${i}.descuento_pct`, { setValueAs: aNumero })}
                           />
                           {errorLinea(i, 'descuento_pct') ? (
-                            <p role="alert" className="mt-1 text-xs text-urgente">
+                            <p role="alert" className="mt-1 text-xs text-plazo-vencido">
                               {errorLinea(i, 'descuento_pct')}
                             </p>
                           ) : null}
@@ -277,7 +277,7 @@ export function DialogoPlantilla({
             )}
             <p className="text-sm text-tinta-2">Precio vacío = tarifa vigente al aplicar</p>
             {errors.lineas?.message ? (
-              <p role="alert" className="text-sm text-urgente">
+              <p role="alert" className="text-sm text-plazo-vencido">
                 {errors.lineas.message}
               </p>
             ) : null}
@@ -294,7 +294,7 @@ export function DialogoPlantilla({
           </fieldset>
 
           {errorGeneral ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errorGeneral}
             </p>
           ) : null}

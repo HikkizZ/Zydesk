@@ -62,7 +62,7 @@ function LineaUf() {
   return uf.desactualizado ? (
     <p className="text-sm text-tinta-3">
       UF del {formatearDiaAnio(uf.fecha)} ({formatearValorUf(uf.valor)}, {fuente}):{' '}
-      <strong className="font-semibold text-alta">puede estar desactualizada</strong>
+      <strong className="font-semibold text-plazo-atento">puede estar desactualizada</strong>
     </p>
   ) : (
     <p className="text-sm text-tinta-3">
@@ -229,7 +229,7 @@ function FormularioTarifas({ datos }: { datos: TarifasSalidaDatos }) {
       </Tarjeta>
 
       {errorGeneral ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido">
           {errorGeneral}
         </p>
       ) : null}
