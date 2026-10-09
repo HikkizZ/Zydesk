@@ -165,7 +165,7 @@ export function OtDetallePage() {
 
   return (
     <>
-      <header className="-mx-4 border-b border-linea bg-panel px-4 py-5 lg:-mx-7 lg:px-7">
+      <header className="-mx-4 -mt-4 border-b border-linea bg-panel px-4 py-5 lg:-mx-7 lg:-mt-7 lg:px-7">
         <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2">
           <Codigo className="text-sm text-tinta-2">{ot.codigo}</Codigo>
           <span aria-hidden="true" className="h-4 border-l border-linea-fuerte" />
