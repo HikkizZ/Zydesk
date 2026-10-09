@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { AvisoBorrador } from './AvisoBorrador';
@@ -18,7 +18,7 @@ export function DocumentoLegalPage({ clave }: { clave: DocumentoLegalSalidaDatos
         <EstadoError error={consulta.error} reintentar={() => void consulta.refetch()} />
       ) : (
         <>
-          <TituloPagina titulo={consulta.data.titulo} />
+          <CabeceraPagina titulo={consulta.data.titulo} />
           {consulta.data.borrador ? <AvisoBorrador /> : null}
           <article className="mt-4 rounded-md border border-linea bg-panel p-5 text-sm leading-relaxed text-tinta lg:p-6">
             <Markdown texto={consulta.data.contenido_md} />

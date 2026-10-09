@@ -3,16 +3,16 @@ import { formatearFecha } from '@zydesk/shared';
 import { ArrowLeft } from 'lucide-react';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { AtajosSecciones } from '@/components/dominio/AtajosSecciones';
 import { Cargando } from '@/components/dominio/Cargando';
+import { Chip } from '@/components/dominio/Chip';
 import { Codigo } from '@/components/dominio/Codigo';
 import { DialogoCambiarEstado } from '@/components/dominio/DialogoCambiarEstado';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
 import { diaMesHora } from '@/components/dominio/formato-fecha';
 import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
-import { Pill } from '@/components/dominio/Pill';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { PillTipo } from '@/components/dominio/PillTipo';
@@ -184,10 +184,12 @@ export function TicketDetallePage() {
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
           <PillPrioridad prioridad={t.prioridad} />
           {t.ot_vinculada ? <PillTipo tipo={t.tipo} codigo={t.ot_vinculada.codigo} /> : null}
-          {t.correo ? <Pill tono="neutro">Correo adjunto</Pill> : null}
-          {t.archivado_en ? <Pill tono="neutro">Archivado</Pill> : null}
+          {t.correo ? <Chip tono="neutro">Correo adjunto</Chip> : null}
+          {t.archivado_en ? <Chip tono="neutro">Archivado</Chip> : null}
         </div>
-        <TituloPagina titulo={t.asunto} codigo={t.codigo} />
+        <div className="*:mb-0">
+          <CabeceraPagina titulo={t.asunto} codigo={t.codigo} />
+        </div>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between lg:gap-6">
           <FranjaPlazo ticket={t} variante="ancha" className="min-w-0 lg:flex-1" />
           <div className="flex flex-wrap items-center gap-2 lg:shrink-0">

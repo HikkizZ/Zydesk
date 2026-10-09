@@ -4,7 +4,7 @@ import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
 import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { PillTipo } from '@/components/dominio/PillTipo';
 import type { TicketResumenDatos } from '@/features/tickets/api';
@@ -13,19 +13,19 @@ const recortar = (texto: string, max: number) =>
   texto.length > max ? `${texto.slice(0, max - 1).trimEnd()}…` : texto;
 
 function EtiquetaCierre({ ticket }: { ticket: TicketResumenDatos }) {
-  if (ticket.estado === 'resuelto') return <Pill tono="resuelto">Resuelto</Pill>;
+  if (ticket.estado === 'resuelto') return <Chip tono="suave-ok">Resuelto</Chip>;
   if (ticket.estado === 'descartado') {
     const motivo = ticket.motivo_cierre ? ` · ${recortar(ticket.motivo_cierre, 28)}` : '';
     return (
-      <Pill tono="neutro">
+      <Chip tono="neutro">
         <span className="line-through">{`Descartado${motivo}`}</span>
-      </Pill>
+      </Chip>
     );
   }
   return (
-    <Pill tono="neutro">
+    <Chip tono="neutro">
       {ticket.duplicado_de ? `Duplicado de ${ticket.duplicado_de.codigo}` : 'Duplicado'}
-    </Pill>
+    </Chip>
   );
 }
 
@@ -42,13 +42,13 @@ function Etiquetas({ ticket }: { ticket: TicketResumenDatos }) {
         <PillTipo tipo={ticket.tipo} codigo={ticket.ot_vinculada.codigo} />
       ) : null}
       {ticket.tiene_correo ? (
-        <Pill tono="neutro">
+        <Chip tono="neutro">
           <Mail aria-hidden="true" className="size-3" />
           Correo
-        </Pill>
+        </Chip>
       ) : null}
       {ticket.estado === 'en_espera' && ticket.espera_de ? (
-        <Pill tono="en-espera">Espera: {ETIQUETA_ESPERA_DE[ticket.espera_de]}</Pill>
+        <Chip tono="suave-atento">Espera: {ETIQUETA_ESPERA_DE[ticket.espera_de]}</Chip>
       ) : null}
       {esCerrado(ticket.estado) ? <EtiquetaCierre ticket={ticket} /> : null}
     </div>

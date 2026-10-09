@@ -16,7 +16,7 @@ const ESTILO_ESTADO: Record<EstadoTicket, string> = {
   en_curso: 'border border-acento/40 bg-acento-suave text-acento',
   nuevo: 'border border-dashed border-tinta-3 bg-panel text-tinta',
   en_espera:
-    'border border-plazo-atento/40 bg-[repeating-linear-gradient(135deg,var(--color-plazo-atento-suave)_0_6px,#f6e3c4_6px_12px)] text-plazo-atento',
+    'border border-plazo-atento/40 bg-[repeating-linear-gradient(135deg,var(--color-plazo-atento-suave)_0_6px,color-mix(in_srgb,var(--color-plazo-atento)_22%,var(--color-plazo-atento-suave))_6px_12px)] text-plazo-atento',
   resuelto: 'bg-panel-hundido text-tinta-3',
   descartado: 'bg-panel-hundido text-tinta-3',
   duplicado: 'bg-panel-hundido text-tinta-3',

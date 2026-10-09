@@ -22,7 +22,7 @@ function LineaEventoOt({ evento }: { evento: EventoDatos }) {
       {evento.autor ? (
         <Avatar
           iniciales={iniciales(evento.autor.nombre)}
-          color="#E8E5DD"
+          color="var(--color-panel-hundido)"
           className="mt-0.5 size-5 text-[8px]"
         />
       ) : (

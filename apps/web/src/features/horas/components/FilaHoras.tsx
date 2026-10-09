@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Codigo } from '@/components/dominio/Codigo';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { formatearHoras } from '@/lib/formato';
@@ -33,9 +33,13 @@ export function InfoFila({ fila }: { fila: FilaDatos }) {
         <Link to={enlace} className="text-acento underline underline-offset-2">
           <Codigo>{destino.codigo}</Codigo>
         </Link>
-        {fila.facturable ? <Pill tono="acento">Facturable</Pill> : <Pill tono="alta">Interna</Pill>}
+        {fila.facturable ? (
+          <Chip tono="acento">Facturable</Chip>
+        ) : (
+          <Chip tono="suave-atento">Interna</Chip>
+        )}
         {destino.tipo === 'ot' && destino.final ? <PillEtapaOt etapa={destino.etapa} /> : null}
-        {destino.tipo === 'ticket' && destino.cerrado ? <Pill tono="neutro">Cerrado</Pill> : null}
+        {destino.tipo === 'ticket' && destino.cerrado ? <Chip tono="neutro">Cerrado</Chip> : null}
         {tarea ? <span className="text-xs text-tinta-2">· {tarea.titulo}</span> : null}
       </div>
       <p className="truncate text-sm" title={destino.titulo}>

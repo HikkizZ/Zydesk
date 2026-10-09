@@ -6,7 +6,7 @@ import { Controller, useForm } from 'react-hook-form';
 import { Navigate, useSearchParams } from 'react-router';
 import type { z } from 'zod';
 import { Pie } from '@/app/layout/Pie';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Campo } from '@/components/dominio/Campo';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -86,7 +86,9 @@ export function IngresoPage() {
           <Monograma nombre={nombreApp} logoUrl={logoUrl} />
           <span className="text-base font-semibold text-tinta">{nombreApp}</span>
         </div>
-        <TituloPagina titulo="Ingresar" />
+        <div className="*:mb-0">
+          <CabeceraPagina titulo="Ingresar" />
+        </div>
         <p className="mb-6 mt-1 text-sm text-tinta-2">Usa tu cuenta de trabajo.</p>
         <form onSubmit={enviar} noValidate className="flex flex-col gap-4">
           <Campo etiqueta="Correo" error={errors.correo?.message}>

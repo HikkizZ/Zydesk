@@ -31,7 +31,7 @@ export function Campo({
       <Label htmlFor={id}>{etiqueta}</Label>
       {children({ id, 'aria-invalid': Boolean(error), 'aria-describedby': describe })}
       {error ? (
-        <p id={idMensaje} role="alert" className="text-sm text-urgente">
+        <p id={idMensaje} role="alert" className="text-sm text-plazo-vencido">
           {error}
         </p>
       ) : ayuda ? (

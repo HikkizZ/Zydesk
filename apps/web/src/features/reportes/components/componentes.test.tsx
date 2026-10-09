@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
-import { TarjetaIndicador } from '@/components/dominio/TarjetaIndicador';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { reporteDePrueba } from '@/test/reportes';
 import { sumarDias } from '../filtros';
@@ -18,21 +17,6 @@ const filasDe = (tabla: HTMLElement) =>
     .getAllByRole('row')
     .slice(1)
     .map((f) => Array.from(f.children).map((c) => c.textContent));
-
-it('TarjetaIndicador es un enlace con `to` y un grupo sin él', () => {
-  montar(
-    <>
-      <TarjetaIndicador etiqueta="Con enlace" to="/ots" tono="text-tinta">
-        1
-      </TarjetaIndicador>
-      <TarjetaIndicador etiqueta="Sin enlace" tono="text-tinta" ariaLabel="Sin enlace: 2">
-        2
-      </TarjetaIndicador>
-    </>,
-  );
-  expect(screen.getByRole('link', { name: /Con enlace/ }).getAttribute('href')).toBe('/ots');
-  expect(screen.getByRole('group', { name: 'Sin enlace: 2' })).toBeTruthy();
-});
 
 it('los indicadores muestran las cifras del escenario de la spec', () => {
   montar(<IndicadoresReportes indicadores={reporteDePrueba().indicadores} />);

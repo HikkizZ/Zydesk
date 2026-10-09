@@ -32,34 +32,6 @@
   --radius-md: 6px;
   --radius-lg: 8px;
   --shadow-flotante: 0 8px 24px rgb(22 25 31 / 0.12), 0 1px 2px rgb(22 25 31 / 0.06);
-
-  /* alias de transición: se eliminan en F10-T16 */
-  --color-fondo: var(--color-lienzo);
-  --color-superficie: var(--color-panel);
-  --color-superficie-suave: var(--color-panel-hundido);
-  --color-superficie-suave-2: var(--color-lienzo);
-  --color-borde: var(--color-linea);
-  --color-borde-campo: var(--color-linea-campo);
-  --color-urgente: var(--color-plazo-vencido);
-  --color-urgente-fondo: var(--color-plazo-vencido-suave);
-  --color-urgente-punto: var(--color-plazo-vencido);
-  --color-alta: var(--color-plazo-atento);
-  --color-alta-fondo: var(--color-plazo-atento-suave);
-  --color-alta-punto: var(--color-plazo-atento);
-  --color-media: var(--color-acento);
-  --color-media-fondo: var(--color-acento-suave);
-  --color-media-punto: var(--color-acento);
-  --color-baja: var(--color-tinta-3);
-  --color-baja-fondo: var(--color-panel-hundido);
-  --color-baja-punto: var(--color-tinta-4);
-  --color-en-espera: var(--color-plazo-atento);
-  --color-en-espera-fondo: var(--color-plazo-atento-suave);
-  --color-resuelto: var(--color-plazo-ok);
-  --color-resuelto-fondo: var(--color-plazo-ok-suave);
-  --color-interna-fondo: var(--color-interna-suave);
-  --color-nota-interna-fondo: var(--color-plazo-atento-suave);
-  --color-nota-interna-borde: var(--color-linea);
-  --font-titulo: var(--font-texto);
 }
 
 /* Variables de shadcn/ui mapeadas a los tokens de Zydesk (ADR 0011, 0033). Sin modo oscuro. */

@@ -7,8 +7,8 @@ const DESCRIPCION: Record<TipoOt, string> = {
 };
 
 const COLOR: Record<TipoOt, string> = {
-  facturable: 'border-resuelto bg-resuelto-fondo/50',
-  interna: 'border-interna bg-interna-fondo/50',
+  facturable: 'border-plazo-ok bg-plazo-ok-suave/50',
+  interna: 'border-interna bg-interna-suave/50',
 };
 
 // Dos tarjetas-radio (diseño "Orden de trabajo"); el tipo solo se cambia en Borrador.
@@ -33,7 +33,7 @@ export function SelectorTipoOt({
             key={tipo}
             className={cn(
               'flex min-h-11 cursor-pointer items-start gap-3 rounded-lg border p-3',
-              valor === tipo ? cn('border-2', COLOR[tipo]) : 'bg-superficie',
+              valor === tipo ? cn('border-2', COLOR[tipo]) : 'bg-panel',
               disabled && 'cursor-not-allowed opacity-70',
             )}
           >

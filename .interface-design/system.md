@@ -37,15 +37,13 @@ Qué no hacemos: sin sombras en reposo, sin degradados, sin ilustraciones, sin m
 
 Pares de texto verificados (≥ 4,5:1 por `tema.test.ts`): `tinta`, `tinta-2`, `tinta-3`, `acento`, `plazo-*`, `estado-nuevo` e `interna` sobre `panel`, `lienzo`, `panel-hundido` (`tinta`, `tinta-2`, `tinta-3` y `acento` también sobre `acento-suave`; cada color de plazo/interna también sobre su fondo suave); blanco sobre `acento` 7,45; `linea-campo` sobre `panel` 3,16 (≥ 3, no es texto).
 
-Durante la fase siguen vigentes los **alias de transición** de los nombres antiguos (`fondo`, `superficie*`, `borde*`, `urgente*`, `alta*`, `media*`, `baja*`, `en-espera*`, `resuelto*`, `interna-fondo`, `nota-interna*`, `font-titulo`). No usarlos en código nuevo; se eliminan en F10-T16.
-
 ## Tipografía
 
 `html` sigue en 16 px (los `rem` de Tailwind y las alturas de 44 px dependen de ello). Texto corrido `text-sm` (14 px), metadatos `text-xs` (12 px), tablas y listas `text-tabla` (13 px). Títulos: `h1` `text-xl font-semibold` (20 px), `h2` 14 px/600, `h3` 13 px/500. Nada sobre 20 px. Pesos 400/500/600 (700 disponible para `h1` si hiciera falta). Folios, montos y horas en celdas: `font-mono` (o `data-mono`) con `tabular-nums` (la base ya lo aplica).
 
 ## Profundidad
 
-Solo borde de 1 px: toda superficie estática es `bg-panel border border-linea` (`linea-fuerte` en tablas y composer). **Sombra (`shadow-flotante`) únicamente** en `dialog`, `alert-dialog`, `popover`, `dropdown-menu`, `select` (contenido), `command` (popover), `sheet`, `sonner` y la barra `sticky` de `RedactorPlegable` (hacia arriba).
+Solo borde de 1 px: toda superficie estática es `bg-panel border border-linea` (`linea-fuerte` en tablas y composer). **Sombra (`shadow-flotante`) únicamente** en `dialog`, `alert-dialog`, `popover`, `dropdown-menu`, `select` (contenido), `command` (popover), `sheet`, `sonner` la barra `sticky` de `RedactorPlegable` (hacia arriba) y la barra `sticky` de resumen de `Planilla` (spec §8).
 
 ## Espaciado y densidad
 

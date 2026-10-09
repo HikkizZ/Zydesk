@@ -34,7 +34,7 @@ function Detalle({ active, payload }: { active?: boolean; payload?: { payload: P
   const p = payload?.[0]?.payload;
   if (!active || !p) return null;
   return (
-    <div className="rounded-md border border-linea bg-panel px-3 py-2 text-sm shadow-flotante">
+    <div className="rounded-sm bg-tinta px-2.5 py-1.5 text-xs text-white">
       {p.etiqueta}: {numeroHoras(p.facturables)} h facturables, {numeroHoras(p.internas)} h internas
     </div>
   );
