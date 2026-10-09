@@ -134,6 +134,33 @@ describe('plazo_habil en TicketResumen y TicketSalida (fase 10 §5)', () => {
     expect(r.body.plazo_habil).toMatchObject({ total: 3, restantes: 2 });
   });
 
+  // Seguridad (spec fase 10 §11): plazo_habil solo lleva números y un instante; nunca el departamento,
+  // el horario ni los feriados con que se calculó.
+  it('plazo_habil no expone departamento_id, horario ni feriados', async () => {
+    const { principal } = await conDepartamento();
+    const { agente } = await comoLectura();
+    const t = await crearTicket({
+      principal_id: principal.id,
+      creado_en: dias(-1),
+      fecha_limite: dias(3),
+    });
+    const detalle = await agente.get(`/api/tickets/${t.id}`);
+    expect(detalle.status).toBe(200);
+    expect(Object.keys(detalle.body.plazo_habil).sort()).toEqual([
+      'calculado_en',
+      'restantes',
+      'total',
+    ]);
+    const lista = await agente.get('/api/tickets');
+    const enLista = porId<{ id: number; plazo_habil: unknown }>(lista.body.datos, t.id);
+    for (const plazo of [detalle.body.plazo_habil, enLista?.plazo_habil]) {
+      const texto = JSON.stringify(plazo);
+      expect(texto).not.toContain('departamento');
+      expect(texto).not.toContain('horario');
+      expect(texto).not.toContain('feriado');
+    }
+  });
+
   it('null sin fecha límite o sin departamento en la cadena', async () => {
     const { principal } = await conDepartamento();
     const sinDepto = await crearUsuario();
