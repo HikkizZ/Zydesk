@@ -39,7 +39,7 @@ Cada foto aparece al instante como **vista previa** mientras sube, con su estado
 
 ## El detalle del ticket
 
-Arriba ves el código, el asunto, el estado, la prioridad, la fecha límite y los botones **Cambiar estado** y **Editar**. Debajo: descripción, correo original, archivos, tareas y la **actividad**. A la derecha están los datos del ticket: responsables, seguidores, solicitante, cliente, categoría, fechas y primera respuesta. **Seguir** te agrega como seguidor; **Dejar de seguir** te quita.
+Arriba, en una cabecera blanca, ves el código, el estado, la prioridad, el asunto y la **franja de plazo**: «Resolución: vence mié 9 oct 12:00 · quedan 6 h hábiles de 16» con la línea verde, ámbar o roja debajo (ver [Plazos](00-primeros-pasos.md#plazos)) y, a la derecha, los botones **Cambiar estado**, **Editar** y **Convertir en OT**. Debajo: descripción, correo original, archivos, tareas y la **actividad**. A la derecha, el panel con los datos del ticket en secciones plegables: Datos (solicitante, cliente, categoría, fechas y primera respuesta), Responsables, Seguidores y OT vinculadas. **Seguir** te agrega como seguidor; **Dejar de seguir** te quita.
 
 **En el celular** el orden cambia para que lo de terreno quede a mano: bajo el título hay una fila de **atajos** (Datos · Descripción · Tareas · Actividad · Archivos); **Datos del ticket** va arriba, **plegado**, con el cliente y los responsables en el resumen (tócalo para ver el estado con **Cambiar**, la prioridad, las fechas y las OT vinculadas); luego Descripción, Tareas y Actividad; al pie, la barra **Escribir seguimiento** con el botón de cámara; y al final, Correo original y Archivos del ticket.
 
@@ -166,7 +166,7 @@ Aprobar, cerrar, cancelar y marcar como facturada requieren permisos de Coordina
 
 ![Lista de órdenes de trabajo con sus etapas y estados de facturación](../img/coordinacion/lista-ot.png)
 
-Arriba hay cuatro **indicadores**: **Por facturar** (OT cerradas pendientes de factura), **Esperando al cliente** (OT con cotización enviada y sin respuesta), **En ejecución** y **Horas internas del mes** (horas registradas en OT internas este mes). Cada uno es un enlace que deja la lista filtrada; "Esperando al cliente" filtra por la etapa Cotizada. Los montos en pesos solo los ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos ven «—».
+Arriba hay una **línea de indicadores**: **Por facturar** (OT cerradas pendientes de factura), **Esperando al cliente** (OT con cotización enviada y sin respuesta), **En ejecución** y **Horas internas del mes** (horas registradas en OT internas este mes). Cada uno es un enlace que deja la lista filtrada; "Esperando al cliente" filtra por la etapa Cotizada. Los montos en pesos solo los ven Administración, Coordinación y Solo lectura ("Ver reportes y montos"); los técnicos ven «—».
 
 En la columna **Etapa**, una OT facturable Cotizada con cotización enviada se muestra como **Esperando aprobación**, y una interna en Borrador con aprobador asignado como **Borrador · por aprobar**. El botón **Exportar para facturación (.xlsx)** es de Coordinación y Administración ([manual de coordinación](02-coordinacion.md#exportar-para-facturación-xlsx)).
 
@@ -236,7 +236,7 @@ Una cotización enviada o rechazada no se edita: pulsa **Duplicar como v2** (o v
 
 ## Tablero
 
-**Tickets** abre el **Tablero**, una vista de solo lectura con cuatro columnas: **Nuevo**, **En curso**, **En espera** y **Cerrados**. No se arrastra nada: cada tarjeta es un enlace al detalle del ticket, donde se cambia el estado. La tarjeta muestra código, prioridad, asunto, cliente, si tiene correo, de quién se espera (En espera), responsables, fecha límite y cantidad de mensajes. En **Cerrados** cada tarjeta indica el tipo de cierre: Resuelto, Descartado con su motivo, o Duplicado de otro ticket.
+**Tickets** abre el **Tablero**, una vista de solo lectura con cuatro columnas: **Nuevo**, **En curso**, **En espera** y **Cerrados**. No se arrastra nada: cada tarjeta es un enlace al detalle del ticket, donde se cambia el estado. La tarjeta muestra código, prioridad, asunto, cliente, si tiene correo, de quién se espera (En espera), responsables, el plazo con su franja y cantidad de mensajes. En **Cerrados** cada tarjeta indica el tipo de cierre: Resuelto, Descartado con su motivo, o Duplicado de otro ticket.
 
 ![Tablero de tickets con una columna por estado](../img/tecnico/tablero.png)
 
@@ -244,7 +244,7 @@ Puedes buscar por texto, filtrar por responsable, prioridad y **Tipo** (Ticket, 
 
 ## Tabla
 
-**Tabla** muestra los mismos tickets en filas. Arriba hay filtros rápidos con contador: **Todos**, **Míos**, **Sin asignar**, **Vencen hoy**, **Vencidos**, **Con OT** y **Archivados**. Puedes buscar por código (`1048` o `TK-1048`) o por texto, **agrupar** por prioridad, estado, responsable, cliente, tipo o sin agrupar, y ordenar por **Vence**, **Prioridad** o **Actualizado**. También es de solo lectura: cada fila abre el ticket.
+**Tabla** muestra los mismos tickets en filas. Arriba hay filtros rápidos con contador: **Todos**, **Míos**, **Sin asignar**, **Vencen hoy**, **Vencidos**, **Con OT** y **Archivados**. Puedes buscar por código (`1048` o `TK-1048`) o por texto, **agrupar** por prioridad, estado, responsable, cliente, tipo o sin agrupar, y ordenar por **Vence**, **Prioridad** o **Actualizado**. Las columnas son Folio, Asunto (con el cliente debajo), Estado, Prioridad, Responsable, Tipo, **Plazo hábil** (el texto en horas hábiles con su franja verde, ámbar o roja; ver [Plazos](00-primeros-pasos.md#plazos)) y Actualizado. También es de solo lectura: cada fila abre el ticket.
 
 ![Tabla de tickets con sus columnas y filtros](../img/tecnico/tabla.png)
 

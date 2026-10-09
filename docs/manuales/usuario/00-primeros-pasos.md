@@ -49,7 +49,7 @@ La aplicación no envía correos, así que no hay un enlace de recuperación. **
 
 ## Mi día
 
-**Mi día** es la pantalla con la que abre la app (también en el menú y en la barra inferior). Reúne lo tuyo para hoy:
+**Mi día** es la pantalla con la que abre la app (también en el menú y en la barra inferior). El título es la fecha de hoy y, debajo, una **línea de resumen** con los totales: Vencen hoy (punto ámbar), Vencidos (punto rojo), Por aprobar, Te mencionaron, Tus tareas y Detenidos; cada uno lleva a su lista. Reúne lo tuyo para hoy:
 
 ![Mi día en el computador, con los cuadros Vencen hoy, Por aprobar, Te mencionaron y Tus tareas](../img/primeros-pasos/mi-dia.png)
 
@@ -59,11 +59,15 @@ La aplicación no envía correos, así que no hay un enlace de recuperación. **
 - **Tus tareas**: tareas abiertas a tu nombre en tickets y OT que no están cerrados, ordenadas por fecha (en rojo si la fecha pasó). La casilla las marca como hechas al momento; con rol Solo lectura la casilla está deshabilitada.
 - **Detenidos hace días**: tickets tuyos abiertos (también En espera) sin ningún cambio en más de 3 días y que no estén ya en Vencen hoy o Vencidos.
 
-Los cuadros de arriba muestran los totales y llevan a cada lista. La pantalla se actualiza sola cada minuto. Si no tienes nada pendiente dice "Nada pendiente por hoy".
+Cada ticket es una fila con su código, el cliente, la prioridad y el asunto; toda la fila abre el ticket. Debajo del asunto va su **plazo** (ver más abajo). La pantalla se actualiza sola cada minuto. Si no tienes nada pendiente dice "Nada pendiente por hoy".
+
+## Plazos
+
+Donde aparece un ticket (Mi día, Tabla, Tablero, ficha del cliente y su detalle) el plazo se muestra en **horas hábiles** del departamento, con una línea fina debajo que indica cuánto queda: **verde** mientras hay holgura, **ámbar** cuando queda menos de un cuarto del plazo («Quedan 2 h hábiles») y **roja** si ya venció («Vencido hace 3 h hábiles»). «Vence hoy 17:30» marca la hora; desde 24 horas el texto pasa a días hábiles («Quedan 3,3 días hábiles»). Las horas hábiles cuentan el horario del departamento, sin colación ni feriados. Un ticket cerrado dice **Resuelto en plazo** o **Resuelto fuera de plazo** y conserva ese resultado. Si el ticket no tiene fecha límite dice «Sin plazo»; si no hay un departamento con el que calcular, se muestra solo la fecha («Vence 9 oct»).
 
 ## Avisos
 
-**Avisos** (menú o barra inferior; el número rojo indica cuántos no has leído, `99+` desde 100) junta lo que te pasa a ti:
+**Avisos** (menú o barra inferior; el número azul indica cuántos no has leído, `99+` desde 100) junta lo que te pasa a ti:
 
 ![Lista de avisos con los filtros Todos, Menciones, Asignaciones y Vencimientos](../img/primeros-pasos/avisos.png)
 
@@ -92,13 +96,17 @@ En la tarjeta **Telegram** de Avisos, **Vincular Telegram** te da un código de 
 
 ## Ayuda
 
-**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice de la página. Las capturas de pantalla de los manuales también se ven ahí.
+**Ayuda** (al pie del menú; en el celular, **Más → Ayuda**) abre estos manuales dentro de la app, con una pestaña por cada manual de tu rol y un índice a la derecha. Las capturas de pantalla de los manuales también se ven ahí.
 
 ![La Ayuda dentro de la app, con las pestañas de manuales y el índice de la página](../img/primeros-pasos/ayuda.png)
 
+## El menú y la barra superior
+
+En el computador, el **menú lateral** va a la izquierda, del mismo color claro que la página, con **Nuevo ticket** arriba, luego Mi día y Avisos y los grupos **Tickets** (Tablero, Tabla, Línea de tiempo), **Trabajo** (Órdenes de trabajo, Cotizador, Horas) y **Administración** (Reportes, Clientes, Configuración, según tu rol); la sección donde estás se marca en azul. Al pie están **Ayuda** y tu **Perfil**. Arriba de cada pantalla, una **barra** muestra dónde estás («Tickets › Tabla», «Órdenes de trabajo › OT-0218»; los tramos con enlace vuelven a la lista) y, a la derecha, la acción principal de esa pantalla (por ejemplo **Nuevo ticket** en el Tablero y la Tabla, o **Exportar** en las órdenes de trabajo).
+
 ## En el celular
 
-En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol), **Ayuda** y **Cerrar sesión**.
+En pantallas pequeñas el menú pasa a una barra inferior con **Mi día**, **Tickets**, **Avisos** y **Nuevo**. El botón **Más** abre el resto: Perfil, Clientes, Horas, Reportes, Configuración (según tu rol), **Ayuda** y **Cerrar sesión**. La barra superior muestra solo los dos últimos tramos de la ubicación; las acciones están dentro de cada pantalla. En Mi día la línea de resumen se reparte en dos columnas.
 
 ![Mi día en el celular, con las tarjetas en dos columnas y la barra inferior](../img/primeros-pasos/mi-dia-movil.png)
 

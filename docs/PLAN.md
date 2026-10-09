@@ -55,7 +55,7 @@ Detalle y justificación en [ADR 0001](decisiones/0001-stack-y-monorepo.md).
 | Correos | `mailparser` (.eml) · `@kenjiuno/msgreader` (.msg) · **sin correo saliente en v1** (canal `correo` previsto, no implementado) |
 | Documentos | exceljs (.xlsx) · pdfmake (PDF) |
 | Archivos | Disco local (volumen Docker) tras interfaz `Storage` |
-| Frontend (`apps/web`) | React 19 · Vite · React Router 7 · TanStack Query · React Hook Form + Zod · Tailwind v4 (tokens de la spec) · shadcn/ui (Radix) · dnd-kit (Kanban) · Recharts (reportes) · fuentes autoalojadas (@fontsource) |
+| Frontend (`apps/web`) | React 19 · Vite · React Router 7 · TanStack Query · React Hook Form + Zod · Tailwind v4 (tokens de la spec) · shadcn/ui (Radix) · dnd-kit (Kanban) · Recharts (reportes) · fuentes autoalojadas (@fontsource: IBM Plex Sans y Mono; sistema visual v2 en `.interface-design/system.md`, ADR 0033) |
 | Tests | Vitest · Supertest · Postgres real en Docker para tests de integración · Playwright opcional para flujos críticos |
 | Despliegue | Docker Compose: `postgres`, `api`, `web` (nginx con build estático + proxy `/api`) · staging en el VPS Nexus detrás del nginx-proxy + Cloudflare Tunnel existentes |
 | Bot (`apps/bot`, Fase 6) | grammY · long polling · solo habla con la API por la red interna de Docker |
@@ -224,6 +224,9 @@ Siguen el orden de la spec (§9). Cada fase entrega algo usable y demostrable.
 - Despliegue con Docker Compose en el VPS (`desk.zytech.dev`), respaldos (`pg_dump` + archivos a un destino externo), guía de actualización.
 - Documentos legales revisados por quien corresponda antes de cargar datos reales.
 - Carga de datos reales (usuarios, departamentos, clientes, tarifas), apagado de semillas de ejemplo.
+
+### Fase 10 — Rediseño visual
+- Sistema visual v2 en toda la web (paleta acero, IBM Plex, bordes finos, menú claro, barra superior con migas, `Estado`/`Chip`, línea de indicadores) y la franja de plazo hábil con `plazo_habil` calculado por la API (ADR 0033). Sale como v1.1.0; el correo entrante pasa a la v1.2.0.
 
 ---
 

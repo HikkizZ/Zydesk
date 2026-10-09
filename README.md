@@ -108,7 +108,7 @@ El workflow `.github/workflows/ci.yml` (ADR 0020) corre en cada `push` de una ra
 
 ```
 apps/api        API Express 5 (pino, TypeORM, Zod)
-apps/web        React 19 + Vite + React Router + TanStack Query + Tailwind v4
+apps/web        React 19 + Vite + React Router + TanStack Query + Tailwind v4 (IBM Plex Sans/Mono autoalojadas; sistema visual en .interface-design/)
 apps/bot        Bot de Telegram (grammY, long polling); sin BD, habla solo con la API
 packages/shared Tipos, errores, formato y utilidades compartidas (se compila a dist/)
 docs            Plan, decisiones (ADR), especificaciones por fase, manuales (con sus capturas en manuales/img/) y API

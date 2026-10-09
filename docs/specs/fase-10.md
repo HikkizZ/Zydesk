@@ -484,4 +484,27 @@ ADR 0032.4: «una fase = un MINOR». Opciones: **(a) v1.1.0 = esta fase sola**, 
 
 ## 20. Estado de avance
 
-_Pendiente: se completa al cerrar la fase (versiones, respuestas a §17, medidas de la auditoría, duración del CI, desviaciones, resultado de la revisión de seguridad, decisión de §19)._
+Actualizado el 2026-10-09 (F10-T18, parte documental). Respuestas a §17 registradas el 2026-10-08 (todas las recomendaciones aprobadas; §19: **(a)**, v1.1.0 = rediseño y el correo entrante pasa a v1.2.0). ADR 0033 escrita con §3, §15, §17 y las desviaciones verificables en el código; el resto de las desviaciones, las medidas de la auditoría, la duración del CI y el resultado de la revisión de seguridad se completan al cerrar T15–T17.
+
+| Tarea                                                   | Estado      | Commit                                                                                    |
+| ------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
+| Spec y respuestas del usuario                           | hecha       | `7185662`, `c2a59b3`                                                                      |
+| F10-T0 Capturas «antes»                                 | hecha       | `57a0391`                                                                                 |
+| F10-T1 Sistema y tokens                                 | hecha       | `d1578dd`                                                                                 |
+| F10-T2 `plazo_habil` en la API                          | hecha       | `209c17f` (horas hábiles en un solo recorrido), `3995f3e`                                 |
+| F10-T3 Layout                                           | hecha       | `8fa4686`, `71ec4c7` (desbordes y objetivos tras el layout nuevo)                         |
+| F10-T4 `components/ui`                                  | hecha       | `893bc69`                                                                                 |
+| F10-T5 `Estado`, `Chip`, `Combo`, avatares, indicadores | hecha       | `bc24aee`                                                                                 |
+| F10-T6 `FranjaPlazo`                                    | hecha       | `e970c21`                                                                                 |
+| F10-T7 Composer, actividad, tareas, etapas, estados     | hecha       | `46ff9ef`, `71ec4c7`                                                                      |
+| F10-T8 Tickets: tablero, tabla, línea de tiempo, nuevo  | hecha       | `17eb076`                                                                                 |
+| F10-T9 Detalle de ticket                                | hecha       | `89ab7d6`                                                                                 |
+| F10-T10 Mi día y Avisos                                 | hecha       | `e3935dd`                                                                                 |
+| F10-T11 OT y lista de OT                                | hecha       | `74746bf`                                                                                 |
+| F10-T12 Cotizador y Horas                               | hecha       | `81e4cb7`                                                                                 |
+| F10-T13 Reportes, Clientes, Configuración               | hecha       | `9f7d2d8`                                                                                 |
+| F10-T14 Ingreso, legal, perfil, ayuda, salud            | hecha       | `4f58ce0`                                                                                 |
+| F10-T15 Auditoría ampliada y revisión en navegador      | en curso    | — (los tests de §9.4–9.6 ya están en `movil.spec.ts`; falta la revisión de §14.2)         |
+| F10-T16 Limpieza de alias y capturas                    | en curso    | `6fb8571` (`Badge` y `TarjetaConteo`); faltan alias, `Pill`, `TarjetaIndicador`, `TituloPagina`, capturas |
+| F10-T17 Revisión de seguridad de la fase                | en curso    | —                                                                                         |
+| F10-T18 Documentación y cierre                          | en curso    | — (ADR 0033, índice de ADR, `CLAUDE.md`, README, CHANGELOG, PLAN y manuales escritos)      |

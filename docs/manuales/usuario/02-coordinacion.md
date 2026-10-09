@@ -88,7 +88,7 @@ Una OT facturable cerrada aparece como **Por facturar** (en la lista, el filtro 
 
 ## Por aprobar en Mi día
 
-En **Mi día**, el cuadro y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan; si tienes Telegram vinculado, ese aviso llega con el botón **Aprobar OT**, que la aprueba sin iniciar la ejecución (ver el [manual del bot](04-bot-telegram.md#aprobar-una-ot-desde-el-botón)). La aprobación del cliente sigue siendo solo desde la web, porque exige el respaldo adjunto.
+En **Mi día**, el indicador y la lista **Por aprobar** aparecen solo para quien tiene permiso de aprobar (Coordinación y Administración). Lista las OT **internas en Borrador** donde tú eres la persona elegida como "quién aprueba", con el título, "interna · N h estimadas" y el responsable técnico. **Revisar** abre la OT: la aprobación se hace ahí, no desde la lista. Además recibes el aviso "Valentina Soto te pidió aprobar la OT-0219 (interna)" cuando te la asignan; si tienes Telegram vinculado, ese aviso llega con el botón **Aprobar OT**, que la aprueba sin iniciar la ejecución (ver el [manual del bot](04-bot-telegram.md#aprobar-una-ot-desde-el-botón)). La aprobación del cliente sigue siendo solo desde la web, porque exige el respaldo adjunto.
 
 ## Avisos de facturación
 
