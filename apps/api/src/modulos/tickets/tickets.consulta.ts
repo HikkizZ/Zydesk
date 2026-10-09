@@ -137,6 +137,8 @@ async function calendarioDe(
   return calendario;
 }
 
+const LIMITE_PLAZO_DIAS = 400; // el mismo tope que `sumarHorasHabiles` en shared
+
 // Calendario del ticket (ADR 0028.12): departamento del responsable principal y, si no, el del responsable
 // por defecto de su categoría. Una consulta por lote.
 async function departamentosDe(m: Consulta, ids: number[]): Promise<Map<number, number>> {
@@ -163,7 +165,16 @@ async function aResumenes(
   cache: CacheCalendarios = new Map(),
 ): Promise<TicketResumenDatos[]> {
   const ahora = new Date();
-  const conPlazo = filas.filter((f) => f.fecha_limite !== null);
+  const referencia = (f: FilaResumen): Date => f.cerrado_en ?? ahora;
+  // Un rango de más de LIMITE_PLAZO_DIAS (p. ej. una fecha límite en el año 9999) no tiene franja: recorrer
+  // el calendario día a día bloquearía cada listado (revisión de seguridad F10-T17).
+  const enRango = (f: FilaResumen): boolean => {
+    const instantes = [f.inicio_planificado ?? f.creado_en, f.fecha_limite!, referencia(f)].map(
+      (d) => d.getTime(),
+    );
+    return Math.max(...instantes) - Math.min(...instantes) <= LIMITE_PLAZO_DIAS * MS_DIA;
+  };
+  const conPlazo = filas.filter((f) => f.fecha_limite !== null && enRango(f));
   const departamentos =
     conPlazo.length === 0
       ? new Map<number, number>()
@@ -171,7 +182,6 @@ async function aResumenes(
           m,
           conPlazo.map((f) => f.id),
         );
-  const referencia = (f: FilaResumen): Date => f.cerrado_en ?? ahora;
   const aniosPorDepto = new Map<number, Set<number>>();
   for (const f of conPlazo) {
     const depto = departamentos.get(f.id);
@@ -189,7 +199,7 @@ async function aResumenes(
   return filas.map((f) => {
     const depto = departamentos.get(f.id);
     const cal = depto === undefined ? undefined : calendarios.get(depto);
-    if (!f.fecha_limite || !cal) return aResumen(f, null);
+    if (!f.fecha_limite || !cal || !enRango(f)) return aResumen(f, null);
     const ref = referencia(f);
     const inicio = f.inicio_planificado ?? f.creado_en;
     return aResumen(f, {

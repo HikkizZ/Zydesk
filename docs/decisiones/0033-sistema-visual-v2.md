@@ -89,12 +89,14 @@ Buscador global `⌘K`, contraer el menú lateral a 68 px, selección múltiple 
 
 ## Desviaciones respecto de la spec
 
-<!-- desviaciones: las completa el coordinador al cerrar F10-T15/T16 -->
+Verificado en el código al cerrar la fase:
 
-Verificado en el código al escribir esta ADR:
-
-- **`BarraTicket` (línea de tiempo)** conserva el estilo por estado de ADR 0016 (en curso lleno, nuevo punteado, en espera rayado, cerrado gris) en lugar del abierto/vencido/cerrado de la spec §8, porque el estado no puede depender solo del color. El rayado de En espera usa un `repeating-linear-gradient` con un hex literal (`#f6e3c4`) fuera de los tokens: es la única excepción a «colores solo por token» y a «sin degradados».
-- **Sombras**: además de la lista cerrada del punto 4, llevan `shadow-flotante` la barra `sticky` de resumen de la planilla de horas (`Planilla.tsx`, prevista en la spec §8 pero no en §3.4) y el tooltip de Recharts en `GraficoHorasSemana.tsx`; ambas flotan sobre contenido.
+- **`BarraTicket` (línea de tiempo)** conserva el estilo por estado de ADR 0016 (en curso lleno, nuevo punteado, en espera rayado, cerrado gris) en lugar del abierto/vencido/cerrado de la spec §8, porque el estado no puede depender solo del color. El rayado de En espera es un `repeating-linear-gradient` con colores de token (`plazo-atento-suave` y una mezcla con `plazo-atento`): es la única excepción a «sin degradados», porque es un patrón y no decoración.
+- **Sombras**: la barra `sticky` de resumen de la planilla de horas (`Planilla.tsx`, prevista en la spec §8) se agregó a la lista cerrada de §3.4 y de `system.md`. El tooltip de Recharts en `GraficoHorasSemana.tsx` usa el estilo de `tooltip.tsx`, sin sombra.
+- **Avatares solapados**: el separador blanco es un `outline` y no un `ring` (en Tailwind el `ring` es un `box-shadow` y contaba como sombra en reposo).
+- **Pestañas sin panel** (Configuración y Avisos en el celular): los `TabsTrigger` llevan `aria-controls={undefined}`, porque el contenido no es un `TabsContent` y axe marcaba la referencia rota como crítica.
+- **`plazo_habil` con rango absurdo**: si entre el inicio, la fecha límite y la referencia hay más de 400 días (el mismo tope que `sumarHorasHabiles`), el campo va en `null` y no se recorre el calendario. Una fecha límite en el año 9999 hacía tardar cada listado unos 9 s (revisión de seguridad F10-T17); la franja cae al texto con la fecha. La validación de fechas de entrada no cambia.
+- **Auditoría**: la prueba «sin sombras en reposo» no excluye la barra de `RedactorPlegable`, que solo existe en el celular y no aparece en la tabla a 1440 px.
 - **`Layout`**: el margen inferior para la barra inferior bajo `lg` (ADR 0029.15) pasa de `main` al `Pie`, que ya no está dentro de `main`; el efecto es el mismo.
 - **Franja ancha**: el verbo cambia con el estado («vence», «venció», «vencía») y, vencido, agrega «vencido hace …»; la spec solo fijaba la forma «vence … · quedan … de …».
 - **`TerminoOt`** es un componente (la spec lo describía en línea en `TablaOts` y `PanelOt`) y en una OT cerrada o cancelada dice «Terminó 12 oct».

@@ -175,6 +175,28 @@ describe('plazo_habil en TicketResumen y TicketSalida (fase 10 §5)', () => {
     }
   });
 
+  it('null si el rango supera 400 días, sin recorrer el calendario (fecha en el año 9999)', async () => {
+    const { principal } = await conDepartamento();
+    const { agente } = await comoLectura();
+    const lejano = await crearTicket({
+      principal_id: principal.id,
+      fecha_limite: new Date('9999-12-31T12:00:00Z'),
+    });
+    const antiguo = await crearTicket({
+      principal_id: principal.id,
+      creado_en: new Date('0001-01-01T12:00:00Z'),
+      fecha_limite: dias(2),
+    });
+    const inicio = Date.now();
+    const lista = await agente.get('/api/tickets');
+    expect(lista.status).toBe(200);
+    expect(Date.now() - inicio).toBeLessThan(1000);
+    for (const t of [lejano, antiguo]) {
+      const fila = lista.body.datos.find((d: { id: number }) => d.id === t.id);
+      expect(fila.plazo_habil).toBeNull();
+    }
+  });
+
   it('la lista, el tablero, la lista del cliente y Mi día incluyen el campo', async () => {
     const { principal } = await conDepartamento();
     const cliente = await crearCliente();
