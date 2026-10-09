@@ -22,7 +22,7 @@ const PUNTO: Record<TonoIndicador, string> = {
   vencido: 'bg-plazo-vencido',
 };
 
-const CELDA = 'inline-flex items-center gap-1.5';
+const CELDA = 'inline-flex flex-wrap items-center gap-x-1.5';
 const INTERACTIVA = 'min-h-11 hover:text-tinta lg:min-h-0';
 
 function Indicador({ item }: { item: ItemIndicador }) {

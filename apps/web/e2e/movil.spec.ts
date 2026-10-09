@@ -355,3 +355,171 @@ test.describe('Pantallas usables a 375 px', () => {
     });
   }
 });
+
+// ---- Fase 10 (spec §9): pantallas nuevas en axe, desborde y objetivos táctiles ----
+
+const NUEVAS: { nombre: string; ruta: string; usuario: UsuarioSemilla }[] = [
+  { nombre: 'Tabla de tickets', ruta: '/tickets/tabla', usuario: 'hikki' },
+  { nombre: 'Tablero de tickets', ruta: '/tickets', usuario: 'hikki' },
+  { nombre: 'OT', ruta: '/ots', usuario: 'hikki' },
+  { nombre: 'Reportes', ruta: '/reportes', usuario: 'hikki' },
+  { nombre: 'Equipo', ruta: '/configuracion/equipo', usuario: 'hikki' },
+  { nombre: 'Avisos', ruta: '/avisos', usuario: 'hikki' },
+  { nombre: 'Clientes', ruta: '/clientes', usuario: 'hikki' },
+];
+
+async function sinDesbordes(page: Page) {
+  const d = await desbordes(page);
+  expect(d.documento, 'desborde del documento (px)').toBeLessThanOrEqual(0);
+  expect(d.elementos).toEqual([]);
+}
+
+for (const n of NUEVAS) {
+  test.describe(`Rediseño: ${n.nombre} (${n.ruta})`, () => {
+    test.beforeEach(async ({ page }) => {
+      await ingresar(page, n.usuario);
+      await page.goto(n.ruta);
+      await page.waitForLoadState('networkidle');
+    });
+
+    test('@desborde sin desbordes', async ({ page }) => sinDesbordes(page));
+
+    test('@axe sin violaciones serias ni críticas', async ({ page }) => {
+      expect(await axe(page)).toEqual([]);
+    });
+  });
+}
+
+for (const ruta of ['/tickets/tabla', '/ots', '/avisos']) {
+  test(`objetivos táctiles de 44 px en ${ruta}`, async ({ page }) => {
+    await ingresar(page, 'hikki');
+    await page.goto(ruta);
+    await page.waitForLoadState('networkidle');
+    expect(await objetivosChicos(page)).toEqual([]);
+  });
+}
+
+test.describe('Rediseño: /ingresar (sin sesión)', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.context().clearCookies();
+    await page.goto('/ingresar');
+    await page.waitForLoadState('networkidle');
+    await expect(page.getByRole('button', { name: /Ingresar/ }).first()).toBeVisible();
+  });
+
+  test('@desborde sin desbordes', async ({ page }) => sinDesbordes(page));
+
+  test('@axe sin violaciones serias ni críticas', async ({ page }) => {
+    expect(await axe(page)).toEqual([]);
+  });
+});
+
+test.describe('Rediseño: diálogo «Convertir en OT»', () => {
+  test.beforeEach(async ({ page }) => {
+    await ingresar(page, 'hikki');
+    // Un ticket abierto y sin OT: se busca en las semillas (los ids no son estables).
+    const r = await page.request.get('/api/tickets?por_pagina=50');
+    const { datos } = (await r.json()) as { datos: { id: number }[] };
+    let abierto = false;
+    for (const t of datos) {
+      const d = (await (await page.request.get(`/api/tickets/${t.id}`)).json()) as {
+        cerrado_en: string | null;
+        ots: { etapa: string }[];
+      };
+      if (d.cerrado_en === null && d.ots.every((o) => o.etapa === 'cancelada')) {
+        await page.goto(`/tickets/${t.id}`);
+        await page.waitForLoadState('networkidle');
+        await page.getByRole('button', { name: 'Convertir en OT' }).first().click();
+        abierto = true;
+        break;
+      }
+    }
+    expect(abierto, 'hay un ticket abierto sin OT en las semillas').toBe(true);
+    await expect(page.getByRole('dialog')).toBeVisible();
+  });
+
+  test('@desborde sin desbordes', async ({ page }) => sinDesbordes(page));
+
+  test('@axe sin violaciones serias ni críticas', async ({ page }) => {
+    expect(await axe(page)).toEqual([]);
+  });
+
+  test('objetivos táctiles de 44 px', async ({ page }) => {
+    expect(await objetivosChicos(page, '[role="dialog"]')).toEqual([]);
+  });
+});
+
+test.describe('Rediseño: selector con búsqueda abierto (/tickets/nuevo)', () => {
+  test.beforeEach(async ({ page }) => {
+    await ingresar(page, 'hikki');
+    await page.goto('/tickets/nuevo');
+    await page.waitForLoadState('networkidle');
+    await page.getByRole('combobox', { name: /^Categoría/ }).click();
+    await expect(page.locator('[data-slot=popover-content]')).toBeVisible();
+  });
+
+  test('@desborde sin desbordes', async ({ page }) => sinDesbordes(page));
+
+  test('@axe sin violaciones serias ni críticas', async ({ page }) => {
+    expect(await axe(page)).toEqual([]);
+  });
+});
+
+test.describe('Rediseño: franja de plazo y menú lateral', () => {
+  test('la franja de plazo hábil', async ({ page }) => {
+    await ingresar(page, 'crojas');
+    await page.goto('/tickets/tabla');
+    await page.waitForLoadState('networkidle');
+    const fila = page.getByRole('row').filter({ hasText: 'TK-1048' }).first();
+    const franja = fila.locator('[data-tono]').first();
+    await expect(franja).toBeVisible();
+    expect((await franja.innerText()).trim()).toMatch(/^(Quedan|Vence|Vencido|Resuelto)/);
+
+    await page.goto(`/tickets/${await idDeTicket(page, 'TK-1048')}`);
+    await page.waitForLoadState('networkidle');
+    const ancha = page
+      .locator('[data-tono]')
+      .filter({ hasText: /^Resolución:/ })
+      .first();
+    await expect(ancha).toBeVisible();
+  });
+
+  test('@escritorio menú lateral claro', async ({ page }) => {
+    await ingresar(page, 'crojas');
+    await page.goto('/mi-dia');
+    await page.waitForLoadState('networkidle');
+    const nav = page.locator('nav[aria-label="Principal"]');
+    const fondoNav = await nav.evaluate((el) => getComputedStyle(el).backgroundColor);
+    const fondoBody = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+    expect(fondoNav).toBe(fondoBody);
+    const activo = nav.locator('a[aria-current="page"]');
+    await expect(activo).toHaveCount(1);
+    expect(await activo.evaluate((el) => getComputedStyle(el).color)).toBe('rgb(47, 71, 196)');
+    expect(await activo.evaluate((el) => getComputedStyle(el, '::before').width)).toBe('2px');
+  });
+
+  test('@escritorio sin sombras en reposo', async ({ page }) => {
+    await ingresar(page, 'crojas');
+    await page.goto('/tickets/tabla');
+    await page.waitForLoadState('networkidle');
+    const conSombra = await page.evaluate(() => {
+      const EXCEPTO =
+        '[role=dialog], [data-slot=popover-content], [data-slot=dropdown-menu-content], [data-slot=select-content], [data-slot=sheet-content]';
+      const lista: string[] = [];
+      for (const el of document.body.querySelectorAll('*')) {
+        if (el.closest(EXCEPTO)) continue;
+        const r = el.getBoundingClientRect();
+        if (r.width === 0 || r.height === 0) continue;
+        const st = getComputedStyle(el);
+        if (st.display === 'none' || st.visibility === 'hidden') continue;
+        if (st.boxShadow !== 'none') {
+          lista.push(
+            `${el.tagName.toLowerCase()}.${String(el.className).split(/\s+/).slice(0, 3).join('.')}`,
+          );
+        }
+      }
+      return lista.slice(0, 30);
+    });
+    expect(conSombra).toEqual([]);
+  });
+});

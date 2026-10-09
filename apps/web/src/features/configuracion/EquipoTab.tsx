@@ -301,7 +301,7 @@ export function EquipoTab() {
 
       <Tarjeta titulo="Qué puede hacer cada rol">
         <div className="overflow-x-auto">
-          <Table>
+          <Table etiquetaRegion="Permisos por rol">
             <TableHeader>
               <TableRow>
                 <TableHead>Acción</TableHead>

@@ -3,10 +3,17 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-function Table({ className, ...props }: React.ComponentProps<'table'>) {
+// `etiquetaRegion`: para tablas sin controles dentro, el contenedor con scroll recibe foco de teclado
+// (axe: scrollable-region-focusable) y un nombre de región.
+function Table({
+  className,
+  etiquetaRegion,
+  ...props
+}: React.ComponentProps<'table'> & { etiquetaRegion?: string }) {
   return (
     <div
       data-slot="table-container"
+      {...(etiquetaRegion ? { tabIndex: 0, role: 'region', 'aria-label': etiquetaRegion } : {})}
       className="relative w-full overflow-x-auto rounded-md border border-linea-fuerte bg-panel"
     >
       <table

@@ -12,14 +12,14 @@ export function Avatares({ personas, max = 3 }: { personas: UsuarioBreveDatos[];
           <Avatar
             iniciales={p.iniciales}
             color={p.color_avatar}
-            className="size-6 text-[10px] ring-2 ring-panel"
+            className="size-6 text-[10px] outline-2 outline-panel"
           />
         </span>
       ))}
       {sobran > 0 ? (
         <span
           aria-hidden="true"
-          className="-ml-1.5 inline-flex size-6 items-center justify-center rounded-full border border-linea-suave bg-panel-hundido text-[10px] font-medium text-tinta-2 ring-2 ring-panel"
+          className="-ml-1.5 inline-flex size-6 items-center justify-center rounded-full border border-linea-suave bg-panel-hundido text-[10px] font-medium text-tinta-2 outline-2 outline-panel"
         >
           +{sobran}
         </span>

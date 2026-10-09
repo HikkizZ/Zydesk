@@ -18,7 +18,7 @@ export function VistasTickets() {
           end={v.end}
           className={({ isActive }) =>
             cn(
-              'relative inline-flex min-h-11 items-center text-sm font-medium whitespace-nowrap hover:text-tinta lg:min-h-10',
+              'relative inline-flex min-h-11 min-w-11 items-center justify-center text-sm font-medium whitespace-nowrap hover:text-tinta lg:min-h-10',
               isActive
                 ? 'text-tinta after:absolute after:inset-x-0 after:-bottom-px after:h-0.5 after:bg-acento'
                 : 'text-tinta-2',

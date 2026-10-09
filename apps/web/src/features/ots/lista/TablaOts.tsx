@@ -34,13 +34,16 @@ function Fila({ ot }: { ot: OtResumenDatos }) {
       <TableCell className="sticky left-0 z-10 bg-panel">
         <Link
           to={`/ots/${ot.id}`}
-          className="font-mono text-tabla text-acento underline underline-offset-2"
+          className="inline-flex min-h-11 items-center font-mono text-tabla text-acento underline underline-offset-2 lg:min-h-0"
         >
           {ot.codigo}
         </Link>
       </TableCell>
       <TableCell className="max-w-80 min-w-56">
-        <Link to={`/ots/${ot.id}`} className="block truncate font-medium hover:underline">
+        <Link
+          to={`/ots/${ot.id}`}
+          className="block truncate py-3 font-medium hover:underline lg:py-0"
+        >
           {ot.titulo}
         </Link>
         <p className="truncate text-xs text-tinta-3">

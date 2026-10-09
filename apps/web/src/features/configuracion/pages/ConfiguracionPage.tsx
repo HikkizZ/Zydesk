@@ -52,7 +52,7 @@ export function ConfiguracionPage() {
             <Tabs value={pestana} onValueChange={ir}>
               <TabsList variant="line">
                 {PESTANAS.map((p) => (
-                  <TabsTrigger key={p.clave} value={p.clave}>
+                  <TabsTrigger key={p.clave} value={p.clave} aria-controls={undefined}>
                     {p.etiqueta}
                   </TabsTrigger>
                 ))}

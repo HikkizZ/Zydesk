@@ -173,12 +173,12 @@ function Filtros({ consulta }: { consulta: ConsultaAvisos }) {
         ))}
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <Switch
-          id="solo-no-leidos"
-          checked={consulta.solo_no_leidos === true}
-          onCheckedChange={(v) => cambiar({ solo_no_leidos: v })}
-        />
-        <Label htmlFor="solo-no-leidos" className="min-h-11 items-center">
+        <Label htmlFor="solo-no-leidos" className="min-h-11 cursor-pointer items-center gap-2">
+          <Switch
+            id="solo-no-leidos"
+            checked={consulta.solo_no_leidos === true}
+            onCheckedChange={(v) => cambiar({ solo_no_leidos: v })}
+          />
           Solo sin leer
         </Label>
       </div>
@@ -227,10 +227,10 @@ export function AvisosPage() {
         className="lg:hidden"
       >
         <TabsList variant="line" className="h-11 w-full">
-          <TabsTrigger value="lista" className="min-h-11">
+          <TabsTrigger value="lista" aria-controls={undefined} className="min-h-11 min-w-11">
             Avisos
           </TabsTrigger>
-          <TabsTrigger value="preferencias" className="min-h-11">
+          <TabsTrigger value="preferencias" aria-controls={undefined} className="min-h-11 min-w-11">
             Preferencias
           </TabsTrigger>
         </TabsList>
