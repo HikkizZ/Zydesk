@@ -60,7 +60,7 @@ function Indicador({ item }: { item: ItemIndicador }) {
   );
 }
 
-// Línea compacta de indicadores (sustituye a TarjetaIndicador/TarjetaConteo): bajo `md`, grilla de 2 columnas.
+// Línea compacta de indicadores: bajo `md`, grilla de 2 columnas.
 export function LineaIndicadores({
   items,
   className,

@@ -44,25 +44,3 @@ export function Chip({
     </span>
   );
 }
-
-// --- Alias de transición (se eliminan en F10-T16): la API de la antigua `Pill` sobre `Chip`. ---
-export type TonoPill =
-  'neutro' | 'acento' | 'urgente' | 'alta' | 'resuelto' | 'en-espera' | 'interna';
-
-const TONO_PILL: Record<TonoPill, TonoChip> = {
-  neutro: 'neutro',
-  acento: 'acento',
-  urgente: 'suave-vencido',
-  alta: 'suave-atento',
-  resuelto: 'suave-ok',
-  'en-espera': 'suave-atento',
-  interna: 'interna',
-};
-
-export function Pill({ tono, children }: { tono: TonoPill; children: ReactNode }) {
-  return (
-    <Chip tono={TONO_PILL[tono]} punto={tono === 'interna'}>
-      {children}
-    </Chip>
-  );
-}

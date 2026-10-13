@@ -484,7 +484,7 @@ ADR 0032.4: «una fase = un MINOR». Opciones: **(a) v1.1.0 = esta fase sola**, 
 
 ## 20. Estado de avance
 
-Actualizado el 2026-10-09 (F10-T18, parte documental). Respuestas a §17 registradas el 2026-10-08 (todas las recomendaciones aprobadas; §19: **(a)**, v1.1.0 = rediseño y el correo entrante pasa a v1.2.0). ADR 0033 escrita con §3, §15, §17 y las desviaciones verificables en el código; el resto de las desviaciones, las medidas de la auditoría, la duración del CI y el resultado de la revisión de seguridad se completan al cerrar T15–T17.
+Actualizado el 2026-10-13 (cierre de la fase). Respuestas a §17 registradas el 2026-10-08 (todas las recomendaciones aprobadas; §19: **(a)**, v1.1.0 = rediseño y el correo entrante pasa a v1.2.0). ADR 0033 escrita con §3, §15, §17 y las desviaciones verificadas al cerrar. Auditoría: 119 pruebas (117 pasan, 2 omitidas) en unos 3 min. Revisión de seguridad sin hallazgos abiertos.
 
 | Tarea                                                   | Estado      | Commit                                                                                    |
 | ------------------------------------------------------- | ----------- | ----------------------------------------------------------------------------------------- |
@@ -504,7 +504,14 @@ Actualizado el 2026-10-09 (F10-T18, parte documental). Respuestas a §17 registr
 | F10-T12 Cotizador y Horas                               | hecha       | `81e4cb7`                                                                                 |
 | F10-T13 Reportes, Clientes, Configuración               | hecha       | `9f7d2d8`                                                                                 |
 | F10-T14 Ingreso, legal, perfil, ayuda, salud            | hecha       | `4f58ce0`                                                                                 |
-| F10-T15 Auditoría ampliada y revisión en navegador      | en curso    | — (los tests de §9.4–9.6 ya están en `movil.spec.ts`; falta la revisión de §14.2)         |
-| F10-T16 Limpieza de alias y capturas                    | en curso    | `6fb8571` (`Badge` y `TarjetaConteo`); faltan alias, `Pill`, `TarjetaIndicador`, `TituloPagina`, capturas |
-| F10-T17 Revisión de seguridad de la fase                | en curso    | —                                                                                         |
-| F10-T18 Documentación y cierre                          | en curso    | — (ADR 0033, índice de ADR, `CLAUDE.md`, README, CHANGELOG, PLAN y manuales escritos)      |
+| F10-T15 Auditoría ampliada y revisión en navegador | hecha | `e62c5ed` (119 pruebas: 117 pasan y 2 omitidas); revisión de §14.2 sobre las capturas regeneradas |
+| F10-T16 Limpieza de alias y capturas | hecha | `6fb8571`, `956695d`, `e6cec3d`, `c36ed28` y el commit que borra `Pill`, `TarjetaIndicador` y `TituloPagina` |
+| F10-T17 Revisión de seguridad de la fase | hecha | `8d04ff7` (pruebas de §11), `4f2142f` (rango de `plazo_habil` acotado a 400 días); sin hallazgos abiertos |
+| F10-T18 Documentación y cierre | hecha | `5258da8`; PR a `main` |
+
+**Qué sigue tras el merge** (para retomar desde otra máquina):
+
+1. Cerrar la v1.1.0 (ADR 0032): `npm run version:fijar -- 1.1.0` → `npm run api:openapi` → commit → CI verde → etiqueta anotada `v1.1.0` → workflow `Desplegar` (lo aprueba el usuario). Sin migraciones: el rollback a v1.0.0 es directo.
+2. v1.2.0, correo entrante (IMAP): base en `docs/investigacion/osticket-correo-y-seguridad.md` (diez conclusiones aprobadas el 2026-10-07). Incluye la vista «Ver correo completo», quitar el GPS de las fotos en el servidor y un panel «Correos entrantes» con bandeja «Sin clasificar». Necesita spec y ADR. Falta saber dónde está alojado el correo `@sigaerp.cl` (el equipo descarta un App Registration de Entra).
+3. Sin versión fijada: permisos por departamento (necesita ADR).
+4. Pendientes de la demo en el VPS (pospuestos por el usuario): ensayo de rollback, ensayo de restauración, respaldo remoto, regla de límite de peticiones en Cloudflare y cambiar `DEMO_PASSWORD` tras la evaluación.

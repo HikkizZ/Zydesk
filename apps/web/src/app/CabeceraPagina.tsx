@@ -36,11 +36,3 @@ export function CabeceraPagina({ titulo, codigo, contador, subtitulo, acciones }
     </div>
   );
 }
-
-// Alias de transición (§6.3): solo el `h1`, sin el margen ni el contenedor de la cabecera, para no
-// alterar las pantallas que aún lo envuelven en su propio flex. Se elimina en 10H.
-export function TituloPagina({ titulo, codigo }: { titulo: string; codigo?: string }) {
-  useTituloDeDocumento(titulo, codigo);
-  useMigas({ codigo });
-  return <h1 className="text-xl font-semibold text-tinta">{titulo}</h1>;
-}

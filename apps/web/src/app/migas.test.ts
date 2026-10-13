@@ -77,16 +77,16 @@ it('un nombre de cliente con HTML se renderiza como texto escapado', () => {
     return null;
   }
   const { container } = render(
-    createElement(
-      ConSesion,
-      { yo: yoDePrueba(), ruta: '/clientes/5' },
-      createElement(
+    createElement(ConSesion, {
+      yo: yoDePrueba(),
+      ruta: '/clientes/5',
+      children: createElement(
         MigasProvider,
         null,
         createElement(BarraSuperior),
         createElement(PaginaCliente),
       ),
-    ),
+    }),
   );
   expect(container.querySelector('img')).toBeNull();
   expect(screen.getByText(NOMBRE).getAttribute('aria-current')).toBe('page');
