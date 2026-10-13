@@ -105,3 +105,18 @@ Sin `rm -rf` ni variables de entorno inline en scripts; usar `rimraf` y `cross-e
 **Scripts `.sh` de `docker/`** (Fase 9): son para Linux (el VPS y CI), `sh` POSIX o `bash` según su cabecera, con fin de línea LF (`.gitattributes`) y limpios con `shellcheck` (en CI; en local `docker run --rm -v "$PWD:/mnt" koalaman/shellcheck:stable …`). En Windows se prueban con Git Bash, WSL o un contenedor; `MSYS_NO_PATHCONV=1` evita que Git Bash convierta las rutas de los montajes de Docker. Si Smart App Control bloquea el binario nativo de `argon2`, la API, `db:*` y sus tests se corren en un contenedor `node:22-alpine` con el repo montado (spec fase 9 §21); shared, web, bot, typecheck, lint y build sí corren en Windows.
 
 **Detener procesos de desarrollo.** Matar solo el proceso que escucha el puerto (3010, 5173) **no basta**: los observadores `tsx watch` y `tsc --watch` (y `vite`, `concurrently`) siguen vivos. Mata el árbol completo desde el proceso raíz (el `npm run dev` o el `node.exe` padre): `taskkill /PID <pid> /T /F`. Para comprobar que no quedó nada (PowerShell): `Get-CimInstance Win32_Process -Filter "Name='node.exe'" | Where-Object { $_.CommandLine -match 'tickets-app' -and $_.CommandLine -match 'watch|vite|tsx' }` debe devolver vacío. Postgres (Docker) se deja corriendo.
+
+## 8. Forma de trabajo con Claude
+
+Válido en cualquier máquina (la memoria de Claude y el `CLAUDE.md` global no viajan con el repo).
+
+- **Idioma**: responder siempre en español al usuario, también en avisos de progreso y resúmenes.
+- **Confirmar antes**: nunca `git push` ni borrar archivos sin confirmación explícita del usuario; cada confirmación vale para esa acción. No modificar archivos fuera del repo. No leer ni imprimir `.env` ni secretos.
+- **Cambios mínimos**: solo lo pedido; sin refactors ni mejoras fuera de alcance. Si algo no está claro o hay varias interpretaciones, preguntar.
+- **Commits**: skill `conventional-commit`, en español: `tipo(ámbito): Verbo en imperativo…` con mayúscula inicial, asunto ≤ 70 caracteres, líneas ≤ 100, ids de tarea (`F10-T5`) en el cuerpo. Sin `Co-Authored-By` ni atribución en commits ni PR. No reescribir commits publicados.
+- **Rama por fase**: `feat/fase-N-<tema>` y PR a `main` al cerrar; `main` siempre verificado. El usuario hace el merge; título `feat: Integra la fase N … (#N)`.
+- **Roles de los modelos**: Opus planifica, coordina, revisa e integra (commits y arreglos chicos); Fable escribe specs, ADR y documentación y hace las revisiones; Sonnet programa y escribe los tests. Cada encargo a un agente dice qué leer, qué archivos puede tocar, el criterio de terminado y que no hace commit, push ni borra archivos. En paralelo solo si no comparten archivos; con la API, una base de test por agente (§3). El coordinador corre la verificación completa (incluido `npm run typecheck`) antes de cada commit.
+- **Preguntas de una spec**: las que no bloquean se resuelven con la recomendación y se registran; las que bloquean se preguntan.
+- **Revisión de seguridad antes del PR de cada fase** (PLAN §1): Fable con la skill `sentry-security-review` y, en paralelo, el `/security-review` de Claude Code; los hallazgos se corrigen con un test que primero falle y se muestran al usuario antes de subir la rama.
+- **VPS y demo**: Claude no entra al VPS ni corre pasos de root; los comandos del VPS los ejecuta el usuario. Avisar antes de crear o reiniciar datos de la demo; nunca datos reales de clientes.
+- **Dónde retomar**: la sección «Estado de avance» de la spec de la fase en curso (`docs/specs/fase-N.md`) lista las tareas con su commit y lo que sigue.
