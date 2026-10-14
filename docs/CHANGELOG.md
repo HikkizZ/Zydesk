@@ -4,6 +4,8 @@ Formato basado en [Keep a Changelog](https://keepachangelog.com/es-ES/1.1.0/).
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-14
+
 ### Añadido
 
 - Fase 10 (rediseño visual): **`plazo_habil`** `{ total, restantes, calculado_en }` en `TicketResumen` y `TicketSalida` (`GET /api/tickets`, tablero, detalle, Mi día y tickets del cliente): horas hábiles entre el inicio del ticket y su fecha límite y las que quedan (negativas si venció; congeladas al cerrar), calculadas por la API con el calendario del departamento del responsable principal o, si no, el de la categoría; `null` sin fecha límite, sin calendario o con un rango de más de 400 días (no recorre el calendario). `estadoPlazo` en `shared` y `horasHabilesEntre` en un solo recorrido (test de equivalencia con 1 200 pares). **Franja de plazo hábil** (`FranjaPlazo`) en la Tabla (columna **Plazo hábil**), el Tablero, Mi día, la ficha del cliente, la vista previa de Nuevo ticket y la cabecera del detalle: texto en horas hábiles («Quedan 6 h hábiles», «Vence hoy 17:30», «Vencido hace 2 h hábiles», «Resuelto en plazo»; en días hábiles desde 24 h) y una línea de 3 px debajo, verde con holgura, ámbar bajo el 25 % y roja si venció; la cabecera del ticket dice «Resolución: vence mié 9 oct 12:00 · quedan 6 h hábiles de 16». `.interface-design/system.md` (sistema visual: dirección, tokens, tipografía, profundidad, densidad, patrones, accesibilidad, móvil) y test de contraste AA de los tokens (`tema.test.ts`). Componentes nuevos `Estado`, `Chip`, `Combo` (selector con búsqueda), `LineaIndicadores`, `TerminoOt`, `CabeceraPagina`, `BarraSuperior` y `migas`. Auditoría móvil con pantallas nuevas en axe y desbordes (`/tickets/tabla`, `/tickets`, `/ots`, `/reportes`, `/configuracion/equipo`, `/ingresar`, `/avisos`, `/clientes`), objetivos de 44 px también en la tabla, OT y avisos, y tres tests nuevos (franja de plazo, menú lateral claro, sin sombras en reposo). Capturas antes/después de la Tabla, TK-1048, Mi día y OT-0218 en `docs/especificacion/rediseno-v2/` (`npm run docs:comparacion:antes|despues`). ADR 0033; manuales, README, `CLAUDE.md`, PLAN y `openapi.json` actualizados. Sin dependencias nuevas; sin migraciones; `apps/bot` sin cambios.
@@ -129,5 +131,6 @@ Primera versión publicada: cierre de la Fase 9 (puesta en marcha). La etiqueta 
 - Las cotizaciones creadas antes de esta fase quedan sin valor UF (se completa con «Usar UF del día»); sin historial de la UF en pantalla ni en Reportes.
 - En producción `UF_ACTUALIZAR=true` (`docs/despliegue.md` §4).
 
-[Unreleased]: https://github.com/HikkizZ/Zydesk/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/HikkizZ/Zydesk/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/HikkizZ/Zydesk/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/HikkizZ/Zydesk/releases/tag/v1.0.0
