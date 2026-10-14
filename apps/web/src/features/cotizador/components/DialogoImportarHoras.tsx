@@ -130,8 +130,8 @@ function Contenido({
             <label
               key={o}
               className={cn(
-                'flex min-h-11 cursor-pointer items-center gap-3 rounded-lg border p-3',
-                origen === o ? 'border-2 border-acento bg-media-fondo/40' : 'bg-superficie',
+                'flex min-h-11 cursor-pointer items-center gap-3 rounded-md border p-3',
+                origen === o ? 'border border-acento bg-acento-suave' : 'bg-panel',
               )}
             >
               <input
@@ -158,7 +158,7 @@ function Contenido({
         ) : tarifa ? (
           <p className="text-sm text-tinta-2">{tarifa.texto}</p>
         ) : (
-          <p role="alert" className="text-sm text-alta">
+          <p role="alert" className="text-sm text-plazo-atento">
             No hay tarifa de hora normal.{' '}
             {puedeConfigurar ? (
               <Link
@@ -173,7 +173,7 @@ function Contenido({
           </p>
         )}
         {sinUf && !cargando ? (
-          <p role="alert" className="text-sm text-alta">
+          <p role="alert" className="text-sm text-plazo-atento">
             Indica el valor de la UF en Datos y guarda antes de importar
           </p>
         ) : null}
@@ -192,7 +192,7 @@ function Contenido({
           </p>
         ) : null}
         {error ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {error}
           </p>
         ) : null}

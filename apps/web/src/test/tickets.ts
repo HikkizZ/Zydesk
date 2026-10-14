@@ -67,6 +67,7 @@ export function ticketDePrueba(cambios: Partial<TicketDatos> = {}): TicketDatos 
     primera_respuesta_en: '2026-09-28T20:05:00.000Z',
     vencido: false,
     vence_hoy: false,
+    plazo_habil: { total: 16, restantes: 6, calculado_en: '2026-09-29T12:00:00.000Z' },
     tiene_correo: false,
     n_mensajes: 0,
     motivo_cierre: null,

@@ -34,7 +34,7 @@ function Detalle({ active, payload }: { active?: boolean; payload?: { payload: P
   const p = payload?.[0]?.payload;
   if (!active || !p) return null;
   return (
-    <div className="rounded-md border border-borde bg-superficie px-3 py-2 text-sm shadow-sm">
+    <div className="rounded-sm bg-tinta px-2.5 py-1.5 text-xs text-white">
       {p.etiqueta}: {numeroHoras(p.facturables)} h facturables, {numeroHoras(p.internas)} h internas
     </div>
   );
@@ -75,10 +75,21 @@ export function GraficoHorasSemana({
       margin={{ top: 20, right: 8, bottom: 4, left: 0 }}
       accessibilityLayer={false}
     >
-      <CartesianGrid vertical={false} stroke="var(--color-borde)" />
-      <XAxis dataKey="etiqueta" tick={{ fontSize: 12 }} tickLine={false} />
-      <YAxis allowDecimals={false} width={32} tick={{ fontSize: 12 }} tickLine={false} />
-      <Tooltip content={<Detalle />} cursor={{ fill: 'var(--color-superficie-suave)' }} />
+      <CartesianGrid vertical={false} stroke="var(--color-linea)" />
+      <XAxis
+        dataKey="etiqueta"
+        tick={{ fontSize: 12, fill: 'var(--color-tinta-3)' }}
+        tickLine={false}
+        axisLine={{ stroke: 'var(--color-linea-fuerte)' }}
+      />
+      <YAxis
+        allowDecimals={false}
+        width={32}
+        tick={{ fontSize: 12, fill: 'var(--color-tinta-3)' }}
+        tickLine={false}
+        axisLine={{ stroke: 'var(--color-linea-fuerte)' }}
+      />
+      <Tooltip content={<Detalle />} cursor={{ fill: 'var(--color-panel-hundido)' }} />
       <Legend />
       <Bar
         dataKey="facturables"
@@ -105,7 +116,7 @@ export function GraficoHorasSemana({
         <LabelList
           dataKey="internas"
           position="center"
-          fill="#1a1a1a"
+          fill="#fff"
           fontSize={12}
           formatter={(v: unknown) => horasCorto(Number(v))}
         />
@@ -124,10 +135,12 @@ export function GraficoHorasSemana({
   );
 
   return (
-    <figure className="space-y-3 rounded-lg border border-borde bg-superficie p-4">
-      <figcaption className="font-titulo text-lg font-semibold">
+    <figure className="space-y-3 rounded-md border border-linea bg-panel p-4">
+      <figcaption className="text-sm font-semibold text-tinta">
         Horas por semana
-        <span className="block text-sm font-normal text-tinta-2">Facturables vs. internas</span>
+        <span className="mt-0.5 block text-xs font-normal text-tinta-3">
+          Facturables vs. internas
+        </span>
       </figcaption>
       {total === 0 ? (
         <EstadoVacio titulo="Sin horas en el período" />

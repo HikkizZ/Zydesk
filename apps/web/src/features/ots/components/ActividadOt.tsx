@@ -22,7 +22,7 @@ function LineaEventoOt({ evento }: { evento: EventoDatos }) {
       {evento.autor ? (
         <Avatar
           iniciales={iniciales(evento.autor.nombre)}
-          color="#E8E5DD"
+          color="var(--color-panel-hundido)"
           className="mt-0.5 size-5 text-[8px]"
         />
       ) : (
@@ -39,7 +39,7 @@ function LineaEventoOt({ evento }: { evento: EventoDatos }) {
           {d.cambio ? (
             <>
               {' '}
-              <span className="rounded bg-superficie-suave px-1.5 py-0.5 font-mono text-xs text-tinta">
+              <span className="rounded-sm bg-panel-hundido px-1.5 py-0.5 font-mono text-xs text-tinta">
                 {d.cambio}
               </span>
             </>

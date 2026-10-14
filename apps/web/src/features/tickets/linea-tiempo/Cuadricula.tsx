@@ -25,10 +25,10 @@ const recortar = (texto: string, max: number) =>
 function Cabecera({ columnas }: { columnas: DiaLineaTiempoDatos[] }) {
   return (
     <div
-      className="grid border-b bg-superficie-suave"
+      className="grid border-b border-linea-fuerte bg-panel-hundido"
       style={{ gridTemplateColumns: plantillaColumnas(columnas.length) }}
     >
-      <div className="sticky left-0 z-10 flex items-center bg-superficie-suave px-3 text-xs font-semibold text-tinta-2 uppercase">
+      <div className="sticky left-0 z-10 flex items-center bg-panel-hundido px-3 text-xs font-normal text-tinta-3">
         Equipo
       </div>
       {columnas.map((d) => (
@@ -37,8 +37,8 @@ function Cabecera({ columnas }: { columnas: DiaLineaTiempoDatos[] }) {
           data-dia={d.fecha}
           data-hoy={d.hoy}
           className={cn(
-            'flex h-12 items-center justify-center border-l text-sm',
-            d.hoy ? 'bg-acento font-semibold text-white' : 'text-tinta-2',
+            'flex h-9 items-center justify-center border-l border-linea text-xs',
+            d.hoy ? 'bg-acento font-medium text-white' : 'text-tinta-3',
           )}
         >
           {etiquetaDia(d.fecha)}
@@ -66,23 +66,23 @@ function Fila({
   return (
     <li
       data-fila={fila.clave}
-      className="grid border-b last:border-b-0"
+      className="grid border-b border-linea last:border-b-0"
       style={{
         gridTemplateColumns: plantillaColumnas(columnas.length),
-        gridTemplateRows: `repeat(${subfilas}, minmax(2rem, auto))`,
+        gridTemplateRows: `repeat(${subfilas}, minmax(2.25rem, auto))`,
       }}
     >
       <div
-        className="sticky left-0 z-10 flex min-h-14 items-center gap-2 bg-superficie px-3 py-2"
+        className="sticky left-0 z-10 flex min-h-11 items-center gap-2 bg-panel px-3 py-2"
         style={{ gridColumn: 1, gridRow: `1 / span ${subfilas}` }}
       >
         {fila.persona ? (
           <Avatar iniciales={fila.persona.iniciales} color={fila.persona.color_avatar} />
         ) : null}
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium">{fila.nombre}</p>
+          <p className="truncate text-tabla font-medium text-tinta">{fila.nombre}</p>
           {mostrarAhora && fila.persona ? (
-            <p className="truncate text-xs text-tinta-2">
+            <p className="truncate text-xs text-tinta-3">
               {ahora ? `${ahora.codigo} ${recortar(ahora.asunto, 28)}` : 'Sin ticket en curso'}
             </p>
           ) : null}
@@ -92,7 +92,10 @@ function Fila({
         <div
           key={d.fecha}
           aria-hidden="true"
-          className={cn('border-l', d.hoy && 'bg-acento/5')}
+          className={cn(
+            'border-l border-linea',
+            d.hoy && 'border-l-2 border-l-acento bg-acento-suave/40',
+          )}
           style={{ gridColumn: i + 2, gridRow: `1 / span ${subfilas}` }}
         />
       ))}
@@ -118,7 +121,7 @@ export function Cuadricula({
   mostrarAhora: boolean;
 }) {
   return (
-    <div className="overflow-x-auto rounded-lg border border-borde bg-superficie">
+    <div className="overflow-x-auto rounded-md border border-linea-fuerte bg-panel">
       <div style={{ minWidth: anchoMinimo(columnas.length) }}>
         <Cabecera columnas={columnas} />
         <ul aria-label="Filas de la línea de tiempo">

@@ -2,7 +2,7 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { TriangleAlert } from 'lucide-react';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -11,6 +11,7 @@ import { useYo } from '@/features/auth/SesionProvider';
 import { clavesLineaTiempo, lineaDeTiempo, STALE_TICKETS } from '@/features/tickets/api';
 import { formatearFechaLarga } from '@/lib/fechas';
 import { cn } from '@/lib/utils';
+import { VistasTickets } from '../components/VistasTickets';
 import { Controles, type Agrupar } from '../linea-tiempo/Controles';
 import { Cuadricula } from '../linea-tiempo/Cuadricula';
 import { filasPorCliente, filasPorPersona } from '../linea-tiempo/disposicion';
@@ -86,7 +87,10 @@ export function LineaDeTiempoPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <TituloPagina titulo="Línea de tiempo" />
+      <div>
+        <CabeceraPagina titulo="Tickets" />
+        <VistasTickets />
+      </div>
       <Controles
         escala={escala}
         agrupar={agrupar}
@@ -103,10 +107,10 @@ export function LineaDeTiempoPage() {
           aria-pressed={soloVencidos}
           onClick={() => cambiar({ vencidos: soloVencidos ? null : 'true' })}
           className={cn(
-            'inline-flex min-h-11 w-fit items-center gap-2 rounded-lg border px-3 text-sm font-semibold focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-9',
+            'inline-flex min-h-11 w-fit items-center gap-2 rounded-md border px-3 text-xs font-medium lg:min-h-8',
             soloVencidos
-              ? 'border-urgente bg-urgente text-white'
-              : 'border-urgente-punto bg-urgente-fondo text-urgente',
+              ? 'border-plazo-vencido bg-plazo-vencido text-white'
+              : 'border-plazo-vencido/40 bg-plazo-vencido-suave text-plazo-vencido',
           )}
         >
           <TriangleAlert aria-hidden="true" className="size-4" />

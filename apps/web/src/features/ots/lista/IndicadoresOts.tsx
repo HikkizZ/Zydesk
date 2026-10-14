@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { Monto } from '@/components/dominio/Monto';
-import { TarjetaIndicador } from '@/components/dominio/TarjetaIndicador';
+import { LineaIndicadores } from '@/components/dominio/LineaIndicadores';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { clavesOt, indicadoresOts, STALE_OTS, type IndicadoresOtsDatos } from '@/features/ots/api';
 import { formatearHoras } from '@/lib/formato';
@@ -28,7 +28,7 @@ function ConMonto({ n, neto }: { n: number; neto: number | null }) {
   return (
     <>
       {neto === null ? <MontoOculto /> : <Monto valor={neto} />}
-      <span className="text-sm font-normal text-tinta-2"> · {textoOt(n)}</span>
+      <span className="font-normal text-tinta-2"> · {textoOt(n)}</span>
     </>
   );
 }
@@ -45,27 +45,32 @@ export function IndicadoresOts() {
   const datos: IndicadoresOtsDatos | undefined = consulta.data;
   if (!datos) return null;
   return (
-    <div role="group" aria-label="Indicadores" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <TarjetaIndicador
-        etiqueta="Por facturar"
-        to="/ots?estado_facturacion=por_facturar"
-        tono="text-alta"
-      >
-        <ConMonto n={datos.por_facturar.n} neto={datos.por_facturar.neto} />
-      </TarjetaIndicador>
-      <TarjetaIndicador etiqueta="Esperando al cliente" to="/ots?etapa=cotizada" tono="text-tinta">
-        <ConMonto n={datos.esperando_cliente.n} neto={datos.esperando_cliente.neto} />
-      </TarjetaIndicador>
-      <TarjetaIndicador etiqueta="En ejecución" to="/ots?etapa=en_ejecucion" tono="text-acento">
-        {textoOt(datos.en_ejecucion)}
-      </TarjetaIndicador>
-      <TarjetaIndicador
-        etiqueta="Horas internas del mes"
-        to="/ots?tipo=interna"
-        tono="text-interna"
-      >
-        {formatearHoras(datos.horas_internas_mes)}
-      </TarjetaIndicador>
-    </div>
+    <LineaIndicadores
+      items={[
+        {
+          etiqueta: 'Por facturar',
+          tono: 'atento',
+          to: '/ots?estado_facturacion=por_facturar',
+          valor: <ConMonto n={datos.por_facturar.n} neto={datos.por_facturar.neto} />,
+        },
+        {
+          etiqueta: 'Esperando al cliente',
+          tono: 'neutro',
+          to: '/ots?etapa=cotizada',
+          valor: <ConMonto n={datos.esperando_cliente.n} neto={datos.esperando_cliente.neto} />,
+        },
+        {
+          etiqueta: 'En ejecución',
+          tono: 'acento',
+          to: '/ots?etapa=en_ejecucion',
+          valor: textoOt(datos.en_ejecucion),
+        },
+        {
+          etiqueta: 'Horas internas del mes',
+          to: '/ots?tipo=interna',
+          valor: formatearHoras(datos.horas_internas_mes),
+        },
+      ]}
+    />
   );
 }

@@ -139,3 +139,15 @@ it('el botón Mostrar alterna la visibilidad de la contraseña', async () => {
   expect(campo.type).toBe('text');
   expect(screen.getByRole('button', { name: 'Ocultar' }).getAttribute('aria-pressed')).toBe('true');
 });
+
+it('es una tarjeta centrada con la marca y sin el panel lateral oscuro', async () => {
+  simular(() => respuesta(500));
+  const { container } = render(
+    <ConSesion yo={null}>
+      <IngresoPage />
+    </ConSesion>,
+  );
+  expect(container.firstElementChild?.className).toContain('bg-lienzo');
+  expect(container.querySelector('.bg-tinta')).toBeNull();
+  expect((await screen.findAllByText('Zydesk')).length).toBeGreaterThan(0);
+});

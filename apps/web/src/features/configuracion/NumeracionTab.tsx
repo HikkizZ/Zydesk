@@ -42,6 +42,7 @@ import {
   quitarLogo,
   subirLogo,
 } from './api';
+import { cn } from '@/lib/utils';
 import { Seleccion } from './Seleccion';
 import { Tarjeta } from './Tarjeta';
 
@@ -146,7 +147,7 @@ function Marca() {
             </Button>
           </div>
           {errorNombre ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errorNombre}
             </p>
           ) : null}
@@ -159,7 +160,7 @@ function Marca() {
               <img
                 src={`${yo.logo_url}?v=${version}`}
                 alt="Logo actual"
-                className="h-12 max-w-40 rounded border border-borde bg-white object-contain p-1"
+                className="h-12 max-w-40 rounded border border-linea bg-white object-contain p-1"
               />
             ) : (
               <span className="text-sm text-tinta-2">Sin logo</span>
@@ -184,7 +185,7 @@ function Marca() {
           </div>
           <p className="text-sm text-tinta-2">PNG, JPEG o SVG de hasta 200 KB.</p>
           {errorLogo ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errorLogo}
             </p>
           ) : null}
@@ -296,7 +297,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
           const error = (campo: string) => errores[`${clave}.${campo}`];
           return (
             <fieldset key={clave} className="flex flex-col gap-3">
-              <legend className="mb-1 font-medium">{TITULO_CLAVE[clave]}</legend>
+              <legend className="mb-1 text-sm font-medium text-tinta">{TITULO_CLAVE[clave]}</legend>
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 <div className="flex flex-col gap-1.5">
                   <Label htmlFor={`${clave}-prefijo`}>Prefijo</Label>
@@ -308,7 +309,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
                     onChange={(e) => cambiar(clave, { prefijo: e.target.value })}
                   />
                   {error('prefijo') ? (
-                    <p role="alert" className="text-sm text-urgente">
+                    <p role="alert" className="text-sm text-plazo-vencido">
                       {error('prefijo')}
                     </p>
                   ) : null}
@@ -324,7 +325,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
                     onChange={(e) => cambiar(clave, { inicial: e.target.value })}
                   />
                   {error('inicial') ? (
-                    <p role="alert" className="text-sm text-urgente">
+                    <p role="alert" className="text-sm text-plazo-vencido">
                       {error('inicial')}
                     </p>
                   ) : null}
@@ -342,7 +343,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
                     }))}
                   />
                   {error('digitos') ? (
-                    <p role="alert" className="text-sm text-urgente">
+                    <p role="alert" className="text-sm text-plazo-vencido">
                       {error('digitos')}
                     </p>
                   ) : null}
@@ -362,7 +363,9 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
                   </div>
                 ) : null}
               </div>
-              <p className="text-sm">Próximo: {proximo}</p>
+              <p className={cn('font-mono text-tinta', aleatorio ? 'text-sm' : 'text-xl')}>
+                Próximo: {proximo}
+              </p>
               {aleatorio ? (
                 <p className="text-sm text-tinta-2">
                   {estado.usados} usados / {estado.capacidad} de capacidad
@@ -371,7 +374,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
               {aleatorio && estado.advertencia ? (
                 <p
                   role="status"
-                  className="rounded-md border border-alta-punto/40 bg-alta-fondo px-3 py-2 text-sm text-alta"
+                  className="rounded-md border border-plazo-atento/40 bg-plazo-atento-suave px-3 py-2 text-sm text-plazo-atento"
                 >
                   Ya se usó la mitad o más de los números disponibles. Sube los dígitos antes de que
                   se agoten.
@@ -382,7 +385,7 @@ export function FormularioNumeracion({ datos }: { datos: NumeracionSalidaDatos }
         })}
         <p className="text-sm text-tinta-2">COT- deriva de la OT (COT-0218 v1)</p>
         {errores['general'] ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errores['general']}
           </p>
         ) : null}

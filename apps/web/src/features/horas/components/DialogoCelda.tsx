@@ -79,7 +79,7 @@ function Registro({
   const quitar = () => void acciones.quitar(registro).catch(() => {});
 
   return (
-    <li className="space-y-3 rounded-lg border border-borde p-3">
+    <li className="space-y-3 rounded-md border border-linea p-3">
       <div className="flex items-center justify-between gap-2 text-sm">
         {origen ? (
           <Link to={origen} className="text-acento underline underline-offset-2">

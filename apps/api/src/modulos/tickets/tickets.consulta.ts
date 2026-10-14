@@ -1,4 +1,4 @@
-import { horasJornada, iniciales, ZONA, type Calendario } from '@zydesk/shared';
+import { horasHabilesEntre, horasJornada, iniciales, ZONA, type Calendario } from '@zydesk/shared';
 import type { EntityManager } from 'typeorm';
 import { ErrorApp } from '../../core/errores/error-app.js';
 import { paginar } from '../../core/http/paginacion.js';
@@ -11,6 +11,7 @@ import type {
   LineaTiempoSalidaDatos,
   TableroQueryDatos,
   TareaSalidaDatos,
+  PlazoHabilDatos,
   TicketResumenDatos,
   TicketSalidaDatos,
   TicketsQueryDatos,
@@ -78,7 +79,7 @@ interface FilaResumen {
 
 const iso = (d: Date | null): string | null => (d ? d.toISOString() : null);
 
-function aResumen(f: FilaResumen): TicketResumenDatos {
+function aResumen(f: FilaResumen, plazo_habil: PlazoHabilDatos | null): TicketResumenDatos {
   return {
     id: f.id,
     numero: f.numero,
@@ -100,6 +101,7 @@ function aResumen(f: FilaResumen): TicketResumenDatos {
     inicio_planificado: iso(f.inicio_planificado),
     vencido: f.vencido,
     vence_hoy: f.vence_hoy,
+    plazo_habil,
     tiene_correo: f.tiene_correo,
     n_mensajes: f.n_mensajes,
     motivo_cierre: f.motivo_cierre,
@@ -111,6 +113,101 @@ function aResumen(f: FilaResumen): TicketResumenDatos {
     cerrado_en: iso(f.cerrado_en),
     archivado_en: iso(f.archivado_en),
   };
+}
+
+// ---- Plazo en horas hábiles (fase 10, §5) ----
+
+// Calendarios ya cargados en una petición: por departamento y con los años que cubren.
+export type CacheCalendarios = Map<number, { anios: Set<number>; calendario: Calendario }>;
+
+const FORMATO_ANIO = new Intl.DateTimeFormat('en-CA', { timeZone: ZONA, year: 'numeric' });
+const anioSantiago = (d: Date): number => Number(FORMATO_ANIO.format(d));
+
+async function calendarioDe(
+  m: Consulta,
+  cache: CacheCalendarios,
+  departamento_id: number,
+  anios: number[],
+): Promise<Calendario> {
+  const previo = cache.get(departamento_id);
+  if (previo && anios.every((a) => previo.anios.has(a))) return previo.calendario;
+  const todos = new Set([...(previo?.anios ?? []), ...anios]);
+  const calendario = await cargarCalendario(m as EntityManager, departamento_id, [...todos]);
+  cache.set(departamento_id, { anios: todos, calendario });
+  return calendario;
+}
+
+const LIMITE_PLAZO_DIAS = 400; // el mismo tope que `sumarHorasHabiles` en shared
+
+// Calendario del ticket (ADR 0028.12): departamento del responsable principal y, si no, el del responsable
+// por defecto de su categoría. Una consulta por lote.
+async function departamentosDe(m: Consulta, ids: number[]): Promise<Map<number, number>> {
+  const filas: { id: number; departamento_id: number | null }[] = await m.query(
+    `SELECT t.id, COALESCE(rp.departamento_id, ud.departamento_id) AS departamento_id
+       FROM ticket t
+       LEFT JOIN LATERAL (SELECT u.departamento_id
+                            FROM ticket_responsable r JOIN usuario u ON u.id = r.usuario_id
+                           WHERE r.ticket_id = t.id AND r.principal LIMIT 1) rp ON true
+       LEFT JOIN categoria cat ON cat.id = t.categoria_id
+       LEFT JOIN usuario ud ON ud.id = cat.responsable_defecto_id
+      WHERE t.id = ANY($1::int[])`,
+    [ids],
+  );
+  const mapa = new Map<number, number>();
+  for (const f of filas) if (f.departamento_id !== null) mapa.set(f.id, f.departamento_id);
+  return mapa;
+}
+
+// Resúmenes con `plazo_habil`: abiertos miden hasta `ahora`; cerrados, hasta `cerrado_en` (queda congelado).
+async function aResumenes(
+  m: Consulta,
+  filas: FilaResumen[],
+  cache: CacheCalendarios = new Map(),
+): Promise<TicketResumenDatos[]> {
+  const ahora = new Date();
+  const referencia = (f: FilaResumen): Date => f.cerrado_en ?? ahora;
+  // Un rango de más de LIMITE_PLAZO_DIAS (p. ej. una fecha límite en el año 9999) no tiene franja: recorrer
+  // el calendario día a día bloquearía cada listado (revisión de seguridad F10-T17).
+  const enRango = (f: FilaResumen): boolean => {
+    const instantes = [f.inicio_planificado ?? f.creado_en, f.fecha_limite!, referencia(f)].map(
+      (d) => d.getTime(),
+    );
+    return Math.max(...instantes) - Math.min(...instantes) <= LIMITE_PLAZO_DIAS * MS_DIA;
+  };
+  const conPlazo = filas.filter((f) => f.fecha_limite !== null && enRango(f));
+  const departamentos =
+    conPlazo.length === 0
+      ? new Map<number, number>()
+      : await departamentosDe(
+          m,
+          conPlazo.map((f) => f.id),
+        );
+  const aniosPorDepto = new Map<number, Set<number>>();
+  for (const f of conPlazo) {
+    const depto = departamentos.get(f.id);
+    if (depto === undefined) continue;
+    const anios = aniosPorDepto.get(depto) ?? new Set<number>();
+    const desde = anioSantiago(f.inicio_planificado ?? f.creado_en);
+    const hasta = Math.max(anioSantiago(f.fecha_limite!), anioSantiago(referencia(f)));
+    for (let a = Math.min(desde, hasta); a <= hasta; a++) anios.add(a);
+    aniosPorDepto.set(depto, anios);
+  }
+  const calendarios = new Map<number, Calendario>();
+  for (const [depto, anios] of aniosPorDepto) {
+    calendarios.set(depto, await calendarioDe(m, cache, depto, [...anios]));
+  }
+  return filas.map((f) => {
+    const depto = departamentos.get(f.id);
+    const cal = depto === undefined ? undefined : calendarios.get(depto);
+    if (!f.fecha_limite || !cal || !enRango(f)) return aResumen(f, null);
+    const ref = referencia(f);
+    const inicio = f.inicio_planificado ?? f.creado_en;
+    return aResumen(f, {
+      total: horasHabilesEntre(inicio, f.fecha_limite, cal),
+      restantes: horasHabilesEntre(ref, f.fecha_limite, cal),
+      calculado_en: ref.toISOString(),
+    });
+  });
 }
 
 const escaparLike = (s: string): string => s.replace(/[\\%_]/g, '\\$&');
@@ -221,7 +318,7 @@ export async function listarTickets(
     `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${ORDENES[q.orden]} LIMIT $${valores.length + 1} OFFSET $${valores.length + 2}`,
     [...valores, q.por_pagina, (q.pagina - 1) * q.por_pagina],
   );
-  return paginar(filas.map(aResumen), cuenta?.total ?? 0, q);
+  return paginar(await aResumenes(m, filas), cuenta?.total ?? 0, q);
 }
 
 // Sin paginar: todos los no archivados que cumplan los filtros; orden fijo prioridad y -actualizado_en.
@@ -235,7 +332,7 @@ export async function listarTablero(
     `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${ORDEN_PRIORIDAD}, t.actualizado_en DESC, t.id DESC`,
     valores,
   );
-  return filas.map(aResumen);
+  return aResumenes(m, filas);
 }
 
 // ---- Detalle ----
@@ -366,7 +463,7 @@ export async function cargarTicket(m: EntityManager, id: number): Promise<Ticket
 
   const e = extra!;
   return {
-    ...aResumen(resumen),
+    ...(await aResumenes(m, [resumen]))[0]!,
     descripcion: e.descripcion,
     cliente_id: e.cliente_id,
     solicitante_nombre: e.solicitante_nombre,
@@ -434,6 +531,7 @@ export async function listarTicketsMiDia(
   actor_id: number,
   grupo: GrupoMiDia,
   limite: number,
+  cache?: CacheCalendarios,
 ): Promise<{ datos: TicketResumenDatos[]; total: number }> {
   const { condicion, orden } = GRUPOS_MI_DIA[grupo];
   const where = `t.archivado_en IS NULL AND t.cerrado_en IS NULL
@@ -447,7 +545,7 @@ export async function listarTicketsMiDia(
     `${SELECT_RESUMEN} WHERE ${where} ORDER BY ${orden} LIMIT $2`,
     [actor_id, limite],
   );
-  return { datos: filas.map(aResumen), total: cuenta?.total ?? 0 };
+  return { datos: await aResumenes(m, filas, cache), total: cuenta?.total ?? 0 };
 }
 
 // ---- Línea de tiempo (spec fase 6 §11, ADR 0016) ----
@@ -522,7 +620,7 @@ export async function lineaDeTiempo(
     throw new ErrorApp('VALIDACION', 'Datos inválidos', { hasta: ['Acorta el rango'] });
   }
   const items = filas.map((f) => {
-    const r = aResumen(f);
+    const r = aResumen(f, null);
     return {
       id: r.id,
       codigo: r.codigo,

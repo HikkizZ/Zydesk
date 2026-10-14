@@ -63,7 +63,7 @@ function FormularioResponsables({
       </DialogHeader>
       <SelectorResponsables valor={valor} onChange={setValor} />
       {error ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido">
           {error}
         </p>
       ) : null}
@@ -109,7 +109,7 @@ function FormularioSeguidores({ ticket, onCerrar }: { ticket: TicketDatos; onCer
         />
       </div>
       {error ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido">
           {error}
         </p>
       ) : null}

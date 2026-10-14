@@ -1,3 +1,4 @@
+import { Inbox } from 'lucide-react';
 import type { ReactNode } from 'react';
 
 export function EstadoVacio({
@@ -10,9 +11,10 @@ export function EstadoVacio({
   accion?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-borde-campo bg-superficie-suave-2 px-6 py-10 text-center">
-      <p className="font-titulo text-lg font-semibold">{titulo}</p>
-      {descripcion ? <p className="max-w-md text-sm text-tinta-2">{descripcion}</p> : null}
+    <div className="flex flex-col items-center gap-2 px-6 py-14 text-center text-tinta-3">
+      <Inbox aria-hidden="true" className="size-6 text-tinta-4" />
+      <h3 className="text-sm font-medium text-tinta-2">{titulo}</h3>
+      {descripcion ? <p className="max-w-md text-xs text-tinta-3">{descripcion}</p> : null}
       {accion ? <div className="mt-2">{accion}</div> : null}
     </div>
   );

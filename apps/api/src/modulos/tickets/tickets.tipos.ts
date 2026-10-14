@@ -3,6 +3,7 @@ import type {
   ClienteBreve,
   LineaTiempoQuery,
   LineaTiempoSalida,
+  PlazoHabil,
   ResponsablesEntrada,
   SeguidoresEntrada,
   TableroQuery,
@@ -19,6 +20,7 @@ import type { z } from 'zod';
 export type ArchivoSalidaDatos = z.infer<typeof ArchivoSalida>;
 export type ClienteBreveDatos = z.infer<typeof ClienteBreve>;
 export type TareaSalidaDatos = z.infer<typeof TareaSalida>;
+export type PlazoHabilDatos = z.infer<typeof PlazoHabil>;
 export type TicketResumenDatos = z.infer<typeof TicketResumen>;
 export type TicketSalidaDatos = z.infer<typeof TicketSalida>;
 export type TicketsQueryDatos = z.infer<typeof TicketsQuery>;

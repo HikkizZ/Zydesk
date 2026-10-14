@@ -678,3 +678,13 @@ it('«Descuenta de la bolsa» usa la casilla táctil de 44 px', async () => {
   const etiqueta = casilla.closest('label');
   expect(etiqueta?.className).toContain('size-11');
 });
+
+it('la cabecera lleva el ticket de origen como chip enlazado y la OT sin responsable avisa', async () => {
+  montar(otDePrueba({ responsable_tecnico: null }));
+  const cabecera = (await screen.findByRole('heading', { level: 1 })).closest('header');
+  expect(cabecera).toBeTruthy();
+  const enlace = within(cabecera as HTMLElement).getByRole('link', { name: 'TK-1048' });
+  expect(enlace.getAttribute('href')).toBe('/tickets/7');
+  expect(enlace.className).toContain('min-h-11');
+  expect(within(cabecera as HTMLElement).getByText('Sin responsable técnico')).toBeTruthy();
+});

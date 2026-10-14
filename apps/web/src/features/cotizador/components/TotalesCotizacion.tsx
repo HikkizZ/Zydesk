@@ -31,16 +31,16 @@ export function TotalesCotizacion({
   return (
     <section
       aria-label="Totales"
-      className={cn('rounded-lg border border-borde bg-superficie p-4 shadow-sm', className)}
+      className={cn('rounded-md border border-linea bg-panel p-4', className)}
     >
-      <h2 className="mb-2 font-titulo text-base font-semibold">Totales</h2>
+      <h2 className="mb-2 text-sm font-semibold">Totales</h2>
       <dl className="flex flex-col gap-1 text-sm">
         <Fila etiqueta="Subtotal">
           <Monto valor={totales.subtotal} moneda={moneda} />
         </Fila>
         <Fila etiqueta="Descuentos">
           {totales.descuentos > 0 ? (
-            <span className="text-right font-mono text-alta tabular-nums">
+            <span className="text-right font-mono text-plazo-atento tabular-nums">
               {formatearMonto(-totales.descuentos, moneda)}
             </span>
           ) : (
@@ -57,14 +57,10 @@ export function TotalesCotizacion({
             <span className="text-tinta-2">Exento</span>
           )}
         </Fila>
-        <div className="mt-1 flex items-baseline justify-between gap-3 border-t pt-2">
+        <div className="mt-1 flex items-baseline justify-between gap-3 border-t border-linea-fuerte pt-2">
           <dt className="font-semibold">Total</dt>
           <dd>
-            <Monto
-              valor={totales.total}
-              moneda={moneda}
-              className="font-titulo text-2xl font-bold"
-            />
+            <Monto valor={totales.total} moneda={moneda} className="text-base font-semibold" />
           </dd>
         </div>
       </dl>

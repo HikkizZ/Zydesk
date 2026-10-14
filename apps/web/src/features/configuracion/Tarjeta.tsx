@@ -10,9 +10,9 @@ export function Tarjeta({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-lg border border-borde bg-superficie p-4 sm:p-6">
+    <section className="rounded-md border border-linea bg-panel p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">{titulo}</h2>
+        <h2 className="text-sm font-semibold text-tinta">{titulo}</h2>
         {acciones}
       </div>
       {children}

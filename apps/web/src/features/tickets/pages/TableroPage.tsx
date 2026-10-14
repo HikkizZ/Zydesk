@@ -2,12 +2,13 @@ import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { PRIORIDADES, TIPOS_TICKET, type Prioridad, type TipoTicket } from '@zydesk/shared';
 import { useCallback } from 'react';
 import { Link, useSearchParams } from 'react-router';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { Button } from '@/components/ui/button';
 import { usePermiso } from '@/features/auth/SesionProvider';
 import { claves, STALE_TICKETS, tablero, type ConsultaTablero } from '@/features/tickets/api';
+import { VistasTickets } from '../components/VistasTickets';
 import { FiltrosTablero, type ValoresFiltrosTablero } from '../tablero/FiltrosTablero';
 import { Tablero } from '../tablero/Tablero';
 
@@ -69,13 +70,19 @@ export function TableroPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <TituloPagina titulo="Tablero" />
-        {puedeEditar ? (
-          <Button asChild>
-            <Link to="/tickets/nuevo">Nuevo ticket</Link>
-          </Button>
-        ) : null}
+      <div>
+        <CabeceraPagina
+          titulo="Tickets"
+          {...(tickets.data ? { contador: tickets.data.length } : {})}
+          acciones={
+            puedeEditar ? (
+              <Button asChild>
+                <Link to="/tickets/nuevo">Nuevo ticket</Link>
+              </Button>
+            ) : null
+          }
+        />
+        <VistasTickets />
       </div>
       <FiltrosTablero valores={filtros} onCambio={cambiarFiltros} />
       {tickets.isPending ? (

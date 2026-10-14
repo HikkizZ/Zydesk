@@ -176,16 +176,20 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
   });
 
   return (
-    <form noValidate onSubmit={enviar} className="flex flex-col gap-4">
-      <Campo
-        etiqueta="Título"
-        error={errors.titulo?.message && 'Escribe el título (hasta 200 caracteres)'}
-      >
-        {(p) => <Input {...p} maxLength={200} disabled={soloLectura} {...register('titulo')} />}
-      </Campo>
-      <Campo etiqueta="Alcance" error={errors.alcance?.message}>
-        {(p) => <Textarea {...p} rows={4} disabled={soloLectura} {...register('alcance')} />}
-      </Campo>
+    <form noValidate onSubmit={enviar} className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="lg:col-span-2">
+        <Campo
+          etiqueta="Título"
+          error={errors.titulo?.message && 'Escribe el título (hasta 200 caracteres)'}
+        >
+          {(p) => <Input {...p} maxLength={200} disabled={soloLectura} {...register('titulo')} />}
+        </Campo>
+      </div>
+      <div className="lg:col-span-2">
+        <Campo etiqueta="Alcance" error={errors.alcance?.message}>
+          {(p) => <Textarea {...p} rows={4} disabled={soloLectura} {...register('alcance')} />}
+        </Campo>
+      </div>
       <Campo etiqueta="Responsable técnico">
         {(p) => (
           <SelectorPersonas
@@ -197,7 +201,7 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
           />
         )}
       </Campo>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 lg:contents">
         <Campo etiqueta="Inicio" error={errors.inicio?.message}>
           {(p) => <Input {...p} type="date" disabled={soloLectura} {...register('inicio')} />}
         </Campo>
@@ -250,7 +254,7 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
               />
             )}
           </Campo>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:contents">
             <Campo etiqueta="N° de OC del cliente" error={errors.oc_cliente?.message}>
               {(p) => (
                 <Input
@@ -274,7 +278,7 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
             </Campo>
           </div>
           {comercialBloqueado && !soloLectura ? (
-            <p className="text-sm text-tinta-2">
+            <p className="text-sm text-tinta-2 lg:col-span-2">
               Solo Coordinación o Administración puede cambiarlos tras la aprobación
             </p>
           ) : null}
@@ -302,7 +306,7 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
         </>
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 lg:contents">
             <Campo etiqueta="Área solicitante" error={errors.area_solicitante?.message}>
               {(p) => (
                 <Input
@@ -335,12 +339,12 @@ function Formulario({ ot, soloLectura }: { ot: OtDatos; soloLectura: boolean }) 
       )}
 
       {errorGeneral ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido lg:col-span-2">
           {errorGeneral}
         </p>
       ) : null}
       {soloLectura ? null : (
-        <div>
+        <div className="lg:col-span-2">
           <Button type="submit" disabled={!hayCambios || guardar.isPending}>
             {guardar.isPending ? 'Guardando…' : 'Guardar'}
           </Button>
@@ -417,7 +421,7 @@ export function DatosOt({
     </>
   );
   const clases = cn(
-    'rounded-lg border border-borde bg-superficie p-4 sm:p-5',
+    'rounded-md border border-linea bg-panel p-4',
     !plegable && 'flex flex-col gap-4',
     className,
   );
@@ -426,7 +430,7 @@ export function DatosOt({
       ot.tipo === 'facturable' ? ot.cliente?.nombre : (ot.area_solicitante ?? ot.cliente?.nombre);
     return (
       <details open={ot.etapa === 'borrador'} className={clases}>
-        <summary className="flex min-h-11 cursor-pointer items-center font-titulo text-base font-semibold">
+        <summary className="flex min-h-11 cursor-pointer items-center text-sm font-semibold">
           {['Tipo y datos', ot.tipo === 'facturable' ? 'Facturable' : 'Interna', quien]
             .filter(Boolean)
             .join(' · ')}
@@ -437,7 +441,7 @@ export function DatosOt({
   }
   return (
     <section aria-label="Tipo y datos" className={clases}>
-      <h2 className="font-titulo text-base font-semibold">Tipo y datos</h2>
+      <h2 className="text-sm font-semibold">Tipo y datos</h2>
       {contenido}
     </section>
   );

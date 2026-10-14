@@ -127,3 +127,11 @@ it('className va en la raíz: en la barra sticky en móvil y en el contenedor en
   expect(barra.className).toContain('sticky');
   expect(barra.className).toContain('order-6');
 });
+
+it('en móvil la barra compensa el relleno de main (p-4): -mx-4 y px-4', () => {
+  simularMovil();
+  montar();
+  const barra = escribir().closest('.sticky');
+  expect(barra?.className).toContain('-mx-4');
+  expect(barra?.className).toContain('px-4');
+});

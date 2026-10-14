@@ -104,7 +104,10 @@ export function FormularioCambiarContrasena({ alExito }: { alExito?: () => void 
         )}
       </Campo>
       {errorGeneral ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p
+          role="alert"
+          className="rounded-md border border-plazo-vencido/40 bg-plazo-vencido-suave p-3 text-sm text-plazo-vencido"
+        >
           {errorGeneral}
         </p>
       ) : null}

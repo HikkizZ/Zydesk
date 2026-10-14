@@ -8,14 +8,14 @@ export const COLUMNAS: {
   subtitulo?: string;
   punto: string;
 }[] = [
-  { clave: 'nuevo', titulo: 'Nuevo', punto: 'bg-baja-punto' },
+  { clave: 'nuevo', titulo: 'Nuevo', punto: 'bg-estado-nuevo' },
   { clave: 'en_curso', titulo: 'En curso', punto: 'bg-acento' },
-  { clave: 'en_espera', titulo: 'En espera', punto: 'bg-alta-punto' },
+  { clave: 'en_espera', titulo: 'En espera', punto: 'bg-plazo-atento' },
   {
     clave: 'cerrados',
     titulo: 'Cerrados',
     subtitulo: 'Se archivan a los 7 días',
-    punto: 'bg-resuelto',
+    punto: 'bg-plazo-ok',
   },
 ];
 

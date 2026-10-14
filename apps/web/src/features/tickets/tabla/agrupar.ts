@@ -39,19 +39,19 @@ export interface GrupoTickets {
 }
 
 const PUNTO_PRIORIDAD: Record<Prioridad, string> = {
-  urgente: 'bg-urgente-punto',
-  alta: 'bg-alta-punto',
-  media: 'bg-media-punto',
-  baja: 'bg-baja-punto',
+  urgente: 'bg-plazo-vencido',
+  alta: 'bg-plazo-atento',
+  media: 'bg-tinta-4',
+  baja: 'bg-tinta-4',
 };
 
 const PUNTO_ESTADO: Record<EstadoTicket, string> = {
-  nuevo: 'bg-baja-punto',
+  nuevo: 'bg-estado-nuevo',
   en_curso: 'bg-acento',
-  en_espera: 'bg-alta-punto',
-  resuelto: 'bg-resuelto',
-  descartado: 'bg-baja-punto',
-  duplicado: 'bg-baja-punto',
+  en_espera: 'bg-plazo-atento',
+  resuelto: 'bg-plazo-ok',
+  descartado: 'bg-tinta-4',
+  duplicado: 'bg-tinta-4',
 };
 
 // Agrupa la página actual en el cliente (spec fase 2 §12); los grupos vacíos no se muestran.

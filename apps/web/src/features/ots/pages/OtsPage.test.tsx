@@ -303,3 +303,10 @@ it('la etapa de un indicador llega a la consulta y se puede quitar', async () =>
   await usuario.click(screen.getByRole('button', { name: 'Quitar filtro de etapa: Cotizada' }));
   expect(screen.getByLabelText('URL').textContent).toBe('');
 });
+
+it('la cabecera muestra el total de OT como contador', async () => {
+  montar();
+  await screen.findByRole('link', { name: 'OT-0216' });
+  const titulo = screen.getByRole('heading', { level: 1 });
+  await waitFor(() => expect(titulo.textContent).toMatch(/^Órdenes de trabajo\s*\d+$/));
+});

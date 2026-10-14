@@ -11,7 +11,7 @@ import { useState } from 'react';
 import { useForm, useWatch } from 'react-hook-form';
 import { Link, useParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -166,46 +166,50 @@ function Editor({
 
   return (
     <>
-      <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <TituloPagina
-            titulo={`${cotizacion.codigo} v${cotizacion.version}`}
-            codigo={`${cotizacion.codigo} v${cotizacion.version}`}
-          />
+      <header className="-mx-4 border-b border-linea bg-panel px-4 py-5 lg:-mx-7 lg:px-7">
+        <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
           <PillEstadoCotizacion estado={cotizacion.estado} />
-        </div>
-        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-sm">
           <Link
             to={`/ots/${cotizacion.ot.id}`}
-            className="text-acento underline underline-offset-2"
+            className="inline-flex min-h-11 items-center text-acento underline underline-offset-2 lg:min-h-0"
           >
             <span className="font-mono">{cotizacion.ot.codigo}</span> · {cotizacion.ot.titulo}
           </Link>
           <Link
             to={`/tickets/${cotizacion.ot.ticket.id}`}
-            className="font-mono text-acento underline underline-offset-2"
+            className="inline-flex min-h-11 items-center font-mono text-acento underline underline-offset-2 lg:min-h-0"
           >
             {cotizacion.ot.ticket.codigo}
           </Link>
           {cotizacion.cliente ? (
             <span className="text-tinta-2">{cotizacion.cliente.nombre}</span>
           ) : null}
-        </p>
+        </div>
         {aviso ? (
-          <p role="status" className="rounded-md bg-superficie-suave px-3 py-2 text-sm">
+          <p role="status" className="mb-3 rounded-md bg-panel-hundido px-3 py-2 text-sm">
             {aviso}
           </p>
         ) : null}
-        <AccionesCotizacion
-          cotizacion={cotizacion}
-          hayCambios={isDirty}
-          puedeGuardar={isValid}
-          guardando={guardar.isPending}
-          onGuardar={onGuardar}
-          onImportar={() => setDialogo('horas')}
-          onAplicarPlantilla={() => setDialogo('plantilla')}
-        />
+        <div className="[&>div]:mb-0">
+          <CabeceraPagina
+            titulo={`${cotizacion.codigo} v${cotizacion.version}`}
+            codigo={`${cotizacion.codigo} v${cotizacion.version}`}
+            acciones={
+              <AccionesCotizacion
+                cotizacion={cotizacion}
+                hayCambios={isDirty}
+                puedeGuardar={isValid}
+                guardando={guardar.isPending}
+                onGuardar={onGuardar}
+                onImportar={() => setDialogo('horas')}
+                onAplicarPlantilla={() => setDialogo('plantilla')}
+              />
+            }
+          />
+        </div>
       </header>
+
+      <VersionesCotizacion cotizacion={cotizacion} className="mt-4" />
 
       <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <form
@@ -214,7 +218,7 @@ function Editor({
             e.preventDefault();
             if (editable) onGuardar();
           }}
-          className="flex min-w-0 flex-col gap-4 lg:col-start-1 lg:row-span-2"
+          className="flex min-w-0 flex-col gap-4 lg:col-start-1"
         >
           <DatosCotizacion
             form={form}
@@ -222,11 +226,8 @@ function Editor({
             contactos={contactos}
             editable={editable}
           />
-          <section
-            aria-label="Líneas"
-            className="rounded-lg border border-borde bg-superficie p-4 sm:p-5"
-          >
-            <h2 className="mb-3 font-titulo text-base font-semibold">Líneas</h2>
+          <section aria-label="Líneas" className="rounded-md border border-linea bg-panel p-4">
+            <h2 className="mb-3 text-sm font-semibold">Líneas</h2>
             <TablaLineas
               form={form}
               moneda={moneda}
@@ -252,7 +253,6 @@ function Editor({
             procedencia={procedencia}
           />
         </div>
-        <VersionesCotizacion cotizacion={cotizacion} className="lg:col-start-2 lg:row-start-2" />
       </div>
 
       <DialogoImportarHoras

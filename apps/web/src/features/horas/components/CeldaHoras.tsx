@@ -59,7 +59,7 @@ export function CeldaHoras({
       >
         {horasCorto(celda.total) || '–'}
         {celda.fuera_de_horario ? (
-          <Moon aria-label="Fuera de horario" className="ml-1 inline size-3 text-alta" />
+          <Moon aria-label="Fuera de horario" className="ml-1 inline size-3 text-plazo-atento" />
         ) : null}
       </span>
     );
@@ -99,7 +99,7 @@ export function CeldaHoras({
           }}
           className={cn(
             'absolute top-1/2 left-1 z-10 -translate-y-1/2 rounded p-0.5 hover:text-tinta focus-visible:opacity-100 group-focus-within/celda:opacity-100 group-hover/celda:opacity-100',
-            celda.fuera_de_horario ? 'text-alta opacity-100' : 'text-tinta-3 opacity-0',
+            celda.fuera_de_horario ? 'text-plazo-atento opacity-100' : 'text-tinta-3 opacity-0',
           )}
         >
           <Moon aria-hidden="true" className="size-3.5" />
@@ -110,7 +110,7 @@ export function CeldaHoras({
           type="button"
           aria-label={`${etiqueta}: ${horasCorto(celda.total)} h, ver detalle`}
           onClick={onAbrirDetalle}
-          className="inline-flex h-9.5 w-full min-w-0 items-center justify-end gap-1 rounded-md border border-borde-campo bg-superficie pr-2 pl-6 font-mono text-sm"
+          className="inline-flex h-9.5 w-full min-w-0 items-center justify-end gap-1 rounded-md border border-linea-campo bg-panel pr-2 pl-6 font-mono text-sm"
         >
           <MessageSquare aria-hidden="true" className="size-3 text-tinta-3" />
           {horasCorto(celda.total)}
@@ -133,8 +133,8 @@ export function CeldaHoras({
             if (e.key === 'Enter') e.currentTarget.blur();
           }}
           className={cn(
-            'h-9.5 w-full min-w-0 rounded-md border bg-superficie pr-2 pl-6 text-right font-mono text-sm outline-none focus-visible:border-acento focus-visible:ring-2 focus-visible:ring-acento/30',
-            invalido ? 'border-urgente' : 'border-borde-campo',
+            'h-9.5 w-full min-w-0 rounded-md border bg-panel pr-2 pl-6 text-right font-mono text-sm outline-none focus-visible:border-acento focus-visible:ring-2 focus-visible:ring-acento/30',
+            invalido ? 'border-plazo-vencido' : 'border-linea-campo',
           )}
         />
       )}

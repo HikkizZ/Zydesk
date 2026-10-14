@@ -1,20 +1,19 @@
 import { ETIQUETA_ESTADO_FACTURACION, type EstadoFacturacion } from '@zydesk/shared';
-import { Pill, type TonoPill } from '@/components/dominio/Pill';
-
-const TONO: Record<Exclude<EstadoFacturacion, 'no_aplica'>, TonoPill> = {
-  pendiente: 'neutro',
-  por_facturar: 'alta',
-  facturada: 'resuelto',
-};
+import { Chip } from '@/components/dominio/Chip';
+import { Estado } from '@/components/dominio/Estado';
 
 export function PillFacturacion({ estado }: { estado: EstadoFacturacion }) {
   if (estado === 'no_aplica') {
     return <span className="text-sm text-tinta-3">{ETIQUETA_ESTADO_FACTURACION[estado]}</span>;
   }
   const etiqueta = ETIQUETA_ESTADO_FACTURACION[estado];
-  return (
-    <Pill tono={TONO[estado]}>
-      {estado === 'por_facturar' ? <strong className="font-semibold">{etiqueta}</strong> : etiqueta}
-    </Pill>
-  );
+  // «Por facturar» es la única que pide acción: chip con fondo; las demás, punto + texto.
+  if (estado === 'por_facturar') {
+    return (
+      <Chip tono="suave-atento">
+        <strong className="font-medium">{etiqueta}</strong>
+      </Chip>
+    );
+  }
+  return <Estado tono={estado === 'facturada' ? 'facturada' : 'borrador'}>{etiqueta}</Estado>;
 }

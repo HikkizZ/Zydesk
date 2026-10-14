@@ -5,7 +5,7 @@ import type { UsuarioSesion } from '../../core/auth/tipos.js';
 import { hoyEnSantiago } from '../horas/horas.tipos.js';
 import { listarOts } from '../ots/ots.consulta.js';
 import { SQL_HORAS_REGISTRADAS } from '../tareas/tareas.service.js';
-import { listarTicketsMiDia } from '../tickets/tickets.consulta.js';
+import { listarTicketsMiDia, type CacheCalendarios } from '../tickets/tickets.consulta.js';
 import type { AvisoMiDiaDatos, MiDiaSalidaDatos, TareaMiDiaDatos } from './mi-dia.tipos.js';
 
 const LIMITE_TICKETS = 50;
@@ -172,9 +172,16 @@ export async function cargarMiDia(
   m: EntityManager,
   actor: UsuarioSesion,
 ): Promise<MiDiaSalidaDatos> {
-  const venHoy = await listarTicketsMiDia(m, actor.id, 'vencen_hoy', LIMITE_TICKETS);
-  const vencidos = await listarTicketsMiDia(m, actor.id, 'vencidos', LIMITE_TICKETS);
-  const detenidos = await listarTicketsMiDia(m, actor.id, 'detenidos', LIMITE_DETENIDOS);
+  const calendarios: CacheCalendarios = new Map(); // un calendario por departamento en toda la petición
+  const venHoy = await listarTicketsMiDia(m, actor.id, 'vencen_hoy', LIMITE_TICKETS, calendarios);
+  const vencidos = await listarTicketsMiDia(m, actor.id, 'vencidos', LIMITE_TICKETS, calendarios);
+  const detenidos = await listarTicketsMiDia(
+    m,
+    actor.id,
+    'detenidos',
+    LIMITE_DETENIDOS,
+    calendarios,
+  );
   // B8: solo quien puede aprobar ve las OT internas en borrador que le tocan a él.
   const porAprobar = actor.permisos.includes('ots.aprobar')
     ? await listarOts(

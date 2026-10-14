@@ -10,6 +10,7 @@ import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { Campo } from '@/components/dominio/Campo';
+import { Combo } from '@/components/dominio/Combo';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -170,17 +171,14 @@ export function FormularioUsuario({
                     control={control}
                     name="departamento"
                     render={({ field }) => (
-                      <Seleccion
+                      <Combo
                         id={p.id}
-                        valor={field.value}
-                        alCambiar={field.onChange}
-                        opciones={[
-                          { valor: SIN_DEPARTAMENTO, etiqueta: 'Sin departamento' },
-                          ...departamentos.map((d) => ({
-                            valor: String(d.id),
-                            etiqueta: d.nombre,
-                          })),
-                        ]}
+                        etiqueta="Departamento"
+                        placeholder="Sin departamento"
+                        textoQuitar="Sin departamento"
+                        opciones={departamentos.map((d) => ({ valor: d.id, etiqueta: d.nombre }))}
+                        valor={field.value === SIN_DEPARTAMENTO ? null : Number(field.value)}
+                        alCambiar={(v) => field.onChange(v === null ? SIN_DEPARTAMENTO : String(v))}
                       />
                     )}
                   />
@@ -189,7 +187,7 @@ export function FormularioUsuario({
             </>
           )}
           {errorGeneral ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errorGeneral}
             </p>
           ) : null}

@@ -6,7 +6,7 @@ import { Campo } from '@/components/dominio/Campo';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -107,7 +107,7 @@ function DialogoFeriado({
             <Label htmlFor="feriado-solo-este">Solo para este departamento</Label>
           </div>
           {errores.general ? (
-            <p role="alert" className="text-sm text-urgente">
+            <p role="alert" className="text-sm text-plazo-vencido">
               {errores.general}
             </p>
           ) : null}
@@ -155,14 +155,14 @@ export function FeriadosCard({ departamento }: { departamento: DepartamentoSalid
     contenido = <EstadoVacio titulo={`Sin feriados en ${anio}`} />;
   } else {
     contenido = (
-      <ul className="divide-y divide-borde">
+      <ul className="divide-y divide-linea-suave">
         {consulta.data.map((f) => (
           <li key={f.id} className="flex flex-wrap items-center gap-3 py-2">
             <span className="w-28 shrink-0 text-tinta-2">{fechaLegible(f.fecha)}</span>
             <span className="min-w-0 flex-1">{f.nombre}</span>
-            <Pill tono={f.departamento_id === null ? 'neutro' : 'acento'}>
+            <Chip tono={f.departamento_id === null ? 'neutro' : 'acento'}>
               {f.departamento_id === null ? 'General' : 'Solo este departamento'}
-            </Pill>
+            </Chip>
             <Button
               variant="ghost"
               size="sm"

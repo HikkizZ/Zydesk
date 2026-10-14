@@ -17,7 +17,11 @@ function Opciones<T extends string>({
   onElegir: (clave: T) => void;
 }) {
   return (
-    <div role="group" aria-label={etiqueta} className="inline-flex rounded-lg border bg-superficie">
+    <div
+      role="group"
+      aria-label={etiqueta}
+      className="inline-flex rounded-md border border-linea-fuerte bg-panel"
+    >
       {opciones.map((o) => (
         <button
           key={o.clave}
@@ -25,8 +29,8 @@ function Opciones<T extends string>({
           aria-pressed={valor === o.clave}
           onClick={() => onElegir(o.clave)}
           className={cn(
-            'min-h-11 px-3 text-sm font-medium first:rounded-l-lg last:rounded-r-lg focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-none lg:min-h-9',
-            valor === o.clave ? 'bg-acento text-white' : 'hover:bg-superficie-suave',
+            'min-h-11 px-3 text-xs font-medium first:rounded-l-md last:rounded-r-md lg:min-h-8',
+            valor === o.clave ? 'bg-acento-suave text-acento' : 'text-tinta-2 hover:bg-lienzo',
           )}
         >
           {o.etiqueta}
@@ -54,7 +58,7 @@ export function Controles({
   onHoy: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-3">
+    <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center gap-1">
         <Button
           variant="outline"
@@ -76,10 +80,10 @@ export function Controles({
           Hoy
         </Button>
       </div>
-      <p className="font-medium" aria-live="polite">
+      <p className="text-sm font-medium text-tinta" aria-live="polite">
         {etiquetaRango}
       </p>
-      <div className="ml-auto flex flex-wrap items-center gap-3">
+      <div className="ml-auto flex flex-wrap items-center gap-2">
         <Opciones
           etiqueta="Agrupar por"
           opciones={[

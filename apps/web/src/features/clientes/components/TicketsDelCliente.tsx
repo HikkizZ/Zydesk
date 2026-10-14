@@ -3,7 +3,7 @@ import { Link } from 'react-router';
 import { Cargando } from '@/components/dominio/Cargando';
 import { Codigo } from '@/components/dominio/Codigo';
 import { EstadoError } from '@/components/dominio/EstadoError';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { PillEstado } from '@/components/dominio/PillEstado';
 import { claves, STALE_TICKETS, tickets, type ConsultaTickets } from '@/features/tickets/api';
 
@@ -24,7 +24,7 @@ export function TicketsDelCliente({ clienteId }: { clienteId: number }) {
     return <p className="text-tinta-2">Este cliente aún no tiene tickets.</p>;
   }
   return (
-    <ul className="divide-y divide-borde">
+    <ul className="divide-y divide-linea-suave">
       {lista.data.datos.map((t) => (
         <li key={t.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
           <Link
@@ -35,12 +35,7 @@ export function TicketsDelCliente({ clienteId }: { clienteId: number }) {
           </Link>
           <span className="min-w-0 flex-1 basis-48 font-medium">{t.asunto}</span>
           <PillEstado estado={t.estado} espera_de={t.espera_de} />
-          <FechaLimite
-            fecha_limite={t.fecha_limite}
-            vencido={t.vencido}
-            vence_hoy={t.vence_hoy}
-            prefijo="Vence"
-          />
+          <FranjaPlazo ticket={t} />
         </li>
       ))}
     </ul>

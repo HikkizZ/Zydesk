@@ -3,8 +3,8 @@ import { Mail, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router';
 import { Avatares } from '@/components/dominio/Avatares';
 import { Codigo } from '@/components/dominio/Codigo';
-import { FechaLimite } from '@/components/dominio/FechaLimite';
-import { Pill } from '@/components/dominio/Pill';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
+import { Chip } from '@/components/dominio/Chip';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { PillTipo } from '@/components/dominio/PillTipo';
 import type { TicketResumenDatos } from '@/features/tickets/api';
@@ -13,19 +13,19 @@ const recortar = (texto: string, max: number) =>
   texto.length > max ? `${texto.slice(0, max - 1).trimEnd()}…` : texto;
 
 function EtiquetaCierre({ ticket }: { ticket: TicketResumenDatos }) {
-  if (ticket.estado === 'resuelto') return <Pill tono="resuelto">Resuelto</Pill>;
+  if (ticket.estado === 'resuelto') return <Chip tono="suave-ok">Resuelto</Chip>;
   if (ticket.estado === 'descartado') {
     const motivo = ticket.motivo_cierre ? ` · ${recortar(ticket.motivo_cierre, 28)}` : '';
     return (
-      <Pill tono="neutro">
+      <Chip tono="neutro">
         <span className="line-through">{`Descartado${motivo}`}</span>
-      </Pill>
+      </Chip>
     );
   }
   return (
-    <Pill tono="neutro">
+    <Chip tono="neutro">
       {ticket.duplicado_de ? `Duplicado de ${ticket.duplicado_de.codigo}` : 'Duplicado'}
-    </Pill>
+    </Chip>
   );
 }
 
@@ -42,13 +42,13 @@ function Etiquetas({ ticket }: { ticket: TicketResumenDatos }) {
         <PillTipo tipo={ticket.tipo} codigo={ticket.ot_vinculada.codigo} />
       ) : null}
       {ticket.tiene_correo ? (
-        <Pill tono="neutro">
+        <Chip tono="neutro">
           <Mail aria-hidden="true" className="size-3" />
           Correo
-        </Pill>
+        </Chip>
       ) : null}
       {ticket.estado === 'en_espera' && ticket.espera_de ? (
-        <Pill tono="en-espera">Espera: {ETIQUETA_ESPERA_DE[ticket.espera_de]}</Pill>
+        <Chip tono="suave-atento">Espera: {ETIQUETA_ESPERA_DE[ticket.espera_de]}</Chip>
       ) : null}
       {esCerrado(ticket.estado) ? <EtiquetaCierre ticket={ticket} /> : null}
     </div>
@@ -61,7 +61,7 @@ export function TarjetaTicket({ ticket }: { ticket: TicketResumenDatos }) {
   return (
     <article
       aria-label={`${ticket.codigo} ${ticket.asunto}`}
-      className="relative flex min-h-11 flex-col gap-2 rounded-lg border border-borde bg-superficie p-3 shadow-sm transition-colors hover:border-borde-campo hover:bg-superficie-suave"
+      className="relative flex min-h-11 flex-col gap-2 rounded-md border border-linea bg-panel p-3 transition-colors hover:border-linea-fuerte"
     >
       <div className="flex items-center gap-2">
         <Codigo>{ticket.codigo}</Codigo>
@@ -69,26 +69,21 @@ export function TarjetaTicket({ ticket }: { ticket: TicketResumenDatos }) {
       </div>
       <Link
         to={`/tickets/${ticket.id}`}
-        className="line-clamp-2 font-medium after:absolute after:inset-0 after:rounded-lg focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
+        className="line-clamp-2 text-tabla font-medium text-tinta after:absolute after:inset-0 after:rounded-md focus-visible:outline-none focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
       >
         {ticket.asunto}
       </Link>
-      <p className="text-sm text-tinta-2">{ticket.cliente?.nombre ?? 'Sin cliente'}</p>
+      <p className="text-xs text-tinta-3">{ticket.cliente?.nombre ?? 'Sin cliente'}</p>
       <Etiquetas ticket={ticket} />
       <div className="mt-1 flex items-center gap-3">
         {ticket.responsables.length > 0 ? (
           <Avatares personas={ticket.responsables} />
         ) : (
-          <span className="text-sm text-alta">Sin asignar</span>
+          <span className="text-xs text-plazo-atento">Sin asignar</span>
         )}
-        <FechaLimite
-          fecha_limite={ticket.fecha_limite}
-          vencido={ticket.vencido}
-          vence_hoy={ticket.vence_hoy}
-          className="ml-auto"
-        />
+        <FranjaPlazo ticket={ticket} className="ml-auto" />
         <span
-          className="inline-flex items-center gap-1 text-sm text-tinta-2"
+          className="inline-flex items-center gap-1 text-xs text-tinta-2"
           aria-label={`${ticket.n_mensajes} ${ticket.n_mensajes === 1 ? 'mensaje' : 'mensajes'}`}
         >
           <MessageSquare aria-hidden="true" className="size-3.5" />

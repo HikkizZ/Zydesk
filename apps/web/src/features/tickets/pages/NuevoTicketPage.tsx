@@ -10,8 +10,10 @@ import { useEffect, useRef, useState } from 'react';
 import { Controller, useForm, useWatch } from 'react-hook-form';
 import { Link, useNavigate, useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Campo } from '@/components/dominio/Campo';
+import { Combo } from '@/components/dominio/Combo';
+import { FranjaPlazo } from '@/components/dominio/FranjaPlazo';
 import { localSantiagoAIso } from '@/components/dominio/formato-fecha';
 import { PillPrioridad } from '@/components/dominio/PillPrioridad';
 import { SelectorPersonas, useUsuariosActivos } from '@/components/dominio/SelectorPersonas';
@@ -301,197 +303,216 @@ function FormularioNuevoTicket() {
   });
 
   return (
-    <div className="mt-4 grid gap-6 lg:grid-cols-[1fr_380px]">
-      <div className="lg:order-2 lg:self-start">
-        <PanelCorreo
-          usado={correo}
-          alUsar={usarCorreo}
-          alQuitar={() => setCorreo(null)}
-          autoFoco={params.get('correo') === '1'}
-        />
-      </div>
+    <div className="flex flex-col">
+      <form onSubmit={enviar} noValidate aria-label="Nuevo ticket" className="flex flex-col gap-6">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="flex min-w-0 flex-col gap-4">
+            <Campo etiqueta="Asunto" error={errors.asunto?.message}>
+              {(p) => <Input {...p} maxLength={200} {...register('asunto')} />}
+            </Campo>
+            <Campo etiqueta="Descripción" error={errors.descripcion?.message}>
+              {(p) => <Textarea {...p} rows={6} {...register('descripcion')} />}
+            </Campo>
 
-      <form
-        onSubmit={enviar}
-        noValidate
-        aria-label="Nuevo ticket"
-        className="flex flex-col gap-4 rounded-lg border border-borde bg-superficie p-4 sm:p-6 lg:order-1"
-      >
-        <Campo etiqueta="Asunto" error={errors.asunto?.message}>
-          {(p) => <Input {...p} maxLength={200} {...register('asunto')} />}
-        </Campo>
-        <Campo etiqueta="Descripción" error={errors.descripcion?.message}>
-          {(p) => <Textarea {...p} rows={6} {...register('descripcion')} />}
-        </Campo>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo etiqueta="Cliente o área interna" error={errors.cliente_id?.message}>
-            {(p) => (
-              <SelectorCliente
-                id={p.id}
-                invalido={p['aria-invalid']}
-                valor={valores.cliente_id ?? null}
-                onChange={(c) => alElegirCliente(c ? c.es_interno : null, c ? c.id : null)}
-              />
-            )}
-          </Campo>
-          <Campo etiqueta="Origen">
-            {(p) => (
-              <Seleccion
-                id={p.id}
-                etiqueta="Origen"
-                valor={valores.origen ?? 'externo'}
-                alCambiar={(v) => {
-                  origenManual.current = true;
-                  setValue('origen', v as OrigenTicket, { shouldDirty: true });
-                }}
-                opciones={[
-                  { valor: 'externo', etiqueta: 'Externo' },
-                  { valor: 'interno', etiqueta: 'Interno' },
-                ]}
-              />
-            )}
-          </Campo>
-          <Campo etiqueta="Nombre del solicitante" error={errors.solicitante_nombre?.message}>
-            {(p) => <Input {...p} autoComplete="off" {...register('solicitante_nombre')} />}
-          </Campo>
-          <Campo etiqueta="Correo del solicitante" error={errors.solicitante_correo?.message}>
-            {(p) => (
-              <Input type="email" {...p} autoComplete="off" {...register('solicitante_correo')} />
-            )}
-          </Campo>
-        </div>
-
-        <fieldset className="flex flex-col gap-1.5">
-          <legend className="mb-1 text-sm font-medium">Prioridad</legend>
-          <div role="radiogroup" aria-label="Prioridad" className="flex flex-wrap gap-2">
-            {PRIORIDADES.map((p) => (
-              <button
-                key={p}
-                type="button"
-                role="radio"
-                aria-checked={valores.prioridad === p}
-                aria-label={ETIQUETA_PRIORIDAD[p]}
-                onClick={() => setValue('prioridad', p, { shouldDirty: true })}
-                className={cn(
-                  'inline-flex min-h-11 items-center rounded-md border px-3 lg:min-h-10',
-                  valores.prioridad === p
-                    ? 'border-acento ring-2 ring-acento/30'
-                    : 'hover:bg-superficie-suave',
-                )}
-              >
-                <PillPrioridad prioridad={p} />
-              </button>
-            ))}
-          </div>
-        </fieldset>
-
-        <Campo etiqueta="Categoría" error={errors.categoria_id?.message}>
-          {(p) => (
-            <Seleccion
-              id={p.id}
-              etiqueta="Categoría"
-              valor={
-                valores.categoria_id === null || valores.categoria_id === undefined
-                  ? 'ninguna'
-                  : String(valores.categoria_id)
-              }
-              alCambiar={(v) => alElegirCategoria(v === 'ninguna' ? null : Number(v))}
-              opciones={[
-                { valor: 'ninguna', etiqueta: 'Sin categoría' },
-                ...(listaCategorias.data ?? []).map((c) => ({
-                  valor: String(c.id),
-                  etiqueta: c.nombre,
-                })),
-              ]}
+            <PanelCorreo
+              usado={correo}
+              alUsar={usarCorreo}
+              alQuitar={() => setCorreo(null)}
+              autoFoco={params.get('correo') === '1'}
             />
-          )}
-        </Campo>
 
-        <div className="flex flex-col gap-1.5">
-          <SelectorResponsables
-            valor={{
-              principal_id: valores.principal_id ?? null,
-              otros_ids: (valores.otros_ids ?? []) as number[],
-            }}
-            propuesto={propuesto}
-            onChange={(r) => {
-              if (r.principal_id !== getValues('principal_id')) {
-                principalManual.current = true;
-                setPropuesto(null);
-              }
-              setValue('principal_id', r.principal_id, { shouldDirty: true });
-              setValue('otros_ids', r.otros_ids, { shouldDirty: true });
-              clearErrors(['principal_id', 'otros_ids']);
-            }}
-          />
-          {errors.principal_id?.message || errors.otros_ids?.message ? (
-            <p role="alert" className="text-sm text-urgente">
-              {errors.principal_id?.message ?? errors.otros_ids?.message}
-            </p>
-          ) : null}
-        </div>
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-medium text-tinta-2">Archivos</span>
+              <p className="text-xs text-tinta-3">Fotos o documentos del ticket</p>
+              <SubidaArchivos camara archivos={archivos} onChange={setArchivos} />
+            </div>
+          </div>
 
-        <Campo etiqueta="Seguidores" error={errors.seguidores_ids?.message}>
-          {(p) => (
-            <Controller
-              control={control}
-              name="seguidores_ids"
-              render={({ field }) => (
-                <SelectorPersonas
-                  multiple
+          <section
+            aria-label="Datos"
+            className="flex flex-col gap-4 rounded-md border border-linea bg-panel p-4 lg:self-start"
+          >
+            <h2 className="text-sm font-semibold text-tinta">Datos</h2>
+            <Campo etiqueta="Cliente o área interna" error={errors.cliente_id?.message}>
+              {(p) => (
+                <SelectorCliente
                   id={p.id}
-                  etiqueta="Seguidores"
-                  valor={field.value}
-                  onChange={field.onChange}
+                  invalido={p['aria-invalid']}
+                  valor={valores.cliente_id ?? null}
+                  onChange={(c) => alElegirCliente(c ? c.es_interno : null, c ? c.id : null)}
                 />
               )}
-            />
-          )}
-        </Campo>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Campo etiqueta="Inicio planificado" error={errors.inicio_planificado?.message}>
-            {(p) => <Input type="datetime-local" {...p} {...register('inicio_planificado')} />}
-          </Campo>
-          <div className="flex flex-col gap-1.5">
-            <Campo etiqueta="Fecha límite" error={errors.fecha_limite?.message}>
-              {(p) => <Input type="datetime-local" {...p} {...register('fecha_limite')} />}
             </Campo>
-            {sinFecha ? (
-              <p aria-live="polite" className="text-sm text-tinta-2">
-                {puedeCalcular && vistaPlazo.data && plazo
-                  ? `Se calculará: vence el ${formatearFechaHora(vistaPlazo.data.hasta)} (${textoPlazo(plazo.valor, plazo.unidad)} desde ${desdeIso ? formatearFechaHora(desdeIso) : 'ahora'})`
-                  : puedeCalcular && vistaPlazo.isPending
-                    ? 'Calculando fecha límite…'
-                    : 'Sin fecha límite (elige responsable y categoría o escribe una)'}
-              </p>
-            ) : null}
-          </div>
-        </div>
+            <Campo etiqueta="Origen">
+              {(p) => (
+                <Seleccion
+                  id={p.id}
+                  etiqueta="Origen"
+                  valor={valores.origen ?? 'externo'}
+                  alCambiar={(v) => {
+                    origenManual.current = true;
+                    setValue('origen', v as OrigenTicket, { shouldDirty: true });
+                  }}
+                  opciones={[
+                    { valor: 'externo', etiqueta: 'Externo' },
+                    { valor: 'interno', etiqueta: 'Interno' },
+                  ]}
+                />
+              )}
+            </Campo>
+            <Campo etiqueta="Nombre del solicitante" error={errors.solicitante_nombre?.message}>
+              {(p) => <Input {...p} autoComplete="off" {...register('solicitante_nombre')} />}
+            </Campo>
+            <Campo etiqueta="Correo del solicitante" error={errors.solicitante_correo?.message}>
+              {(p) => (
+                <Input type="email" {...p} autoComplete="off" {...register('solicitante_correo')} />
+              )}
+            </Campo>
 
-        <Campo etiqueta="Horas estimadas" error={errors.horas_estimadas?.message}>
-          {(p) => (
-            <Input
-              type="number"
-              step={0.25}
-              min={0}
-              inputMode="decimal"
-              className="sm:w-40"
-              {...p}
-              {...register('horas_estimadas')}
-            />
-          )}
-        </Campo>
+            <fieldset className="flex flex-col gap-1.5">
+              <legend className="mb-1 text-xs font-medium text-tinta-2">Prioridad</legend>
+              <div role="radiogroup" aria-label="Prioridad" className="flex flex-wrap gap-2">
+                {PRIORIDADES.map((p) => (
+                  <button
+                    key={p}
+                    type="button"
+                    role="radio"
+                    aria-checked={valores.prioridad === p}
+                    aria-label={ETIQUETA_PRIORIDAD[p]}
+                    onClick={() => setValue('prioridad', p, { shouldDirty: true })}
+                    className={cn(
+                      'inline-flex min-h-11 items-center rounded-md border px-3 lg:min-h-8',
+                      valores.prioridad === p
+                        ? 'border-acento bg-acento-suave'
+                        : 'border-linea-campo hover:bg-lienzo',
+                    )}
+                  >
+                    <PillPrioridad prioridad={p} />
+                  </button>
+                ))}
+              </div>
+            </fieldset>
 
-        <div className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium">Archivos</span>
-          <p className="text-sm text-tinta-2">Fotos o documentos del ticket</p>
-          <SubidaArchivos camara archivos={archivos} onChange={setArchivos} />
+            <Campo etiqueta="Categoría" error={errors.categoria_id?.message}>
+              {(p) => (
+                <Combo
+                  id={p.id}
+                  etiqueta="Categoría"
+                  placeholder="Sin categoría"
+                  placeholderBusqueda="Buscar categoría…"
+                  invalido={p['aria-invalid']}
+                  valor={valores.categoria_id ?? null}
+                  alCambiar={alElegirCategoria}
+                  textoQuitar="Sin categoría"
+                  opciones={(listaCategorias.data ?? []).map((c) => ({
+                    valor: c.id,
+                    etiqueta: c.nombre,
+                  }))}
+                />
+              )}
+            </Campo>
+
+            <div className="flex flex-col gap-1.5">
+              <SelectorResponsables
+                valor={{
+                  principal_id: valores.principal_id ?? null,
+                  otros_ids: (valores.otros_ids ?? []) as number[],
+                }}
+                propuesto={propuesto}
+                onChange={(r) => {
+                  if (r.principal_id !== getValues('principal_id')) {
+                    principalManual.current = true;
+                    setPropuesto(null);
+                  }
+                  setValue('principal_id', r.principal_id, { shouldDirty: true });
+                  setValue('otros_ids', r.otros_ids, { shouldDirty: true });
+                  clearErrors(['principal_id', 'otros_ids']);
+                }}
+              />
+              {errors.principal_id?.message || errors.otros_ids?.message ? (
+                <p role="alert" className="text-sm text-plazo-vencido">
+                  {errors.principal_id?.message ?? errors.otros_ids?.message}
+                </p>
+              ) : null}
+            </div>
+
+            <Campo etiqueta="Seguidores" error={errors.seguidores_ids?.message}>
+              {(p) => (
+                <Controller
+                  control={control}
+                  name="seguidores_ids"
+                  render={({ field }) => (
+                    <SelectorPersonas
+                      multiple
+                      id={p.id}
+                      etiqueta="Seguidores"
+                      valor={field.value}
+                      onChange={field.onChange}
+                    />
+                  )}
+                />
+              )}
+            </Campo>
+
+            <Campo etiqueta="Inicio planificado" error={errors.inicio_planificado?.message}>
+              {(p) => <Input type="datetime-local" {...p} {...register('inicio_planificado')} />}
+            </Campo>
+            <div className="flex flex-col gap-1.5">
+              <Campo etiqueta="Fecha límite" error={errors.fecha_limite?.message}>
+                {(p) => <Input type="datetime-local" {...p} {...register('fecha_limite')} />}
+              </Campo>
+              {sinFecha ? (
+                <div aria-live="polite" className="text-xs text-tinta-2">
+                  {puedeCalcular && vistaPlazo.data && plazo ? (
+                    <div className="flex flex-col gap-1">
+                      <FranjaPlazo
+                        variante="ancha"
+                        ticket={{
+                          fecha_limite: vistaPlazo.data.hasta,
+                          cerrado_en: null,
+                          vencido: false,
+                          vence_hoy: false,
+                          plazo_habil: {
+                            total: vistaPlazo.data.horas_habiles,
+                            restantes: vistaPlazo.data.horas_habiles,
+                            calculado_en: new Date().toISOString(),
+                          },
+                        }}
+                      />
+                      <p className="text-tinta-3">
+                        {`Plazo de la categoría: ${textoPlazo(plazo.valor, plazo.unidad)} desde ${desdeIso ? formatearFechaHora(desdeIso) : 'ahora'}`}
+                      </p>
+                    </div>
+                  ) : puedeCalcular && vistaPlazo.isPending ? (
+                    <p>Calculando fecha límite…</p>
+                  ) : (
+                    <p>Sin fecha límite (elige responsable y categoría o escribe una)</p>
+                  )}
+                </div>
+              ) : null}
+            </div>
+
+            <Campo etiqueta="Horas estimadas" error={errors.horas_estimadas?.message}>
+              {(p) => (
+                <Input
+                  type="number"
+                  step={0.25}
+                  min={0}
+                  inputMode="decimal"
+                  className="sm:w-40"
+                  {...p}
+                  {...register('horas_estimadas')}
+                />
+              )}
+            </Campo>
+          </section>
         </div>
 
         {errorGeneral ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p
+            role="alert"
+            className="rounded-md border border-plazo-vencido/40 bg-plazo-vencido-suave p-3 text-sm text-plazo-vencido"
+          >
             {errorGeneral}
           </p>
         ) : null}
@@ -543,7 +564,7 @@ export function NuevoTicketPage() {
   const puedeEditar = usePermiso('tickets.editar');
   return (
     <>
-      <TituloPagina titulo="Nuevo ticket" />
+      <CabeceraPagina titulo="Nuevo ticket" />
       {puedeEditar ? <FormularioNuevoTicket /> : <SinPermiso />}
     </>
   );

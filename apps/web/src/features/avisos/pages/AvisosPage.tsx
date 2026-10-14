@@ -9,7 +9,7 @@ import { FILTROS_AVISO, type FiltroAviso } from '@zydesk/shared';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -118,7 +118,7 @@ function Lista({ consulta }: { consulta: ConsultaAvisos }) {
   return (
     <>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-sm text-tinta-2">{noLeidos} sin leer</p>
+        <p className="text-xs text-tinta-3">{noLeidos} sin leer</p>
         <Button
           variant="outline"
           size="sm"
@@ -162,10 +162,10 @@ function Filtros({ consulta }: { consulta: ConsultaAvisos }) {
             aria-pressed={consulta.filtro === f}
             onClick={() => cambiar({ filtro: f })}
             className={cn(
-              'min-h-9 rounded-full border px-3 text-sm',
+              'min-h-11 rounded-md border px-3 text-xs font-medium lg:min-h-8',
               consulta.filtro === f
-                ? 'border-acento bg-acento text-white'
-                : 'border-borde-campo bg-superficie hover:bg-superficie-suave',
+                ? 'border-acento/40 bg-acento-suave text-acento'
+                : 'border-linea-campo bg-panel text-tinta-2 hover:bg-lienzo',
             )}
           >
             {ETIQUETA_FILTRO[f]}
@@ -173,12 +173,14 @@ function Filtros({ consulta }: { consulta: ConsultaAvisos }) {
         ))}
       </div>
       <div className="ml-auto flex items-center gap-2">
-        <Switch
-          id="solo-no-leidos"
-          checked={consulta.solo_no_leidos === true}
-          onCheckedChange={(v) => cambiar({ solo_no_leidos: v })}
-        />
-        <Label htmlFor="solo-no-leidos">Solo sin leer</Label>
+        <Label htmlFor="solo-no-leidos" className="min-h-11 cursor-pointer items-center gap-2">
+          <Switch
+            id="solo-no-leidos"
+            checked={consulta.solo_no_leidos === true}
+            onCheckedChange={(v) => cambiar({ solo_no_leidos: v })}
+          />
+          Solo sin leer
+        </Label>
       </div>
     </div>
   );
@@ -218,15 +220,19 @@ export function AvisosPage() {
   // Bajo 1024 px las dos vistas son pestañas; desde 1024 px se ven a la vez (lista 2/3, preferencias 1/3).
   return (
     <div className="flex flex-col gap-4">
-      <TituloPagina titulo="Avisos" />
+      <CabeceraPagina titulo="Avisos" />
       <Tabs
         value={vista}
         onValueChange={(v) => setVista(v === 'preferencias' ? 'preferencias' : 'lista')}
         className="lg:hidden"
       >
-        <TabsList>
-          <TabsTrigger value="lista">Avisos</TabsTrigger>
-          <TabsTrigger value="preferencias">Preferencias</TabsTrigger>
+        <TabsList variant="line" className="h-11 w-full">
+          <TabsTrigger value="lista" aria-controls={undefined} className="min-h-11 min-w-11">
+            Avisos
+          </TabsTrigger>
+          <TabsTrigger value="preferencias" aria-controls={undefined} className="min-h-11 min-w-11">
+            Preferencias
+          </TabsTrigger>
         </TabsList>
       </Tabs>
       <div className="grid gap-6 lg:grid-cols-3">
@@ -236,9 +242,9 @@ export function AvisosPage() {
         <div className={cn('flex flex-col gap-4', vista !== 'preferencias' && 'hidden lg:flex')}>
           <section
             aria-labelledby="titulo-preferencias"
-            className="rounded-lg border border-borde bg-superficie p-4"
+            className="rounded-md border border-linea bg-panel p-4"
           >
-            <h2 id="titulo-preferencias" className="mb-3 text-lg font-semibold">
+            <h2 id="titulo-preferencias" className="mb-3 text-sm font-semibold text-tinta">
               Preferencias
             </h2>
             <Preferencias />

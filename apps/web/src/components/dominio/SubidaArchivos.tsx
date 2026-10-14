@@ -63,7 +63,7 @@ function Miniatura({ src, categoria }: { src?: string | undefined; categoria?: s
   }
   const Icono = categoria === 'correo' ? Mail : FileText;
   return (
-    <span className="inline-flex size-16 shrink-0 items-center justify-center rounded-md border bg-superficie-suave text-tinta-2">
+    <span className="inline-flex size-16 shrink-0 items-center justify-center rounded-sm border border-linea bg-panel-hundido text-tinta-2">
       <Icono aria-hidden="true" className="size-6" />
     </span>
   );
@@ -323,8 +323,8 @@ export function SubidaArchivos({
           onDragLeave={() => setArrastrando(false)}
           onDrop={alSoltar}
           className={cn(
-            'flex flex-col items-center gap-2 rounded-lg border border-dashed border-borde-campo bg-superficie-suave-2 px-4 py-6 text-center text-sm text-tinta-2',
-            arrastrando && 'border-acento bg-media-fondo',
+            'flex flex-col items-center gap-2 rounded-md border border-dashed border-linea-campo bg-lienzo px-4 py-6 text-center text-sm text-tinta-2',
+            arrastrando && 'border-acento bg-acento-suave',
           )}
         >
           <ImagenIcono aria-hidden="true" className="size-6 text-tinta-3" />
@@ -352,7 +352,7 @@ export function SubidaArchivos({
           : null}
       </p>
       {errorGeneral ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido">
           {errorGeneral.nombre}: {errorGeneral.mensaje}
         </p>
       ) : null}
@@ -362,7 +362,7 @@ export function SubidaArchivos({
           {archivos.map((a) => (
             <li
               key={a.id}
-              className="flex items-center gap-3 rounded-md border bg-superficie px-2 py-1.5"
+              className="flex items-center gap-3 min-h-11 rounded-md border border-linea bg-panel px-2 py-1.5"
             >
               <Miniatura
                 src={previas.get(a.id) ?? (a.es_imagen ? a.url : undefined)}
@@ -370,7 +370,7 @@ export function SubidaArchivos({
               />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium">{a.nombre_original}</span>
-                <span className="text-xs text-tinta-2">{formatearTamano(a.tamano)}</span>
+                <span className="text-xs text-tinta-3">{formatearTamano(a.tamano)}</span>
               </span>
               <Button
                 type="button"
@@ -386,13 +386,13 @@ export function SubidaArchivos({
           {items.map((it) => (
             <li
               key={it.clave}
-              className="flex items-center gap-3 rounded-md border bg-superficie px-2 py-1.5"
+              className="flex items-center gap-3 min-h-11 rounded-md border border-linea bg-panel px-2 py-1.5"
             >
               <Miniatura src={it.previa} />
               <span className="flex min-w-0 flex-1 flex-col">
                 <span className="truncate text-sm font-medium">{it.nombre}</span>
                 {it.estado === 'error' ? (
-                  <span role="alert" className="text-sm text-urgente">
+                  <span role="alert" className="text-sm text-plazo-vencido">
                     {it.mensaje}
                   </span>
                 ) : (

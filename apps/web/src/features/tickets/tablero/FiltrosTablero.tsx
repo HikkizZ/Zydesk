@@ -49,7 +49,7 @@ export function FiltrosTablero({
     <div
       role="search"
       aria-label="Filtros del tablero"
-      className="flex flex-wrap items-center gap-3"
+      className="flex flex-wrap items-center gap-2"
     >
       <BuscadorTickets valor={valores.q} onCambio={(q) => onCambio({ q })} />
       <div className="w-full sm:w-56">

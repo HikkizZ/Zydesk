@@ -1,10 +1,12 @@
 import type { TipoOt } from '@zydesk/shared';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 
 export function PillTipoOt({ tipo }: { tipo: TipoOt }) {
   return tipo === 'facturable' ? (
-    <Pill tono="resuelto">Facturable</Pill>
+    <Chip tono="suave-ok">Facturable</Chip>
   ) : (
-    <Pill tono="interna">Interna</Pill>
+    <Chip tono="interna" punto>
+      Interna
+    </Chip>
   );
 }

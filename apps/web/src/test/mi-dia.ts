@@ -22,6 +22,7 @@ export function ticketResumenDePrueba(
     inicio_planificado: null,
     vencido: false,
     vence_hoy: true,
+    plazo_habil: { total: 16, restantes: -2, calculado_en: '2026-09-29T12:00:00.000Z' },
     tiene_correo: false,
     n_mensajes: 2,
     motivo_cierre: null,

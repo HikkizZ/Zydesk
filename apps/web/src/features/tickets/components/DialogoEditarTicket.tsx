@@ -251,7 +251,7 @@ function Formulario({ ticket, onCerrar }: { ticket: TicketDatos; onCerrar: () =>
           </Campo>
         </div>
         {errorGeneral ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errorGeneral}
           </p>
         ) : null}

@@ -122,3 +122,17 @@ it('un # malformado (%) no rompe la página', () => {
   expect(screen.getByRole('heading', { level: 1 }).textContent).toBe('Ayuda');
   expect(scrollIntoView).not.toHaveBeenCalled();
 });
+
+it('el enlace del índice de la sección en la URL queda marcado como activo', () => {
+  montar('tecnico', '/ayuda/primeros-pasos');
+  const primero = screen.getAllByRole('link').find((a) => a.getAttribute('href')?.startsWith('#'));
+  expect(primero).toBeTruthy();
+  expect(primero!.getAttribute('aria-current')).toBeNull();
+  const id = primero!.getAttribute('href')!;
+  montar('tecnico', `/ayuda/primeros-pasos${id}`);
+  const activos = screen
+    .getAllByRole('link')
+    .filter((a) => a.getAttribute('aria-current') === 'location');
+  expect(activos.length).toBeGreaterThan(0);
+  expect(activos[0]!.className).toContain('text-acento');
+});

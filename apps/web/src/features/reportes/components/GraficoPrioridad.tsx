@@ -14,9 +14,9 @@ function Fila({ r, escala }: { r: ResolucionPrioridadDatos; escala: number }) {
         <span className="col-span-1 text-sm text-tinta-3 sm:col-span-2">Sin tickets resueltos</span>
       ) : (
         <>
-          <span className="relative block h-2.5 rounded-full bg-superficie-suave-2">
+          <span className="relative block h-2.5 rounded-sm bg-panel-hundido">
             <span
-              className="block h-full rounded-full bg-grafico-facturable"
+              className="block h-full rounded-sm bg-grafico-facturable"
               style={{ width: `${Math.min(100, ((r.promedio_dias ?? 0) / escala) * 100)}%` }}
             />
             {r.objetivo_dias !== null ? (
@@ -31,7 +31,7 @@ function Fila({ r, escala }: { r: ResolucionPrioridadDatos; escala: number }) {
             {numeroDias(r.promedio_dias ?? 0)} d
             {r.objetivo_dias !== null ? ` · obj. ${numeroDias(r.objetivo_dias)}` : ''}
             {r.sobre_plazo ? (
-              <span className="font-semibold text-urgente"> · sobre plazo</span>
+              <span className="font-semibold text-plazo-vencido"> · sobre plazo</span>
             ) : null}
           </span>
         </>
@@ -47,10 +47,10 @@ export function GraficoPrioridad({ resolucion }: { resolucion: ResolucionPriorid
     ...resolucion.flatMap((r) => [r.promedio_dias ?? 0, r.objetivo_dias ?? 0]),
   );
   return (
-    <figure className="space-y-3 rounded-lg border border-borde bg-superficie p-4">
-      <figcaption className="font-titulo text-lg font-semibold">
+    <figure className="space-y-3 rounded-md border border-linea bg-panel p-4">
+      <figcaption className="text-sm font-semibold text-tinta">
         Resolución por prioridad vs objetivo
-        <span className="block text-sm font-normal text-tinta-2">
+        <span className="mt-0.5 block text-xs font-normal text-tinta-3">
           Días hábiles de los tickets resueltos en el período; la marca es el objetivo
         </span>
       </figcaption>

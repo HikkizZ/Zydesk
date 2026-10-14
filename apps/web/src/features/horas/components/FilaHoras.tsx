@@ -1,6 +1,6 @@
 import { Link } from 'react-router';
 import { Codigo } from '@/components/dominio/Codigo';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import { PillEtapaOt } from '@/components/dominio/PillEtapaOt';
 import { TableCell, TableRow } from '@/components/ui/table';
 import { formatearHoras } from '@/lib/formato';
@@ -33,9 +33,13 @@ export function InfoFila({ fila }: { fila: FilaDatos }) {
         <Link to={enlace} className="text-acento underline underline-offset-2">
           <Codigo>{destino.codigo}</Codigo>
         </Link>
-        {fila.facturable ? <Pill tono="acento">Facturable</Pill> : <Pill tono="alta">Interna</Pill>}
+        {fila.facturable ? (
+          <Chip tono="acento">Facturable</Chip>
+        ) : (
+          <Chip tono="suave-atento">Interna</Chip>
+        )}
         {destino.tipo === 'ot' && destino.final ? <PillEtapaOt etapa={destino.etapa} /> : null}
-        {destino.tipo === 'ticket' && destino.cerrado ? <Pill tono="neutro">Cerrado</Pill> : null}
+        {destino.tipo === 'ticket' && destino.cerrado ? <Chip tono="neutro">Cerrado</Chip> : null}
         {tarea ? <span className="text-xs text-tinta-2">· {tarea.titulo}</span> : null}
       </div>
       <p className="truncate text-sm" title={destino.titulo}>
@@ -98,14 +102,14 @@ export function FilaCuadricula({
 }) {
   return (
     <TableRow data-fila={fila.clave}>
-      <TableCell className="sticky left-0 z-10 w-80 min-w-80 bg-superficie whitespace-normal">
+      <TableCell className="sticky left-0 z-10 w-60 min-w-60 bg-panel whitespace-normal">
         <InfoFila fila={fila} />
       </TableCell>
       {dias.map((dia, i) => (
         <TableCell
           key={dia.fecha}
           data-hoy={dia.hoy || undefined}
-          className={cn('min-w-18 px-1', dia.futuro && 'bg-superficie-suave-2/60 opacity-60')}
+          className={cn('w-18 min-w-18 px-1', dia.futuro && 'bg-panel-hundido/60 opacity-60')}
         >
           <CeldaDeFila
             fila={fila}
@@ -117,7 +121,7 @@ export function FilaCuadricula({
           />
         </TableCell>
       ))}
-      <TableCell className="text-right font-mono text-sm font-semibold">
+      <TableCell className="text-right font-mono font-medium tabular-nums">
         {formatearHoras(fila.total)}
       </TableCell>
     </TableRow>
@@ -137,7 +141,7 @@ export function TarjetaFila({
     <li
       data-fila={fila.clave}
       data-hoy={dia.hoy || undefined}
-      className="space-y-2 rounded-lg border border-borde bg-superficie p-3"
+      className="space-y-2 rounded-md border border-linea bg-panel p-3"
     >
       <InfoFila fila={fila} />
       <CeldaDeFila

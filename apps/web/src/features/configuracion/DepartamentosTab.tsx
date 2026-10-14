@@ -188,7 +188,7 @@ function EditorDepartamento({
           <TableBody>
             {DIAS.map(({ dia, nombre: nombreDia }) => {
               const d = horario.find((x) => x.dia_semana === dia) as HorarioDia;
-              const campo = 'w-28';
+              const campo = 'w-28 lg:h-8';
               return (
                 <TableRow key={dia}>
                   <TableCell>
@@ -236,7 +236,7 @@ function EditorDepartamento({
                       type="number"
                       min={0}
                       max={240}
-                      className="w-20"
+                      className="w-20 lg:h-8"
                       disabled={!d.activo}
                       value={d.colacion_min}
                       aria-label={`Colación (min) ${nombreDia}`}
@@ -253,7 +253,7 @@ function EditorDepartamento({
         </Table>
       </div>
 
-      <p className="font-medium">Jornada semanal calculada: {horas(horario)}</p>
+      <p className="text-sm font-medium text-tinta">Jornada semanal calculada: {horas(horario)}</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
@@ -289,7 +289,7 @@ function EditorDepartamento({
       </div>
 
       {error ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="text-sm text-plazo-vencido">
           {error}
         </p>
       ) : null}
@@ -362,12 +362,14 @@ export function DepartamentosTab() {
                   aria-pressed={elegido}
                   onClick={() => setSeleccion(d.id)}
                   className={cn(
-                    'flex flex-col items-start gap-0.5 rounded-lg border bg-superficie p-4 text-left',
-                    elegido ? 'border-2 border-tinta' : 'border-borde',
+                    'flex min-h-11 flex-col items-start gap-0.5 rounded-md border p-3 text-left',
+                    elegido
+                      ? 'border-acento bg-acento-suave'
+                      : 'border-linea bg-panel hover:bg-lienzo',
                   )}
                 >
-                  <span className="font-semibold">{d.nombre}</span>
-                  <span className="text-sm text-tinta-2">
+                  <span className="text-sm font-medium text-tinta">{d.nombre}</span>
+                  <span className="text-xs text-tinta-2">
                     {d.personas} {d.personas === 1 ? 'persona' : 'personas'} ·{' '}
                     {formatoHoras.format(d.jornada_semanal_horas)} h por semana
                   </span>

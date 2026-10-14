@@ -25,3 +25,11 @@ describe('AtajosSecciones', () => {
     expect(screen.queryByRole('navigation')).toBeNull();
   });
 });
+
+it('compensa el relleno de main (p-4) con -mx-4 y px-4 para no desbordar el documento', () => {
+  simularMovil();
+  render(<AtajosSecciones etiqueta="En este ticket" secciones={SECCIONES} />);
+  const nav = screen.getByRole('navigation', { name: 'En este ticket' });
+  expect(nav.className).toContain('-mx-4');
+  expect(nav.className).toContain('px-4');
+});

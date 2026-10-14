@@ -61,7 +61,7 @@ function CodigoQr({ enlace }: { enlace: string }) {
         alt="Código QR para vincular Telegram"
         width={200}
         height={200}
-        className="size-[200px] rounded-md bg-white"
+        className="size-[200px] rounded-md border border-linea bg-white"
       />
       <p className="text-sm text-tinta-2">Escanéalo con la cámara de tu celular</p>
     </div>
@@ -122,7 +122,7 @@ function ContenidoVincular({
   if (vinculado) {
     const usuario = estado.data?.telegram_usuario;
     return (
-      <p role="status" className="py-4 text-center font-medium text-resuelto">
+      <p role="status" className="py-4 text-center font-medium text-plazo-ok">
         {usuario ? `¡Listo! Vinculado como @${usuario}` : '¡Listo! Vinculado'}
       </p>
     );
@@ -150,12 +150,12 @@ function ContenidoVincular({
     <div className="flex flex-col gap-4">
       {datos ? (
         <>
-          <div className="flex flex-col items-center gap-4 rounded-lg bg-superficie-suave p-4 md:flex-row md:justify-center md:gap-8">
+          <div className="flex flex-col items-center gap-4 rounded-md border border-linea bg-lienzo p-4 md:flex-row md:justify-center md:gap-8">
             {escritorio && enlaceValido ? <CodigoQr enlace={datos.enlace!} /> : null}
             <div className="flex flex-col items-center gap-2">
               <p
                 data-testid="codigo-vinculo"
-                className="font-mono text-3xl font-bold tracking-widest"
+                className="font-mono text-xl font-semibold tracking-widest"
                 aria-label="Código de vinculación"
               >
                 {datos.codigo}

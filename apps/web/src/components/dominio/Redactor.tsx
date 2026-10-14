@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Lock } from 'lucide-react';
+import { Lock, Send } from 'lucide-react';
 import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react';
 import { Link } from 'react-router';
 import { toast } from 'sonner';
@@ -245,16 +245,9 @@ export function Redactor({
   return (
     <section
       aria-label="Redactor"
-      className={cn(
-        'flex flex-col gap-3 rounded-lg border p-3',
-        esNota ? 'border-nota-interna-borde bg-nota-interna-fondo' : 'bg-superficie-suave',
-      )}
+      className="flex flex-col overflow-hidden rounded-md border border-linea-fuerte bg-panel"
     >
-      <div
-        role="group"
-        aria-label="Tipo de mensaje"
-        className="inline-flex w-fit rounded-md bg-black/5 p-0.5"
-      >
+      <div role="group" aria-label="Tipo de mensaje" className="flex border-b border-linea px-3">
         {(['seguimiento', 'nota_interna'] as const).map((tipo) => (
           <button
             key={tipo}
@@ -262,90 +255,94 @@ export function Redactor({
             aria-pressed={modo === tipo}
             onClick={() => setModo(tipo)}
             className={cn(
-              'inline-flex min-h-11 items-center gap-1.5 rounded-[6px] px-3 text-sm font-medium lg:min-h-9',
-              modo === tipo ? 'bg-white shadow-sm' : 'text-tinta-2 hover:text-tinta',
+              '-mb-px inline-flex min-h-11 items-center gap-1.5 border-b-2 px-3 text-sm font-medium lg:min-h-9',
+              modo === tipo
+                ? 'border-acento text-tinta'
+                : 'border-transparent text-tinta-2 hover:text-tinta',
             )}
           >
-            {tipo === 'nota_interna' ? <Lock aria-hidden="true" className="size-3.5" /> : null}
+            {tipo === 'nota_interna' ? <Lock aria-hidden="true" className="size-3" /> : null}
             {tipo === 'seguimiento' ? 'Seguimiento' : 'Nota interna'}
           </button>
         ))}
       </div>
-      <p className="text-sm text-tinta-2">{textos.ayuda}</p>
+      <div className={cn('flex flex-col gap-3 p-3', esNota && 'bg-plazo-atento-suave')}>
+        <p className="text-xs text-tinta-2">{textos.ayuda}</p>
 
-      <Popover open={menuAbierto}>
-        <PopoverAnchor asChild>
-          <div>
-            <Textarea
-              ref={areaTexto}
-              aria-label="Texto del mensaje"
-              placeholder={textos.placeholder}
-              value={texto}
-              rows={esMovil ? 4 : 3}
-              onChange={alCambiarTexto}
-              onKeyDown={alTeclear}
-              className="min-h-20 bg-white"
+        <Popover open={menuAbierto}>
+          <PopoverAnchor asChild>
+            <div>
+              <Textarea
+                ref={areaTexto}
+                aria-label="Texto del mensaje"
+                placeholder={textos.placeholder}
+                value={texto}
+                rows={esMovil ? 4 : 3}
+                onChange={alCambiarTexto}
+                onKeyDown={alTeclear}
+                className="min-h-[108px] resize-none border-0 bg-transparent px-0 shadow-none focus-visible:ring-0"
+              />
+            </div>
+          </PopoverAnchor>
+          <PopoverContent
+            side="top"
+            align="start"
+            className="w-72 p-1"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+            onCloseAutoFocus={(e) => e.preventDefault()}
+          >
+            <ul role="listbox" aria-label="Mencionar a" className="flex flex-col">
+              {opciones.map((u, i) => (
+                <li
+                  key={u.id}
+                  role="option"
+                  aria-selected={i === activo}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => elegirMencion(i)}
+                  className={cn(
+                    'flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm lg:min-h-9',
+                    i === activo && 'bg-panel-hundido',
+                  )}
+                >
+                  <Avatar
+                    iniciales={u.iniciales}
+                    color={u.color_avatar}
+                    className="size-6 text-[10px]"
+                  />
+                  {u.nombre}
+                </li>
+              ))}
+            </ul>
+          </PopoverContent>
+        </Popover>
+
+        <SubidaArchivos
+          compacto
+          archivos={archivos}
+          onChange={setArchivos}
+          abrirCamaraAlMontar={abrirCamaraAlMontar}
+        />
+
+        {copiaAlTicket ? (
+          <div className="flex items-start gap-2">
+            <CasillaTactil
+              id={`copiar-${destino.id}`}
+              checked={copiar}
+              onCheckedChange={(v) => setCopiar(v === true)}
             />
+            <div className="flex min-h-11 flex-col justify-center lg:min-h-0">
+              <Label htmlFor={`copiar-${destino.id}`}>Copiar al ticket</Label>
+              <p className="text-xs text-tinta-2">
+                El avance también queda en {codigoTicket ?? 'el ticket'}
+              </p>
+            </div>
           </div>
-        </PopoverAnchor>
-        <PopoverContent
-          side="top"
-          align="start"
-          className="w-72 p-1"
-          onOpenAutoFocus={(e) => e.preventDefault()}
-          onCloseAutoFocus={(e) => e.preventDefault()}
-        >
-          <ul role="listbox" aria-label="Mencionar a" className="flex flex-col">
-            {opciones.map((u, i) => (
-              <li
-                key={u.id}
-                role="option"
-                aria-selected={i === activo}
-                onMouseDown={(e) => e.preventDefault()}
-                onClick={() => elegirMencion(i)}
-                className={cn(
-                  'flex min-h-11 cursor-pointer items-center gap-2 rounded-md px-2 py-1 text-sm lg:min-h-9',
-                  i === activo && 'bg-superficie-suave',
-                )}
-              >
-                <Avatar
-                  iniciales={u.iniciales}
-                  color={u.color_avatar}
-                  className="size-6 text-[10px]"
-                />
-                {u.nombre}
-              </li>
-            ))}
-          </ul>
-        </PopoverContent>
-      </Popover>
+        ) : null}
+      </div>
 
-      <SubidaArchivos
-        compacto
-        archivos={archivos}
-        onChange={setArchivos}
-        abrirCamaraAlMontar={abrirCamaraAlMontar}
-      />
-
-      {copiaAlTicket ? (
-        <div className="flex items-start gap-2">
-          <CasillaTactil
-            id={`copiar-${destino.id}`}
-            checked={copiar}
-            onCheckedChange={(v) => setCopiar(v === true)}
-          />
-          <div className="flex min-h-11 flex-col justify-center lg:min-h-0">
-            <Label htmlFor={`copiar-${destino.id}`}>Copiar al ticket</Label>
-            <p className="text-sm text-tinta-2">
-              El avance también queda en {codigoTicket ?? 'el ticket'}
-            </p>
-          </div>
-        </div>
-      ) : null}
-
-      <div className="flex flex-wrap items-end gap-3">
+      <div className="flex flex-wrap items-end gap-3 border-t border-linea bg-lienzo px-3 py-2">
         {sinHoras ? (
-          <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
+          <p className="min-w-40 flex-1 pb-2 text-xs text-tinta-2">
             La OT está cerrada: no se registran horas
           </p>
         ) : (
@@ -363,12 +360,12 @@ export function Redactor({
                   value={horas}
                   aria-invalid={!horasOk}
                   onChange={(e) => setHoras(e.target.value)}
-                  className="w-[90px] bg-white"
+                  className="w-14 px-1.5 font-mono tabular-nums"
                 />
                 <span className="text-sm text-tinta-2">h</span>
               </div>
             </div>
-            <p className="min-w-40 flex-1 pb-2 text-sm text-tinta-2">
+            <p className="min-w-40 flex-1 pb-2 text-xs text-tinta-2">
               {horasOk ? (
                 <>
                   Se suman a tu planilla de hoy; corrígelas en{' '}
@@ -392,11 +389,12 @@ export function Redactor({
           </Button>
         ) : null}
         <Button type="button" disabled={!puedeEnviar || enviarMensaje.isPending} onClick={enviar}>
+          <Send aria-hidden="true" />
           {enviarMensaje.isPending ? 'Enviando…' : textos.boton}
         </Button>
       </div>
       {errorGeneral ? (
-        <p role="alert" className="text-sm text-urgente">
+        <p role="alert" className="px-3 py-2 text-sm text-plazo-vencido">
           {errorGeneral}
         </p>
       ) : null}

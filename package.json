@@ -33,6 +33,8 @@
     "api:openapi": "npm run openapi -w @zydesk/api",
     "test:movil": "npm run test:movil -w @zydesk/web",
     "docs:capturas": "npm run docs:capturas -w @zydesk/web",
+    "docs:comparacion:antes": "npm run docs:comparacion:antes -w @zydesk/web",
+    "docs:comparacion:despues": "npm run docs:comparacion:despues -w @zydesk/web",
     "version:fijar": "node scripts/version-fijar.mjs",
     "test:scripts": "node --test scripts/version-fijar.test.mjs"
   },

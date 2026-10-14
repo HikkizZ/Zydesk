@@ -17,11 +17,11 @@ function Fila({ c }: { c: CargaPersonaDatos }) {
         <span className="truncate text-sm font-medium">{c.usuario.nombre}</span>
       </span>
       {conCapacidad ? (
-        <span className="h-2.5 overflow-hidden rounded-full bg-superficie-suave-2">
+        <span className="h-2.5 overflow-hidden rounded-sm bg-panel-hundido">
           <span
             role="img"
             aria-label={`${c.usuario.nombre}: ${pluralizar(c.tickets_abiertos, 'ticket abierto', 'tickets abiertos')}, ${numeroHoras(c.horas_estimadas)} h estimadas de ${numeroHoras(c.capacidad_semanal ?? 0)} h disponibles`}
-            className="block h-full rounded-full bg-grafico-facturable"
+            className="block h-full rounded-sm bg-grafico-facturable"
             style={{ width: `${Math.min(100, pct)}%` }}
           />
         </span>
@@ -31,7 +31,9 @@ function Fila({ c }: { c: CargaPersonaDatos }) {
       <span className="col-span-2 text-sm tabular-nums text-tinta-2 sm:col-span-1 sm:text-right">
         {etiqueta}
         {conCapacidad ? (
-          <span className={cn('ml-2', pct > 100 && 'font-semibold text-urgente')}>{pct} %</span>
+          <span className={cn('ml-2', pct > 100 && 'font-semibold text-plazo-vencido')}>
+            {pct} %
+          </span>
         ) : null}
       </span>
     </li>
@@ -41,10 +43,10 @@ function Fila({ c }: { c: CargaPersonaDatos }) {
 // Carga por persona vs capacidad, en HTML: instantánea de hoy (spec fase 7 §4.10).
 export function GraficoCarga({ carga }: { carga: CargaPersonaDatos[] }) {
   return (
-    <figure className="space-y-3 rounded-lg border border-borde bg-superficie p-4">
-      <figcaption className="font-titulo text-lg font-semibold">
+    <figure className="space-y-3 rounded-md border border-linea bg-panel p-4">
+      <figcaption className="text-sm font-semibold text-tinta">
         Carga por persona vs capacidad
-        <span className="block text-sm font-normal text-tinta-2">
+        <span className="mt-0.5 block text-xs font-normal text-tinta-3">
           Hoy · tickets abiertos · horas estimadas / horas disponibles a la semana
         </span>
       </figcaption>

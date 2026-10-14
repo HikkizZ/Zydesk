@@ -3,7 +3,7 @@ import { Plus } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router';
 import { toast } from 'sonner';
-import { TituloPagina } from '@/app/TituloPagina';
+import { CabeceraPagina } from '@/app/CabeceraPagina';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
@@ -89,16 +89,19 @@ function Vista({ planilla, propia }: { planilla: PlanillaDatos; propia: boolean 
       </div>
 
       {!propia ? (
-        <p role="status" className="rounded-md bg-superficie-suave-2 px-3 py-2 text-sm">
+        <p role="status" className="rounded-md bg-panel-hundido px-3 py-2 text-sm">
           Estás viendo la planilla de {planilla.usuario.nombre} · solo lectura
         </p>
       ) : !puedeEditar ? (
-        <p role="status" className="rounded-md bg-superficie-suave-2 px-3 py-2 text-sm">
+        <p role="status" className="rounded-md bg-panel-hundido px-3 py-2 text-sm">
           Tu rol no registra horas
         </p>
       ) : null}
       {planilla.usuario.departamento === null ? (
-        <p role="status" className="rounded-md bg-alta-fondo px-3 py-2 text-sm text-alta">
+        <p
+          role="status"
+          className="rounded-md bg-plazo-atento-suave px-3 py-2 text-sm text-plazo-atento"
+        >
           Sin departamento: no hay jornada para comparar
         </p>
       ) : null}
@@ -117,7 +120,7 @@ function Vista({ planilla, propia }: { planilla: PlanillaDatos; propia: boolean 
             : {})}
         />
       ) : (
-        <div className="space-y-4 lg:grid lg:grid-cols-[minmax(0,1fr)_15rem] lg:items-start lg:gap-4 lg:space-y-0">
+        <div className="flex flex-col gap-4">
           <Planilla
             planilla={planilla}
             filas={filas}
@@ -125,7 +128,9 @@ function Vista({ planilla, propia }: { planilla: PlanillaDatos; propia: boolean 
             acciones={acciones}
             onDetalle={(clave, indice) => setDetalle({ clave, indice })}
           />
-          <ResumenSemana totales={planilla.totales} />
+          <div className="lg:order-first">
+            <ResumenSemana totales={planilla.totales} />
+          </div>
         </div>
       )}
 
@@ -183,19 +188,23 @@ export function HorasPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <TituloPagina
-          titulo={datos ? `Horas · semana del ${diaMesDeFecha(datos.semana.desde)}` : 'Horas'}
-        />
-        {verTodas ? (
-          <SelectorPersona
-            valor={usuarioId ?? yo.id}
-            yoId={yo.id}
-            actual={datos ? { id: datos.usuario.id, nombre: datos.usuario.nombre } : undefined}
-            onCambiar={elegirPersona}
-          />
-        ) : null}
-      </div>
+      <CabeceraPagina
+        titulo={datos ? `Horas · semana del ${diaMesDeFecha(datos.semana.desde)}` : 'Horas'}
+        {...(verTodas
+          ? {
+              acciones: (
+                <SelectorPersona
+                  valor={usuarioId ?? yo.id}
+                  yoId={yo.id}
+                  actual={
+                    datos ? { id: datos.usuario.id, nombre: datos.usuario.nombre } : undefined
+                  }
+                  onCambiar={elegirPersona}
+                />
+              ),
+            }
+          : {})}
+      />
       {resultado.isError ? (
         <EstadoError error={resultado.error} reintentar={() => void resultado.refetch()} />
       ) : datos ? (

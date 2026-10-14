@@ -64,7 +64,7 @@ it('calcula el progreso (2 de 5 hechas) y marca la fecha vencida', () => {
   expect(
     screen.getByRole('progressbar', { name: 'Progreso de tareas' }).getAttribute('aria-valuenow'),
   ).toBe('40');
-  expect(screen.getByText('29 sep').className).toContain('text-urgente');
+  expect(screen.getByText('29 sep').className).toContain('text-plazo-vencido');
 });
 
 it('marcar una tarea llama a PATCH con hecha', async () => {

@@ -1,6 +1,5 @@
 import { render, screen, within } from '@testing-library/react';
 import { expect, it } from 'vitest';
-import { TarjetaIndicador } from '@/components/dominio/TarjetaIndicador';
 import { ConSesion, yoDePrueba } from '@/test/sesion';
 import { reporteDePrueba } from '@/test/reportes';
 import { sumarDias } from '../filtros';
@@ -18,21 +17,6 @@ const filasDe = (tabla: HTMLElement) =>
     .getAllByRole('row')
     .slice(1)
     .map((f) => Array.from(f.children).map((c) => c.textContent));
-
-it('TarjetaIndicador es un enlace con `to` y un grupo sin él', () => {
-  montar(
-    <>
-      <TarjetaIndicador etiqueta="Con enlace" to="/ots" tono="text-tinta">
-        1
-      </TarjetaIndicador>
-      <TarjetaIndicador etiqueta="Sin enlace" tono="text-tinta" ariaLabel="Sin enlace: 2">
-        2
-      </TarjetaIndicador>
-    </>,
-  );
-  expect(screen.getByRole('link', { name: /Con enlace/ }).getAttribute('href')).toBe('/ots');
-  expect(screen.getByRole('group', { name: 'Sin enlace: 2' })).toBeTruthy();
-});
 
 it('los indicadores muestran las cifras del escenario de la spec', () => {
   montar(<IndicadoresReportes indicadores={reporteDePrueba().indicadores} />);
@@ -106,7 +90,7 @@ it('con pct 120 la barra se recorta al 100 % y el número queda en urgente', () 
   montar(<GraficoCarga carga={[{ ...primera!, horas_estimadas: 39.4, pct: 120 }]} />);
   expect((screen.getByRole('img') as HTMLElement).style.width).toBe('100%');
   const numero = screen.getByText('120 %');
-  expect(numero.className).toContain('text-urgente');
+  expect(numero.className).toContain('text-plazo-vencido');
   expect(numero.className).toContain('font-semibold');
 });
 
@@ -128,7 +112,7 @@ it('la resolución marca «sobre plazo» solo en Alta', () => {
   const marcas = screen.getAllByText(/· sobre plazo/);
   expect(marcas).toHaveLength(1);
   expect(marcas[0]!.closest('li')?.textContent).toContain('Alta');
-  expect(marcas[0]!.className).toContain('text-urgente');
+  expect(marcas[0]!.className).toContain('text-plazo-vencido');
   expect(screen.getByText(/^1 d · obj\. 1/)).toBeTruthy();
   const tabla = screen.getByRole('table', { name: 'Resolución por prioridad' });
   expect(filasDe(tabla)[1]).toEqual(['Alta', '1', '2', '1', 'Sí']);
@@ -155,7 +139,7 @@ it('la tabla por cliente muestra montos, «—» en Interno y totales', () => {
   expect(screen.queryByRole('link', { name: 'Interno' })).toBeNull();
   expect(within(interno.closest('tr')!).getAllByText('—')).toHaveLength(2);
   const vina = within(screen.getByRole('link', { name: 'Viña' }).closest('tr')!);
-  expect(vina.getByText('$680.000').className).toContain('text-alta');
+  expect(vina.getByText('$680.000').className).toContain('text-plazo-atento');
   const pie = within(screen.getAllByRole('row').at(-1)!);
   expect(pie.getByText('Total')).toBeTruthy();
   expect(pie.getByText('9 h')).toBeTruthy();
@@ -183,4 +167,10 @@ it('las tablas ocultas van dentro de un div sr-only (una tabla no se recorta y e
     expect(t.classList.contains('sr-only')).toBe(false);
     expect(t.parentElement?.classList.contains('sr-only')).toBe(true);
   }
+});
+
+it('IndicadoresReportes es una línea de indicadores con los cuatro grupos', () => {
+  montar(<IndicadoresReportes indicadores={reporteDePrueba().indicadores} />);
+  const linea = screen.getByRole('group', { name: 'Indicadores' });
+  expect(within(linea).getAllByRole('group')).toHaveLength(4);
 });

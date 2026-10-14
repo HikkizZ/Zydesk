@@ -15,7 +15,7 @@ import { Avatar } from '@/components/dominio/Avatar';
 import { Cargando } from '@/components/dominio/Cargando';
 import { EstadoError, mensajeDeError } from '@/components/dominio/EstadoError';
 import { EstadoVacio } from '@/components/dominio/EstadoVacio';
-import { Pill } from '@/components/dominio/Pill';
+import { Chip } from '@/components/dominio/Chip';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -110,7 +110,7 @@ export function DialogoTemporal({
         </DialogHeader>
         <p
           data-testid="contrasena-temporal"
-          className="rounded-md border border-borde-campo bg-superficie-suave px-3 py-2 font-mono text-lg select-all"
+          className="rounded-md border border-linea-campo bg-panel-hundido px-3 py-2 font-mono text-lg select-all"
         >
           {temporal.contrasena}
         </p>
@@ -243,9 +243,9 @@ export function EquipoTab() {
                   />
                 </TableCell>
                 <TableCell>
-                  <Pill tono={u.activo ? 'resuelto' : 'neutro'}>
+                  <Chip tono={u.activo ? 'suave-ok' : 'neutro'}>
                     {u.activo ? 'Activo' : 'Inactivo'}
-                  </Pill>
+                  </Chip>
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
@@ -301,7 +301,7 @@ export function EquipoTab() {
 
       <Tarjeta titulo="Qué puede hacer cada rol">
         <div className="overflow-x-auto">
-          <Table>
+          <Table etiquetaRegion="Permisos por rol">
             <TableHeader>
               <TableRow>
                 <TableHead>Acción</TableHead>
@@ -324,7 +324,7 @@ export function EquipoTab() {
                         aria-label={permitido ? 'Permitido' : 'No permitido'}
                         className={
                           permitido
-                            ? 'text-center font-semibold text-resuelto'
+                            ? 'text-center font-semibold text-plazo-ok'
                             : 'text-center text-tinta-2'
                         }
                       >

@@ -11,3 +11,5 @@ export {
   sumarHorasHabiles,
   sumarPlazo,
 } from './motor.js';
+export { estadoPlazo, UMBRAL_PLAZO_ATENTO } from './franja.js';
+export type { EstadoPlazo, TonoPlazo } from './franja.js';

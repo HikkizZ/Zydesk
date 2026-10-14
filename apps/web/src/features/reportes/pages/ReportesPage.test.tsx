@@ -141,7 +141,9 @@ it('?departamento=3 se envía como departamento_id=3 y el selector lo muestra', 
   await esperar();
   expect(llamadas.some((l) => l.ruta === '/api/reportes?departamento_id=3')).toBe(true);
   await waitFor(() =>
-    expect(screen.getByRole('combobox', { name: 'Departamento' }).textContent).toBe('Soporte TI'),
+    expect(screen.getByRole('combobox', { name: 'Departamento: Soporte TI' }).textContent).toBe(
+      'Soporte TI',
+    ),
   );
 });
 

@@ -60,7 +60,7 @@ export function PlantillasTab() {
     );
   } else {
     contenido = (
-      <ul className="flex flex-col divide-y divide-borde">
+      <ul className="flex flex-col divide-y divide-linea-suave">
         {consulta.data.map((p) => (
           <li key={p.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
             <div className="min-w-0">

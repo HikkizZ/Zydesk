@@ -35,10 +35,8 @@ function Grupo({
   if (filas.length === 0) return null;
   return (
     <section aria-label={titulo}>
-      <h3 className="mb-1 px-3 text-xs font-semibold tracking-wide text-tinta-2 uppercase">
-        {titulo}
-      </h3>
-      <ul className="flex flex-col gap-0.5">
+      <h3 className="mb-1 px-3 text-xs font-medium text-tinta-3">{titulo}</h3>
+      <ul className="flex flex-col">
         {filas.map((c) => {
           const secundario = [
             c.tickets_abiertos > 0
@@ -55,13 +53,13 @@ function Grupo({
                 to={`/clientes/${c.id}`}
                 aria-current={c.id === idActual ? 'page' : undefined}
                 className={cn(
-                  'flex min-h-11 flex-col justify-center rounded-md px-3 py-1.5 hover:bg-superficie-suave',
-                  c.id === idActual && 'bg-superficie-suave',
-                  c.activo ? '' : 'text-tinta-2',
+                  'flex min-h-12 flex-col justify-center border-b border-linea-suave px-3 py-1.5 hover:bg-lienzo lg:min-h-11',
+                  c.id === idActual && 'bg-acento-suave hover:bg-acento-suave',
+                  c.activo ? 'text-tinta' : 'text-tinta-2',
                 )}
               >
-                <span className="font-medium">{c.nombre}</span>
-                {secundario ? <span className="text-sm text-tinta-2">{secundario}</span> : null}
+                <span className="text-tabla font-medium">{c.nombre}</span>
+                {secundario ? <span className="text-xs text-tinta-2">{secundario}</span> : null}
               </Link>
             </li>
           );
@@ -122,9 +120,9 @@ export function ClientesPage() {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
         {idActual === null ? (
-          <h1 className="font-titulo text-2xl font-bold">Clientes</h1>
+          <h1 className="text-xl font-semibold text-tinta">Clientes</h1>
         ) : (
-          <h2 className="font-titulo text-2xl font-bold">Clientes</h2>
+          <h2 className="text-xl font-semibold text-tinta">Clientes</h2>
         )}
         {botonNuevo}
       </div>
@@ -152,7 +150,7 @@ export function ClientesPage() {
       ) : todos.length === 0 ? (
         <EstadoVacio titulo="Aún no hay clientes" accion={botonNuevo} />
       ) : visibles.length === 0 ? (
-        <p className="text-tinta-2">Ningún cliente coincide con la búsqueda.</p>
+        <p className="text-sm text-tinta-2">Ningún cliente coincide con la búsqueda.</p>
       ) : (
         <>
           <Grupo titulo="Clientes" filas={externos} idActual={idActual} />

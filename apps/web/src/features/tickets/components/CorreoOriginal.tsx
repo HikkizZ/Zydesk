@@ -47,7 +47,7 @@ export function CorreoOriginal({ correo }: { correo: NonNullable<TicketDatos['co
       {correo.adjuntos.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           <h3 className="text-sm font-medium">Adjuntos del correo</h3>
-          <ul className="flex flex-col divide-y rounded-md border">
+          <ul className="flex flex-col divide-y divide-linea rounded-md border border-linea">
             {correo.adjuntos.map((a) => (
               <li key={a.id} className="flex items-center gap-2 px-3 py-1.5 text-sm">
                 <span className="min-w-0 flex-1 truncate">{a.nombre_original}</span>

@@ -58,7 +58,7 @@ export function TarjetaTelegram() {
         {t.sesion_bot_activa ? null : (
           <div
             role="alert"
-            className="flex flex-col items-start gap-2 rounded-md bg-alta-fondo p-3 text-sm text-alta"
+            className="flex flex-col items-start gap-2 rounded-md border border-plazo-atento/40 bg-plazo-atento-suave p-3 text-sm text-plazo-atento"
           >
             <p>Los comandos del bot caducaron: envía /vincular con un código nuevo</p>
             <Button variant="outline" size="sm" onClick={() => setVinculando(true)}>
@@ -94,9 +94,9 @@ export function TarjetaTelegram() {
   return (
     <section
       aria-labelledby="titulo-telegram"
-      className="rounded-lg border border-borde bg-superficie p-4"
+      className="rounded-md border border-linea bg-panel p-4"
     >
-      <h2 id="titulo-telegram" className="mb-3 text-lg font-semibold">
+      <h2 id="titulo-telegram" className="mb-3 text-sm font-semibold text-tinta">
         Telegram
       </h2>
       {cuerpo}

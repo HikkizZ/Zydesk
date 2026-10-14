@@ -1,10 +1,10 @@
-import { TarjetaIndicador } from '@/components/dominio/TarjetaIndicador';
+import { LineaIndicadores } from '@/components/dominio/LineaIndicadores';
 import type { ReporteSalidaDatos } from '../api';
 import { numeroDias, numeroHoras, pluralizar, porcentaje } from '../formato';
 
 type Indicadores = ReporteSalidaDatos['indicadores'];
 
-// Cuatro tarjetas de la pantalla 14 con `aria-label` completo (spec fase 7 §8.4 punto 2).
+// Cuatro indicadores de la pantalla 14 (LineaIndicadores) con `aria-label` completo (spec fase 7 §8.4 punto 2).
 export function IndicadoresReportes({ indicadores }: { indicadores: Indicadores }) {
   const { cerrados, resolucion, dentro_de_plazo: plazo, horas } = indicadores;
 
@@ -32,46 +32,56 @@ export function IndicadoresReportes({ indicadores }: { indicadores: Indicadores 
     .filter(Boolean)
     .join(', ');
 
+  const detalle = (texto: string) => (
+    <span className="ml-1.5 font-normal text-tinta-3">{texto}</span>
+  );
+
   return (
-    <div role="group" aria-label="Indicadores" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-      <TarjetaIndicador
-        etiqueta="Tickets cerrados"
-        tono="text-tinta"
-        ariaLabel={`Tickets cerrados: ${cerrados.total}, ${detalleCerrados}`}
-      >
-        {cerrados.total}
-        <span className="block text-sm font-normal text-tinta-2">{detalleCerrados}</span>
-      </TarjetaIndicador>
-      <TarjetaIndicador
-        etiqueta="Resolución promedio"
-        tono="text-tinta"
-        ariaLabel={etiquetaResolucion}
-      >
-        {textoResolucion}
-        {sinCalendario ? (
-          <span className="block text-sm font-normal text-tinta-3">{sinCalendario}</span>
-        ) : null}
-      </TarjetaIndicador>
-      <TarjetaIndicador
-        etiqueta="Dentro de plazo"
-        tono="text-resuelto"
-        ariaLabel={`Dentro de plazo: ${plazo.pct === null ? 'sin datos' : `${textoPlazo}, ${detallePlazo}`}`}
-      >
-        {textoPlazo}
-        {plazo.pct !== null ? (
-          <span className="block text-sm font-normal text-tinta-2">{detallePlazo}</span>
-        ) : null}
-      </TarjetaIndicador>
-      <TarjetaIndicador
-        etiqueta="Horas facturables"
-        tono="text-acento"
-        ariaLabel={`Horas facturables: ${horas.pct_facturables === null ? 'sin datos' : `${textoHoras}, ${detalleHoras}`}`}
-      >
-        {textoHoras}
-        {horas.pct_facturables !== null ? (
-          <span className="block text-sm font-normal text-tinta-2">{detalleHoras}</span>
-        ) : null}
-      </TarjetaIndicador>
-    </div>
+    <LineaIndicadores
+      items={[
+        {
+          etiqueta: 'Tickets cerrados',
+          valor: (
+            <>
+              {cerrados.total}
+              {detalle(detalleCerrados)}
+            </>
+          ),
+          ariaLabel: `Tickets cerrados: ${cerrados.total}, ${detalleCerrados}`,
+        },
+        {
+          etiqueta: 'Resolución promedio',
+          valor: (
+            <>
+              {textoResolucion}
+              {sinCalendario ? detalle(sinCalendario) : null}
+            </>
+          ),
+          ariaLabel: etiquetaResolucion,
+        },
+        {
+          etiqueta: 'Dentro de plazo',
+          tono: 'ok',
+          valor: (
+            <>
+              {textoPlazo}
+              {plazo.pct !== null ? detalle(detallePlazo) : null}
+            </>
+          ),
+          ariaLabel: `Dentro de plazo: ${plazo.pct === null ? 'sin datos' : `${textoPlazo}, ${detallePlazo}`}`,
+        },
+        {
+          etiqueta: 'Horas facturables',
+          tono: 'acento',
+          valor: (
+            <>
+              {textoHoras}
+              {horas.pct_facturables !== null ? detalle(detalleHoras) : null}
+            </>
+          ),
+          ariaLabel: `Horas facturables: ${horas.pct_facturables === null ? 'sin datos' : `${textoHoras}, ${detalleHoras}`}`,
+        },
+      ]}
+    />
   );
 }

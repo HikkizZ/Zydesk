@@ -24,12 +24,12 @@ function montar(datos: MiDiaDatos, rol: 'tecnico' | 'coordinacion' | 'lectura' =
 }
 
 const valorCuadro = (nombre: string) =>
-  within(screen.getByRole('button', { name: new RegExp(`^${nombre}`) })).getByText(/^\d+$/)
+  within(screen.getByRole('button', { name: new RegExp(`${nombre}$`) })).getByText(/^\d+$/)
     .textContent;
 
 it('muestra los cuatro cuadros con los conteos de la respuesta y el título con la fecha', async () => {
   montar(miDiaDePrueba());
-  expect(await screen.findByRole('heading', { name: 'Mi día · jueves 1 de octubre' })).toBeTruthy();
+  expect(await screen.findByRole('heading', { name: 'Jueves 1 de octubre' })).toBeTruthy();
   expect(valorCuadro('Vencen hoy')).toBe('2');
   expect(valorCuadro('Por aprobar')).toBe('1');
   expect(valorCuadro('Te mencionaron')).toBe('3');
@@ -67,21 +67,6 @@ it('sin ots.aprobar no se renderiza «Por aprobar»', async () => {
   );
   await screen.findByText('Tus tareas', { selector: 'h2' });
   expect(screen.queryByText('Por aprobar')).toBeNull();
-});
-
-it('bajo 768 px los cuadros van en 2 columnas', async () => {
-  vi.stubGlobal(
-    'matchMedia',
-    vi.fn((q: string) => ({
-      matches: true,
-      media: q,
-      addEventListener: () => {},
-      removeEventListener: () => {},
-    })),
-  );
-  montar(miDiaDePrueba());
-  await screen.findByRole('button', { name: /^Vencen hoy/ });
-  expect(document.querySelector('[data-columnas]')?.getAttribute('data-columnas')).toBe('2');
 });
 
 it('con lectura las casillas de las tareas están deshabilitadas', async () => {

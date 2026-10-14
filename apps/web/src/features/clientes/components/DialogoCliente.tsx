@@ -184,7 +184,7 @@ function FormularioCliente({
           </>
         )}
         {errorGeneral ? (
-          <p role="alert" className="text-sm text-urgente">
+          <p role="alert" className="text-sm text-plazo-vencido">
             {errorGeneral}
           </p>
         ) : null}

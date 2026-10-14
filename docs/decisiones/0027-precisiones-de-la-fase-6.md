@@ -1,6 +1,6 @@
 # ADR 0027 — Precisiones surgidas al especificar e implementar la Fase 6
 
-**Estado**: aceptada · 2026-10-02 (parte 6a) · 2026-10-04 (parte 6b) · precisa a ADR 0001, 0002, 0003, 0008, 0010, 0011, 0012, 0013, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023 y 0025 (no cambia sus decisiones de fondo)
+**Estado**: aceptada · 2026-10-02 (parte 6a) · 2026-10-04 (parte 6b) · precisa a ADR 0001, 0002, 0003, 0008, 0010, 0011, 0012, 0013, 0016, 0017, 0018, 0019, 0020, 0021, 0022, 0023 y 0025 (no cambia sus decisiones de fondo) · precisada por ADR 0033 (punto 22: Mi día con `LineaIndicadores` en vez de cuadros 2×2)
 
 ## Contexto
 
